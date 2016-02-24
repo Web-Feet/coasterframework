@@ -1,0 +1,96 @@
+<?php namespace Webfeet\Cms;
+
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\ServiceProvider;
+use Webfeet\Cms\Models\Setting;
+
+class CmsServiceProvider extends ServiceProvider {
+
+	/**
+	 * Indicates if loading of the provider is deferred.
+	 *
+	 * @var bool
+	 */
+	protected $defer = false;
+
+	/**
+	 * Bootstrap the application events.
+	 *
+	 * @return void
+	 */
+	public function boot()
+	{
+		$this->publishes([
+			__DIR__.'/../public' => public_path('packages/webfeet/cms'),
+		], 'public');
+
+		$this->loadViewsFrom(base_path(trim(config('wf_cms::admin.view'), '/')), 'wf_cms');
+
+		$this->app['config']['auth.driver'] = 'wf_cms';
+		$this->app['config']['auth.model'] = Models\User::class;
+
+		Auth::extend('wf_cms', function($app)
+		{
+			return new Libraries\AuthManager(
+				new Providers\CmsAuthUserProvider(),
+				$app['session.store']
+			);
+		});
+
+		if ($this->app['config']['wf_cms::installed']) {
+			if (!App::runningInConsole() || env('IS_TEST')) {
+				$router = $this->app['router'];
+				$router->middleware('auth.admin', \Webfeet\Cms\Http\MiddleWare\AdminAuth::class);
+				$router->middleware('auth.guest', \Webfeet\Cms\Http\MiddleWare\GuestAuth::class);
+				include __DIR__ . '/Http/routes.php';
+			} else {
+				echo "Notice: running in console and/or test mode, skipping cms routes\r\n";
+			}
+		} else {
+			echo "Notice: can't find settings table, cms might not be installed ?\r\n";
+		}
+
+	}
+
+	/**
+	 * Register the service provider.
+	 *
+	 * @return void
+	 */
+	public function register()
+	{
+		require __DIR__ . '/../vendor/autoload.php';
+
+		// load cms settings first
+		$this->app->register('Webfeet\Cms\Providers\CmsSettingsProvider');
+
+		// register other providers
+		$this->app->register('Bkwld\Croppa\ServiceProvider');
+		$this->app->register('Collective\Html\HtmlServiceProvider');
+		$this->app->register('Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider');
+
+		// register aliases
+		$loader = \Illuminate\Foundation\AliasLoader::getInstance();
+		$loader->alias('Form',   'Collective\Html\FormFacade');
+		$loader->alias('HTML',   'Collective\Html\HtmlFacade');
+		$loader->alias('Croppa', 'Webfeet\Cms\Helpers\CroppaFacade');
+		$loader->alias('CmsBlockInput', 'Webfeet\Cms\Helpers\CmsBlockInput');
+		$loader->alias('AssetBuilder', 'Webfeet\Cms\Libraries\Builder\AssetBuilder');
+		$loader->alias('FormMessage', 'Webfeet\Cms\Libraries\Builder\FormMessage');
+		$loader->alias('PageBuilder', 'Webfeet\Cms\Libraries\Builder\PageBuilder');
+	}
+
+	/**
+	 * Get the services provided by the provider.
+	 *
+	 * @return array
+	 */
+	public function provides()
+	{
+		return array();
+	}
+
+}
