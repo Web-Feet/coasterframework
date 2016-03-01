@@ -71,7 +71,6 @@ class CmsServiceProvider extends ServiceProvider
         // register other providers
         $this->app->register('Bkwld\Croppa\ServiceProvider');
         $this->app->register('Collective\Html\HtmlServiceProvider');
-        $this->app->register('Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider');
 
         // register aliases
         $loader = \Illuminate\Foundation\AliasLoader::getInstance();
