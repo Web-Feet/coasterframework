@@ -462,21 +462,23 @@ class PageBuilder
         if (!View::exists('themes.' . self::$theme . '.breadcrumbs.' . $options['view'] . '.wrap')) {
             return null;
         }
-        $url = '';
-        end(self::$page_levels);
-        $active_key = key(self::$page_levels);
         $crumbs = '';
-        foreach (self::$page_levels as $key => $crumb) {
-            if ($crumb->url != '/') {
-                // if not homepage, build up uri
-                $url .= '/' . $crumb->url;
-                $crumb->url = $url;
-            }
-            if ($active_key == $key) {
-                $crumbs .= View::make('themes.' . self::$theme . '.breadcrumbs.' . $options['view'] . '.active_element', array('crumb' => $crumb));
-            } else {
-                $crumbs .= View::make('themes.' . self::$theme . '.breadcrumbs.' . $options['view'] . '.link_element', array('crumb' => $crumb));
-                $crumbs .= View::make('themes.' . self::$theme . '.breadcrumbs.' . $options['view'] . '.separator');
+        if (!empty(self::$page_levels)) {
+            $url = '';
+            end(self::$page_levels);
+            $active_key = key(self::$page_levels);
+            foreach (self::$page_levels as $key => $crumb) {
+                if ($crumb->url != '/') {
+                    // if not homepage, build up uri
+                    $url .= '/' . $crumb->url;
+                    $crumb->url = $url;
+                }
+                if ($active_key == $key) {
+                    $crumbs .= View::make('themes.' . self::$theme . '.breadcrumbs.' . $options['view'] . '.active_element', array('crumb' => $crumb));
+                } else {
+                    $crumbs .= View::make('themes.' . self::$theme . '.breadcrumbs.' . $options['view'] . '.link_element', array('crumb' => $crumb));
+                    $crumbs .= View::make('themes.' . self::$theme . '.breadcrumbs.' . $options['view'] . '.separator');
+                }
             }
         }
         return View::make('themes.' . self::$theme . '.breadcrumbs.' . $options['view'] . '.wrap', array('crumbs' => $crumbs));
