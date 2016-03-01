@@ -1,39 +1,26 @@
 {
-  "name": "Coaster CMS",
-  "description": "Coaster CMS",
-  "authors": [
-    {
-      "name": "Neil Jennings",
-      "email": "neil@web-feet.co.uk"
+    "name": "web-feet/coasterframework",
+    "description": "Coaster CMS Framework",
+    "authors": [
+        {
+            "name": "Neil Jennings",
+            "email": "neil@web-feet.co.uk"
+        },
+        {
+            "name": "Daniel Chadwick",
+            "email": "dan@web-feet.co.uk"
+        }
+    ],
+    "require": {
+        "php": ">=5.5.9",
+        "laravelcollective/html": "5.2.*",
+        "bkwld/croppa": "4.2.*",
+        "guzzlehttp/guzzle": "6.*",
+        "blueimp/jQuery-File-Upload": "9.11.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "CoasterCms\\": "src/"
+        }
     }
-  ],
-  "require": {
-    "php": ">=5.5.9",
-    "laravel/framework": "5.2.*",
-    "laravelcollective/html": "5.2.*",
-    "bkwld/croppa": "4.2.*",
-    "guzzlehttp/guzzle": "6.*",
-    "blueimp/jQuery-File-Upload": "9.11.2"
-  },
-  "require-dev": {
-    "phpspec/phpspec": "~2.1",
-    "phpunit/phpunit": "~4.0",
-    "barryvdh/laravel-ide-helper": "^2.1"
-  },
-  "autoload": {
-    "psr-4": {
-      "CoasterCms\\": "src/"
-    }
-  },
-  "autoload-dev": {
-    "psr-4": {
-      "CoasterCms\\Tests\\": "tests/"
-    }
-  },
-  "minimum-stability": "stable",
-  "scripts": {
-    "post-update-cmd": [
-      ""
-    ]
-  }
 }
