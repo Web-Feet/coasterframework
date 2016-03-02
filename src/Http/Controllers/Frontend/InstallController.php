@@ -15,8 +15,8 @@ class InstallController extends Controller
 
     public function getIndex()
     {
-        if (Storage::get('install.txt') == 'adduser') {
-            return redirect('install/admin')->send();
+        if ($redirect = $this->_checkRedirect('install')) {
+            return redirect($redirect)->send();
         }
 
         View::make('coaster::asset_builder.main')->render();
@@ -28,9 +28,8 @@ class InstallController extends Controller
 
     public function postIndex()
     {
-
-        if (Storage::get('install.txt') == 'adduser') {
-            return redirect('install/admin')->send();
+        if ($redirect = $this->_checkRedirect('install')) {
+            return redirect($redirect)->send();
         }
 
         $details = Request::all();
@@ -77,16 +76,31 @@ class InstallController extends Controller
 
         file_put_contents(base_path('.env'), $envFile);
 
+        Storage::put('install.txt', 'add-tables');
+
+        return redirect('install/database')->send();
+
+    }
+
+    public function getDatabase()
+    {
+        if ($redirect = $this->_checkRedirect('install/database')) {
+            return redirect($redirect)->send();
+        }
+
         Artisan::call('migrate', ['--path' => '/vendor/web-feet/coasterframework/database/migrations']);
 
-        Storage::put('install.txt', 'adduser');
+        Storage::put('install.txt', 'add-user');
 
         return redirect('install/admin')->send();
-
     }
 
     public function getAdmin()
     {
+        if ($redirect = $this->_checkRedirect('install/admin')) {
+            return redirect($redirect)->send();
+        }
+
         View::make('coaster::asset_builder.main')->render();
 
         $installContent = View::make('coaster::pages.install', ['stage' => 'adduser']);
@@ -97,6 +111,10 @@ class InstallController extends Controller
 
     public function postAdmin()
     {
+        if ($redirect = $this->_checkRedirect('install/admin')) {
+            return redirect($redirect)->send();
+        }
+
         $details = Request::all();
 
         $v = Validator::make($details, array('email' => 'required|email', 'password' => 'required|confirmed|min:4'));
@@ -120,7 +138,7 @@ class InstallController extends Controller
             )
         );
 
-        Storage::put('install.txt', 'complete_welcome');
+        Storage::put('install.txt', 'complete-welcome');
 
         View::make('coaster::asset_builder.main')->render();
 
@@ -131,12 +149,28 @@ class InstallController extends Controller
 
     public function missingMethod($parameters = [])
     {
-        if (Storage::get('install.txt') == 'adduser') {
-            $url = 'install/admin';
-        } else {
-            $url = 'install';
+        return redirect($this->_checkRedirect())->send();
+    }
+
+    private function _checkRedirect($current = null)
+    {
+        switch (Storage::get('install.txt')) {
+            case 'set-env':
+                $redirect = 'install';
+                break;
+            case 'add-tables':
+                $redirect = 'install/database';
+                break;
+            case 'add-user':
+                $redirect = 'install/admin';
+                break;
+            default:
+                $redirect = '';
         }
-        return redirect($url)->send();
+        if ($current == $redirect) {
+            $redirect = '';
+        }
+        return $redirect;
     }
 
 }

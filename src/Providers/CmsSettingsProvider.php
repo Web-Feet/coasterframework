@@ -23,23 +23,20 @@ class CmsSettingsProvider extends ServiceProvider
     public function boot()
     {
         $db = false;
-        try {
-            if (Schema::hasTable('settings')) {
-                $db = true;
-            }
-        } catch (\PDOException $e) {
-
-        }
 
         if (Storage::exists('install.txt') && strpos(Storage::get('install.txt'), 'complete') !== false) {
             $this->app['config']['coaster::installed'] = 1;
-            if (!$db) {
+            try {
+                if (Schema::hasTable('settings')) {
+                    $db = true;
+                }
+            } catch (\PDOException $e) {
                 die('Database Error');
             }
         } else {
             $this->app['config']['coaster::installed'] = 0;
             if (!Storage::exists('install.txt')) {
-                Storage::put('install.txt', 'database');
+                Storage::put('install.txt', 'set-env');
             }
         }
 

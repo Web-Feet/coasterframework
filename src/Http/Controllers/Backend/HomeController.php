@@ -33,7 +33,7 @@ class HomeController extends _Base
         $logs = View::make('coaster::partials.logs.table', array('logs' => $logs_data));
 
         $welcome_message = '';
-        if (Storage::get('install.txt') == 'complete_welcome') {
+        if (Storage::get('install.txt') == 'complete-welcome') {
             Storage::put('install.txt', 'complete');
             $welcome_message = '<h2>Welcome to Coaster CMS, click on the pages link to start editing content</h2><p>&nbsp;</p>';
         }
