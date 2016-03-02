@@ -31,7 +31,9 @@ class CmsSettingsProvider extends ServiceProvider
                     $db = true;
                 }
             } catch (\PDOException $e) {
-                die('Database Error');
+            }
+            if (!$db) {
+                die('Database error, settings table could not be found');
             }
         } else {
             $this->app['config']['coaster::installed'] = 0;

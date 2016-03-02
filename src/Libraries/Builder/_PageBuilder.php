@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Libraries\Builder;
 
 use CoasterCms\Models\Block;
+use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\BlockRepeater;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\TemplateBlock;
@@ -42,6 +43,9 @@ class _PageBuilder
     private static $_databaseTemplates;
     private static $_databaseTemplateIds;
     private static $_databaseBlockTemplates;
+
+    // load block category ids for use in category guess
+    private static $_categoryIds;
 
     public static function processFiles($themeId)
     {
@@ -271,7 +275,7 @@ class _PageBuilder
             $processedData['global_site'] = (bool)(!empty(self::$_databaseGlobalBlocks[$block]) ? self::$_databaseGlobalBlocks[$block]->show_in_global : 0);
             $processedData['global_pages'] = (bool)(!empty(self::$_databaseGlobalBlocks[$block]) ? self::$_databaseGlobalBlocks[$block]->show_in_pages : 0);
         } else {
-            $processedData['category_id'] = 1;
+            $processedData['category_id'] = self::_categoryGuess($block);
             $processedData['label'] = ucwords(str_replace('_', ' ', $block));
             $processedData['name'] = $block;
             $processedData['type'] = !empty($details['type']) ? $details['type'] : self::_typeGuess($block);
@@ -279,6 +283,52 @@ class _PageBuilder
             $processedData['global_pages'] = (bool)stristr($block, 'meta');
         }
         return $processedData;
+    }
+
+    private static function _categoryGuess($block)
+    {
+        if (!isset(self::$_categoryIds)) {
+            $findKeys = [
+                'main' => ['main'],
+                'banner' => ['banner'],
+                'seo' => ['seo'],
+                'footer' => ['foot'],
+                'header' => ['head']
+            ];
+
+            self::$_categoryIds = [];
+            $first = true;
+            foreach (BlockCategory::all() as $category) {
+                if ($first) {
+                    $first = false;
+                    $keys['main'] = $category->id;
+                }
+                foreach ($findKeys as $key => $matches) {
+                    foreach ($matches as $match) {
+                        if (stristr($category->name, $match)) {
+                            self::$_categoryIds[$key] = $category->id;
+                        }
+                    }
+                }
+            }
+        }
+
+        $categoryFound = self::$_categoryIds['main'];
+
+        $categoriesArr = [];
+        $categoriesArr[self::$_categoryIds['seo']] = ['meta'];
+        $categoriesArr[self::$_categoryIds['header']] = ['header_html', 'head'];
+        $categoriesArr[self::$_categoryIds['footer']] = ['footer_html', 'foot'];
+        $categoriesArr[self::$_categoryIds['banner']] = ['banner'];
+        foreach ($categoriesArr as $categoryId => $matches) {
+            foreach ($matches as $match) {
+                if (stristr($block, $match)) {
+                    $categoryFound = $categoryId;
+                }
+            }
+        }
+
+        return $categoryFound;
     }
 
     private static function _typeGuess($block)
@@ -291,7 +341,7 @@ class _PageBuilder
             'link' => ['link', 'url'],
             'datetime' => ['date', 'datetime'],
             'string' => ['link_text', 'caption', 'title'],
-            'form' => ['form']
+            'form' => ['form', 'contact']
         ];
         $typeFound = 'string';
         foreach ($typesArr as $type => $matches) {

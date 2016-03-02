@@ -314,13 +314,13 @@ class Page extends Eloquent
         $child_pages = self::where('parent', '=', $this->id)->get();
         if (!empty($child_pages)) {
             foreach ($child_pages as $child_page) {
-                $log_ids = json_decode($child_page->delete());
+                $log_ids = $child_page->delete();
                 $return_log_ids = array_merge($log_ids, $return_log_ids);
             }
         }
 
         sort($return_log_ids);
-        return json_encode($return_log_ids);
+        return $return_log_ids;
     }
 
     public static function restore($obj)

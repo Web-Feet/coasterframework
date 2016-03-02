@@ -75,19 +75,20 @@ class PageLoaderController extends Controller
             $this->loadBodyNodes($this->dom->getElementsByTagName('body')->item(0));
 
             // add meta generator
-            $headNode = $this->dom->getElementsByTagName('head')->item(0);
-            $generator = $this->dom->createElement('meta');
-            $generator->setAttribute('name', 'generator');
-            $generator->setAttribute('content', 'Coaster CMS ' . config('coaster::site.version'));
-            if ($headNode->hasChildNodes()) {
-                $titleNode = $this->dom->getElementsByTagName('title')->item(0);
-                if (!empty($titleNode)) {
-                    $headNode->insertBefore($generator, $titleNode);
+            if ($headNode = $this->dom->getElementsByTagName('head')->item(0)) {
+                $generator = $this->dom->createElement('meta');
+                $generator->setAttribute('name', 'generator');
+                $generator->setAttribute('content', 'Coaster CMS ' . config('coaster::site.version'));
+                if ($headNode->hasChildNodes()) {
+                    $titleNode = $this->dom->getElementsByTagName('title')->item(0);
+                    if (!empty($titleNode)) {
+                        $headNode->insertBefore($generator, $titleNode);
+                    } else {
+                        $headNode->insertBefore($generator, $headNode->firstChild);
+                    }
                 } else {
-                    $headNode->insertBefore($generator, $headNode->firstChild);
+                    $headNode->appendChild($generator);
                 }
-            } else {
-                $headNode->appendChild($generator);
             }
 
             // add <strong></strong> around any keywords

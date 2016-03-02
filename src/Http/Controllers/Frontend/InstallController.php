@@ -50,7 +50,8 @@ class InstallController extends Controller
                 case 2005:
                     FormMessage::add('host', $e->getMessage());
                     break;
-                default: dd($e);
+                default: 
+                    FormMessage::add('host', $e->getMessage());
             }
             return $this->getIndex();
         }
