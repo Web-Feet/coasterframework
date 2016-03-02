@@ -22,10 +22,13 @@ class CmsSettingsProvider extends ServiceProvider
      */
     public function boot()
     {
-        if (Schema::hasTable('settings')) {
-            $db = true;
-        } else {
-            $db = false;
+        $db = false;
+        try {
+            if (Schema::hasTable('settings')) {
+                $db = true;
+            }
+        } catch (\PDOException $e) {
+
         }
 
         if (Storage::exists('install.txt') && strpos(Storage::get('install.txt'), 'complete') !== false) {
