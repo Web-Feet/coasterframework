@@ -16,7 +16,7 @@
     <div class="col-sm-12 pages_key">
         Key: <span class="label type_normal_dark">Normal Page</span>
         <span class="label type_link">Link / Document</span>
-        <span class="label type_group">Plugin</span>
+        <span class="label type_group">Group Page</span>
         <span class="label type_hidden">Not Live</span>
     </div>
 </div>

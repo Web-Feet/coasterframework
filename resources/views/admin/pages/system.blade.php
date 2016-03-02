@@ -68,7 +68,7 @@
                         <td>Database Structure</td>
                         <td>
                             @if (!empty($database_structure['errors']))
-                                <span class="text-danger">{{ count($database_structure['notices']).' '.str_plural('error', count($database_structure['notices'])) }}
+                                <span class="text-danger">{{ count($database_structure['errors']).' '.str_plural('error', count($database_structure['errors'])) }}
                                     found</span>
                             @elseif (!empty($database_structure['warnings']))
                                 <span class="text-warning">{{ count($database_structure['warnings']).' '.str_plural('warning', count($database_structure['warnings'])) }}

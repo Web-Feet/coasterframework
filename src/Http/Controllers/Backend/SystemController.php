@@ -98,7 +98,7 @@ class SystemController extends _Base
                 case 'site.pages':
                     $total_pages = Page::get_total();
                     $true_total_pages = Page::get_total(true);
-                    $custom = $total_pages . '/' . ($setting->value ?: 'Unlimited') . ' (total including plugin pages: ' . $true_total_pages . ')';
+                    $custom = $total_pages . '/' . ($setting->value ?: 'Unlimited') . ' (total including group pages: ' . $true_total_pages . ')';
                     break;
                 default:
                     $custom = null;

@@ -47,15 +47,6 @@ class CreateSettings
                     'updated_at' => $date
                 ),
                 array(
-                    'label' => 'Site Version',
-                    'name' => 'site.version',
-                    'value' => '5.1',
-                    'editable' => 0,
-                    'hidden' => 0,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
                     'label' => 'Site Pages',
                     'name' => 'site.pages',
                     'value' => '20',
@@ -88,15 +79,6 @@ class CreateSettings
                     'value' => '0',
                     'editable' => 0,
                     'hidden' => 1,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'label' => 'Admin Undo Actions Time Limit (secs)',
-                    'name' => 'admin.undo_time',
-                    'value' => '3600',
-                    'editable' => 1,
-                    'hidden' => 0,
                     'created_at' => $date,
                     'updated_at' => $date
                 ),

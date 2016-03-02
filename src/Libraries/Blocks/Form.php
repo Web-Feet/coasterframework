@@ -136,7 +136,7 @@ class Form extends _Base
                 $form_settings = unserialize($form_settings);
 
                 // load captcha
-                include_once public_path('/coaster/securimage/securimage.php');
+                include_once public_path(config('coaster::admin.public').'/securimage/securimage.php');
                 $secure_image = new \Securimage();
                 if (empty($_POST['captcha_code'])) {
                     $_POST['captcha_code'] = '';
