@@ -1,6 +1,11 @@
 #!/usr/bin/env php
 <?php
 
+if (version_compare(phpversion(), '5.5.9', '<')) {
+    echo "Coaster Framework: Can't run updateAsset script with PHP Version ".phpversion()." (5.5.9+ required)";
+    exit;
+}
+
 require __DIR__ . '/../../../bootstrap/autoload.php';
 $laravel_app = require __DIR__ . '/../../../bootstrap/app.php';
 

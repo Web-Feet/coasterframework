@@ -15,13 +15,8 @@ class AdminAuth
      */
     public function handle($request, Closure $next)
     {
-        if ($request->segment(3)) {
-            $controller = $request->segment(2);
-            $action = $request->segment(3);
-        } else {
-            $controller = 'home';
-            $action = $request->segment(2);
-        }
+        $controller = $request->segment(2);
+        $action = $request->segment(3);
         $parameters = $request->route()->parameters();
 
         if (Auth::actionRoute(array($controller, $action), $parameters)) {

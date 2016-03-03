@@ -691,6 +691,16 @@ class CreateAdminActions extends Migration
                     'about' => 'only keys with the string browser in can be called',
                     'created_at' => $date,
                     'updated_at' => $date
+                ),
+                array(
+                    'controller_id' => 8,
+                    'action' => 'page-state',
+                    'inherit' => -1,
+                    'edit_based' => 0,
+                    'name' => 'Save page list state',
+                    'about' => null,
+                    'created_at' => $date,
+                    'updated_at' => $date
                 )
             ));
 

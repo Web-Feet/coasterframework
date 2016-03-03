@@ -24,6 +24,7 @@ class CreateUsers
             $table->string('tmp_code')->nullable();
             $table->timestamp('tmp_code_created')->nullable();
             $table->string('blog_login')->nullable();
+            $table->text('page_states');
             $table->timestamps();
         });
     }
