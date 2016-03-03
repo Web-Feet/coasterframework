@@ -52,7 +52,7 @@ class PagesController extends _Base
             array_push($this->child_pages[$page->parent], $page);
         }
 
-        $this->layout->content = View::make('coaster::pages.pages', array('pages' => $this->_list_pages(0, 1), 'add_page' => $add_perm, 'max' => false));
+        $this->layout->content = View::make('coaster::pages.pages', array('pages' => $this->_list_pages(0, 1), 'add_page' => $add_perm, 'page_states' => Auth::user()->getPageStates(), 'max' => false));
         $this->layout->modals = View::make('coaster::modals.general.delete_item');
     }
 
@@ -519,6 +519,8 @@ class PagesController extends _Base
         PageSearchData::update_processed_text(0, strip_tags($page_lang->name), $page->id, Language::current());
 
         if (Auth::action('themes.beacons-update')) {
+            BlockBeacon::preload(); // get latest urls
+
             // beacons
             if (!empty($page_info['beacons']) && !empty($page->id)) {
                 foreach ($page_info['beacons'] as $uniqueId) {
@@ -531,6 +533,7 @@ class PagesController extends _Base
             if (!empty($pageInfoMultipleSelects)) {
                 foreach ($pageInfoMultipleSelects as $field => $v) {
                     if (empty($page_info[$field]) && $field == 'beacons') {
+
                         $setBeacons = BlockBeacon::where('page_id', '=', $page->id)->get();
                         foreach ($setBeacons as $setBeacon) {
                             BlockBeacon::updateUrl($setBeacon->unique_id, 0);

@@ -150,6 +150,24 @@ class AccountController extends _Base
         }
     }
 
+    public function postPageState()
+    {
+        $postData = Request::all();
+        $pageStates = Auth::user()->getPageStates();
+
+        if ($postData['expanded'] == "false" && ($key = array_search($postData['page_id'], $pageStates)) !== false) {
+            unset($pageStates[$key]);
+            Auth::user()->savePageStates($pageStates);
+            return 1;
+        } elseif ($postData['expanded'] == "true" && !in_array($postData['page_id'], $pageStates)) {
+            $pageStates[] = $postData['page_id'];
+            Auth::user()->savePageStates($pageStates);
+            return 1;
+        }
+
+        return 0;
+    }
+
     public function get_blog()
     {
         $form = View::make('coaster::partials.forms.user.blog', array('blog_login' => $this->_existing_blog_login()));

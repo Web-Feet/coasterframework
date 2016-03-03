@@ -26,6 +26,8 @@
 @section('scripts')
     <script type='text/javascript'>
 
+        var expanded = {!! json_encode($page_states) !!};
+
         $(document).ready(function () {
 
             @if ($max)
@@ -53,9 +55,24 @@
                 startCollapsed: true
             });
 
+            $.each(expanded, function(index, value) {
+                var li = $('#list_'+value);
+                li.addClass('mjs-nestedSortable-expanded').removeClass('mjs-nestedSortable-collapsed');
+                li.children('div').children('.disclose').addClass('glyphicon-minus-sign').removeClass('glyphicon-plus-sign');
+            });
+
             $('.disclose').on('click', function () {
                 $(this).toggleClass('glyphicon-plus-sign').toggleClass('glyphicon-minus-sign');
-                $(this).closest('li').toggleClass('mjs-nestedSortable-collapsed').toggleClass('mjs-nestedSortable-expanded');
+                var li = $(this).closest('li');
+                li.toggleClass('mjs-nestedSortable-collapsed').toggleClass('mjs-nestedSortable-expanded');
+                $.ajax({
+                    url: get_admin_url() + 'account/page-state',
+                    type: 'POST',
+                    data: {
+                        page_id: li.attr('id').replace('list_', ''),
+                        expanded: li.hasClass('mjs-nestedSortable-expanded')
+                    }
+                });
             });
 
             initialize_sort('nestedSortable');

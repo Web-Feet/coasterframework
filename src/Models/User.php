@@ -94,6 +94,20 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         return false;
     }
 
+    public function getPageStates()
+    {
+        if (!empty($this->page_states)) {
+            return unserialize($this->page_states);
+        }
+        return [];
+    }
+
+    public function savePageStates($pageStates)
+    {
+        $this->page_states = serialize($pageStates);
+        $this->save();
+    }
+
     public function delete()
     {
         $log_id = AdminLog::new_log('User \'' . $this->email . '\' deleted');

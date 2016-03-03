@@ -1,0 +1,34 @@
+#!/usr/bin/env php
+<?php
+
+require __DIR__ . '/../../../bootstrap/autoload.php';
+$laravel_app = require __DIR__ . '/../../../bootstrap/app.php';
+
+$kernel = $laravel_app->make(Illuminate\Contracts\Http\Kernel::class);
+$response = $kernel->handle(
+    $request = Illuminate\Http\Request::capture()
+);
+
+$coasterPublicFolder = public_path() . config('coaster::admin.public');
+$updateFrom = __DIR__.'/public';
+
+// update app folder
+if (file_exists($coasterPublicFolder . '/app/')) {
+    recursive_copy($updateFrom . '/app/', $coasterPublicFolder . '/app/');
+}
+
+function recursive_copy($src,$dst) {
+    $dir = opendir($src);
+    @mkdir($dst);
+    while(false !== ( $file = readdir($dir)) ) {
+        if (( $file != '.' ) && ( $file != '..' )) {
+            if ( is_dir($src . '/' . $file) ) {
+                recursive_copy($src . '/' . $file,$dst . '/' . $file);
+            }
+            else {
+                copy($src . '/' . $file,$dst . '/' . $file);
+            }
+        }
+    }
+    closedir($dir);
+}

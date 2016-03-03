@@ -25,10 +25,11 @@ Class BlockBeacon extends Eloquent
                 foreach ($devicesData->devices as $device) {
                     if (isset(self::$_beacons[$device->uniqueId])) {
                         if (!self::$_beacons[$device->uniqueId]->visible && $addMissing) {
-                            self::$_beacons[$device->uniqueId]->url = self::_getUrl($device);
                             self::$_beacons[$device->uniqueId]->removed = 0;
                             self::$_beacons[$device->uniqueId]->save();
-                        } elseif (self::$_beacons[$device->uniqueId]->url != self::_getUrl($device)) {
+                        }
+                        if (self::$_beacons[$device->uniqueId]->url != self::_getUrl($device)) {
+                            self::$_beacons[$device->uniqueId]->page_id = 0;
                             self::$_beacons[$device->uniqueId]->url = self::_getUrl($device);
                             self::$_beacons[$device->uniqueId]->save();
                         }
@@ -118,10 +119,11 @@ Class BlockBeacon extends Eloquent
     {
         $beacon = self::where('unique_id', '=', $uniqueId)->first();
 
-        if (!empty($beacon)) {
+        if (!empty($beacon) && $pageId != $beacon->page_id) {
 
             $beaconUrl = URL::to('/');
-            $beaconUrlEncoded = '02' . bin2hex(URL::to('/'));
+            $beaconUrlParts = parse_url($beaconUrl);
+            $beaconUrlEncoded = '02' . bin2hex($beaconUrlParts['host']);
 
             if ($pageId) {
                 $pageUrl = PageLang::full_url($pageId);
