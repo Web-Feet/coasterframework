@@ -118,7 +118,7 @@ class _Base extends Controller
         return '#';
     }
 
-    protected function missingMethod($parameters = array())
+    public function missingMethod($parameters = array())
     {
         $list_view = 'coaster::lists/' . str_plural(strtolower($this->model_name));
         if (View::exists($list_view)) {
@@ -136,14 +136,14 @@ class _Base extends Controller
     }
 
     // setup layout for l5 (migrated from l4)
-    protected function setupLayout()
+    public function setupLayout()
     {
         if (!is_null($this->layout)) {
             $this->layout = View::make($this->layout, $this->layoutData);
         }
     }
 
-    protected function callAction($method, $parameters)
+    public function callAction($method, $parameters)
     {
         $this->setupLayout();
 
