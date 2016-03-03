@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\View;
 class MenuBuilder
 {
     private static $view;
-    private static $max_depth;
 
     public static function set_view($view)
     {
@@ -21,7 +20,6 @@ class MenuBuilder
 
     public static function build_menu($items, $level = 1, $sub_levels = 0)
     {
-        self::$max_depth = $level;
         $menu_items = '';
         $item_data = new \stdClass;
         $i = 1;
@@ -35,9 +33,6 @@ class MenuBuilder
             }
         }
         foreach ($items as $item) {
-            if ($level == 1) {
-                self::$max_depth = 1; // reset on top level items
-            }
             if (get_class($item) == 'CoasterCms\Models\Page') {
                 $page_id = $item->id;
             } else {
@@ -77,9 +72,9 @@ class MenuBuilder
                     $is_last = true;
                 }
                 if (!empty($sub_menu) && View::exists('themes.' . PageBuilder::$theme . '.menus.' . self::$view . '.submenu_' . $level)) {
-                    $menu_items .= View::make('themes.' . PageBuilder::$theme . '.menus.' . self::$view . '.submenu_' . $level, array('item' => $item_data, 'items' => $sub_menu, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $total, 'max_depth' => self::$max_depth));
+                    $menu_items .= View::make('themes.' . PageBuilder::$theme . '.menus.' . self::$view . '.submenu_' . $level, array('item' => $item_data, 'items' => $sub_menu, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $total, 'level' => $level));
                 } else {
-                    $menu_items .= View::make('themes.' . PageBuilder::$theme . '.menus.' . self::$view . '.item', array('item' => $item_data, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $total, 'max_depth' => self::$max_depth));
+                    $menu_items .= View::make('themes.' . PageBuilder::$theme . '.menus.' . self::$view . '.item', array('item' => $item_data, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $total, 'level' => $level));
                 }
             }
             $i++;

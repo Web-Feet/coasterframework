@@ -4,15 +4,9 @@
 if (version_compare(phpversion(), '5.5.9', '<')) {
     echo "Coaster Framework: Can't run updateAsset script with PHP Version ".phpversion()." (5.5.9+ required)";
     exit;
+} else {
+    require __DIR__.'/hooks/laravel_basic.php';
 }
-
-require __DIR__ . '/../../../bootstrap/autoload.php';
-$laravel_app = require __DIR__ . '/../../../bootstrap/app.php';
-
-$kernel = $laravel_app->make(Illuminate\Contracts\Http\Kernel::class);
-$response = $kernel->handle(
-    $request = Illuminate\Http\Request::capture()
-);
 
 $coasterPublicFolder = public_path() . config('coaster::admin.public');
 $updateFrom = __DIR__.'/public';
