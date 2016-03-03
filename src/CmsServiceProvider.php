@@ -39,20 +39,20 @@ class CmsServiceProvider extends ServiceProvider
         });
 
         if ($this->app['config']['coaster::installed']) {
-            if (!App::runningInConsole() || env('IS_TEST')) {
+            if (!App::runningInConsole()) {
                 $router = $this->app['router'];
                 $router->middleware('admin', \CoasterCms\Http\MiddleWare\AdminAuth::class);
                 $router->middleware('guest', \CoasterCms\Http\MiddleWare\GuestAuth::class);
                 include __DIR__ . '/Http/routes.php';
-            } else {
-                echo "Notice: running in console and/or test mode, skipping cms routes\r\n";
             }
-        } elseif (App::runningInConsole()) {
-            echo "Notice: can't find settings table, cms might not be installed ?\r\n";
         } else {
-            Route::controller('install', 'CoasterCms\Http\Controllers\Frontend\InstallController');
-            if (!Request::is('install') && !Request::is('install/*')) {
-                return redirect('install')->send();
+            if (!App::runningInConsole()) {
+                Route::controller('install', 'CoasterCms\Http\Controllers\Frontend\InstallController');
+                if (!Request::is('install') && !Request::is('install/*')) {
+                    return redirect('install')->send();
+                }
+            } else {
+                echo "Notice: can't find settings table, cms might not be installed ?\r\n";
             }
         }
 

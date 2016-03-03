@@ -15,6 +15,7 @@ $updateFrom = __DIR__.'/public';
 // update app folder
 if (file_exists($coasterPublicFolder . '/app/')) {
     recursive_copy($updateFrom . '/app/', $coasterPublicFolder . '/app/');
+    echo "Coaster Framework: Updated public coaster app assets\r\n";
 }
 
 function recursive_copy($src,$dst) {
