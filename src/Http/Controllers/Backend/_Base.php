@@ -118,7 +118,7 @@ class _Base extends Controller
         return '#';
     }
 
-    public function missingMethod($parameters = array())
+    protected function missingMethod($parameters = array())
     {
         $list_view = 'coaster::lists/' . str_plural(strtolower($this->model_name));
         if (View::exists($list_view)) {
@@ -143,7 +143,7 @@ class _Base extends Controller
         }
     }
 
-    public function callAction($method, $parameters)
+    protected function callAction($method, $parameters)
     {
         $this->setupLayout();
 
