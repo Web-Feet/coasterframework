@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\View;
 class HomeController extends _Base
 {
 
-    public function index()
+    public function getIndex()
     {
         $requests = PagePublishRequests::can_moderate(['status' => 'awaiting'], 10);
         if ($requests->isEmpty()) {

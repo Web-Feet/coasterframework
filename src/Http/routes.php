@@ -12,7 +12,7 @@ Route::group(['middleware' => ['web', 'guest']], function () {
 
 Route::group(['middleware' => ['web', 'admin']], function () {
     // admin root
-    Route::get(config('coaster::admin.url'), 'CoasterCms\Http\Controllers\Backend\HomeController@index');
+    Route::get(config('coaster::admin.url'), 'CoasterCms\Http\Controllers\Backend\HomeController@getIndex');
 
     // auth logout
     Route::get(config('coaster::admin.url') . '/logout', 'CoasterCms\Http\Controllers\Backend\AuthController@getLogout');
@@ -25,8 +25,8 @@ Route::group(['middleware' => ['web', 'admin']], function () {
     }
 });
 
-// catch home action or invalid admin routes
-Route::controller(config('coaster::admin.url'), 'CoasterCms\Http\Controllers\Backend\HomeController');
+// catch invalid admin routes
+Route::controller(config('coaster::admin.url'), 'CoasterCms\Http\Controllers\Backend\_Base');
 
 // catch all (rest must be cms pages)
 Route::any('{all}', 'CoasterCms\Http\Controllers\Frontend\PageLoaderController@index')->where('all', '.*');

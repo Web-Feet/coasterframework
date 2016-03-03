@@ -25,7 +25,11 @@ Class BlockBeacon extends Eloquent
                 foreach ($devicesData->devices as $device) {
                     if (isset(self::$_beacons[$device->uniqueId])) {
                         if (!self::$_beacons[$device->uniqueId]->visible && $addMissing) {
+                            self::$_beacons[$device->uniqueId]->url = self::_getUrl($device);
                             self::$_beacons[$device->uniqueId]->removed = 0;
+                            self::$_beacons[$device->uniqueId]->save();
+                        } elseif (self::$_beacons[$device->uniqueId]->url != self::_getUrl($device)) {
+                            self::$_beacons[$device->uniqueId]->url = self::_getUrl($device);
                             self::$_beacons[$device->uniqueId]->save();
                         }
                         self::$_beacons[$device->uniqueId]->device = $device;
