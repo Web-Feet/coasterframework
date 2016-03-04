@@ -137,6 +137,7 @@ class PageSearchData extends Eloquent
                         $post_data->name = $blog_post['post_title'];
                         $post_data->url = config('coaster::blog.url') . $blog_post['post_name'];
                         $post_data->blog_content = $blog_post['post_content'];
+                        $post_data->template = 0;
                         $blog_pages['b' . $blog_post['ID']] = $post_data;
                     }
                 }
