@@ -3,6 +3,8 @@
 use CoasterCms\Models\AdminAction;
 use CoasterCms\Models\AdminController;
 use CoasterCms\Models\AdminMenu;
+use CoasterCms\Models\Language;
+use CoasterCms\Models\PageLang;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
@@ -37,9 +39,16 @@ class _Base extends Controller
         $this->layoutData['content'] = '';
 
         $this->layoutData['system_menu'] = ['Open Frontend' => URL::to('/') . '" target="_blank', 'Help' => config('coaster::admin.help_link') . 'Subject=' . urlencode(config('coaster::site.name'))];
+        $this->layoutData['system_menu_icons'] = [];
 
         if (Auth::admin()) {
             $this->user = Auth::user();
+
+            if (PageLang::count() > 1) {
+                $page_lang = Language::find(Language::current());
+                $this->layoutData['system_menu_icons']['Language: '.$page_lang->language] = 'fa fa-language';
+                $this->layoutData['system_menu']['Language: '.$page_lang->language] = URL::to(config('coaster::admin.url') . '/account/language');
+            }
 
             if (Auth::action('account')) {
                 $this->layoutData['system_menu']['My Account'] = URL::to(config('coaster::admin.url') . '/account');

@@ -1,11 +1,13 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
 use CoasterCms\Helpers\View\FormMessage;
+use CoasterCms\Models\Language;
 use CoasterCms\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\View;
 
@@ -166,6 +168,18 @@ class AccountController extends _Base
         }
 
         return 0;
+    }
+
+    public function getLanguage()
+    {
+        $this->layout->content = View::make('coaster::pages.account.language', ['language' => Language::current(), 'languages' => Language::selectArray(), 'saved' => false]);
+    }
+
+    public function postLanguage()
+    {
+        $input = Request::get('language');
+        Language::set($input);
+        return redirect(config('coaster::admin.url').'/account/language');
     }
 
     public function get_blog()

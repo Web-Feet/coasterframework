@@ -701,6 +701,16 @@ class CreateAdminActions extends Migration
                     'about' => null,
                     'created_at' => $date,
                     'updated_at' => $date
+                ),
+                array(
+                    'controller_id' => 8,
+                    'action' => 'language',
+                    'inherit' => -1,
+                    'edit_based' => 0,
+                    'name' => 'Change current language',
+                    'about' => null,
+                    'created_at' => $date,
+                    'updated_at' => $date
                 )
             ));
 

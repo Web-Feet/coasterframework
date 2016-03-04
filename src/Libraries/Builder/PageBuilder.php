@@ -107,7 +107,9 @@ class PageBuilder
                             break;
                         }
                     }
-                    break;
+                    if (!empty($page_level[$i])) {
+                        break;
+                    }
                 }
             }
         }

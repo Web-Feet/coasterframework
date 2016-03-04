@@ -589,6 +589,15 @@ class PagesController extends _Base
             $submitted_data['live_start'] = Datetime::mysqlToJQuery($page->live_start);
             $submitted_data['live_end'] = Datetime::mysqlToJQuery($page->live_end);
             $page_lang = PageLang::where('page_id', '=', $page_id)->where('language_id', '=', Language::current())->first();
+            if (empty($page_lang)) {
+                $page_lang_duplicate = PageLang::where('page_id', '=', $page_id)->where('language_id', '=', Language::current())->first();
+                if (empty($page_lang_duplicate)) {
+                    $page_lang_duplicate = PageLang::where('page_id', '=', $page_id)->first();
+                }
+                $page_lang = $page_lang_duplicate->replicate();
+                $page_lang->language_id = Language::current();
+                $page_lang->save();
+            }
             $submitted_data['name'] = $page_lang->name;
             $submitted_data['url'] = ($page->link != 1) ? ltrim($page_lang->url, '/') : $page_lang->url;
             $in_menus = MenuItem::get_page_menus($page_id);

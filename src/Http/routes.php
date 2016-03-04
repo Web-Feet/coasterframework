@@ -25,8 +25,10 @@ Route::group(['middleware' => ['web', 'admin']], function () {
     }
 });
 
+Route::group(['middleware' => 'web'], function () {
 // catch invalid admin routes
-Route::controller(config('coaster::admin.url'), 'CoasterCms\Http\Controllers\Backend\_Base');
+    Route::controller(config('coaster::admin.url'), 'CoasterCms\Http\Controllers\Backend\_Base');
 
 // catch all (rest must be cms pages)
-Route::any('{all}', 'CoasterCms\Http\Controllers\Frontend\PageLoaderController@index')->where('all', '.*');
+    Route::any('{all}', 'CoasterCms\Http\Controllers\Frontend\PageLoaderController@index')->where('all', '.*');
+});
