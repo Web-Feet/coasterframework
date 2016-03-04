@@ -345,11 +345,12 @@ class PageBuilder
         self::$search_not_found = false;
         // get query (should be after last 'search' segment in url)
         $search_pos = array_search('search', array_reverse(Request::segments(), true));
-        if ($search_pos !== false) {
+        if ($search_pos !== false && Request::segment($search_pos + 2)) {
             $query = urldecode(Request::segment($search_pos + 2)); // + 2 due to segments starting at 1
         } else {
-            $query = '';
+            $query = Request::get('q');
         }
+        $options['search_query'] = $query;
         $pages = array();
         if ($query != '') {
             $pages = PageSearchData::lookup($query);
@@ -540,7 +541,8 @@ class PageBuilder
             'type' => 'all',
             'per_page' => 20,
             'limit' => 0,
-            'content' => ''
+            'content' => '',
+            'search_query'
         );
         $options = array_merge($default_options, $options);
         // select page of selected type
@@ -619,7 +621,7 @@ class PageBuilder
             $is_first = false;
         }
         $html_content = (!empty($options['html']) && $options['html']) ? true : false;
-        return View::make('themes.' . self::$theme . '.categories.' . $options['view'] . '.pages_wrap', array('pages' => $list, 'pagination' => $links, 'links' => $links, 'content' => $options['content'], 'category_id' => $cat_id, 'total' => $total_pages, 'html_content' => $html_content))->render();
+        return View::make('themes.' . self::$theme . '.categories.' . $options['view'] . '.pages_wrap', array('pages' => $list, 'pagination' => $links, 'links' => $links, 'content' => $options['content'], 'category_id' => $cat_id, 'total' => $total_pages, 'html_content' => $html_content, 'search_query' => $options['search_query']))->render();
     }
 
     private static function _load_custom_block_data($block_name)
