@@ -66,6 +66,7 @@ class SystemController extends _Base
             if (!$update) {
                 $settings[$k]->editable = 0;
             }
+            $note = '';
             switch ($setting->name) {
                 case 'frontend.language':
                     $custom = new \stdClass;
@@ -108,7 +109,7 @@ class SystemController extends _Base
             } else {
                 $settings[$k]->value = $custom;
             }
-            $settings[$k]->note = isset($note)?$note:null;
+            $settings[$k]->note = !empty($note)?$note:null;
             $settings[$k]->name = str_replace('.', $this->dot_replace, $setting->name);
         }
 
