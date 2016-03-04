@@ -40,17 +40,17 @@ class CreateSettings
                 array(
                     'label' => 'Site Email',
                     'name' => 'site.email',
-                    'value' => 'info@coastercms.org',
+                    'value' => 'info@example.com',
                     'editable' => 1,
                     'hidden' => 0,
                     'created_at' => $date,
                     'updated_at' => $date
                 ),
                 array(
-                    'label' => 'Site Pages',
+                    'label' => 'Site Page Limit',
                     'name' => 'site.pages',
-                    'value' => '20',
-                    'editable' => 0,
+                    'value' => '0',
+                    'editable' => 1,
                     'hidden' => 0,
                     'created_at' => $date,
                     'updated_at' => $date
@@ -68,8 +68,8 @@ class CreateSettings
                     'label' => 'Admin Publishing',
                     'name' => 'admin.publishing',
                     'value' => '0',
-                    'editable' => 0,
-                    'hidden' => 1,
+                    'editable' => 1,
+                    'hidden' => 0,
                     'created_at' => $date,
                     'updated_at' => $date
                 ),
@@ -77,8 +77,8 @@ class CreateSettings
                     'label' => 'Admin Permissions',
                     'name' => 'admin.advanced_permissions',
                     'value' => '0',
-                    'editable' => 0,
-                    'hidden' => 1,
+                    'editable' => 1,
+                    'hidden' => 0,
                     'created_at' => $date,
                     'updated_at' => $date
                 ),

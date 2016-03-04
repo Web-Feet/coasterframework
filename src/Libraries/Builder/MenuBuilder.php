@@ -37,7 +37,7 @@ class MenuBuilder
                 $page_id = $item->id;
             } else {
                 if ($item->sub_levels >= 0) {
-                    $sub_levels = $item->sub_levels;
+                    $sub_levels = (int) $item->sub_levels;
                 }
                 $page_id = $item->page_id;
             }
@@ -72,9 +72,9 @@ class MenuBuilder
                     $is_last = true;
                 }
                 if (!empty($sub_menu) && View::exists('themes.' . PageBuilder::$theme . '.menus.' . self::$view . '.submenu_' . $level)) {
-                    $menu_items .= View::make('themes.' . PageBuilder::$theme . '.menus.' . self::$view . '.submenu_' . $level, array('item' => $item_data, 'items' => $sub_menu, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $total, 'level' => $level));
+                    $menu_items .= View::make('themes.' . PageBuilder::$theme . '.menus.' . self::$view . '.submenu_' . $level, array('item' => $item_data, 'items' => $sub_menu, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $total, 'level' => $level, 'further_levels' => $sub_levels));
                 } else {
-                    $menu_items .= View::make('themes.' . PageBuilder::$theme . '.menus.' . self::$view . '.item', array('item' => $item_data, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $total, 'level' => $level));
+                    $menu_items .= View::make('themes.' . PageBuilder::$theme . '.menus.' . self::$view . '.item', array('item' => $item_data, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $total, 'level' => $level, 'further_levels' => $sub_levels));
                 }
             }
             $i++;

@@ -98,17 +98,17 @@ class SystemController extends _Base
                 case 'site.pages':
                     $total_pages = Page::get_total();
                     $true_total_pages = Page::get_total(true);
-                    $custom = $total_pages . '/' . ($setting->value ?: 'Unlimited') . ' (total including group pages: ' . $true_total_pages . ')';
+                    $note = 'set to 0 for no limit (' . $total_pages . ' normal pages in use, total including group pages is ' . $true_total_pages . ')';
                     break;
                 default:
                     $custom = null;
-
             }
             if (empty($custom)) {
                 $settings[$k]->value = $setting->value;
             } else {
                 $settings[$k]->value = $custom;
             }
+            $settings[$k]->note = isset($note)?$note:null;
             $settings[$k]->name = str_replace('.', $this->dot_replace, $setting->name);
         }
 

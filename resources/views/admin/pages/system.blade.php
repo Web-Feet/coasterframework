@@ -38,6 +38,9 @@
                                 @else
                                     {!! Form::select($setting->name, $setting->value->options, $setting->value->selected, $inputDetails) !!}
                                 @endif
+                                @if ($setting->note)
+                                    <span class="help-block">{{ $note }}</span>
+                                @endif
                             </td>
                         </tr>
                     @endforeach

@@ -3,8 +3,8 @@
 return [
 
     'name' => 'Coaster CMS',
-    'email' => 'info@coastercms.org',
+    'email' => 'info@example.com',
     'version' => '5.2',
-    'pages' => '20'
+    'pages' => '0'
 
 ];
