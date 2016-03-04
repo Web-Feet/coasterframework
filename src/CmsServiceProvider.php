@@ -52,7 +52,7 @@ class CmsServiceProvider extends ServiceProvider
                     return redirect('install')->send();
                 }
             } else {
-                echo "Notice: can't find settings table, cms might not be installed ?\r\n";
+                echo "Coaster Framework: CMS not installed, go to a web browser to complete installation\r\n";
             }
         }
 

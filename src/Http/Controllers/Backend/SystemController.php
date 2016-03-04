@@ -166,59 +166,6 @@ class SystemController extends _Base
         return 1;
     }
 
-    public function get_preview_update()
-    {
-        $versions = PageVersion::all();
-        foreach ($versions as $version) {
-            $version->preview_key = base_convert((rand(10, 99) . microtime(true) * 10000), 10, 36);
-            $version->save(['system' => true]);
-        }
-    }
-
-    public function get_repeater_update()
-    {
-        // 4.4 => 4.5
-        $old_format = DB::table('page_blocks_repeater')->where('repeater_id', '>', 0)->orderBy('repeater_id')->get();
-        $row_keys = [];
-        foreach ($old_format as $old_format_row) {
-            if (!isset($row_keys[$old_format_row->repeater_id])) {
-                $row_keys[$old_format_row->repeater_id] = [];
-            }
-            if (empty($row_keys[$old_format_row->repeater_id][$old_format_row->row_id])) {
-                $row = new PageBlockRepeaterRows;
-                $row->repeater_id = $old_format_row->repeater_id;
-                $row->row_id = $old_format_row->row_id;
-                $row->save();
-                $row_keys[$old_format_row->repeater_id][$old_format_row->row_id] = $row->id;
-                $data = new PageBlockRepeaterData;
-                $data->row_key = $row_keys[$old_format_row->repeater_id][$old_format_row->row_id];
-                $data->block_id = 0;
-                $data->content = $old_format_row->row_id; // order
-                $data->version = 1;
-                $data->save();
-            }
-            $data = new PageBlockRepeaterData;
-            $data->row_key = $row_keys[$old_format_row->repeater_id][$old_format_row->row_id];
-            $data->block_id = $old_format_row->block_id;
-            $data->content = $old_format_row->content;
-            $data->version = 1;
-            $data->save();
-        }
-        DB::table('page_lang')->update(array('live_version' => 1));
-        DB::table('page_blocks')->update(array('version' => 1));
-        DB::table('page_blocks_default')->update(array('version' => 1));
-        $pages = Page::all();
-        foreach ($pages as $page) {
-            $page_version = new PageVersion;
-            $page_version->page_id = $page->id;
-            $page_version->version_id = 1;
-            $page_version->template = $page->template;
-            $page_version->user_id = 1;
-            $page_version->created_at = $page->created_at;
-            $page_version->save();
-        }
-    }
-
     public function get_validate_db($fix = null)
     {
         $messages = $this->_db_messages($fix);
@@ -253,7 +200,7 @@ class SystemController extends _Base
             $prefix = DB::getTablePrefix();
             foreach ($db_tables as $table) {
                 $table = reset($table);
-                if (strrpos($table, $prefix) === 0) {
+                if (empty($prefix) || strrpos($table, $prefix) === 0) {
                     $name = substr($table, strlen($prefix));
                     $tables->$name = DB::select('SHOW COLUMNS FROM ' . $table);
                 }

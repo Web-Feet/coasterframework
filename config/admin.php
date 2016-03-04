@@ -3,7 +3,7 @@
 return [
 
     'url' => 'admin',
-    'help_link' => 'mailto:support@coastercms.org',
+    'help_link' => 'http://www.coastercms.org/documentation/user-documentation',
     'view' => '/vendor/web-feet/coasterframework/resources/views/admin',
     'public' => '/coaster',
     'bootstrap_version' => '3', // for pagination (supports 2, 3 or a custom class)
