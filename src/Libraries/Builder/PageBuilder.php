@@ -542,7 +542,7 @@ class PageBuilder
             'per_page' => 20,
             'limit' => 0,
             'content' => '',
-            'search_query'
+            'search_query' => ''
         );
         $options = array_merge($default_options, $options);
         // select page of selected type

@@ -44,7 +44,7 @@ class _Base extends Controller
         if (Auth::admin()) {
             $this->user = Auth::user();
 
-            if (PageLang::count() > 1) {
+            if (Language::count() > 1) {
                 $page_lang = Language::find(Language::current());
                 $this->layoutData['system_menu_icons']['Language: '.$page_lang->language] = 'fa fa-language';
                 $this->layoutData['system_menu']['Language: '.$page_lang->language] = URL::to(config('coaster::admin.url') . '/account/language');

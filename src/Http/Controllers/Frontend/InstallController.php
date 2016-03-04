@@ -23,7 +23,7 @@ class InstallController extends Controller
 
         $installContent = View::make('coaster::pages.install', ['stage' => 'database']);
 
-        return View::make('coaster::template.main', ['site_name' => '', 'title' => '', 'content' => $installContent, 'modals' => '']);
+        return View::make('coaster::template.main', ['site_name' => 'Coaster CMS', 'title' => 'Install Database', 'content' => $installContent, 'modals' => '', 'system_menu_icons' => []]);
     }
 
     public function postIndex()
@@ -50,7 +50,7 @@ class InstallController extends Controller
                 case 2005:
                     FormMessage::add('host', $e->getMessage());
                     break;
-                default: 
+                default:
                     FormMessage::add('host', $e->getMessage());
             }
             return $this->getIndex();
@@ -106,7 +106,7 @@ class InstallController extends Controller
 
         $installContent = View::make('coaster::pages.install', ['stage' => 'adduser']);
 
-        return View::make('coaster::template.main', ['site_name' => '', 'title' => '', 'content' => $installContent, 'modals' => '']);
+        return View::make('coaster::template.main', ['site_name' => 'Coaster CMS', 'title' => 'Install User', 'content' => $installContent, 'modals' => '', 'system_menu_icons' => []]);
     }
 
 
@@ -145,7 +145,7 @@ class InstallController extends Controller
 
         $installContent = View::make('coaster::pages.install', ['stage' => 'complete']);
 
-        return View::make('coaster::template.main', ['site_name' => '', 'title' => '', 'content' => $installContent, 'modals' => '']);
+        return View::make('coaster::template.main', ['site_name' => 'Coaster CMS', 'title' => 'Install Complete', 'content' => $installContent, 'modals' => '', 'system_menu_icons' => []]);
     }
 
     public function missingMethod($parameters = [])
