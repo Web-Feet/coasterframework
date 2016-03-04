@@ -6,12 +6,12 @@ use Illuminate\Support\Facades\View;
 
 class MenuBuilder
 {
-    private static $view;
+    private static $_view;
 
     public static function set_view($view)
     {
         if (View::exists('themes.' . PageBuilder::$theme . '.menus.' . $view . '.menu') && View::exists('themes.' . PageBuilder::$theme . '.menus.' . $view . '.item')) {
-            self::$view = $view;
+            self::$_view = $view;
             return true;
         } else {
             return false;
@@ -71,17 +71,17 @@ class MenuBuilder
                 if ($i == $total) {
                     $is_last = true;
                 }
-                if (!empty($sub_menu) && View::exists('themes.' . PageBuilder::$theme . '.menus.' . self::$view . '.submenu_' . $level)) {
-                    $menu_items .= View::make('themes.' . PageBuilder::$theme . '.menus.' . self::$view . '.submenu_' . $level, array('item' => $item_data, 'items' => $sub_menu, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $total, 'level' => $level, 'further_levels' => $sub_levels));
+                if (!empty($sub_menu) && View::exists('themes.' . PageBuilder::$theme . '.menus.' . self::$_view . '.submenu_' . $level)) {
+                    $menu_items .= View::make('themes.' . PageBuilder::$theme . '.menus.' . self::$_view . '.submenu_' . $level, array('item' => $item_data, 'items' => $sub_menu, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $total, 'level' => $level, 'further_levels' => $sub_levels));
                 } else {
-                    $menu_items .= View::make('themes.' . PageBuilder::$theme . '.menus.' . self::$view . '.item', array('item' => $item_data, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $total, 'level' => $level, 'further_levels' => $sub_levels));
+                    $menu_items .= View::make('themes.' . PageBuilder::$theme . '.menus.' . self::$_view . '.item', array('item' => $item_data, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $total, 'level' => $level, 'further_levels' => $sub_levels));
                 }
             }
             $i++;
             $is_first = false;
         }
         if ($level == 1)
-            return View::make('themes.' . PageBuilder::$theme . '.menus.' . self::$view . '.menu', array('items' => $menu_items));
+            return View::make('themes.' . PageBuilder::$theme . '.menus.' . self::$_view . '.menu', array('items' => $menu_items));
         else
             return $menu_items;
     }

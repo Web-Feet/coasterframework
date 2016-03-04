@@ -39,7 +39,7 @@
                                     {!! Form::select($setting->name, $setting->value->options, $setting->value->selected, $inputDetails) !!}
                                 @endif
                                 @if ($setting->note)
-                                    <span class="help-block">{{ $note }}</span>
+                                    <span class="help-block">{!! $setting->note !!}</span>
                                 @endif
                             </td>
                         </tr>
