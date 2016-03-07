@@ -199,7 +199,7 @@ class SystemController extends _Base
             if (!empty($composerUpdate)) {
                 Artisan::call('migrate', ['--path' => '/vendor/web-feet/coasterframework/database/migrations']);
 
-                $message = 'Successfully upgraded to version '.config('coaster::site.version');
+                $message = 'Successfully upgraded to version '.$this->_latestTag();
             } else {
                 $error = 'Upgrade failed, composer might not be installed';
             }
