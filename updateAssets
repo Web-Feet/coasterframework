@@ -2,7 +2,7 @@
 <?php
 
 if (version_compare(phpversion(), '5.5.9', '<')) {
-    echo "Coaster Framework: Can't run updateAsset script with PHP Version ".phpversion()." (5.5.9+ required)\r\n";
+    echo "Coaster Framework: Can't run updateAsset script with PHP Version ".phpversion()." (5.5.9+ required)\n";
     exit;
 } else {
     require __DIR__.'/hooks/laravel_basic.php';
@@ -14,7 +14,7 @@ $updateFrom = __DIR__.'/public';
 // update app folder
 if (file_exists($coasterPublicFolder . '/app/')) {
     recursive_copy($updateFrom . '/app/', $coasterPublicFolder . '/app/');
-    echo "Coaster Framework: Updated public coaster app assets\r\n";
+    echo "Coaster Framework: Updated public coaster app assets\n";
 }
 
 function recursive_copy($src,$dst) {

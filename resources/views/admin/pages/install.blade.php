@@ -10,7 +10,7 @@
 
 @elseif ($stage == 'adduser')
 
-    {!! Form::open() !!}
+    {!! Form::open(['url' => Request::url()]) !!}
 
     <p>Set up the admin user</p>
     <p>&nbsp;</p>
@@ -37,7 +37,7 @@
 
 @elseif ($stage == 'database')
 
-    {!! Form::open() !!}
+    {!! Form::open(['url' => Request::url()]) !!}
 
     <p>Set up the database connection</p>
     <p>&nbsp;</p>

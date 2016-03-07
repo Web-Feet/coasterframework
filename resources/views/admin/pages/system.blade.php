@@ -14,7 +14,7 @@
 
         <div class="tab-pane" id="tab0">
             <br />
-            {!! Form::open() !!}
+            {!! Form::open(['url' => Request::url()]) !!}
 
 
             <div class="table-responsive">
@@ -91,7 +91,7 @@
                                 <span class="text-success">No errors found</span>
                             @endif
                             @if ($can_validate)
-                                <a href="{!! URL::to(config('coaster::admin.url').'/system/validate-db') !!}">(moredetails)</a>
+                                <a href="{!! URL::to(config('coaster::admin.url').'/system/validate-db') !!}">(more details)</a>
                             @endif
                         </td>
                     </tr>

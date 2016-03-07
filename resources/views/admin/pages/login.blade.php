@@ -1,4 +1,4 @@
-{!! Form::open() !!}
+{!! Form::open(['url' => Request::url()]) !!}
 
         <!-- username field -->
 <div class="form-group {!! FormMessage::get_class('username') !!}">
