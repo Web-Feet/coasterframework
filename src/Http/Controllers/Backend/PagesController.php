@@ -52,7 +52,9 @@ class PagesController extends _Base
             array_push($this->child_pages[$page->parent], $page);
         }
 
-        $this->layout->content = View::make('coaster::pages.pages', array('pages' => $this->_list_pages(0, 1), 'add_page' => $add_perm, 'page_states' => Auth::user()->getPageStates(), 'max' => false));
+        $groups_exist = (bool) (PageGroup::count() > 0);
+
+        $this->layout->content = View::make('coaster::pages.pages', array('pages' => $this->_list_pages(0, 1), 'add_page' => $add_perm, 'page_states' => Auth::user()->getPageStates(), 'max' => Page::at_limit(), 'groups_exist' => $groups_exist));
         $this->layout->modals = View::make('coaster::modals.general.delete_item');
     }
 

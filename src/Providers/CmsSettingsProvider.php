@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Providers;
 
 use CoasterCms\Models\Setting;
+use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
@@ -41,6 +42,8 @@ class CmsSettingsProvider extends ServiceProvider
                 Storage::put('install.txt', 'set-env');
             }
         }
+
+        $this->app['config']['coaster::site.secure'] = Request::isSecure();
 
         Setting::loadAll(__DIR__ . '/../../config', 'coaster', $db);
         // override croppa settings

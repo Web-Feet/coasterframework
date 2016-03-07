@@ -6,9 +6,9 @@ var tinymce_cnf = {
     paste_as_text: true,
     relative_urls: false,
     valid_elements : '*[*]',
-    external_filemanager_path: get_url()+"coaster/filemanager/",
+    external_filemanager_path: get_public_url()+"/filemanager/",
     filemanager_title: "Responsive Filemanager",
-    external_plugins: { "filemanager" : get_url()+"coaster/filemanager/plugin.min.js"}
+    external_plugins: { "filemanager" : get_public_url()+"/filemanager/plugin.min.js"}
 };
 var tinymce_fetched_cms_pages = false;
 

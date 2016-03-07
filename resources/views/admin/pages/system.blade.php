@@ -2,8 +2,6 @@
 
 <br/>
 
-{!! Form::open(['url' => Request::url()]) !!}
-
 <div id="system_tabs" class="tabbable">
 
     <ul class="nav nav-tabs">
@@ -13,9 +11,11 @@
 
     <div class="tab-content">
 
-        <div class="tab-pane" id="tab0">
 
-            <br/>
+        <div class="tab-pane" id="tab0">
+            <br />
+            {!! Form::open() !!}
+
 
             <div class="table-responsive">
                 <table class="table table-bordered">
@@ -54,37 +54,44 @@
                     {!! Form::submit('Update', ['class' => 'btn btn-primary']) !!}
                 </div>
             @endif
+
+            {!! Form::close() !!}
         </div>
 
 
         <div class="tab-pane" id="tab1">
             <br/>
+
             <div class="table-responsive">
                 <table class="table table-bordered">
                     <tbody>
                     <tr>
                         <td>PHP Version</td>
-                        <td><span class="{{ version_compare(phpversion(), '5.5.9')?'text-success':'text-danger' }}">{{ phpversion() }}
-                                &nbsp; (required: 5.5.9+)</span></td>
+                        <td><span class="{{ version_compare(phpversion(), '5.5.9')?'text-success':'text-danger' }}">{{ phpversion() }}&nbsp; (required: 5.5.9+)</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>Site Version</td>
+                        @if ($upgrade->required)
+                            <td><span class="text-warning">{{ $upgrade->from }} [latest release {{ $upgrade->to }}]</span> <a href="{{ URL::to(config('coaster::admin.url').'/system/upgrade') }}">(upgrade)</a></td>
+                        @else
+                            <td><span class="text-success">{{ $upgrade->from }} [latest release {{ $upgrade->to }}]</span></td>
+                        @endif
                     </tr>
                     <tr>
                         <td>Database Structure</td>
                         <td>
                             @if (!empty($database_structure['errors']))
-                                <span class="text-danger">{{ count($database_structure['errors']).' '.str_plural('error', count($database_structure['errors'])) }}
-                                    found</span>
+                                <span class="text-danger">{{ count($database_structure['errors']).' '.str_plural('error', count($database_structure['errors'])) }} found</span>
                             @elseif (!empty($database_structure['warnings']))
-                                <span class="text-warning">{{ count($database_structure['warnings']).' '.str_plural('warning', count($database_structure['warnings'])) }}
-                                    found</span>
+                                <span class="text-warning">{{ count($database_structure['warnings']).' '.str_plural('warning', count($database_structure['warnings'])) }} found</span>
                             @elseif (!empty($database_structure['notices']))
-                                <span class="text-success">{{ count($database_structure['notices']).' '.str_plural('notice', count($database_structure['notices'])) }}
-                                    found</span>
+                                <span class="text-success">{{ count($database_structure['notices']).' '.str_plural('notice', count($database_structure['notices'])) }} found</span>
                             @else
                                 <span class="text-success">No errors found</span>
                             @endif
                             @if ($can_validate)
-                                <a href="{!! URL::to(config('coaster::admin.url').'/system/validate-db') !!}">(more
-                                    details)</a>
+                                <a href="{!! URL::to(config('coaster::admin.url').'/system/validate-db') !!}">(moredetails)</a>
                             @endif
                         </td>
                     </tr>
@@ -103,12 +110,15 @@
                     </tr>
                     </tbody>
                 </table>
+
+                @if ($can_upgrade && $upgrade->required)
+                    <br /><br />
+                    <a class="btn btn-primary" href="{{ URL::to(config('coaster::admin.url').'/system/upgrade') }}">Upgrade Coaster CMS</a>
+                @endif
             </div>
         </div>
 
     </div>
-
-    {!! Form::close() !!}
 
     @section('scripts')
         <script type='text/javascript'>

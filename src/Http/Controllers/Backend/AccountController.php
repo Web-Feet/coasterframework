@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\View;
 
@@ -179,7 +180,7 @@ class AccountController extends _Base
     {
         $input = Request::get('language');
         Language::set($input);
-        return redirect(config('coaster::admin.url').'/account/language');
+        return redirect(URL::to(config('coaster::admin.url').'/account/language'));
     }
 
     public function get_blog()

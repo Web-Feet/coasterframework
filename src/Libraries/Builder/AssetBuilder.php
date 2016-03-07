@@ -113,7 +113,7 @@ class AssetBuilder
         }
         $return = '';
         foreach (array_unique($usedAssets) as $usedAsset) {
-            $return .= \HTML::style(config('coaster::admin.public') . $usedAsset);
+            $return .= \HTML::style(config('coaster::admin.public') . $usedAsset, [], config('coaster::site.secure'));
         }
         return $return;
     }
@@ -138,7 +138,7 @@ class AssetBuilder
         }
         $return = '';
         foreach (array_unique($usedAssets) as $usedAsset) {
-            $return .= \HTML::script(config('coaster::admin.public') . $usedAsset);
+            $return .= \HTML::script(config('coaster::admin.public') . $usedAsset, [], config('coaster::site.secure'));
         }
         return $return;
     }

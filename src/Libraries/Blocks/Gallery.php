@@ -165,7 +165,7 @@ class Gallery extends _Base
                     'max_file_size' => 2000000, //2MB   (will also error if over php.ini post_max_size)
                     'accept_file_types' => '/\.(gif|jpe?g|png)$/i',
                     'upload_dir' => public_path() . '/uploads/system/gallery/' . $block_id . '/' . $page_id . '/',
-                    'upload_url' => URL::to('/uploads/system/gallery/' . $block_id . '/' . $page_id) . '/')
+                    'upload_url' => URL::to('/uploads/system/gallery/' . $block_id . '/' . $page_id) . '/', config('coaster::site.secure'))
             );
             if (!empty($upload_handler->name)) {
                 $gallery_data_s = BlockManager::get_block($block_id, $page_id);

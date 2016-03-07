@@ -5,12 +5,12 @@ use CoasterCms\Models\Block;
 use CoasterCms\Models\Language;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageBlockRepeaterData;
-use CoasterCms\Models\PageBlockRepeaterRows;
+use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageSearchData;
-use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\Setting;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Input;
@@ -98,8 +98,11 @@ class SystemController extends _Base
                     break;
                 case 'site.pages':
                     $total_pages = Page::get_total();
-                    $true_total_pages = Page::get_total(true);
-                    $note = 'set to 0 for no limit (' . $total_pages . ' normal pages in use, total including group pages is ' . $true_total_pages . ')';
+                    $note = 'set to 0 for no limit - currently ' . $total_pages . ' normal pages in use';
+                    if (PageGroup::count() > 0) {
+                        $true_total_pages = Page::get_total(true);
+                        $note .= ', total including group pages is ' . $true_total_pages;
+                    }
                     break;
                 default:
                     $custom = null;
@@ -113,7 +116,12 @@ class SystemController extends _Base
             $settings[$k]->name = str_replace('.', $this->dot_replace, $setting->name);
         }
 
-        $this->layout->content = View::make('coaster::pages.system', array('database_structure' => $database_structure, 'last_indexed_search' => $last_indexed_search, 'site_details' => $settings, 'can_index_search' => Auth::action('system.search'), 'can_validate' => Auth::action('system.validate-db')));
+        $upgrade = new \stdClass;
+        $upgrade->from = config('coaster::site.version');
+        $upgrade->to = $this->_latestTag();
+        $upgrade->required = version_compare(config('coaster::site.version'), $this->_latestTag(), '<');
+
+        $this->layout->content = View::make('coaster::pages.system', array('database_structure' => $database_structure, 'last_indexed_search' => $last_indexed_search, 'site_details' => $settings, 'can_index_search' => Auth::action('system.search'), 'can_validate' => Auth::action('system.validate-db'), 'can_upgrade' => Auth::action('system.upgrade'), 'upgrade' => $upgrade));
     }
 
     public function get_wp_login()
@@ -172,6 +180,38 @@ class SystemController extends _Base
         $this->layout->content = View::make('coaster::pages.system.validate-db', $messages);
     }
 
+    public function getUpgrade($update = null)
+    {
+        $run = false;
+        $error = '';
+        $message = '';
+
+        if (empty($update)) {
+
+            $run = true;
+            $message = 'Composer is required to run the upgrade and must be executable from the sites root directory.<br />
+            The process can take a minute or so to complete.';
+
+        } elseif (version_compare(config('coaster::site.version'), $this->_latestTag(), '<') && $this->_latestTag() != "not-found") {
+
+            $composerUpdate = shell_exec('cd ..; composer update 2>&1;');
+
+            if (!empty($composerUpdate)) {
+                Artisan::call('migrate', ['--path' => '/vendor/web-feet/coasterframework/database/migrations']);
+
+                $message = 'Successfully upgraded to version '.config('coaster::site.version');
+            } else {
+                $error = 'Upgrade failed, composer might not be installed';
+            }
+
+        } else {
+            $message = 'Already at the latest version '.config('coaster::site.version');
+        }
+
+        $this->layout->content = View::make('coaster::pages.system.upgrade', ['message' => $message, 'error' => $error, 'run' => $run]);
+
+    }
+
     public function post_keys($key = null)
     {
         if (strpos($key, 'browser') !== false) {
@@ -181,14 +221,30 @@ class SystemController extends _Base
         }
     }
 
+    private function _latestTag()
+    {
+        try {
+            $gitHub = new \GuzzleHttp\Client(
+                [
+                    'base_uri' => 'https://api.github.com/repos/'
+                ]
+            );
+            $latestRelease = $gitHub->request('GET', 'Web-Feet/coasterframework/releases/latest')->getBody();
+        } catch (\Exception $e) {
+            return 'not-found';
+        }
+        $latestRelease = json_decode($latestRelease);
+        return $latestRelease->tag_name;
+    }
+
     private function _db_messages($basic_fix = 0)
     {
         $notices = [];
         $warnings = [];
         $errors = [];
 
-        $version = config('coaster::site.version');
-        $json = file_get_contents('http://cms.web-feet.co.uk/validate/database/' . $version);
+        $json = file_get_contents(base_path() . '/vendor/web-feet/coasterframework/database/validate.json');
+
         if (!empty($json)) {
 
             // get version tables

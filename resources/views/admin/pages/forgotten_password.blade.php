@@ -12,7 +12,7 @@
     <!-- email field -->
     <div class="form-group {!! FormMessage::get_class('email') !!}">
         {!! Form::label('email', 'Email Address', ['class' => 'control-label']) !!}
-        {!! Form::text('email', Request::input('email', 'hgf'), ['class' => 'form-control']) !!}
+        {!! Form::text('email', Request::input('email'), ['class' => 'form-control']) !!}
         <span class="help-block">{!! FormMessage::get_message('email') !!}</span>
     </div>
 
