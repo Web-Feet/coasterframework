@@ -1,12 +1,12 @@
 <?php
 
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 
-
-
-
-
-class CreateAdminControllers
+class CreateAdminControllers extends Migration
 {
 
     /**
@@ -17,7 +17,7 @@ class CreateAdminControllers
     public function up()
     {
 
-        Schema::table('admin_controllers', function ($table) {
+        Schema::table('admin_controllers', function (Blueprint $table) {
             $table->create();
             $table->increments('id');
             $table->string('controller');

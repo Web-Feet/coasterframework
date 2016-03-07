@@ -1,11 +1,11 @@
 <?php
 
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
-
-
-
-
-class CreateAdminActions
+class CreateAdminActions extends Migration
 {
 
     /**
@@ -16,7 +16,7 @@ class CreateAdminActions
     public function up()
     {
 
-        Schema::table('admin_actions', function ($table) {
+        Schema::table('admin_actions', function (Blueprint $table) {
             $table->create();
             $table->increments('id');
             $table->integer('controller_id');
@@ -708,6 +708,16 @@ class CreateAdminActions
                     'inherit' => -1,
                     'edit_based' => 0,
                     'name' => 'Change current language',
+                    'about' => null,
+                    'created_at' => $date,
+                    'updated_at' => $date
+                ),
+                array(
+                    'controller_id' => 9,
+                    'action' => 'upgrade',
+                    'inherit' => 0,
+                    'edit_based' => 0,
+                    'name' => 'Upgrade CMS',
                     'about' => null,
                     'created_at' => $date,
                     'updated_at' => $date

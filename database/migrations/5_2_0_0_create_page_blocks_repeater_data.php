@@ -1,6 +1,6 @@
 <?php
 
-
+use Illuminate\Support\Facades\Schema;
 
 class CreatePageBlocksRepeaterData
 {
