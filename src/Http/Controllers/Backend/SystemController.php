@@ -228,7 +228,7 @@ class SystemController extends _Base
                 [
                     'base_uri' => 'https://api.github.com/repos/',
                     'headers' => [
-                        'Authorization' => 'token 980b6540a40d6ece112b7b7fd3cd7a5652fc1505'
+                        'Authorization' => 'token 3f6d67e953dcc9ccfddb1479cd46bce15d597189'
                     ]
                 ]
             );
