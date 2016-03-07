@@ -226,7 +226,10 @@ class SystemController extends _Base
         try {
             $gitHub = new \GuzzleHttp\Client(
                 [
-                    'base_uri' => 'https://api.github.com/repos/'
+                    'base_uri' => 'https://api.github.com/repos/',
+                    'headers' => [
+                        'Authorization' => 'token e1d3bcc91d12a341fa3882be6306b6d0c94486f6'
+                    ]
                 ]
             );
             $latestRelease = $gitHub->request('GET', 'Web-Feet/coasterframework/releases/latest')->getBody();
