@@ -194,7 +194,7 @@ class SystemController extends _Base
 
         } elseif (version_compare(config('coaster::site.version'), $this->_latestTag(), '<') && $this->_latestTag() != "not-found") {
 
-            $composerUpdate = shell_exec('cd ..; composer update 2>&1;');
+            $composerUpdate = shell_exec('cd '.base_path().'; composer update 2>&1;');
 
             if (!empty($composerUpdate)) {
                 Artisan::call('migrate', ['--path' => '/vendor/web-feet/coasterframework/database/migrations']);
