@@ -195,16 +195,17 @@ class SystemController extends _Base
 
         } elseif (version_compare(config('coaster::site.version'), $this->_latestTag(), '<') && $this->_latestTag() != "not-found") {
 
-            $composerUpdate = shell_exec('cd '.base_path().'; composer update 2>&1;');
+            shell_exec('cd '.base_path().'; composer update 2>'.storage_path('app').'/upgrade.log;');
+            $upgradeLog = file_get_contents(storage_path('app').'/upgrade.log');
 
-            if (!empty($composerUpdate) && stripos($composerUpdate, 'Generating autoload files') !== false) {
+            if (!empty($upgradeLog) && stripos($upgradeLog, 'Generating autoload files') !== false) {
                 Artisan::call('migrate', ['--path' => '/vendor/web-feet/coasterframework/database/migrations']);
 
                 Cache::put('coaster::site.version', $this->_latestTag(), 30);
                 $message = 'Successfully upgraded to version '.$this->_latestTag();
             } else {
                 $error = 'Upgrade failed, composer might not be installed or there might have been an error: <br /><br />';
-                $error .= str_replace($composerUpdate, "\n", "<br />");
+                $error .= '<pre>'.str_replace("\n", "<br />", $upgradeLog).'</pre>';
             }
 
         } else {
