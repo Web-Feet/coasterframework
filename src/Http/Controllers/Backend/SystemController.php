@@ -12,6 +12,7 @@ use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\URL;
@@ -196,12 +197,14 @@ class SystemController extends _Base
 
             $composerUpdate = shell_exec('cd '.base_path().'; composer update 2>&1;');
 
-            if (!empty($composerUpdate)) {
+            if (!empty($composerUpdate) && stripos($composerUpdate, 'Generating autoload files') !== false) {
                 Artisan::call('migrate', ['--path' => '/vendor/web-feet/coasterframework/database/migrations']);
 
+                Cache::put('coaster::site.version', $this->_latestTag(), 30);
                 $message = 'Successfully upgraded to version '.$this->_latestTag();
             } else {
-                $error = 'Upgrade failed, composer might not be installed';
+                $error = 'Upgrade failed, composer might not be installed or there might have been an error: <br /><br />';
+                $error .= str_replace($composerUpdate, "\n", "<br />");
             }
 
         } else {
@@ -223,18 +226,20 @@ class SystemController extends _Base
 
     private function _latestTag()
     {
-        try {
-            $gitHub = new \GuzzleHttp\Client(
-                [
-                    'base_uri' => 'https://api.github.com/repos/'
-                ]
-            );
-            $latestRelease = $gitHub->request('GET', 'Web-Feet/coasterframework/releases/latest')->getBody();
-        } catch (\Exception $e) {
-            return 'not-found';
+        if (!Cache::has('coaster::site.version')) {
+            try {
+                $gitHub = new \GuzzleHttp\Client(
+                    [
+                        'base_uri' => 'https://api.github.com/repos/'
+                    ]
+                );
+                $latestRelease = $gitHub->request('GET', 'Web-Feet/coasterframework/releases/latest')->getBody();
+                Cache::put('coaster::site.version', $latestRelease->tag_name, 30);
+            } catch (\Exception $e) {
+                return 'not-found';
+            }
         }
-        $latestRelease = json_decode($latestRelease);
-        return $latestRelease->tag_name;
+        return Cache::get('coaster::site.version');
     }
 
     private function _db_messages($basic_fix = 0)
