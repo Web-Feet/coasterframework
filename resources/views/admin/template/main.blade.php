@@ -83,8 +83,8 @@
 {!! $modals !!}
 
 <script type="text/javascript">
-    var adminUrl = '{{ URL::to(config('coaster::admin.url')) }}';
-    var adminPublicUrl = '{{ URL::to(config('coaster::admin.public')) }}';
+    var adminUrl = '{{ URL::to(config('coaster::admin.url')).'/' }}';
+    var adminPublicUrl = '{{ URL::to(config('coaster::admin.public')).'/' }}';
 </script>
 {!! AssetBuilder::scripts() !!}
 @yield('scripts')
