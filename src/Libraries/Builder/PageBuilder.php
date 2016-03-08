@@ -119,7 +119,7 @@ class PageBuilder
             throw new PageLoadException('page not found');
         } else {
             self::$page_id = $page_level[$url_parts]->page_id;
-            self::$page_info = $page_level[$url_parts];
+            self::$page_info = clone $page_level[$url_parts];
             self::$page_levels = $page_level;
         }
 
