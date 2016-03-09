@@ -7,6 +7,8 @@
     </div>
 </div>
 
+<p>Coaster uses the <a href="http://kontakt.io" target="_blank">Kontakt.io</a> API to integrate with their beacon technology, for more info click <a href="http://coaster.web-feet.co.uk/beacons">here</a>.</p>
+
 <table class="table table-bordered" id="beacons">
 
     <thead>

@@ -30,7 +30,7 @@ class Gallery extends _Base
             }
         }
         $template = !empty($options['view']) ? $options['view'] : 'default';
-        if (empty($options['view']) && View::exists('themes.' . PageBuilder::$theme . '.blocks.gallery.id_' . $block->id)) {
+        if (empty($options['view']) && View::exists('themes.' . PageBuilder::$theme . '.blocks.gallery.' . $block->name)) {
             return View::make('themes.' . PageBuilder::$theme . '.blocks.gallery.id_' . $block->id, array('images' => $images))->render();
         } elseif (View::exists('themes.' . PageBuilder::$theme . '.blocks.gallery.' . $template)) {
             return View::make('themes.' . PageBuilder::$theme . '.blocks.gallery.' . $template, array('images' => $images))->render();

@@ -72,7 +72,7 @@ class Repeater extends _Base
                             }
                             if ($i + $cols - 1 >= $rows)
                                 $is_last = true;
-                            $content .= View::make('themes.' . PageBuilder::$theme . '.blocks.repeaters.' . $template, array('is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $rows, 'id' => $block_data, 'pagination' => $links))->render();
+                            $content .= View::make('themes.' . PageBuilder::$theme . '.blocks.repeaters.' . $template, array('is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $rows, 'id' => $block_data, 'pagination' => $links, 'links' => $links))->render();
                             $is_first = false;
                         }
                         $i++;

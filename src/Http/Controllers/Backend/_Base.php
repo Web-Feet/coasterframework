@@ -38,7 +38,7 @@ class _Base extends Controller
         $this->layoutData['modals'] = '';
         $this->layoutData['content'] = '';
 
-        $this->layoutData['system_menu'] = ['Open Frontend' => URL::to('/') . '" target="_blank', 'Help' => config('coaster::admin.help_link') . 'Subject=' . urlencode(config('coaster::site.name'))];
+        $this->layoutData['system_menu'] = ['Open Frontend' => URL::to('/') . '" target="_blank', 'Help' => config('coaster::admin.help_link') . '" target="_blank'];
         $this->layoutData['system_menu_icons'] = [];
 
         if (Auth::admin()) {
@@ -63,7 +63,6 @@ class _Base extends Controller
         } else {
             $this->layoutData['system_menu']['Login'] = URL::to(config('coaster::admin.url') . '/login');
             $this->layoutData['menu'] = null;
-
         }
 
     }

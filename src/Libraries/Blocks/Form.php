@@ -34,8 +34,8 @@ class Form extends _Base
                     $options['url'] = $forwarded_url . '#form' . $block->id;
                 }
                 unset($options['version']);
-                $options['files'] = true;
-                $options['id'] = 'form' . $block->id;
+                $options['files'] = !empty($options['files'])?$options['files']:true;
+                $options['id'] = !empty($options['id'])?$options['id']:'form' . $block->id;
                 $form_fields = View::make($template, array('form_data' => $form_data))->render();
                 $page_id = !empty(PageBuilder::$page_info) ? PageBuilder::$page_info->page_id : 0;
                 return View::make('coaster::frontend.form_wrap', array('block_id' => $block->id, 'page_id' => $page_id, 'form_attrs' => $options, 'form_fields' => $form_fields));
