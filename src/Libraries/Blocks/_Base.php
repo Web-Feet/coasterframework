@@ -105,4 +105,9 @@ class _Base
         return $page_ids;
     }
 
+    public static function block_settings_action()
+    {
+        return ['action' => '', 'name' => ''];
+    }
+
 }

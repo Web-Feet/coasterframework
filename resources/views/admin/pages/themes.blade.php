@@ -10,6 +10,18 @@
     </div>
 </div>
 
+@if (!empty($blockSettings))
+
+    <br /><br />
+
+    <h2>Block Settings</h2>
+
+    @foreach($blockSettings as $name => $url)
+        <p><a href="{{  $url }}">{{ $name }}</a></p>
+    @endforeach
+
+@endif
+
 @section('scripts')
     <script type="text/javascript">
         $(document).ready(function () {

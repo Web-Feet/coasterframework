@@ -3,7 +3,9 @@
 use CoasterCms\Libraries\Builder\ThemeBuilder;
 use CoasterCms\Models\BlockBeacon;
 use CoasterCms\Models\BlockCategory;
+use CoasterCms\Models\BlockFormRule;
 use CoasterCms\Models\Theme;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\View;
 
@@ -32,7 +34,31 @@ class ThemesController extends _Base
             }
         }
 
-        $this->layout->content = View::make('coaster::pages.themes', ['themes' => $themes]);
+
+        $block_classes = [];
+        $blockSettings = [];
+        foreach (scandir(__DIR__ . '/../../../Libraries/Blocks') as $name) {
+            $class = explode('.', $name)[0];
+            if (!empty($class) && empty($block_classes[$class])) {
+                $block_classes[$class] = 'CoasterCms\\Libraries\\Blocks\\' . $class;
+            }
+        }
+        if (is_dir(base_path('app/Blocks'))) {
+            foreach (scandir(__DIR__ . '/Blocks') as $name) {
+                $class = explode('.', $name)[0];
+                if (!empty($class) && empty($block_classes[$class])) {
+                    $block_classes[$class] = 'App\\Blocks\\' . $class;
+                }
+            }
+        }
+        foreach ($block_classes as $class => $block_class) {
+            $blockSettingsAction = $block_class::block_settings_action();
+            if (!empty($blockSettingsAction['action']) && Auth::action(str_replace('/', '.', $blockSettingsAction['action']))) {
+                $blockSettings[$blockSettingsAction['name']] = $blockSettingsAction['action'];
+            }
+        }
+
+        $this->layout->content = View::make('coaster::pages.themes', ['themes' => $themes, 'blockSettings' => $blockSettings]);
     }
 
     public function getBeacons()
@@ -106,6 +132,88 @@ class ThemesController extends _Base
         $loader->alias('PageBuilder', 'CoasterCms\Libraries\Builder\PageBuilder');
     }
 
+    public function getForms($template = null)
+    {
+        if ($template) {
+            $rules = BlockFormRule::where('form_template', '=', $template)->get();
+            $rules = $rules->isEmpty()?[]:$rules;
+            $this->layout->content = View::make('coaster::pages.themes.forms', ['template' => $template, 'rules' => $rules]);
+        }
+        else {
+            $formTemplates = [];
+            $themes = base_path('resources/views/themes');
+            if (is_dir($themes)) {
+                foreach (scandir($themes) as $theme) {
+                    if (!is_dir($theme) && $theme != '.' && $theme != '..') {
+
+                        $forms = $themes . DIRECTORY_SEPARATOR . $theme . '/blocks/forms';
+                        if (is_dir($forms)) {
+                            foreach (scandir($forms) as $form) {
+                                if (!is_dir($forms . DIRECTORY_SEPARATOR . $form)) {
+                                    $form_file = explode(".", $form);
+                                    if (!empty($form_file[0])) {
+                                        $formTemplates[] = $form_file[0];
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+                }
+            }
+            $this->layout->content = View::make('coaster::pages.themes.forms', ['templates' => $formTemplates]);
+        }
+    }
+
+    public function postForms($template)
+    {
+        $databaseRules = [];
+        $inputRules = [];
+
+        $rules = BlockFormRule::where('form_template', '=', $template)->get();
+        if (!$rules->isEmpty()) {
+            foreach ($rules as $rule) {
+                $databaseRules[$rule->field] = $rule;
+            }
+        }
+
+        $rules = Request::get('rule');
+        if (!empty($rules)) {
+            foreach ($rules as $rule) {
+                $inputRules[$rule['field']] = $rule['rule'];
+            }
+        }
+
+        $toAdd = array_diff_key($inputRules, $databaseRules);
+        $toUpdate = array_intersect_key($inputRules, $databaseRules);
+        $toDelete = array_diff_key($databaseRules, $inputRules);
+
+        if (!empty($toAdd)) {
+            foreach ($toAdd as $field => $rule) {
+                $newBlockFormRule = new BlockFormRule;
+                $newBlockFormRule->form_template = $template;
+                $newBlockFormRule->field = $field;
+                $newBlockFormRule->rule = $rule;
+                $newBlockFormRule->save();
+            }
+        }
+
+        if (!empty($toUpdate)) {
+            foreach ($toUpdate as $field => $rule) {
+                if ($rule != $databaseRules[$field]->rule) {
+                    $databaseRules[$field]->rule = $rule;
+                    $databaseRules[$field]->save();
+                }
+            }
+        }
+
+        if (!empty($toDelete)) {
+            BlockFormRule::whereIn('field', array_keys($toDelete))->delete();
+        }
+
+        return redirect(config('coaster::admin.url').'/themes/forms');
+    }
+
     private function _typeList()
     {
         $classNames = [];
@@ -113,6 +221,14 @@ class ThemesController extends _Base
             $className = explode('.', $name)[0];
             if (!empty($className)) {
                 $classNames[trim(strtolower($className), '_')] = trim(strtolower($className), '_');
+            }
+        }
+        if (is_dir(base_path('app/Blocks'))) {
+            foreach (base_path('app/Blocks') as $name) {
+                $className = explode('.', $name)[0];
+                if (!empty($className)) {
+                    $classNames[trim(strtolower($className), '_')] = trim(strtolower($className), '_');
+                }
             }
         }
         return $classNames;

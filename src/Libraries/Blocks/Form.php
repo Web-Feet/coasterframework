@@ -277,4 +277,9 @@ class Form extends _Base
         return null;
     }
 
+    public static function block_settings_action()
+    {
+        return ['action' => 'themes/forms', 'name' => 'Manage form input validation rules'];
+    }
+
 }
