@@ -85,7 +85,7 @@ class CreateSettings
                 array(
                     'label' => 'Default Template',
                     'name' => 'admin.default_template',
-                    'value' => '1',
+                    'value' => '2',
                     'editable' => 1,
                     'hidden' => 0,
                     'created_at' => $date,
