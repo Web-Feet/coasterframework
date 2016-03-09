@@ -4,7 +4,7 @@ return [
 
     'name' => 'Coaster CMS',
     'email' => 'info@example.com',
-    'version' => 'v5.2.15',
+    'version' => 'v5.2.17',
     'pages' => '0'
 
 ];
