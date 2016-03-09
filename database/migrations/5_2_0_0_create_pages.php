@@ -34,7 +34,7 @@ class CreatePages
         DB::table('pages')->insert(
             array(
                 array(
-                    'template' => 1,
+                    'template' => 3,
                     'parent' => 0,
                     'order' => 1,
                     'group_container' => 0,
@@ -60,7 +60,7 @@ class CreatePages
                     'updated_at' => $date
                 ),
                 array(
-                    'template' => 3,
+                    'template' => 1,
                     'parent' => 0,
                     'order' => 1,
                     'group_container' => 0,

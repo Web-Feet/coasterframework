@@ -26,8 +26,8 @@ class CreateBlockRepeaters
         DB::table('block_repeaters')->insert(
             array(
                 array(
-                    'block_id' => 11,
-                    'blocks' => '12,13,14,15',
+                    'block_id' => 13,
+                    'blocks' => '15,16',
                     'created_at' => $date,
                     'updated_at' => $date
                 )
