@@ -50,10 +50,13 @@ class Image extends _Base
         $height = !empty($options['height']) ? $options['height'] : null;
         $width = !empty($options['width']) ? $options['width'] : null;
         $croppaOptions = !empty($options['croppaOptions']) ? $options['croppaOptions'] : array();
-        if ((!empty($height) || !empty($width)) && !empty($image_data->file))
+        if ((!empty($height) || !empty($width)) && !empty($image_data->file)) {
+            $image_data->file = str_replace(URL::to('/'), '', $image_data->file);
             $image_data->file = \Croppa::url($image_data->file, $width, $height, $croppaOptions);
-        else
+        }
+        else {
             $image_data->file = $image_data->original;
+        }
         $template = !empty($options['view']) ? $options['view'] : 'default';
         if (!View::exists('themes.' . PageBuilder::$theme . '.blocks.images.' . $template)) {
             return 'Image template not found';
@@ -68,6 +71,7 @@ class Image extends _Base
         if (!empty($block_data)) {
             try {
                 $image_data = unserialize($block_data);
+                $image_data->file = str_replace(URL::to('/'), '', $image_data->file);
             } catch (\Exception $e) {
                 $image_data->file = '';
                 $image_data->title = '';
