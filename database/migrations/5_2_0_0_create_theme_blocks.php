@@ -62,55 +62,23 @@ class CreateThemeBlocks
                 ),
                 array(
                     'theme_id' => 1,
-                    'block_id' => 5,
+                    'block_id' => 8,
                     'show_in_pages' => 0,
                     'show_in_global' => 1,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'theme_id' => 1,
-                    'block_id' => 6,
-                    'show_in_pages' => 1,
-                    'show_in_global' => 0,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'theme_id' => 1,
-                    'block_id' => 7,
-                    'show_in_pages' => 1,
-                    'show_in_global' => 0,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'theme_id' => 1,
-                    'block_id' => 8,
-                    'show_in_pages' => 1,
-                    'show_in_global' => 0,
                     'created_at' => $date,
                     'updated_at' => $date
                 ),
                 array(
                     'theme_id' => 1,
                     'block_id' => 9,
-                    'show_in_pages' => 1,
-                    'show_in_global' => 0,
+                    'show_in_pages' => 0,
+                    'show_in_global' => 1,
                     'created_at' => $date,
                     'updated_at' => $date
                 ),
                 array(
                     'theme_id' => 1,
                     'block_id' => 10,
-                    'show_in_pages' => 1,
-                    'show_in_global' => 0,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'theme_id' => 1,
-                    'block_id' => 18,
                     'show_in_pages' => 0,
                     'show_in_global' => 1,
                     'created_at' => $date,
@@ -118,7 +86,7 @@ class CreateThemeBlocks
                 ),
                 array(
                     'theme_id' => 1,
-                    'block_id' => 18,
+                    'block_id' => 11,
                     'show_in_pages' => 0,
                     'show_in_global' => 1,
                     'created_at' => $date,
@@ -126,95 +94,7 @@ class CreateThemeBlocks
                 ),
                 array(
                     'theme_id' => 1,
-                    'block_id' => 19,
-                    'show_in_pages' => 0,
-                    'show_in_global' => 1,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'theme_id' => 1,
-                    'block_id' => 20,
-                    'show_in_pages' => 0,
-                    'show_in_global' => 1,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'theme_id' => 1,
-                    'block_id' => 21,
-                    'show_in_pages' => 0,
-                    'show_in_global' => 1,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'theme_id' => 1,
-                    'block_id' => 22,
-                    'show_in_pages' => 0,
-                    'show_in_global' => 1,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'theme_id' => 1,
-                    'block_id' => 23,
-                    'show_in_pages' => 0,
-                    'show_in_global' => 1,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'theme_id' => 1,
-                    'block_id' => 24,
-                    'show_in_pages' => 0,
-                    'show_in_global' => 1,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'theme_id' => 1,
-                    'block_id' => 25,
-                    'show_in_pages' => 0,
-                    'show_in_global' => 1,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'theme_id' => 1,
-                    'block_id' => 26,
-                    'show_in_pages' => 0,
-                    'show_in_global' => 1,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'theme_id' => 1,
-                    'block_id' => 27,
-                    'show_in_pages' => 0,
-                    'show_in_global' => 1,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'theme_id' => 1,
-                    'block_id' => 28,
-                    'show_in_pages' => 0,
-                    'show_in_global' => 1,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'theme_id' => 1,
-                    'block_id' => 29,
-                    'show_in_pages' => 0,
-                    'show_in_global' => 1,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'theme_id' => 1,
-                    'block_id' => 30,
+                    'block_id' => 12,
                     'show_in_pages' => 0,
                     'show_in_global' => 1,
                     'created_at' => $date,

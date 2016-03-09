@@ -27,22 +27,59 @@ class CreateTemplateBlocks
             array(
                 array(
                     'template_id' => 1,
-                    'block_id' => 11,
+                    'block_id' => 5,
+                    'created_at' => $date,
+                    'updated_at' => $date
+                ),
+                array(
+                    'template_id' => 2,
+                    'block_id' => 5,
                     'created_at' => $date,
                     'updated_at' => $date
                 ),
                 array(
                     'template_id' => 3,
-                    'block_id' => 16,
+                    'block_id' => 5,
+                    'created_at' => $date,
+                    'updated_at' => $date
+                ),
+                array(
+                    'template_id' => 1,
+                    'block_id' => 6,
+                    'created_at' => $date,
+                    'updated_at' => $date
+                ),
+                array(
+                    'template_id' => 2,
+                    'block_id' => 6,
                     'created_at' => $date,
                     'updated_at' => $date
                 ),
                 array(
                     'template_id' => 3,
-                    'block_id' => 17,
+                    'block_id' => 6,
                     'created_at' => $date,
                     'updated_at' => $date
-                )
+                ),
+                array(
+                    'template_id' => 1,
+                    'block_id' => 7,
+                    'created_at' => $date,
+                    'updated_at' => $date
+                ),
+                array(
+                    'template_id' => 2,
+                    'block_id' => 13,
+                    'created_at' => $date,
+                    'updated_at' => $date
+                ),
+                array(
+                    'template_id' => 3,
+                    'block_id' => 14,
+                    'created_at' => $date,
+                    'updated_at' => $date
+                ),
+
             )
         );
 
