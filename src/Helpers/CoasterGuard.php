@@ -58,6 +58,11 @@ class CoasterGuard extends SessionGuard
                 $options['page_id'] = !empty($page_group) ? $page_group->default_parent : 0;
         }
 
+        if (!empty($route[1]) && $route[0] == 'pages' && $route[1] == 'sort') {
+            // let page sort function deal with permissions
+            return true;
+        }
+
         return Auth::action($route, $options);
     }
 

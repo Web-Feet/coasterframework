@@ -170,30 +170,36 @@ class PagesController extends _Base
         $pages = Request::input('list');
         $order = array();
         $logged = [];
-        foreach ($pages as $pageId => $parent) {
-            $currentPage = Page::preload($pageId);
-            if (empty($currentPage))
-                return 0;
-            $parent = (!empty($parent) && $parent != 'null') ? $parent : 0;
-            if (!isset($order[$parent]))
-                $order[$parent] = 1;
-            else
-                $order[$parent]++;
-            if (Auth::action('pages.sort', ['page_id' => $parent]) && Auth::action('pages.sort', ['page_id' => $currentPage->parent]) && ($currentPage->parent != $parent || $currentPage->order != $order[$parent])) {
-                $parentPageName = $parent ? PageLang::preload($parent)->name : '-- Top Level Page --';
-                if ($parent != $currentPage->parent) {
-                    $logged[$parent] = true;
-                    $logged[$currentPage->parent] = true;
-                    AdminLog::new_log('Moved page \'' . PageLang::preload($pageId)->name . '\' under \'' . $parentPageName . '\' (Page ID ' . $currentPage->id . ')');
-                }
-                if (!isset($logged[$parent])) {
-                    $logged[$parent] = true;
-                    AdminLog::new_log('Re-ordered pages in \'' . $parentPageName . '\' (Page ID ' . $currentPage->id . ')');
-                }
-                $currentPage->parent = $parent;
-                $currentPage->order = $order[$parent];
+        if (!empty($pages)) {
+            foreach ($pages as $pageId => $parent) {
+                $currentPage = Page::preload($pageId);
+                if (empty($currentPage))
+                    return 0;
+                $parent = (!empty($parent) && $parent != 'null') ? $parent : 0;
+                if (!isset($order[$parent]))
+                    $order[$parent] = 1;
+                else
+                    $order[$parent]++;
+                if (($currentPage->parent != $parent || $currentPage->order != $order[$parent])) {
+                    if (Auth::action('pages.sort', ['page_id' => $parent]) && Auth::action('pages.sort', ['page_id' => $currentPage->parent])) {
+                        $parentPageName = $parent ? PageLang::preload($parent)->name : '-- Top Level Page --';
+                        if ($parent != $currentPage->parent) {
+                            $logged[$parent] = true;
+                            $logged[$currentPage->parent] = true;
+                            AdminLog::new_log('Moved page \'' . PageLang::preload($pageId)->name . '\' under \'' . $parentPageName . '\' (Page ID ' . $currentPage->id . ')');
+                        }
+                        if (!isset($logged[$parent])) {
+                            $logged[$parent] = true;
+                            AdminLog::new_log('Re-ordered pages in \'' . $parentPageName . '\' (Page ID ' . $currentPage->id . ')');
+                        }
+                        $currentPage->parent = $parent;
+                        $currentPage->order = $order[$parent];
 
-                $currentPage->save();
+                        $currentPage->save();
+                    } else {
+                        return 0;
+                    }
+                }
             }
         }
         return 1;
