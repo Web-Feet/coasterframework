@@ -38,6 +38,8 @@ class CmsServiceProvider extends ServiceProvider
             );
         });
 
+        Auth::setCookieJar($this->app['cookie']);
+
         if ($this->app['config']['coaster::installed']) {
             if (!App::runningInConsole()) {
                 $router = $this->app['router'];
