@@ -204,7 +204,7 @@ class ThemesController extends _Base
     public function getSelects($block_id = null)
     {
         if ($block_id) {
-            $block = Block::where('type', 'LIKE', '%select%')->where('id', '=', $block_id)->first();
+            $block = Block::where('type', 'LIKE', '%select%')->where('type', 'NOT LIKE', '%selectpage%')->where('id', '=', $block_id)->first();
 
             if (!empty($block)) {
                 $options = BlockSelectOption::where('block_id', '=', $block_id)->get();
@@ -216,7 +216,7 @@ class ThemesController extends _Base
 
             $selectBlocks = [];
 
-            $blocks = Block::where('type', 'LIKE', '%select%')->get();
+            $blocks = Block::where('type', 'LIKE', '%select%')->where('type', 'NOT LIKE', '%selectpage%')->get();
             if (!$blocks->isEmpty()) {
                 foreach ($blocks as $block) {
                     $selectBlocks[$block->id] = $block->name;
