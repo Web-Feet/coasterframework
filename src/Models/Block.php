@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Models;
 
+use CoasterCms\Libraries\BlockManager;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 
 class Block extends Eloquent
@@ -86,27 +87,8 @@ class Block extends Eloquent
      */
     public function get_class()
     {
-        //user defined
-        $block_type = 'App\\Blocks\\' . ucwords($this->type);
-        if (!class_exists($block_type)) {
-            $block_type .= '_';
-
-            // system
-            if (!class_exists($block_type)) {
-                $block_type = 'CoasterCms\\Libraries\\Blocks\\' . ucwords($this->type);
-
-                if (!class_exists($block_type)) {
-                    $block_type .= '_';
-                    if (!class_exists($block_type)) {
-                        $block_type = 'CoasterCms\\Libraries\\Blocks\\_Base';
-                    }
-                }
-
-            }
-        }
-
-        return $block_type;
-
+        $blockClasses = BlockManager::getBlockClasses();
+        return !empty($blockClasses[$this->type])?$blockClasses[$this->type]:$blockClasses['string'];
     }
 
 }

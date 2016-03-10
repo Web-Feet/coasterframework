@@ -212,7 +212,7 @@ class BlockManager
         return $field_key;
     }
 
-    public static function proccess_submission($page_id = 0)
+    public static function process_submission($page_id = 0)
     {
         // update all text inputs
         self::submit_text($page_id);
@@ -239,26 +239,33 @@ class BlockManager
 
     public static function submit_custom_block_data($page_id, $repeater_key = null, $repeater_info = null)
     {
-        $block_classes = [];
-        if (file_exists(base_path('app/Blocks'))) {
-            foreach (scandir(base_path('app/Blocks')) as $name) {
-                $class = explode('.', $name)[0];
-                if (!empty($class)) {
-                    $block_classes[$class] = 'App\\Blocks\\' . $class;
+        foreach (BlockManager::getBlockClasses() as $blockName => $blockClass) {
+            if ($blockName != 'repeater') {
+                $blockClass::submit($page_id, $repeater_key . $blockClass::$blocks_key, $repeater_info);
+            }
+        }
+    }
+
+    public static function getBlockClasses()
+    {
+        $paths = [
+            'CoasterCms\\Libraries\\Blocks\\' => base_path('vendor/web-feet/coasterframework/src/Libraries/Blocks'),
+            'App\\' => base_path('app/Blocks')
+        ];
+
+        $blockClasses = [];
+        foreach ($paths as $classPath => $dirPath) {
+            if (is_dir($dirPath)) {
+                foreach (scandir($dirPath) as $file) {
+                    $className = explode('.', $file)[0];
+                    if (!empty($className) && $className != '_Base') {
+                        $blockClasses[trim(strtolower($className), '_')] = $classPath . $className;
+                    }
                 }
             }
         }
-        foreach (scandir(__DIR__ . '/Blocks') as $name) {
-            $class = explode('.', $name)[0];
-            if (!empty($class) && empty($block_classes[$class])) {
-                $block_classes[$class] = 'CoasterCms\\Libraries\\Blocks\\' . $class;
-            }
-        }
-        foreach ($block_classes as $class => $block_class) {
-            if ($class != 'Repeater') {
-                $block_class::submit($page_id, $repeater_key . $block_class::$blocks_key, $repeater_info);
-            }
-        }
+
+        return $blockClasses;
     }
 
     public static function get_data_for_version($table_name, $version, $filter_on = array(), $filter_values = array(), $order_by = null)

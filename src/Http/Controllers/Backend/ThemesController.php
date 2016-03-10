@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
+use CoasterCms\Libraries\BlockManager;
 use CoasterCms\Libraries\Builder\ThemeBuilder;
 use CoasterCms\Models\BlockBeacon;
 use CoasterCms\Models\BlockCategory;
@@ -34,25 +35,9 @@ class ThemesController extends _Base
             }
         }
 
-
-        $block_classes = [];
         $blockSettings = [];
-        foreach (scandir(__DIR__ . '/../../../Libraries/Blocks') as $name) {
-            $class = explode('.', $name)[0];
-            if (!empty($class) && empty($block_classes[$class])) {
-                $block_classes[$class] = 'CoasterCms\\Libraries\\Blocks\\' . $class;
-            }
-        }
-        if (is_dir(base_path('app/Blocks'))) {
-            foreach (scandir(__DIR__ . '/Blocks') as $name) {
-                $class = explode('.', $name)[0];
-                if (!empty($class) && empty($block_classes[$class])) {
-                    $block_classes[$class] = 'App\\Blocks\\' . $class;
-                }
-            }
-        }
-        foreach ($block_classes as $class => $block_class) {
-            $blockSettingsAction = $block_class::block_settings_action();
+        foreach (BlockManager::getBlockClasses() as $blockName => $blockClass) {
+            $blockSettingsAction = $blockClass::block_settings_action();
             if (!empty($blockSettingsAction['action']) && Auth::action(str_replace('/', '.', $blockSettingsAction['action']))) {
                 $blockSettings[$blockSettingsAction['name']] = $blockSettingsAction['action'];
             }
@@ -216,22 +201,11 @@ class ThemesController extends _Base
 
     private function _typeList()
     {
-        $classNames = [];
-        foreach (scandir(__DIR__ . '/../../../Libraries/Blocks') as $name) {
-            $className = explode('.', $name)[0];
-            if (!empty($className)) {
-                $classNames[trim(strtolower($className), '_')] = trim(strtolower($className), '_');
-            }
+        $selectArray = [];
+        foreach (BlockManager::getBlockClasses() as $blockName => $blockClass) {
+            $selectArray[$blockName] = $blockName;
         }
-        if (is_dir(base_path('app/Blocks'))) {
-            foreach (base_path('app/Blocks') as $name) {
-                $className = explode('.', $name)[0];
-                if (!empty($className)) {
-                    $classNames[trim(strtolower($className), '_')] = trim(strtolower($className), '_');
-                }
-            }
-        }
-        return $classNames;
+        return $selectArray;
     }
 
     private function _categoryList()
