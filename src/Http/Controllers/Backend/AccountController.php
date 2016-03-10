@@ -4,7 +4,6 @@ use CoasterCms\Helpers\View\FormMessage;
 use CoasterCms\Models\Language;
 use CoasterCms\Models\User;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Session;
@@ -61,7 +60,7 @@ class AccountController extends _Base
         $rules = array(
             'email' => 'required|email',
         );
-        $validation = Validator::make(Input::all(), $rules);
+        $validation = Validator::make(Request::all(), $rules);
 
         if ($_POST && $validation->fails()) {
             FormMessage::set($validation->messages());
@@ -140,7 +139,7 @@ class AccountController extends _Base
             'blog_login' => 'required',
             'blog_password' => 'required'
         );
-        $validation = Validator::make(Input::all(), $rules);
+        $validation = Validator::make(Request::all(), $rules);
         $data = [];
         $data['form'] = View::make('coaster::partials.forms.user.blog', array('blog_login' => $this->_existing_blog_login()));
         if ($validation->fails()) {

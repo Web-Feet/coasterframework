@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\Access\Authorizable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Input;
+use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Validator;
 
 class User extends Model implements AuthenticatableContract, AuthorizableContract, CanResetPasswordContract
@@ -68,7 +68,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
             }
         }
 
-        $details = Input::all();
+        $details = Request::all();
         $rules = array('new_password' => 'required|confirmed|min:4');
         if (!($tmp_check || (Auth::check() && Auth::action('user.edit') && Auth::user()->id != $this->id))) {
             $rules['current_password'] = 'required';

@@ -8,7 +8,6 @@ use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\PageRedirect;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Response;
@@ -49,7 +48,7 @@ class PageLoaderController extends Controller
 
             // check for form submissions
             if (!empty($_POST)) {
-                $form_submit = Input::all();
+                $form_submit = Request::all();
                 $success = Form::submission($form_submit);
                 if (!empty($success))
                     return $success;

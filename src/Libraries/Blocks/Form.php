@@ -9,7 +9,6 @@ use CoasterCms\Models\FormSubmission;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\Theme;
 use CoasterCms\Models\ThemeBlock;
-use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Request;
@@ -161,7 +160,7 @@ class Form extends _Base
                         if (empty($value)) {
                             unset($form_data[$field]);
                         }
-                        if (Input::hasFile($field)) {
+                        if (Request::hasFile($field)) {
                             $files[$field] = $value;
                             unset($form_data[$field]);
                         }
@@ -175,14 +174,14 @@ class Form extends _Base
                     $form_submission->save();
 
                     foreach ($files as $field => $value) {
-                        if (Input::hasFile($field)) {
+                        if (Request::hasFile($field)) {
                             $upload_folder = '/uploads/system/forms/' . $block->id;
                             $full_upload_path = public_path() . $upload_folder;
                             if (!file_exists($full_upload_path)) {
                                 mkdir($full_upload_path, 0755, true);
                             }
-                            $unique_filename = $field . ' ' . $form_submission->id . ' ' . Input::file($field)->getClientOriginalName();
-                            Input::file($field)->move($full_upload_path, $unique_filename);
+                            $unique_filename = $field . ' ' . $form_submission->id . ' ' . Request::file($field)->getClientOriginalName();
+                            Request::file($field)->move($full_upload_path, $unique_filename);
                             $form_data[$field] = \HTML::link($upload_folder . '/' . $unique_filename, $unique_filename);
                         }
                     }

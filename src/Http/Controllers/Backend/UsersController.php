@@ -6,7 +6,6 @@ use CoasterCms\Models\User;
 use CoasterCms\Models\UserRole;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Validator;
@@ -50,7 +49,7 @@ class UsersController extends _Base
                 case 'status':
                     // stop admins disabling super admins
                     if ($this->user->id != $user->id) {
-                        $v = Validator::make(Input::all(), array(
+                        $v = Validator::make(Request::all(), array(
                                 'set' => 'integer|min:0|max:1'
                             )
                         );
@@ -115,7 +114,7 @@ class UsersController extends _Base
 
     public function post_add()
     {
-        $v = Validator::make(Input::all(), array(
+        $v = Validator::make(Request::all(), array(
                 'email' => 'required|email',
                 'role' => 'required|integer'
             )

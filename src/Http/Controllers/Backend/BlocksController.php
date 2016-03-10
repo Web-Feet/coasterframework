@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\View;
 
-
 class BlocksController extends _Base
 {
 
@@ -36,7 +35,7 @@ class BlocksController extends _Base
         AdminLog::new_log('Updated Site-wide Content');
 
         BlockManager::$to_version = PageVersion::add_new(0)->version_id;
-        BlockManager::proccess_submission();
+        BlockManager::process_submission();
 
         $alert = new \stdClass;
         $alert->type = 'success';

@@ -7,7 +7,6 @@ use CoasterCms\Models\PageLang;
 use CoasterCms\Models\User;
 use CoasterCms\Models\UserRole;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\View;
@@ -96,7 +95,7 @@ class RolesController extends _Base
 
     public function post_add()
     {
-        $v = Validator::make(Input::all(), array(
+        $v = Validator::make(Request::all(), array(
             'name' => 'required|alpha',
             'copy' => 'required|integer'
         ));
@@ -126,7 +125,7 @@ class RolesController extends _Base
 
     public function post_edit()
     {
-        $v = Validator::make(Input::all(), array(
+        $v = Validator::make(Request::all(), array(
             'role' => 'required|integer',
             'action' => 'required|integer',
             'value' => 'required',
@@ -150,7 +149,7 @@ class RolesController extends _Base
 
     public function post_delete()
     {
-        $v = Validator::make(Input::all(), array(
+        $v = Validator::make(Request::all(), array(
             'role' => 'required|integer',
             'new_role' => 'required|integer'
         ));

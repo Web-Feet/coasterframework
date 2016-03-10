@@ -21,7 +21,6 @@ use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
 use CoasterCms\Models\UserRole;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\URL;
@@ -65,7 +64,7 @@ class PagesController extends _Base
 
     public function post_add($page_id = 0)
     {
-        $input = Input::all();
+        $input = Request::all();
         $page_info = $input['page_info'];
         $page = Page::find($page_id);
         $in_group = !empty($page) ? $page->in_group : 0; // ignore page limit for group pages
@@ -103,10 +102,10 @@ class PagesController extends _Base
                 $page_info['url'] .= '-duplicate';
                 $page_info['parent'] = $duplicate_parent;
                 $page_info['group_container'] = $existingPage->group_container;
-                Input::merge(array('page_info' => $page_info));
+                Request::merge(array('page_info' => $page_info));
 
                 $new_page_id = $this->_save_page_info();
-                BlockManager::proccess_submission($new_page_id);
+                BlockManager::process_submission($new_page_id);
                 return Redirect::action('\CoasterCms\Http\Controllers\Backend\PagesController@get_edit', array($new_page_id));
             } else {
                 return abort(403, 'Action not permitted');
@@ -150,7 +149,7 @@ class PagesController extends _Base
         }
 
         // update blocks
-        BlockManager::proccess_submission($page_id);
+        BlockManager::process_submission($page_id);
 
         // save page info
         if ($this->_save_page_info($page_id) === false) {
@@ -385,7 +384,7 @@ class PagesController extends _Base
     private function _save_page_info($page_id = 0)
     {
 
-        $input = Input::all();
+        $input = Request::all();
         $page_info = $input['page_info'];
 
         // load previous data if not new
