@@ -404,6 +404,8 @@ class PagesController extends _Base
             }
         }
 
+        $input['page_info']['url'] = str_replace('/', '-', $input['page_info']['url']);
+
         if ($input['page_info']['url'] == '' && (isset($page_info['parent']) && $page_info['parent'] == 0)) {
             $input['page_info']['url'] = '/';
             $page_info['url'] = $input['page_info']['url'];
