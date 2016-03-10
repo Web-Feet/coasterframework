@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Input;
+use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 
@@ -25,7 +25,7 @@ class SystemController extends _Base
     public function post_index()
     {
         if (Auth::action('system.update')) {
-            $settings = Input::all();
+            $settings = Request::all();
             unset($settings['_token']);
             foreach ($settings as $setting => $value) {
                 $setting = str_replace($this->dot_replace, '.', $setting);
@@ -195,7 +195,11 @@ class SystemController extends _Base
 
         } elseif (version_compare(config('coaster::site.version'), $this->_latestTag(), '<') && $this->_latestTag() != "not-found") {
 
-            shell_exec('cd '.base_path().'; composer update 2>'.storage_path('app').'/upgrade.log;');
+            if (!getenv('HOME') && !getenv('COMPOSER_HOME')) {
+                putenv("COMPOSER_HOME=".exec('pwd')."/.composer");
+            }
+
+            shell_exec('cd '.base_path().'; composer -n update 2>'.storage_path('app').'/upgrade.log;');
             $upgradeLog = file_get_contents(storage_path('app').'/upgrade.log');
 
             if (!empty($upgradeLog) && stripos($upgradeLog, 'Generating autoload files') !== false) {

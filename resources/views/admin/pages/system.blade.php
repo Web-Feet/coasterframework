@@ -72,7 +72,7 @@
 
                     <tr>
                         <td>Site Version</td>
-                        @if ($upgrade->required)
+                        @if ($can_upgrade && $upgrade->required)
                             <td><span class="text-warning">{{ $upgrade->from }} [latest release {{ $upgrade->to }}]</span> <a href="{{ URL::to(config('coaster::admin.url').'/system/upgrade') }}">(upgrade)</a></td>
                         @else
                             <td><span class="text-success">{{ $upgrade->from }} [latest release {{ $upgrade->to }}]</span></td>
