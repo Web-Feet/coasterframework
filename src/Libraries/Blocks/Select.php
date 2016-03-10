@@ -22,4 +22,9 @@ class Select extends _Base
         return $field_data;
     }
 
+    public static function block_settings_action()
+    {
+        return ['action' => 'themes/selects', 'name' => 'Manage block select options'];
+    }
+
 }

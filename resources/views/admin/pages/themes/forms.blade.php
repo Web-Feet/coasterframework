@@ -2,8 +2,6 @@
 
 @if (!empty($template))
 
-    <p></p>
-
     {!! Form::open(['url' => Request::fullUrl()]) !!}
 
     <div class="table-responsive">

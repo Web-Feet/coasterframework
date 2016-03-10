@@ -2,9 +2,11 @@
 
 use CoasterCms\Libraries\BlockManager;
 use CoasterCms\Libraries\Builder\ThemeBuilder;
+use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockBeacon;
 use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\BlockFormRule;
+use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\Theme;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
@@ -173,6 +175,10 @@ class ThemesController extends _Base
         $toUpdate = array_intersect_key($inputRules, $databaseRules);
         $toDelete = array_diff_key($databaseRules, $inputRules);
 
+        if (!empty($toDelete)) {
+            BlockFormRule::where('form_template', '=', $template)->whereIn('field', array_keys($toDelete))->delete();
+        }
+
         if (!empty($toAdd)) {
             foreach ($toAdd as $field => $rule) {
                 $newBlockFormRule = new BlockFormRule;
@@ -192,11 +198,82 @@ class ThemesController extends _Base
             }
         }
 
-        if (!empty($toDelete)) {
-            BlockFormRule::whereIn('field', array_keys($toDelete))->delete();
+        return redirect(config('coaster::admin.url').'/themes/forms');
+    }
+
+    public function getSelects($block_id = null)
+    {
+        if ($block_id) {
+            $block = Block::where('type', 'LIKE', '%select%')->where('id', '=', $block_id)->first();
+
+            if (!empty($block)) {
+                $options = BlockSelectOption::where('block_id', '=', $block_id)->get();
+                $options = $options->isEmpty()?[]:$options;
+                $this->layout->content = View::make('coaster::pages.themes.selects', ['block' => $block, 'options' => $options]);
+            }
+        }
+        else {
+
+            $selectBlocks = [];
+
+            $blocks = Block::where('type', 'LIKE', '%select%')->get();
+            if (!$blocks->isEmpty()) {
+                foreach ($blocks as $block) {
+                    $selectBlocks[$block->id] = $block->name;
+                }
+            }
+
+            $this->layout->content = View::make('coaster::pages.themes.selects', ['blocks' => $selectBlocks]);
+        }
+    }
+
+    public function postSelects($block_id)
+    {
+        $databaseOptions = [];
+        $inputOptions = [];
+
+        $options = BlockSelectOption::where('block_id', '=', $block_id)->get();
+        if (!$options->isEmpty()) {
+            foreach ($options as $option) {
+                $databaseOptions[$option->value] = $option;
+            }
         }
 
-        return redirect(config('coaster::admin.url').'/themes/forms');
+        $options = Request::get('selectOption');
+        if (!empty($options)) {
+            foreach ($options as $option) {
+                $inputOptions[$option['value']] = $option['option'];
+            }
+        }
+
+        $toAdd = array_diff_key($inputOptions, $databaseOptions);
+        $toUpdate = array_intersect_key($inputOptions, $databaseOptions);
+        $toDelete = array_diff_key($databaseOptions, $inputOptions);
+
+        if (!empty($toDelete)) {
+            BlockSelectOption::where('block_id', '=', $block_id)->whereIn('value', array_keys($toDelete))->delete();
+        }
+
+        if (!empty($toAdd)) {
+            foreach ($toAdd as $value => $option) {
+                $newBlockSelectOption = new BlockSelectOption;
+                $newBlockSelectOption->block_id = $block_id;
+                $newBlockSelectOption->value = $value;
+                $newBlockSelectOption->option = $option;
+                $newBlockSelectOption->save();
+            }
+        }
+
+        if (!empty($toUpdate)) {
+            foreach ($toUpdate as $value => $option) {
+                if ($option != $databaseOptions[$value]->option) {
+                    $databaseOptions[$value]->option = $option;
+                    $databaseOptions[$value]->save();
+                }
+            }
+        }
+
+        return redirect(config('coaster::admin.url').'/themes/selects');
     }
 
     private function _typeList()
