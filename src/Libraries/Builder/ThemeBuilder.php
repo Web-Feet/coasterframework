@@ -456,7 +456,7 @@ class ThemeBuilder
         $typesArr = [
             'video' => ['vid'],
             'text' => ['text', 'desc', 'keywords', 'intro', 'address', 'html', 'lead'],
-            'richtext' => ['richtext', 'content', 'copy'],
+            'richtext' => ['richtext', 'content'],
             'image' => ['image', 'img', 'banner', 'logo'],
             'link' => ['link', 'url'],
             'datetime' => ['date', 'datetime'],
