@@ -3,6 +3,7 @@
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\BlockRepeater;
+use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\TemplateBlock;
 use CoasterCms\Models\Theme;
@@ -111,8 +112,13 @@ class ThemeBuilder
             $row = 0;
             while (($data = fgetcsv($fileHandle)) !== false) {
                 if (count($data) == 3) {
-                    if ($row++ == 0 && $data[0] == 'Block Name') continue;
-                    self::$_selectBlocks[$data[0]] = [$data[1] => $data[2]];
+                    if ($row++ == 0 && $data[0] == 'Block Name') {
+                        continue;
+                    }
+                    if (!isset(self::$_selectBlocks[$data[0]])) {
+                        self::$_selectBlocks[$data[0]] = [];
+                    }
+                    self::$_selectBlocks[$data[0]][$data[2]] = $data[1];
                 }
             }
             fclose($fileHandle);
@@ -129,7 +135,7 @@ class ThemeBuilder
             while (($data = fgetcsv($fileHandle)) !== false) {
                 if ($row++ == 0 && $data[0] == 'Block Name') continue;
                 if (!empty($data[0])) {
-                    $fields = ['name', 'label', 'category_id', 'type', 'global_site', 'global_pages'];
+                    $fields = ['name', 'label', 'category_id', 'type', 'global_site', 'global_pages', 'order'];
                     foreach ($fields as $fieldId => $field) {
                         if (isset($data[$fieldId])) {
                             $setting = trim($data[$fieldId]);
@@ -218,6 +224,18 @@ class ThemeBuilder
                 self::$_fileGlobalBlocks[$block] = 1;
             }
         }
+
+        if (!empty(self::$_blockSettings)) {
+            foreach (self::$_blockSettings as $block => $field) {
+                if (empty(self::$_fileBlocks[$block])) {
+                    if (empty(self::$_blockSettings[$block]['order'])) {
+                        self::$_blockSettings[$block]['order'] = 50;
+                    }
+                    self::$_fileBlocks[$block] = self::$_blockSettings[$block];
+                }
+            }
+        }
+
     }
 
     private static function _processDatabaseBlocks()
@@ -379,7 +397,7 @@ class ThemeBuilder
         if (!isset(self::$_guessedCategoryIds)) {
             $findKeys = [
                 'main' => ['main'],
-                'banner' => ['banner'],
+                'banner' => ['banner', 'carousel'],
                 'seo' => ['seo'],
                 'footer' => ['foot'],
                 'header' => ['head']
@@ -420,8 +438,8 @@ class ThemeBuilder
         $categoriesArr = [];
         $categoriesArr[self::$_guessedCategoryIds['seo']] = ['meta'];
         $categoriesArr[self::$_guessedCategoryIds['header']] = ['header_html', 'head', 'logo', 'phone'];
-        $categoriesArr[self::$_guessedCategoryIds['footer']] = ['footer_html', 'foot', 'address', 'email'];
-        $categoriesArr[self::$_guessedCategoryIds['banner']] = ['banner'];
+        $categoriesArr[self::$_guessedCategoryIds['footer']] = ['footer_html', 'foot', 'address', 'email', 'copyright'];
+        $categoriesArr[self::$_guessedCategoryIds['banner']] = ['banner', 'carousel'];
         foreach ($categoriesArr as $_guessedCategoryIds => $matches) {
             foreach ($matches as $match) {
                 if (stristr($block, $match)) {
@@ -437,7 +455,7 @@ class ThemeBuilder
     {
         $typesArr = [
             'video' => ['vid'],
-            'text' => ['text', 'desc', 'keywords', 'intro', 'address', 'html'],
+            'text' => ['text', 'desc', 'keywords', 'intro', 'address', 'html', 'lead'],
             'richtext' => ['richtext', 'content', 'copy'],
             'image' => ['image', 'img', 'banner', 'logo'],
             'link' => ['link', 'url'],
@@ -446,7 +464,8 @@ class ThemeBuilder
             'form' => ['form', 'contact'],
             'select' => ['select'],
             'selectmultiple' => ['selectmultiple', 'multipleselect'],
-            'selectpages' => ['selectpage']
+            'selectpage' => ['selectpage'],
+            'selectpages' => ['selectpages']
         ];
         $typeFound = 'string';
         foreach ($typesArr as $type => $matches) {
@@ -515,6 +534,9 @@ class ThemeBuilder
                 $newBlock->save();
                 self::$_allBlocks[$block] = $newBlock;
             }
+        }
+        if (!empty(self::$_selectBlocks[$block])) {
+            BlockSelectOption::import(self::$_allBlocks[$block]->id, self::$_selectBlocks[$block]);
         }
     }
 
@@ -614,20 +636,20 @@ class ThemeBuilder
             $currentRepeater = self::$_repeater;
             self::$_repeater = $block_name;
 
-            // render repeater view
+            // manually call the repeater view as the normal pagebuilder won't call it if the block_repeaters table is empty
             if (!empty($options['view'])) {
                 $repeaterView = $options['view'];
             } else {
                 $repeaterView = $block_name;
             }
-            View::make(
+            $output = View::make(
                 'themes.' . self::$_theme->theme . '.blocks.repeaters.' . $repeaterView,
                 ['is_first' => true, 'is_last' => true, 'count' => 1, 'total' => 1, 'id' => 1, 'pagination' => '']
             )->render();
 
             self::$_repeater = $currentRepeater;
         } else {
-            (string) forward_static_call(array('\CoasterCms\Libraries\Builder\PageBuilder', 'block'), $block_name, $options);
+            $output = forward_static_call(array('\CoasterCms\Libraries\Builder\PageBuilder', 'block'), $block_name, $options);
         }
 
         if (self::$_repeater) {
@@ -651,12 +673,13 @@ class ThemeBuilder
             self::$_fileTemplateBlocks[$template][] = $block_name;
         }
 
+        return $output;
     }
 
     public static function __callStatic($name, $arguments)
     {
         try {
-            (string) forward_static_call_array(array('\CoasterCms\Libraries\Builder\PageBuilder', $name), $arguments);
+            return forward_static_call_array(array('\CoasterCms\Libraries\Builder\PageBuilder', $name), $arguments);
         } catch (\Exception $e) {
 
         }

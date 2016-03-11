@@ -229,16 +229,7 @@ class ThemesController extends _Base
 
     public function postSelects($block_id)
     {
-        $databaseOptions = [];
         $inputOptions = [];
-
-        $options = BlockSelectOption::where('block_id', '=', $block_id)->get();
-        if (!$options->isEmpty()) {
-            foreach ($options as $option) {
-                $databaseOptions[$option->value] = $option;
-            }
-        }
-
         $options = Request::get('selectOption');
         if (!empty($options)) {
             foreach ($options as $option) {
@@ -246,32 +237,7 @@ class ThemesController extends _Base
             }
         }
 
-        $toAdd = array_diff_key($inputOptions, $databaseOptions);
-        $toUpdate = array_intersect_key($inputOptions, $databaseOptions);
-        $toDelete = array_diff_key($databaseOptions, $inputOptions);
-
-        if (!empty($toDelete)) {
-            BlockSelectOption::where('block_id', '=', $block_id)->whereIn('value', array_keys($toDelete))->delete();
-        }
-
-        if (!empty($toAdd)) {
-            foreach ($toAdd as $value => $option) {
-                $newBlockSelectOption = new BlockSelectOption;
-                $newBlockSelectOption->block_id = $block_id;
-                $newBlockSelectOption->value = $value;
-                $newBlockSelectOption->option = $option;
-                $newBlockSelectOption->save();
-            }
-        }
-
-        if (!empty($toUpdate)) {
-            foreach ($toUpdate as $value => $option) {
-                if ($option != $databaseOptions[$value]->option) {
-                    $databaseOptions[$value]->option = $option;
-                    $databaseOptions[$value]->save();
-                }
-            }
-        }
+        BlockSelectOption::import($block_id, $inputOptions);
 
         return redirect(config('coaster::admin.url').'/themes/selects');
     }
