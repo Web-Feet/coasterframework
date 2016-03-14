@@ -24,7 +24,7 @@
 </p>
 <p>
     A block with the "show in site-wide content" option checked will appear in the site-wide content section of the admin.<br/>
-    A block with the "show in pages" option checked will be created as a site-wide block and shown on any page templates.<br />
+    A block with the "show in pages" option checked will be created as a site-wide block and shown on any page templates it's in.<br />
     If both options check the block will appear in both pages and site-wide content.
 </p>
 
