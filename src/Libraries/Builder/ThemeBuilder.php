@@ -399,7 +399,7 @@ class ThemeBuilder
             $themeBlocks[$newBlock]['updates'] = 'new block found, will add on update';
             if (empty(self::$_fileBlockTemplates[$newBlock])) {
                 $themeBlocks[$newBlock]['run_template_update'] = -1;
-                $themeBlocks[$newBlock]['templates'] = 'block only used inside repeaters, no template updates required';
+                $themeBlocks[$newBlock]['templates'] = 'block only found inside repeaters, no template updates required';
             } else {
                 $themeBlocks[$newBlock]['templates'] = implode(', ', self::$_fileBlockTemplates[$newBlock]);
             }
@@ -411,7 +411,7 @@ class ThemeBuilder
             if (empty(self::$_fileBlockTemplates[$existingBlock])) {
                 $themeBlocks[$existingBlock]['run_template_update'] = -1;
                 $themeBlocks[$existingBlock]['rowClass'] = 4; // repeater
-                $themeBlocks[$existingBlock]['templates'] = 'block only used inside repeaters, no template updates required';
+                $themeBlocks[$existingBlock]['templates'] = 'block only found inside repeaters, no template updates required';
             } elseif (array_diff(self::$_fileBlockTemplates[$existingBlock], self::$_databaseBlockTemplates[$existingBlock])) {
                 $themeBlocks[$existingBlock]['run_template_update'] = 1;
                 $themeBlocks[$existingBlock]['rowClass'] = 2; // changed templates
@@ -444,7 +444,7 @@ class ThemeBuilder
                 }
                 if ($changed) {
                     $themeBlocks[$existingBlock]['rowClass'] = 2;
-                    $themeBlocks[$existingBlock]['updates'] = 'blocks added or removed from repeater template, will save changes on update';
+                    $themeBlocks[$existingBlock]['updates'] = 'blocks added or removed from the repeater template, will save changes on update';
                 }
             }
         }

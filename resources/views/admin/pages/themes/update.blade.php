@@ -11,18 +11,21 @@
 
 <p>&nbsp;</p>
 
-<p>Here is a list of all blocks found in template, section and repeater files. If there are blocks used in other
-    files they will have to manually added to the database for now.</p>
 <p>
-    Blocks with the "update template" option checked will be added any templates they are found in (and removed from
-    ones they are no longer in).<br/>
-    Newly found blocks will have the option automatically checked (and are highlighted green).
+    Here is a list of all blocks found in the theme.
 </p>
 <p>
-    A block with the "site-wide content" option checked will appear in the Site-wide Content section of the admin
-    (and will not appear in pages unless the show in pages option is also checked).<br/>
-    A block with the "show in page" option checked will show in all templates by default, so it will be shown in any
-    new templates added.
+    Blocks with the "update template" option checked will be added to any templates they are found in (and removed from ones they are no longer in).<br/>
+    Newly found blocks will have the option automatically checked (and are highlighted green).<br />
+    Existing blocks found in new templates or no longer found in others will have this option checked as well (and are highlighted yellow).
+</p>
+<p>
+    Repeater blocks will also be highlighted yellow if blocks within the repeaters template change.
+</p>
+<p>
+    A block with the "site-wide content" option checked will appear in the site-wide content section of the admin.<br/>
+    A block with the "show in page" option checked will be created as a site-wide block and show on any page templates by default.<br />
+    If both options check the block will appear in both pages and site-wide content.
 </p>
 
 <p>&nbsp;</p>
