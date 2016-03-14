@@ -77,7 +77,8 @@ class ThemesController extends _Base
                 'theme' => ThemeBuilder::getThemeName(),
                 'blocksData' => ThemeBuilder::getMainTableData(),
                 'typeList' => $this->_typeList(),
-                'categoryList' => $this->_categoryList()
+                'categoryList' => $this->_categoryList(),
+                'templateList' => ThemeBuilder::getTemplateList()
             ]
         );
 

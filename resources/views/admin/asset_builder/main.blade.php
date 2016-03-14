@@ -9,6 +9,12 @@ AssetBuilder::set('bootstrap', [
         '/bootstrap/css/bootstrap.min.css'
 ], true, 2);
 
+AssetBuilder::set('jquery-ui', [
+        '/jquery-ui/jquery-ui.min.js',
+        '/jquery-ui/jquery-ui.min.css',
+        '/jquery-ui/jquery.ui.touch-punch.min.js'
+], false, 5);
+
 AssetBuilder::set('jquery-sortable', [
         '/jquery-ui/jquery-ui.min.js',
         '/jquery-ui/jquery.ui.touch-punch.min.js',

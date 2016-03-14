@@ -41,7 +41,7 @@ class ThemeBuilder
     private static $_fileBlocks;
     private static $_fileGlobalBlocks;
     private static $_fileTemplateBlocks;
-    private static $_fileBlockTemplates; // only available after saving templates
+    private static $_fileBlockTemplates;
 
     // all blocks/templates used in selected theme
     private static $_databaseBlocks;
@@ -75,9 +75,11 @@ class ThemeBuilder
             \CoasterCms\Libraries\Builder\PageBuilder::$theme = self::$theme;
 
             if (is_dir($themePath)) {
+                self::$_fileTemplateBlocks = [0 => []];
                 foreach (scandir($themePath) as $templateFile) {
                     if (self::$_template = explode('.', $templateFile)[0]) {
                         self::$page_info->template_name = self::$_template;
+                        self::$_fileTemplateBlocks[self::$_template] = [];
                         View::make('themes.' . self::$_theme->theme . '.templates.' . self::$_template)->render();
                     }
                 }
@@ -135,7 +137,7 @@ class ThemeBuilder
             while (($data = fgetcsv($fileHandle)) !== false) {
                 if ($row++ == 0 && $data[0] == 'Block Name') continue;
                 if (!empty($data[0])) {
-                    $fields = ['name', 'label', 'category_id', 'type', 'global_site', 'global_pages', 'order'];
+                    $fields = ['name', 'label', 'category_id', 'type', 'global_site', 'global_pages', 'templates', 'order'];
                     foreach ($fields as $fieldId => $field) {
                         if (isset($data[$fieldId])) {
                             $setting = trim($data[$fieldId]);
@@ -149,6 +151,9 @@ class ThemeBuilder
                                 }
                                 if ($field == 'category_id') {
                                     $setting = self::_getBlockCategoryId($setting);
+                                }
+                                if ($field == 'name') {
+                                    $setting = strtolower($setting);
                                 }
                                 self::$_blockSettings[$data[0]][$field] = $setting;
                             }
@@ -183,7 +188,7 @@ class ThemeBuilder
         self::$_fileBlocks = [];
         self::$_fileGlobalBlocks = [];
 
-        // move non template specific blocks to end of array
+        // move non template specific blocks (repeater blocks) to end of array
         if (!empty(self::$_fileTemplateBlocks[0])) {
             $nonTemplateBlocks = self::$_fileTemplateBlocks[0];
             unset(self::$_fileTemplateBlocks[0]);
@@ -198,17 +203,56 @@ class ThemeBuilder
             $blockOrders[$block] = $details->order;
         }
 
+        // force template adds from overwrite file
+        if (!empty(self::$_blockSettings)) {
+            foreach (self::$_blockSettings as $block => $fields) {
+                if (!empty($fields['templates'])) {
+                    if ($fields['templates'] == '*') {
+                        foreach (self::$_fileTemplateBlocks as $template => $blocks) {
+                            self::$_fileTemplateBlocks[$template][] = $block;
+                        }
+                    } else {
+                        $templates = explode(',', $fields['templates']);
+                        if (!empty($templates)) {
+                            foreach ($templates as $template) {
+                                if (isset(self::$_fileTemplateBlocks[$template])) {
+                                    self::$_fileTemplateBlocks[$template][] = $block;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // create fileBlockTemplates array
+        self::$_fileBlockTemplates = [];
+        foreach (self::$_fileTemplateBlocks as $template => $blocks) {
+            if ($template !== 0) {
+                foreach ($blocks as $block) {
+                    if (!isset(self::$_fileBlockTemplates[$block])) {
+                        self::$_fileBlockTemplates[$block] = [];
+                    }
+                    self::$_fileBlockTemplates[$block][] = $template;
+                }
+            }
+        }
+
         // get full block list and details in one array
         foreach (self::$_fileTemplateBlocks as $template => $blocks) {
             $order = 10;
             foreach ($blocks as $k => $block) {
                 if (!isset(self::$_fileBlocks[$block])) {
-                    if (isset($blocks[$k - 1]) && !empty($blockOrders[$blocks[$k - 1]])) {
-                        $order = $blockOrders[$blocks[$k - 1]] + 10;
+                    if (!empty(self::$_blockSettings[$block]['order'])) {
+                        $blockOrders[$block] = self::$_blockSettings[$block]['order'];
                     } else {
-                        $order += 10;
+                        if (isset($blocks[$k - 1]) && !empty($blockOrders[$blocks[$k - 1]])) {
+                            $order = $blockOrders[$blocks[$k - 1]] + 10;
+                        } else {
+                            $order += 10;
+                        }
+                        $blockOrders[$block] = $order;
                     }
-                    $blockOrders[$block] = $order;
                     $blockCounter[$block] = 0;
                     self::$_fileBlocks[$block] = ['order' => $blockOrders[$block]];
                     if (in_array($block, self::$_repeaterTemplates)) {
@@ -222,17 +266,6 @@ class ThemeBuilder
         foreach ($blockCounter as $block => $count) {
             if (($count / $templateCount) >= 0.7) {
                 self::$_fileGlobalBlocks[$block] = 1;
-            }
-        }
-
-        if (!empty(self::$_blockSettings)) {
-            foreach (self::$_blockSettings as $block => $field) {
-                if (empty(self::$_fileBlocks[$block])) {
-                    if (empty(self::$_blockSettings[$block]['order'])) {
-                        self::$_blockSettings[$block]['order'] = 50;
-                    }
-                    self::$_fileBlocks[$block] = self::$_blockSettings[$block];
-                }
             }
         }
 
@@ -255,6 +288,30 @@ class ThemeBuilder
             self::$_allBlocks[$block->name] = $block;
         }
 
+        $templates = Template::where('theme_id', '=', self::$_theme->id)->get();
+        if (!$templates->isEmpty()) {
+            foreach ($templates as $template) {
+                self::$_databaseTemplateBlocks[$template->template] = [];
+                self::$_databaseTemplates[$template->template] = $template;
+                self::$_databaseTemplateIds[$template->id] = $template;
+            }
+            $templateBlocks = TemplateBlock::whereIn('template_id', array_keys(self::$_databaseTemplateIds))->get();
+            if (!$templateBlocks->isEmpty()) {
+                foreach ($templateBlocks as $templateBlock) {
+                    if (!isset($blocksById[$templateBlock->block_id])) {
+                        $templateBlock->delete();
+                    } else {
+                        self::$_databaseBlocks[$blocksById[$templateBlock->block_id]->name] = $blocksById[$templateBlock->block_id];
+                        self::$_databaseTemplateBlocks[self::$_databaseTemplateIds[$templateBlock->template_id]->template][] = $blocksById[$templateBlock->block_id]->name;
+                        if (!isset(self::$_databaseBlockTemplates[$blocksById[$templateBlock->block_id]->name])) {
+                            self::$_databaseBlockTemplates[$blocksById[$templateBlock->block_id]->name] = [];
+                        }
+                        self::$_databaseBlockTemplates[$blocksById[$templateBlock->block_id]->name][] = self::$_databaseTemplateIds[$templateBlock->template_id]->template;
+                    }
+                }
+            }
+        }
+
         $globalBlocks = ThemeBlock::where('theme_id', '=', self::$_theme->id)->get();
         foreach ($globalBlocks as $globalBlock) {
             if (!isset($blocksById[$globalBlock->block_id])) {
@@ -262,32 +319,13 @@ class ThemeBuilder
             } else {
                 self::$_databaseBlocks[$blocksById[$globalBlock->block_id]->name] = $blocksById[$globalBlock->block_id];
                 self::$_databaseGlobalBlocks[$blocksById[$globalBlock->block_id]->name] = $globalBlock;
-            }
-        }
-
-        $templates = Template::where('theme_id', '=', self::$_theme->id)->get();
-        if (!$templates->isEmpty()) {
-            $templateIds = [];
-            $templatesById = [];
-            foreach ($templates as $template) {
-                $templateIds[] = $template->id;
-                $templatesById[$template->id] = $template->template;
-                self::$_databaseTemplateBlocks[$template->template] = [];
-                self::$_databaseTemplates[$template->template] = $template;
-                self::$_databaseTemplateIds[] = $template->id;
-            }
-            $templateBlocks = TemplateBlock::whereIn('template_id', $templateIds)->get();
-            if (!$templateBlocks->isEmpty()) {
-                foreach ($templateBlocks as $templateBlock) {
-                    if (!isset($blocksById[$templateBlock->block_id])) {
-                        $templateBlock->delete();
-                    } else {
-                        self::$_databaseBlocks[$blocksById[$templateBlock->block_id]->name] = $blocksById[$templateBlock->block_id];
-                        self::$_databaseTemplateBlocks[$templatesById[$templateBlock->template_id]][] = $blocksById[$templateBlock->block_id]->name;
-                        if (!isset(self::$_databaseBlockTemplates[$blocksById[$templateBlock->block_id]->name])) {
-                            self::$_databaseBlockTemplates[$blocksById[$templateBlock->block_id]->name] = [];
-                        }
-                        self::$_databaseBlockTemplates[$blocksById[$templateBlock->block_id]->name][] = $templateBlock->template_id;
+                if (!isset(self::$_databaseBlockTemplates[$blocksById[$globalBlock->block_id]->name])) {
+                    self::$_databaseBlockTemplates[$blocksById[$globalBlock->block_id]->name] = [];
+                }
+                $excludedTemplates = !empty($globalBlock->exclude_templates)?explode(',', $globalBlock->exclude_templates):[];
+                foreach (self::$_databaseTemplateIds as $templateId => $template) {
+                    if (!in_array($templateId, $excludedTemplates) && !in_array($template->template, self::$_databaseBlockTemplates[$blocksById[$globalBlock->block_id]->name])) {
+                        self::$_databaseBlockTemplates[$blocksById[$globalBlock->block_id]->name][] = $template->template;
                     }
                 }
             }
@@ -353,15 +391,87 @@ class ThemeBuilder
     public static function getMainTableData()
     {
         $themeBlocks = [];
+        // if new blocks
         foreach (self::getNewBlocks() as $newBlock => $details) {
             $themeBlocks[$newBlock] = self::_getBlockData($newBlock, $details);
-            $themeBlocks[$newBlock]['run_template_update'] = true;
+            $themeBlocks[$newBlock]['run_template_update'] = 1;
+            $themeBlocks[$newBlock]['rowClass'] = 1;
+            $themeBlocks[$newBlock]['updates'] = 'new block found, will add on update';
+            if (empty(self::$_fileBlockTemplates[$newBlock])) {
+                $themeBlocks[$newBlock]['run_template_update'] = -1;
+                $themeBlocks[$newBlock]['templates'] = 'block only used inside repeaters, no template updates required';
+            } else {
+                $themeBlocks[$newBlock]['templates'] = implode(', ', self::$_fileBlockTemplates[$newBlock]);
+            }
         }
+
         foreach (self::getExistingBlocks() as $existingBlock => $details) {
             $themeBlocks[$existingBlock] = self::_getBlockData($existingBlock);
-            $themeBlocks[$existingBlock]['run_template_update'] = false;
+            $themeBlocks[$existingBlock]['updates'] = '';
+            if (empty(self::$_fileBlockTemplates[$existingBlock])) {
+                $themeBlocks[$existingBlock]['run_template_update'] = -1;
+                $themeBlocks[$existingBlock]['rowClass'] = 4; // repeater
+                $themeBlocks[$existingBlock]['templates'] = 'block only used inside repeaters, no template updates required';
+            } elseif (array_diff(self::$_fileBlockTemplates[$existingBlock], self::$_databaseBlockTemplates[$existingBlock])) {
+                $themeBlocks[$existingBlock]['run_template_update'] = 1;
+                $themeBlocks[$existingBlock]['rowClass'] = 2; // changed templates
+                $themeBlocks[$existingBlock]['templates'] = implode(', ', self::$_fileBlockTemplates[$existingBlock]);
+                $themeBlocks[$existingBlock]['updates'] = 'block removed or added to new templates, template update required';
+            } else {
+                $themeBlocks[$existingBlock]['run_template_update'] = 0;
+                $themeBlocks[$existingBlock]['rowClass'] = 3; // unchanged
+                $themeBlocks[$existingBlock]['templates'] = implode(', ', self::$_fileBlockTemplates[$existingBlock]);
+            }
         }
+
+        // check repeater changes
+        foreach (self::getExistingBlocks() as $existingBlock => $details) {
+            if (!empty(self::$_repeaterBlocks[$existingBlock])) {
+                $changed = false;
+                $arrayList = [];
+                foreach (self::$_repeaterBlocks[$existingBlock] as $repeaterBlock) {
+                    if (!isset(self::$_allBlocks[$repeaterBlock])) {
+                        $changed = true;
+                        break;
+                    }
+                    $arrayList[] = self::$_allBlocks[$repeaterBlock]->id;
+                }
+                if (!$changed) {
+                    $implodedList = implode(',', $arrayList);
+                    if (empty(self::$_databaseRepeaterBlocks[self::$_allBlocks[$existingBlock]->id]) || self::$_databaseRepeaterBlocks[self::$_allBlocks[$existingBlock]->id]->blocks != $implodedList) {
+                        $changed = true;
+                    }
+                }
+                if ($changed) {
+                    $themeBlocks[$existingBlock]['rowClass'] = 2;
+                    $themeBlocks[$existingBlock]['updates'] = 'blocks added or removed from repeater template, will save changes on update';
+                }
+            }
+        }
+
+        uasort($themeBlocks, function($blockA, $blockB) {
+            if ($blockA['rowClass'] == $blockB['rowClass']) {
+                if ($blockA['run_template_update'] == $blockB['run_template_update']) {
+                    if ($blockA['name'] == $blockB['name']) {
+                        return 0;
+                    }
+                    return ($blockA['name'] > $blockB['name']) ? +1 : -1;
+                }
+                return ($blockA['run_template_update'] < $blockB['run_template_update']) ? +1 : -1;
+            }
+            return ($blockA['rowClass'] > $blockB['rowClass']) ? +1 : -1;
+        });
+
         return $themeBlocks;
+    }
+
+    public static function getTemplateList()
+    {
+        $templates = array_keys(self::$_fileTemplateBlocks);
+        if (($repeaterBlocksTemplate = array_search('0', $templates)) !== false) {
+            unset($templates[$repeaterBlocksTemplate]);
+        }
+        return implode(', ', $templates);
     }
 
     private static function _getBlockData($block, $details = [])
@@ -382,7 +492,7 @@ class ThemeBuilder
             $processedData['global_site'] = isset(self::$_fileGlobalBlocks[$block]);
             $processedData['global_pages'] = (bool)stristr($block, 'meta');
         }
-        // overwrite block types from import csv
+        // use overwrite data if found
         if (!empty(self::$_blockSettings[$block])) {
             foreach (self::$_blockSettings[$block] as $setting => $value) {
                 $processedData[$setting] = $value;
@@ -495,20 +605,7 @@ class ThemeBuilder
                 $newTemplate->label = ucwords(str_replace('_', ' ', $template)).' Template';
                 $newTemplate->save();
                 self::$_databaseTemplates[$template] = $newTemplate;
-                self::$_databaseTemplateIds[] = $newTemplate->id;
-            }
-        }
-
-        // create fileBlockTemplates array
-        self::$_fileBlockTemplates = [];
-        foreach (self::$_fileTemplateBlocks as $template => $blocks) {
-            if ($template !== 0) {
-                foreach ($blocks as $block) {
-                    if (!isset(self::$_fileBlockTemplates[$block])) {
-                        self::$_fileBlockTemplates[$block] = [];
-                    }
-                    self::$_fileBlockTemplates[$block][] = self::$_databaseTemplates[$template]->id;
-                }
+                self::$_databaseTemplateIds[$newTemplate->id] = $newTemplate;
             }
         }
     }
@@ -522,6 +619,7 @@ class ThemeBuilder
                     $existingBlock->category_id = $blockData['category_id'];
                     $existingBlock->type = $blockData['type'];
                     $existingBlock->label = $blockData['label'];
+                    $existingBlock->order = self::$_fileBlocks[$block]['order'];
                     $existingBlock->save();
                 }
             } else {
@@ -551,7 +649,7 @@ class ThemeBuilder
                 $toAdd = [];
                 $toDelete = $databaseBlockTemplates;
 
-                $excludeTemplates = array_diff(self::$_databaseTemplateIds, $fileBlockTemplates);
+                $excludeTemplates = array_diff(array_keys(self::$_databaseTemplateIds), $fileBlockTemplates);
                 sort($excludeTemplates);
                 $excludeList = implode(',', $excludeTemplates);
                 $blockData['global_pages'] = !empty($blockData['global_pages']) ? 1 : 0;
@@ -589,13 +687,17 @@ class ThemeBuilder
 
             // Update TemplateBlocks
             if (!empty($toDelete)) {
-                TemplateBlock::where('block_id', '=', self::$_allBlocks[$block]->id)->whereIn('template_id', $toDelete)->delete();
+                $templateIds = [];
+                foreach ($toDelete as $template) {
+                    $templateIds[] = self::$_databaseTemplates[$template]->id;
+                }
+                TemplateBlock::where('block_id', '=', self::$_allBlocks[$block]->id)->whereIn('template_id', $templateIds)->delete();
             }
             if (!empty($toAdd)) {
-                foreach ($toAdd as $template_id) {
+                foreach ($toAdd as $template) {
                     $newTemplateBlock = new TemplateBlock;
                     $newTemplateBlock->block_id = self::$_allBlocks[$block]->id;
-                    $newTemplateBlock->template_id = $template_id;
+                    $newTemplateBlock->template_id =  self::$_databaseTemplates[$template]->id;
                     $newTemplateBlock->save();
                 }
             }
@@ -632,6 +734,8 @@ class ThemeBuilder
             return;
         }
 
+        $block_name = strtolower($block_name);
+
         if (in_array($block_name, self::$_repeaterTemplates)) {
             $currentRepeater = self::$_repeater;
             self::$_repeater = $block_name;
@@ -666,9 +770,6 @@ class ThemeBuilder
             $template = self::$_template;
         }
 
-        if (!isset(self::$_fileTemplateBlocks[$template])) {
-            self::$_fileTemplateBlocks[$template] = [];
-        }
         if (!in_array($block_name, self::$_fileTemplateBlocks[$template])) {
             self::$_fileTemplateBlocks[$template][] = $block_name;
         }
