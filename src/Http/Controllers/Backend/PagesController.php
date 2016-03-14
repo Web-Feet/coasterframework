@@ -2,7 +2,7 @@
 
 use CoasterCms\Helpers\View\FormMessage;
 use CoasterCms\Helpers\View\PaginatorRender;
-use CoasterCms\Libraries\BlockManager;
+use CoasterCms\Helpers\BlockManager;
 use CoasterCms\Libraries\Blocks\Datetime;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;

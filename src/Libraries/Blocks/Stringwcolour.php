@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Libraries\BlockManager;
+use CoasterCms\Helpers\BlockManager;
 use CoasterCms\Models\BlockSelectOption;
 use Illuminate\Support\Facades\Request;
 

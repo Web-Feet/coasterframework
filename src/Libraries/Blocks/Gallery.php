@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
 use CoasterCms\Helpers\GalleryUploadHandler;
-use CoasterCms\Libraries\BlockManager;
+use CoasterCms\Helpers\BlockManager;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;

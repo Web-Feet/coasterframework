@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
-use CoasterCms\Libraries\BlockManager;
+use CoasterCms\Helpers\BlockManager;
 use CoasterCms\Libraries\Builder\ThemeBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockBeacon;

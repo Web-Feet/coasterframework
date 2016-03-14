@@ -2,7 +2,7 @@
 
 use CoasterCms\Helpers\View\CmsBlockInput;
 use CoasterCms\Helpers\View\PaginatorRender;
-use CoasterCms\Libraries\BlockManager;
+use CoasterCms\Helpers\BlockManager;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockRepeater;

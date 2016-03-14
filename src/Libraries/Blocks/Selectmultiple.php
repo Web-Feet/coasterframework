@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Libraries\BlockManager;
+use CoasterCms\Helpers\BlockManager;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\PageBlock;

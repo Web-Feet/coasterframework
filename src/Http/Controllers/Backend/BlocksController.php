@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
-use CoasterCms\Libraries\BlockManager;
+use CoasterCms\Helpers\BlockManager;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\PageBlockDefault;
 use CoasterCms\Models\PageVersion;

@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Libraries\BlockManager;
+use CoasterCms\Helpers\BlockManager;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\URL;

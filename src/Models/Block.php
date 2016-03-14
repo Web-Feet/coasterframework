@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Models;
 
-use CoasterCms\Libraries\BlockManager;
+use CoasterCms\Helpers\BlockManager;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 
 class Block extends Eloquent
