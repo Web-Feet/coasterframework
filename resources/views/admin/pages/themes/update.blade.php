@@ -23,8 +23,8 @@
     Repeater blocks will also be highlighted yellow if blocks within the repeaters template change.
 </p>
 <p>
-    A block with the "site-wide content" option checked will appear in the site-wide content section of the admin.<br/>
-    A block with the "show in page" option checked will be created as a site-wide block and show on any page templates by default.<br />
+    A block with the "show in site-wide content" option checked will appear in the site-wide content section of the admin.<br/>
+    A block with the "show in pages" option checked will be created as a site-wide block and shown on any page templates.<br />
     If both options check the block will appear in both pages and site-wide content.
 </p>
 
@@ -47,7 +47,7 @@
             <th>Category/Tab</th>
             <th>Type</th>
             <th>Show in Site-wide Content</th>
-            <th>Show in Pages by Default</th>
+            <th>Show in Pages</th>
         </tr>
         </thead>
 
