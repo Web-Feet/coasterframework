@@ -728,7 +728,7 @@ class PagesController extends _Base
 
         // general page details
         $page_details->page_template = new \stdClass;
-        $page_details->page_template->options = Theme::get_template_list();
+        $page_details->page_template->options = Theme::get_template_list($template);
         $page_details->page_template->selected = $template;
         $page_details->page_template->hidden = !empty($templateData) ? $templateData->hidden : 0;
         $page_details->name = !empty($submitted_data['name']) ? $submitted_data['name'] : '';

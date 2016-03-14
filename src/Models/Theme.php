@@ -16,13 +16,25 @@ Class Theme extends Eloquent
         return $this->belongsToMany('CoasterCms\Models\Block', 'theme_blocks')->withPivot('show_in_pages', 'exclude_templates', 'show_in_global')->where('active', '=', 1)->orderBy('order', 'asc');
     }
 
-    public static function get_template_list()
+    public static function get_template_list($includeTemplate = 0)
     {
         $templates = array();
         $theme = self::find(config('coaster::frontend.theme'));
         if (!empty($theme)) {
             foreach ($theme->templates()->where('hidden', '=', 0)->get() as $template) {
                 $templates[$template->id] = !empty($template->label) ? $template->label : $template->template;
+                $templateFile[$template->template] = $template->id;
+            }
+        }
+        // fix template issues on theme switching
+        if (!empty($includeTemplate) && empty($templates[$includeTemplate])) {
+            $includeTemplateModel = Template::find($includeTemplate);
+            if (empty($includeTemplateModel)) {
+                $templates[$includeTemplate] = 'Non existent template';
+            } elseif (!empty($templateFile[$includeTemplateModel->template])) {
+                $templates[$includeTemplate] = $templates[$templateFile[$includeTemplateModel->template]].' (using closest match in current theme)';
+            } else {
+                $templates[$includeTemplate] = (!empty($includeTemplateModel->label) ? $includeTemplateModel->label : $includeTemplateModel->template).' (not found in current theme - frontend won\'t load)';
             }
         }
         asort($templates);

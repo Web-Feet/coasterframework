@@ -82,7 +82,7 @@ class SystemController extends _Base
                 case 'admin.default_template':
                     $custom = new \stdClass;
                     $custom->selected = $setting->value;
-                    $custom->options = Theme::get_template_list();
+                    $custom->options = Theme::get_template_list($setting->value);
                     break;
                 case 'frontend.language_fallback':
                 case 'frontend.strong_tags':
