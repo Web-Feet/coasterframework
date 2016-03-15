@@ -632,4 +632,12 @@ class PageBuilder
         return Repeater::load_repeater_data($block_name);
     }
 
+    public static function __callStatic($name, $arguments)
+    {
+        if (strpos($name, 'block_') === 0) {
+            return forward_static_call_array(['self', 'block'], $arguments);
+        }
+        return 'invalid function';
+    }
+
 }

@@ -23,6 +23,8 @@ class BlockManager
     public static $current_version = 0;
     public static $publish = false;
 
+    private static $_blockClasses;
+
     private static function get_model($page_id, $repeater_info = null)
     {
         // model depends on global or page content
@@ -247,26 +249,28 @@ class BlockManager
         }
     }
 
-    public static function getBlockClasses()
+    public static function getBlockClasses($reload = false)
     {
-        $paths = [
-            'CoasterCms\\Libraries\\Blocks\\' => base_path('vendor/web-feet/coasterframework/src/Libraries/Blocks'),
-            'App\\' => base_path('app/Blocks')
-        ];
+        if (!isset(self::$_blockClasses) || $reload) {
+            $paths = [
+                'CoasterCms\\Libraries\\Blocks\\' => base_path('vendor/web-feet/coasterframework/src/Libraries/Blocks'),
+                'App\\' => base_path('app/Blocks')
+            ];
 
-        $blockClasses = [];
-        foreach ($paths as $classPath => $dirPath) {
-            if (is_dir($dirPath)) {
-                foreach (scandir($dirPath) as $file) {
-                    $className = explode('.', $file)[0];
-                    if (!empty($className) && $className != '_Base') {
-                        $blockClasses[trim(strtolower($className), '_')] = $classPath . $className;
+            self::$_blockClasses = [];
+            foreach ($paths as $classPath => $dirPath) {
+                if (is_dir($dirPath)) {
+                    foreach (scandir($dirPath) as $file) {
+                        $className = explode('.', $file)[0];
+                        if (!empty($className) && $className != '_Base') {
+                            self::$_blockClasses[trim(strtolower($className), '_')] = $classPath . $className;
+                        }
                     }
                 }
             }
         }
 
-        return $blockClasses;
+        return self::$_blockClasses;
     }
 
     public static function get_data_for_version($table_name, $version, $filter_on = array(), $filter_values = array(), $order_by = null)

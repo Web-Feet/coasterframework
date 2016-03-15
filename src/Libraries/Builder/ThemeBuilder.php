@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Libraries\Builder;
 
+use CoasterCms\Helpers\BlockManager;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\BlockRepeater;
@@ -779,10 +780,24 @@ class ThemeBuilder
 
     public static function __callStatic($name, $arguments)
     {
+        if (strpos($name, 'block_') === 0) {
+            $validTypes = BlockManager::getBlockClasses();
+            $blockType = strtolower(substr($name, 6));
+            if (!empty($validTypes[$blockType])) {
+                $blockName = $arguments[0];
+                if (!isset(self::$_blockSettings[$blockName])) {
+                    self::$_blockSettings[$blockName] = [];
+                }
+                if (!isset(self::$_blockSettings[$arguments[0]]['type'])) {
+                    self::$_blockSettings[$blockName]['type'] = $blockType;
+                }
+                return forward_static_call_array(['self', 'block'], $arguments);
+            }
+        }
         try {
-            return forward_static_call_array(array('\CoasterCms\Libraries\Builder\PageBuilder', $name), $arguments);
+            return forward_static_call_array(['\CoasterCms\Libraries\Builder\PageBuilder', $name], $arguments);
         } catch (\Exception $e) {
-
+            return '';
         }
     }
 
