@@ -18,6 +18,7 @@ class ThemeBuilder
     public static $theme;
     public static $page_info;
     public static $preview = false;
+    public static $page_levels = [];
 
     // current settings
     private static $_theme;
@@ -650,7 +651,13 @@ class ThemeBuilder
                 $toAdd = [];
                 $toDelete = $databaseBlockTemplates;
 
-                $excludeTemplates = array_diff(array_keys(self::$_databaseTemplateIds), $fileBlockTemplates);
+                $fileBlockTemplatesIds = [];
+                foreach ($fileBlockTemplates as $fileBlockTemplate) {
+                    $fileBlockTemplatesIds[] = self::$_databaseTemplates[$fileBlockTemplate]->id;
+                }
+
+                $excludeTemplates = array_diff(array_keys(self::$_databaseTemplateIds), $fileBlockTemplatesIds);
+
                 sort($excludeTemplates);
                 $excludeList = implode(',', $excludeTemplates);
                 $blockData['global_pages'] = !empty($blockData['global_pages']) ? 1 : 0;
@@ -680,6 +687,7 @@ class ThemeBuilder
                 // Delete from theme blocks if no longer a theme block
                 if (!empty(self::$_databaseGlobalBlocks[$block])) {
                     ThemeBlock::where('block_id', '=', self::$_allBlocks[$block]->id)->where('theme_id', '=', self::$_theme->id)->delete();
+                    $databaseBlockTemplates = [];
                 }
 
                 $toAdd = array_diff($fileBlockTemplates, $databaseBlockTemplates);
@@ -698,7 +706,7 @@ class ThemeBuilder
                 foreach ($toAdd as $template) {
                     $newTemplateBlock = new TemplateBlock;
                     $newTemplateBlock->block_id = self::$_allBlocks[$block]->id;
-                    $newTemplateBlock->template_id =  self::$_databaseTemplates[$template]->id;
+                    $newTemplateBlock->template_id = self::$_databaseTemplates[$template]->id;
                     $newTemplateBlock->save();
                 }
             }
