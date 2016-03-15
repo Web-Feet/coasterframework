@@ -75,4 +75,49 @@ Class Theme extends Eloquent
         return $array;
     }
 
+    public static function activate($themeName)
+    {
+        $theme = self::where('theme', '=', $themeName)->first();
+        if (!empty($theme)) {
+            Setting::where('name', '=', 'frontend.theme')->update(['value' => $theme->id]);
+            return 1;
+        }
+        return 0;
+    }
+
+    public static function remove($themeName)
+    {
+        $theme = self::where('theme', '=', $themeName)->first();
+        if (!empty($theme) && $theme->id == config('coaster::frontend.theme')) {
+            return 0;
+        }
+        if (!empty($theme)) {
+            $templates = Template::where('theme_id', '=', $theme->id)->get();
+            if (!$templates->isEmpty()) {
+                $templateIds = [];
+                foreach ($templates as $template) {
+                    $templateIds[] = $template->id;
+                }
+                TemplateBlock::whereIn('template_id', $templateIds)->delete();
+            }
+            ThemeBlock::where('theme_id', '=', $theme->id)->delete();
+            $theme->delete();
+        }
+        if (is_dir(base_path() . '/resources/views/themes/' . $themeName)) {
+            self::_removeDirectory(base_path() . '/resources/views/themes/' . $themeName);
+        }
+        if (is_dir(base_path() . '/public/themes/' . $themeName)) {
+            self::_removeDirectory(base_path() . '/public/themes/' . $themeName);
+        }
+        return 1;
+    }
+
+    private static function _removeDirectory($dir)
+    {
+        foreach(glob($dir . '/*') as $file) {
+            if(is_dir($file)) self::_removeDirectory($file); else unlink($file);
+        }
+        rmdir($dir);
+    }
+
 }

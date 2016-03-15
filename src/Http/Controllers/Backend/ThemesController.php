@@ -10,6 +10,7 @@ use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\Theme;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\View;
 
 class ThemesController extends _Base
@@ -27,12 +28,9 @@ class ThemesController extends _Base
 
             foreach (scandir($themesPath) as $themeFolder) {
                 if (is_dir($themesPath . '/' . $themeFolder) && strpos($themeFolder, '.') !== 0) {
-                    if (!isset($databaseThemes[$themeFolder])) {
-                        $databaseThemes[$themeFolder] = new Theme;
-                        $databaseThemes[$themeFolder]->theme = $themeFolder;
-                        $databaseThemes[$themeFolder]->save();
+                    if (isset($databaseThemes[$themeFolder])) {
+                        $themes[$databaseThemes[$themeFolder]->id] = $databaseThemes[$themeFolder]->theme;
                     }
-                    $themes[$databaseThemes[$themeFolder]->id] = $databaseThemes[$themeFolder]->theme;
                 }
             }
         }
@@ -46,6 +44,56 @@ class ThemesController extends _Base
         }
 
         $this->layout->content = View::make('coaster::pages.themes', ['themes' => $themes, 'blockSettings' => $blockSettings]);
+    }
+
+    public function getManage()
+    {
+        $this->layout->content = View::make('coaster::pages.themes.manage', ['error' => '', 'themes_count' => Theme::count(), 'themes_installed' => ThemeBuilder::installThumbs()]);
+        $this->layout->modals = View::make('coaster::modals.themes.delete_theme');
+    }
+
+    public function postManage()
+    {
+        $request = Request::all();
+
+        if (!empty($request['activate'])) {
+            return Theme::activate($request['theme']);
+        }
+
+        if (!empty($request['remove'])) {
+            return Theme::remove($request['theme']);
+        }
+
+        if ($request['newTheme']) {
+            $file = Request::file('newTheme');
+            $validator = Validator::make(['theme' => $request['newTheme']], ['theme' => 'required']);
+            if (!$validator->fails() && $file->getClientOriginalExtension() == 'zip') {
+                $uploadTo = base_path() . '/resources/views/themes/';
+                if (!is_dir($uploadTo . $file->getClientOriginalName())) {
+                    $file->move($uploadTo, $file->getClientOriginalName());
+                    $zip = new \ZipArchive;
+                    if ($zip->open($uploadTo . $file->getClientOriginalName()) === true) {
+                        $filePathInfo = pathinfo($file->getClientOriginalName());
+                        mkdir($uploadTo . $filePathInfo['filename']);
+                        $zip->extractTo($uploadTo . $filePathInfo['filename'] . '/');
+                        $zip->close();
+                        return redirect(config('coaster::admin.url') . '/themes/manage')->send();
+                    } else {
+                        $error = 'Error uploading zip file, file may bigger than the server upload limit.';
+                    }
+                } else {
+                    $error = 'Theme with the same name already exists';
+                }
+            } else {
+                $error = 'Uploaded theme must be a zip file.';
+            }
+            $this->layout->content = View::make('coaster::pages.themes.manage', ['error' => $error, 'themes_count' => Theme::count(), 'themes_installed' => ThemeBuilder::installThumbs()]);
+            $this->layout->modals = View::make('coaster::modals.themes.delete_theme');
+        }
+
+        if (!empty($request['install'])) {
+            return Theme::install($request['theme']);
+        }
     }
 
     public function getBeacons()

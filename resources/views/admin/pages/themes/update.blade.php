@@ -1,5 +1,3 @@
-<?php //AssetBuilder::setStatus('jquery-ui', true); ?>
-
 <h1>Theme Blocks - {{ $theme }}</h1>
 
 @if (isset($saved))

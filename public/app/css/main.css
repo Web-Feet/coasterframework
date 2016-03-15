@@ -315,3 +315,20 @@ input[type=checkbox].form-control {width: 25px;margin: 0; box-shadow: none;}
 .select2 {margin-bottom: 5px;}
 
 .repeater-table td.repeater-action {padding:8px 2px;}
+
+.installThumbs .btn {padding: 10px 20px;}
+
+.fileinput-nice {
+    position: relative;
+    overflow: hidden;
+}
+.fileinput-nice .glyphicon {
+    color: white;
+}
+.fileinput-nice input {
+    position: absolute;
+    opacity: 0;
+    filter: alpha(opacity=0);
+    transform: translate(-300px, 0) scale(4);
+    cursor: pointer;
+}

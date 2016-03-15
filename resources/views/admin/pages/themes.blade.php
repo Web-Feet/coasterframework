@@ -1,6 +1,12 @@
 <h1>Themes</h1>
 <br/>
 
+<h2>Manage Installed Themes</h2>
+
+<p>View installed themes or upload new ones <a href="{{ URL::to(config('coaster::admin.url').'/themes/manage') }}">here</a>.</p>
+
+<h2>Update Existing Themes</h2>
+
 <p>Update template blocks for a particular theme (may take a few seconds to process files):</p>
 <div class="form-horizontal">
     <div class="form-inline">
@@ -12,7 +18,7 @@
 
 @if (!empty($blockSettings))
 
-    <br /><br />
+    <br />
 
     <h2>Block Settings</h2>
 

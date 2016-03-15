@@ -809,4 +809,41 @@ class ThemeBuilder
         }
     }
 
+    /*
+     * Install Functions
+     */
+
+    public static function installThumbs()
+    {
+        $thumbs = [];
+
+        $themesPath = base_path('resources/views/themes');
+        if (is_dir($themesPath)) {
+            foreach (Theme::all() as $databaseTheme) {
+                $databaseThemes[$databaseTheme->theme] = $databaseTheme;
+            }
+            foreach (scandir($themesPath) as $themeFolder) {
+                if (is_dir($themesPath . '/' . $themeFolder) && strpos($themeFolder, '.') !== 0) {
+                    $theme = new \stdClass;
+                    $theme->name = $themeFolder;
+                    $theme->image = 'http://www.placehold.it/300x250/EFEFEF/AAAAAA&text=no+image';
+                    if (isset($databaseThemes[$themeFolder])) {
+                        if ($databaseThemes[$themeFolder]->id != config('coaster::frontend.theme')) {
+                            $theme->activate = 1;
+                            $theme->delete = 1;
+                        } else {
+                            $theme->active = 1;
+                        }
+                    } else {
+                        $theme->install = 1;
+                        $theme->delete = 1;
+                    }
+                    $thumbs[] = $theme;
+                }
+            }
+        }
+
+        return View::make('coaster::partials.themes.thumbs', ['thumbs' => $thumbs]);
+    }
+
 }

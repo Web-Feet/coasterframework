@@ -22,6 +22,10 @@ function nth(d) {
     }
 }
 
+function jq(myid) {
+    return "#" + myid.replace( /(:|\.|\[|\]|,)/g, "\\$1" );
+}
+
 function get_url() {
     var pathArray = window.location.href.split('/');
     return pathArray[0] + '//' + pathArray[2] + '/';
