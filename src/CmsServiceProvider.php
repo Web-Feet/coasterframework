@@ -45,6 +45,11 @@ class CmsServiceProvider extends ServiceProvider
                 $router = $this->app['router'];
                 $router->middleware('admin', \CoasterCms\Http\MiddleWare\AdminAuth::class);
                 $router->middleware('guest', \CoasterCms\Http\MiddleWare\GuestAuth::class);
+                try {
+                    include app_path() . '/Http/routes.php';
+                } catch (\Exception $e) {
+
+                }
                 include __DIR__ . '/Http/routes.php';
             }
         } else {
