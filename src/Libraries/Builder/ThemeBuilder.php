@@ -664,7 +664,7 @@ class ThemeBuilder
                 $blockData['global_site'] = !empty($blockData['global_site']) ? 1 : 0;
 
                 // Insert or Update ThemeBlock
-                if (empty(self::$_databaseBlocks[$block])) {
+                if (empty(self::$_databaseGlobalBlocks[$block])) {
                     $newThemeBlock = new ThemeBlock;
                     $newThemeBlock->theme_id = self::$_theme->id;
                     $newThemeBlock->block_id = self::$_allBlocks[$block]->id;
