@@ -11,7 +11,7 @@ class PageLang extends Eloquent
 
     public function page()
     {
-        return $this->hasOne('CoasterCms\Page', 'id');
+        return $this->hasOne('CoasterCms\Models\Page', 'id');
     }
 
     public static function restore($obj)
