@@ -1,9 +1,16 @@
 <h1>Themes</h1>
 <br/>
 
-<h2>Manage Installed Themes</h2>
+<h2>Manage Themes</h2>
 
-<p>View installed themes or upload new ones <a href="{{ URL::to(config('coaster::admin.url').'/themes/manage') }}">here</a>.</p>
+<p>View all uploaded themes. Can upload, install, activate and delete them here.</p>
+<div class="form-horizontal">
+    <div class="form-inline">
+        <a href="{{ URL::to(config('coaster::admin.url').'/themes/manage') }}" class="btn btn-warning"><i class="fa fa-tint"></i> &nbsp; Manage Themes</a>
+    </div>
+</div>
+
+<br />
 
 <h2>Update Existing Themes</h2>
 

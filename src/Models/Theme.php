@@ -1,6 +1,8 @@
 <?php namespace CoasterCms\Models;
 
 use Illuminate\Database\Eloquent\Model as Eloquent;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Validator;
 
 Class Theme extends Eloquent
 {
@@ -75,6 +77,65 @@ Class Theme extends Eloquent
         return $array;
     }
 
+    public static function upload($newTheme)
+    {
+        $error = '';
+        $file = Request::file('newTheme');
+        $validator = Validator::make(['theme' => $newTheme], ['theme' => 'required']);
+        if (!$validator->fails() && $file->getClientOriginalExtension() == 'zip') {
+            $filePathInfo = pathinfo($file->getClientOriginalName());
+            $uploadTo = base_path() . '/resources/views/themes/';
+            $themeDir = $uploadTo . str_replace('.', '_', $filePathInfo['filename']);
+            if (!is_dir($themeDir)) {
+                $file->move($uploadTo, $file->getClientOriginalName());
+                $zip = new \ZipArchive;
+                if ($zip->open($uploadTo . $file->getClientOriginalName()) === true) {
+                    $extractItems = [];
+                    for($i = 0; $i < $zip->numFiles; $i++) {
+                        if (strpos($zip->getNameIndex($i), $filePathInfo['filename'].'/') === 0) {
+                            $extractItems[] = $zip->getNameIndex($i);
+                        }
+                    }
+                    if (!empty($extractItems)) {
+                        $zip->extractTo($uploadTo, $extractItems);
+                        if (($uploadTo . $filePathInfo['filename']) != $themeDir) {
+                            self::_copyDirectory($uploadTo . $filePathInfo['filename'], $themeDir);
+                            self::_removeDirectory($uploadTo . $filePathInfo['filename']);
+                        }
+                    } else {
+                        $zip->extractTo($themeDir);
+                    }
+                    $zip->close();
+                    unlink($uploadTo . $file->getClientOriginalName());
+                } else {
+                    $error = 'Error uploading zip file, file may bigger than the server upload limit.';
+                }
+            } else {
+                $error = 'Theme with the same name already exists';
+            }
+        } else {
+            $error = 'Uploaded theme must be a zip file.';
+        }
+        return $error;
+    }
+
+    public static function install($themeName)
+    {
+        $themePath = base_path() . '/resources/views/themes/'.$themeName;
+        $theme = self::where('theme', '=', $themeName)->first();
+        if (empty($theme) && is_dir($themePath) && is_dir($themePath.'/views')) {
+            self::_copyDirectory($themePath.'/public', public_path().'/themes/'.$themeName);
+            self::_removeDirectory($themePath.'/public');
+            self::_copyDirectory($themePath.'/views', $themePath);
+            self::_removeDirectory($themePath.'/views');
+            $newTheme = new self;
+            $newTheme->theme = $themeName;
+            $newTheme->save();
+            return $newTheme->id;
+        }
+        return 0;
+    }
+
     public static function activate($themeName)
     {
         $theme = self::where('theme', '=', $themeName)->first();
@@ -114,10 +175,27 @@ Class Theme extends Eloquent
 
     private static function _removeDirectory($dir)
     {
-        foreach(glob($dir . '/*') as $file) {
-            if(is_dir($file)) self::_removeDirectory($file); else unlink($file);
+        foreach(scandir($dir) as $file) {
+            if (in_array($file, ['.', '..'])) continue;
+            $fileFullPath = $dir.DIRECTORY_SEPARATOR.$file;
+            if (is_dir($fileFullPath)) self::_removeDirectory($fileFullPath); else unlink($fileFullPath);
         }
         rmdir($dir);
+    }
+
+    private static function _copyDirectory($srcDir, $dstDir) {
+        $dir = opendir($srcDir);
+        @mkdir($dstDir);
+        while(($file = readdir($dir)) !== false) {
+            if (!in_array($file, ['.', '..'])) {
+                if (is_dir($srcDir . '/' . $file)) {
+                    self::_copyDirectory($srcDir.'/'.$file, $dstDir.'/'.$file);
+                } else {
+                    copy($srcDir.'/'.$file, $dstDir.'/'.$file);
+                }
+            }
+        }
+        closedir($dir);
     }
 
 }

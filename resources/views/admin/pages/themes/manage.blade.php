@@ -35,6 +35,23 @@
                     }
                 });
             });
+            $('.installTheme').click(function () {
+                themeSelected = $(this).data('theme');
+                $.ajax({
+                    url: get_admin_url() + 'themes/manage',
+                    type: 'POST',
+                    data: {
+                        theme: themeSelected,
+                        install: 1
+                    },
+                    success: function (r) {
+                        r = parseInt(r);
+                        if (r != 0) {
+                            window.location.href = get_admin_url() + 'themes/update/' + r;
+                        }
+                    }
+                });
+            });
             $('.deleteTheme').click(function () {
                 themeSelected = $(this).data('theme');
                 $('#deleteTheme').modal('show');
