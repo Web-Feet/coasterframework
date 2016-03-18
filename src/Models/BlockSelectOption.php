@@ -1,8 +1,6 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-
-Class BlockSelectOption extends Eloquent
+Class BlockSelectOption extends _BaseEloquent
 {
     protected $table = 'block_selectopts';
 

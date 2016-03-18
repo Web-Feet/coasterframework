@@ -12,7 +12,6 @@ use CoasterCms\Models\PageBlockRepeaterData;
 use CoasterCms\Models\PageSearchData;
 use CoasterCms\Models\PageVersion;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\View;
 
@@ -196,7 +195,7 @@ class Repeater extends _Base
             // search text update
             if (!empty(BlockManager::$publish) && !empty($page_id)) {
                 $repeater_block_ids = Block::get_repeater_blocks();
-                $repeater_page_blocks = BlockManager::get_data_for_version(DB::getTablePrefix() . (new PageBlock)->getTable(), BlockManager::$to_version, array('page_id', 'block_id', 'language_id'), array($page_id, $repeater_block_ids, Language::current()));
+                $repeater_page_blocks = BlockManager::get_data_for_version(new PageBlock, BlockManager::$to_version, array('page_id', 'block_id', 'language_id'), array($page_id, $repeater_block_ids, Language::current()));
                 foreach ($repeater_page_blocks as $repeater_page_block) {
                     $search_text = self::search_text($repeater_page_block->content, BlockManager::$to_version);
                     PageSearchData::update_processed_text($repeater_page_block->block_id, $search_text, $repeater_page_block->page_id, Language::current());

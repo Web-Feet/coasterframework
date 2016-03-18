@@ -16,12 +16,12 @@
             </button> &nbsp;
         @endif
         @if($preview)
-            <a href="{{ PageBuilder::page_url($page_details->id).'?preview='.$preview }}" class="btn btn-warning"
+            <a href="{{ trim($base_url.PageBuilder::page_url($page_details->id), '/').'?preview='.$preview }}" class="btn btn-warning"
                target="_blank">
                 <i class="fa fa-eye"></i> &nbsp; Preview
             </a>
         @else
-            <a href="{{ $page_details->full_url }}" class="btn btn-warning" target="_blank">
+            <a href="{{ trim($base_url.$page_details->full_url, '/') }}" class="btn btn-warning" target="_blank">
                 <i class="fa fa-eye"></i> &nbsp; View Live Page
             </a>
         @endif

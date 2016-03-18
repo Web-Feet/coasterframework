@@ -1,8 +1,6 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-
-class AdminMenu extends Eloquent
+class AdminMenu extends _BaseEloquent
 {
 
     protected $table = 'admin_menu';

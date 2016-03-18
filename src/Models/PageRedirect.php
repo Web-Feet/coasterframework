@@ -1,8 +1,6 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-
-class PageRedirect extends Eloquent
+class PageRedirect extends _BaseEloquent
 {
 
     protected $table = 'page_redirects';

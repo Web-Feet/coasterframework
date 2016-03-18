@@ -1,8 +1,6 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-
-Class BlockVideoCache extends Eloquent
+Class BlockVideoCache extends _BaseEloquent
 {
     protected $table = 'block_video_cache';
 

@@ -1,11 +1,10 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
 
-class PagePublishRequests extends Eloquent
+class PagePublishRequests extends _BaseEloquent
 {
 
     protected $table = 'page_publish_requests';

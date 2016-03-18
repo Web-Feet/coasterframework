@@ -1,11 +1,10 @@
 <?php namespace CoasterCms\Models;
 
 use CoasterCms\Helpers\View\FormMessage;
-use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 
-Class BlockBeacon extends Eloquent
+Class BlockBeacon extends _BaseEloquent
 {
     protected $table = 'block_beacons';
 

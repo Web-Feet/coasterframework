@@ -1,9 +1,8 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Support\Facades\Auth;
 
-class AdminLog extends Eloquent
+class AdminLog extends _BaseEloquent
 {
 
     protected $table = 'admin_logs';

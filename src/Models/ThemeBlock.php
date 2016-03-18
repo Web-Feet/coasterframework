@@ -1,8 +1,6 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-
-class ThemeBlock extends Eloquent
+class ThemeBlock extends _BaseEloquent
 {
 
     protected $table = 'theme_blocks';

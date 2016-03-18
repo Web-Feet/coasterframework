@@ -1,9 +1,10 @@
 <?php namespace CoasterCms\Providers;
 
+use CoasterCms\Helpers\InstallCheck;
 use CoasterCms\Models\Setting;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class CmsSettingsProvider extends ServiceProvider
@@ -23,9 +24,25 @@ class CmsSettingsProvider extends ServiceProvider
      */
     public function boot()
     {
+        for ($i=1; $i<100 ;$i++) {
+            $url = getenv('MULTI_SITE_'.$i.'_URL');
+            if (!$url) break;
+            if (strpos(URL::to('/'), trim(getenv('MULTI_SITE_'.$i.'_URL'), '/')) === 0) {
+                if ($site = getenv('MULTI_SITE_'.$i.'_DB_PREFIX')) {
+                    config(['database.connections.' . config('database.default') . '.prefix' => getenv('MULTI_SITE_' . $i . '_DB_PREFIX')]);
+                    InstallCheck::setSite($site);
+                }
+
+            }
+        }
+
+        if(!empty($_COOKIE['db_prefix'])) {
+            config(['database.connections.' . config('database.default') . '.prefix' => $_COOKIE['db_prefix']]);
+        }
+
         $db = false;
 
-        if (Storage::exists('install.txt') && strpos(Storage::get('install.txt'), 'complete') !== false) {
+        if (InstallCheck::isComplete()) {
             $this->app['config']['coaster::installed'] = 1;
             try {
                 if (Schema::hasTable('settings')) {
@@ -38,8 +55,8 @@ class CmsSettingsProvider extends ServiceProvider
             }
         } else {
             $this->app['config']['coaster::installed'] = 0;
-            if (!Storage::exists('install.txt')) {
-                Storage::put('install.txt', 'set-env');
+            if (!InstallCheck::getStatus()) {
+                InstallCheck::setStatus('set-env');
             }
         }
 

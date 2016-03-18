@@ -1,9 +1,8 @@
 <?php namespace CoasterCms\Models;
 
 use CoasterCms\Helpers\BlockManager;
-use Illuminate\Database\Eloquent\Model as Eloquent;
 
-class Block extends Eloquent
+class Block extends _BaseEloquent
 {
     protected $table = 'blocks';
     private static $preloaded_blocks = array();

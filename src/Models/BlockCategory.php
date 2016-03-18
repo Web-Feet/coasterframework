@@ -1,8 +1,6 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-
-class BlockCategory extends Eloquent
+class BlockCategory extends _BaseEloquent
 {
 
     protected $table = 'block_category';

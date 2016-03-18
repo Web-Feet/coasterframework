@@ -1,9 +1,8 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Support\Facades\Session;
 
-class Language extends Eloquent
+class Language extends _BaseEloquent
 {
 
     protected $table = 'languages';

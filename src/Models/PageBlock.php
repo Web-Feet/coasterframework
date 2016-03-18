@@ -1,10 +1,9 @@
 <?php namespace CoasterCms\Models;
 
 use CoasterCms\Helpers\BlockManager;
-use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Support\Facades\DB;
 
-class PageBlock extends Eloquent
+class PageBlock extends _BaseEloquent
 {
 
     protected $table = 'page_blocks';
@@ -89,8 +88,7 @@ class PageBlock extends Eloquent
         }
         if (!isset(self::$page_blocks[$version][$page_id])) {
             self::$page_blocks[$version][$page_id] = [];
-            $table_name = DB::getTablePrefix() . (new self)->getTable();
-            $page_blocks = BlockManager::get_data_for_version($table_name, $version, array('page_id'), array($page_id), 'block_id');
+            $page_blocks = BlockManager::get_data_for_version(new self, $version, array('page_id'), array($page_id), 'block_id');
             if (!empty($page_blocks)) {
                 foreach ($page_blocks as $page_block) {
                     if (!isset(self::$page_blocks[$version][$page_block->page_id][$page_block->block_id])) {
@@ -109,8 +107,7 @@ class PageBlock extends Eloquent
         }
         if (!isset(self::$block[$version][$block_id])) {
             self::$block[$version][$block_id] = true;
-            $table_name = DB::getTablePrefix() . (new self)->getTable();
-            $page_blocks = BlockManager::get_data_for_version($table_name, $version, array('block_id'), array($block_id), 'page_id');
+            $page_blocks = BlockManager::get_data_for_version(new self, $version, array('block_id'), array($block_id), 'page_id');
             if (!empty($page_blocks)) {
                 foreach ($page_blocks as $page_block) {
                     if (!isset(self::$page_blocks[$version][$page_block->page_id])) {
@@ -128,7 +125,7 @@ class PageBlock extends Eloquent
     public static function page_blocks_on_live_page_versions($block_id)
     {
         return BlockManager::get_data_for_version(
-            DB::getTablePrefix() . (new PageBlock)->getTable(),
+            new self,
             -1,
             array('block_id', 'language_id'),
             array($block_id, Language::current()),

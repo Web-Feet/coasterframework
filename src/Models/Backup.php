@@ -1,8 +1,6 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-
-class Backup extends Eloquent
+class Backup extends _BaseEloquent
 {
     protected $table = 'backups';
 

@@ -1,8 +1,6 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-
-class BlockFormRule extends Eloquent
+class BlockFormRule extends _BaseEloquent
 {
 
     protected $table = 'block_form_rules';

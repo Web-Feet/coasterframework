@@ -1,8 +1,6 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-
-class PageSearchLog extends Eloquent
+class PageSearchLog extends _BaseEloquent
 {
 
     protected $table = 'page_search_log';

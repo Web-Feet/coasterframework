@@ -44,6 +44,20 @@ class _Base extends Controller
         if (Auth::admin()) {
             $this->user = Auth::user();
 
+            $siteSelect = new \stdClass;
+            $siteSelect->selected = config('database.connections.'.config('database.default').'.prefix');
+            $siteSelect->options = [];
+            for ($i=1; $i<100 ;$i++) {
+                $url = getenv('MULTI_SITE_'.$i.'_URL');
+                if (!$url) break;
+                $siteSelect->options[getenv('MULTI_SITE_' . $i . '_DB_PREFIX')] = getenv('MULTI_SITE_'.$i.'_URL');
+            }
+
+            if (!empty($siteSelect->options)) {
+                $this->layoutData['sites'] = $siteSelect;
+                $this->layoutData['system_menu']['Open Frontend'] = $siteSelect->options[$siteSelect->selected];
+            }
+
             if (Language::count() > 1) {
                 $page_lang = Language::find(Language::current());
                 $this->layoutData['system_menu_icons']['Language: '.$page_lang->language] = 'fa fa-language';

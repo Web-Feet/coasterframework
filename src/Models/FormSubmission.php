@@ -1,8 +1,6 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-
-class FormSubmission extends Eloquent
+class FormSubmission extends _BaseEloquent
 {
     protected $table = 'form_submissions';
 

@@ -1,10 +1,9 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Validator;
 
-Class Theme extends Eloquent
+Class Theme extends _BaseEloquent
 {
     protected $table = 'themes';
 

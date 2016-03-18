@@ -1,8 +1,6 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-
-class PageLang extends Eloquent
+class PageLang extends _BaseEloquent
 {
 
     protected $table = 'page_lang';

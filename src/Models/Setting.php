@@ -1,10 +1,9 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 
-Class Setting extends Eloquent
+Class Setting extends _BaseEloquent
 {
     protected $table = 'settings';
     public static $settings = array();

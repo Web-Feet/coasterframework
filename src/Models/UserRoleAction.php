@@ -1,8 +1,6 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-
-class UserRoleAction extends Eloquent
+class UserRoleAction extends _BaseEloquent
 {
 
     protected $table = 'user_roles_actions';

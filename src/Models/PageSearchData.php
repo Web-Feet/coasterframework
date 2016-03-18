@@ -1,10 +1,8 @@
 <?php namespace CoasterCms\Models;
 
 use CoasterCms\Helpers\BlockManager;
-use Illuminate\Database\Eloquent\Model as Eloquent;
-use Illuminate\Support\Facades\DB;
 
-class PageSearchData extends Eloquent
+class PageSearchData extends _BaseEloquent
 {
 
     protected $table = 'page_search_data';
@@ -62,7 +60,7 @@ class PageSearchData extends Eloquent
         foreach ($page_langs as $page_lang) {
             self::update_processed_text(0, strip_tags($page_lang->name), $page_lang->page_id, $page_lang->language_id);
 
-            $page_blocks = BlockManager::get_data_for_version(DB::getTablePrefix() . (new PageBlock)->getTable(), $page_lang->live_version, array('language_id', 'page_id',), array($page_lang->language_id, $page_lang->page_id));
+            $page_blocks = BlockManager::get_data_for_version(new PageBlock, $page_lang->live_version, array('language_id', 'page_id',), array($page_lang->language_id, $page_lang->page_id));
             if (!empty($page_blocks)) {
                 foreach ($page_blocks as $page_block) {
                     self::update_text($page_block->block_id, $page_block->content, $page_block->page_id, $page_block->language_id, $page_lang->live_version);

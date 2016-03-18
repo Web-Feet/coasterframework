@@ -1,8 +1,6 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-
-class PageGroupAttribute extends Eloquent
+class PageGroupAttribute extends _BaseEloquent
 {
 
     protected $table = 'page_group_attributes';

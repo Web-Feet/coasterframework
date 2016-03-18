@@ -1,12 +1,13 @@
 <?php namespace CoasterCms\Http\Controllers\Frontend;
 
+use CoasterCms\Helpers\InstallCheck;
 use CoasterCms\Helpers\View\FormMessage;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\View;
 
@@ -66,18 +67,19 @@ class InstallController extends Controller
             'DB_PASSWORD' => $details['password']
         ];
 
-        $envFile = file_get_contents(base_path('.env'));
-        $dotenv = new \Dotenv\Dotenv(base_path()); // Laravel 5.2
-        foreach ($dotenv->load() as $env) {
-            $envParts = explode('=', $env);
-            if (key_exists($envParts[0], $updateEnv)) {
-                $envFile = str_replace($env, $envParts[0].'='.$updateEnv[$envParts[0]], $envFile);
+        if (!InstallCheck::getSite()) {
+            $envFile = file_get_contents(base_path('.env'));
+            $dotenv = new \Dotenv\Dotenv(base_path());
+            foreach ($dotenv->load() as $env) {
+                $envParts = explode('=', $env);
+                if (key_exists($envParts[0], $updateEnv)) {
+                    $envFile = str_replace($env, $envParts[0].'='.$updateEnv[$envParts[0]], $envFile);
+                }
             }
+            file_put_contents(base_path('.env'), $envFile);
         }
 
-        file_put_contents(base_path('.env'), $envFile);
-
-        Storage::put('install.txt', 'add-tables');
+        InstallCheck::setStatus('add-tables');
 
         return redirect('install/database')->send();
 
@@ -89,9 +91,17 @@ class InstallController extends Controller
             return redirect($redirect)->send();
         }
 
-        Artisan::call('migrate', ['--path' => '/vendor/web-feet/coasterframework/database/migrations']);
+        if (!Schema::hasTable('migrations')) {
+            Schema::table('migrations', function ($table) {
+                $table->create();
+                $table->string('migration');
+                $table->integer('batch');
+            });
+        }
 
-        Storage::put('install.txt', 'add-user');
+        app('migrator')->run(base_path().'/vendor/web-feet/coasterframework/database/migrations');
+
+        InstallCheck::setStatus('add-user');
 
         return redirect('install/admin')->send();
     }
@@ -139,7 +149,7 @@ class InstallController extends Controller
             )
         );
 
-        Storage::put('install.txt', 'complete-welcome');
+        InstallCheck::setStatus('complete-welcome');
 
         View::make('coaster::asset_builder.main')->render();
 
@@ -155,7 +165,7 @@ class InstallController extends Controller
 
     private function _checkRedirect($current = null)
     {
-        switch (Storage::get('install.txt')) {
+        switch (InstallCheck::getStatus()) {
             case 'set-env':
                 $redirect = 'install';
                 break;

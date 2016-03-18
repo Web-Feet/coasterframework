@@ -28,6 +28,7 @@
                 <span class="icon-bar"></span>
             </button>
             <a class="logo" href="#"><img src="{{ URL::to(config('coaster::admin.public')) }}/app/img/logo.png" alt="Coaster CMS"/></a>
+            {!! isset($sites)?"&nbsp; Managing Site: ".Form::select('switchSite', $sites->options, $sites->selected, ['id' => 'switchSite']):'' !!}
         </div>
         <div id="navbar" class="navbar-collapse collapse">
             <?php $system_menu_icons += ['Logout' => 'fa fa-sign-out', 'Login' => 'fa fa-lock', 'Help' => 'fa fa-life-ring', 'My Account' => 'fa fa-lock', 'System Settings' => 'fa fa-cog', 'Open Frontend' => 'fa fa-tv'] ?>
@@ -89,12 +90,21 @@
 {!! AssetBuilder::scripts() !!}
 @yield('scripts')
 @if (!empty($alert))
+    <script type="text/javascript">
+        $(document).ready(function () {
+            cms_alert('{!! $alert->type !!}', '{!! $alert->header !!}', '{!! $alert->content !!}');
+        });
+    </script>
+@endif
 <script type="text/javascript">
     $(document).ready(function () {
-        cms_alert('{!! $alert->type !!}', '{!! $alert->header !!}', '{!! $alert->content !!}');
+        $('#switchSite').change(function () {
+            document.cookie="db_prefix="+$(this).val();
+            window.location.href = get_admin_url();
+
+        });
     });
 </script>
-@endif
 
 </body>
 

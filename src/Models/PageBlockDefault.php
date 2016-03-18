@@ -1,10 +1,8 @@
 <?php namespace CoasterCms\Models;
 
 use CoasterCms\Helpers\BlockManager;
-use Illuminate\Database\Eloquent\Model as Eloquent;
-use Illuminate\Support\Facades\DB;
 
-class PageBlockDefault extends Eloquent
+class PageBlockDefault extends _BaseEloquent
 {
 
     protected $table = 'page_blocks_default';
@@ -69,8 +67,7 @@ class PageBlockDefault extends Eloquent
     {
         if (self::$preloaded_lang_default === false) {
             self::$preloaded_lang_default = array();
-            $table_name = DB::getTablePrefix() . (new self)->getTable();
-            $default_blocks = BlockManager::get_data_for_version($table_name, $version, null, null, 'block_id');
+            $default_blocks = BlockManager::get_data_for_version(new self, $version, null, null, 'block_id');
             if (!empty($default_blocks)) {
                 foreach ($default_blocks as $default_block) {
                     if (!isset(self::$preloaded_lang_default[$default_block->block_id])) {

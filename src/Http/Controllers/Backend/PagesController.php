@@ -317,8 +317,20 @@ class PagesController extends _Base
 
     private function _list_pages($parent, $level, $cat_url = '')
     {
-
         if (isset($this->child_pages[$parent])) {
+
+            $sites = [];
+            for ($i=1; $i<100 ;$i++) {
+                $url = getenv('MULTI_SITE_'.$i.'_URL');
+                if (!$url) break;
+                $sites[getenv('MULTI_SITE_' . $i . '_DB_PREFIX')] = getenv('MULTI_SITE_'.$i.'_URL');
+            }
+            if (!empty($sites[config('database.connections.'.config('database.default').'.prefix')])) {
+                $base_url = $sites[config('database.connections.'.config('database.default').'.prefix')];
+            } else {
+                $base_url = '';
+            }
+
             $pages_li = '';
             $li_info = new \stdClass;
             foreach ($this->child_pages[$parent] as $child_page) {
@@ -362,7 +374,7 @@ class PagesController extends _Base
                         $li_info->url = $page_url;
                         $li_info->type = 'type_link';
                     } else {
-                        $li_info->url = URL::to($li_info->url);
+                        $li_info->url = URL::to($base_url.$li_info->url);
                         $li_info->type = 'type_normal';
                     }
                 }
@@ -751,7 +763,19 @@ class PagesController extends _Base
             }
             $can_duplicate = Auth::action('pages.add', ['page_id' => $duplicate_parent]);
 
-            return View::make('coaster::pages.pages.edit', array('page_details' => $page_details, 'tab' => $tab_data, 'publishing' => $publishing, 'preview' => $preview, 'live_version' => $live_version, 'can_duplicate' => $can_duplicate, 'can_publish' => Auth::action('pages.version-publish', ['page_id' => $page_id])));
+            $sites = [];
+            for ($i=1; $i<100 ;$i++) {
+                $url = getenv('MULTI_SITE_'.$i.'_URL');
+                if (!$url) break;
+                $sites[getenv('MULTI_SITE_' . $i . '_DB_PREFIX')] = getenv('MULTI_SITE_'.$i.'_URL');
+            }
+            if (!empty($sites[config('database.connections.'.config('database.default').'.prefix')])) {
+                $base_url = $sites[config('database.connections.'.config('database.default').'.prefix')];
+            } else {
+                $base_url = '';
+            }
+
+            return View::make('coaster::pages.pages.edit', array('base_url' => $base_url, 'page_details' => $page_details, 'tab' => $tab_data, 'publishing' => $publishing, 'preview' => $preview, 'live_version' => $live_version, 'can_duplicate' => $can_duplicate, 'can_publish' => Auth::action('pages.version-publish', ['page_id' => $page_id])));
         } else {
             $tab_data = BlockManager::tab_contents($blocks, $blocks_content, $page_details->item_name, 'add', $page_details);
             return View::make('coaster::pages.pages.add', array('page_details' => $page_details, 'tab' => $tab_data));

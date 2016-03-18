@@ -1,9 +1,8 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Support\Facades\Auth;
 
-class PageVersion extends Eloquent
+class PageVersion extends _BaseEloquent
 {
 
     protected $table = 'page_versions';

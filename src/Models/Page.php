@@ -1,9 +1,8 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Support\Facades\Auth;
 
-class Page extends Eloquent
+class Page extends _BaseEloquent
 {
 
     protected $table = 'pages';

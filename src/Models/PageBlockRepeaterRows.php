@@ -1,8 +1,6 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-
-class PageBlockRepeaterRows extends Eloquent
+class PageBlockRepeaterRows extends _BaseEloquent
 {
 
     protected $table = 'page_blocks_repeater_rows';
