@@ -25,6 +25,26 @@ Route::group(['middleware' => ['web', 'admin']], function () {
     }
 });
 
+// Files override to enable hosting secure docs
+Route::get('uploads/{file_path}', ['middleware' => 'web', function($file_path)
+{
+  $file_full_path = storage_path().'/uploads/'.$file_path;
+
+  if (file_exists($file_full_path))
+  {
+      $size = filesize($file_full_path);
+      return response()->download($file_full_path, null, ['size' => $size], null);
+  }
+  else
+  {
+    $file_full_path = public_path().'/old_upload_structure/'.$file_path;
+    $size = filesize($file_full_path);
+
+     return response()->download($file_full_path, null, ['size' => $size], null);
+  }
+
+}])->where('file_path', '.*');
+
 Route::group(['middleware' => 'web'], function () {
 // catch invalid admin routes
     Route::controller(config('coaster::admin.url'), 'CoasterCms\Http\Controllers\Backend\_Base');
