@@ -530,13 +530,17 @@ class ThemeBuilder
             $processedData['label'] = self::$_allBlocks[$block]->label;
             $processedData['name'] = self::$_allBlocks[$block]->name;
             $processedData['type'] = self::$_allBlocks[$block]->type;
-            $processedData['global_site'] = (bool)(!empty(self::$_databaseGlobalBlocks[$block]) ? self::$_databaseGlobalBlocks[$block]->show_in_global : 0);
-            $processedData['global_pages'] = (bool)(!empty(self::$_databaseGlobalBlocks[$block]) ? self::$_databaseGlobalBlocks[$block]->show_in_pages : 0);
+
         } else {
             $processedData['category_id'] = self::_categoryGuess($block);
             $processedData['label'] = ucwords(str_replace('_', ' ', $block));
             $processedData['name'] = $block;
             $processedData['type'] = !empty($details['type']) ? $details['type'] : self::_typeGuess($block);
+        }
+        if (!empty(self::$_databaseBlocks[$block])) {
+            $processedData['global_site'] = (bool)(!empty(self::$_databaseGlobalBlocks[$block]) ? self::$_databaseGlobalBlocks[$block]->show_in_global : 0);
+            $processedData['global_pages'] = (bool)(!empty(self::$_databaseGlobalBlocks[$block]) ? self::$_databaseGlobalBlocks[$block]->show_in_pages : 0);
+        } else {
             $processedData['global_site'] = isset(self::$_fileGlobalBlocks[$block]);
             $processedData['global_pages'] = (bool)stristr($block, 'meta');
         }
