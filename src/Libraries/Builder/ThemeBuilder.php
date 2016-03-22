@@ -221,6 +221,8 @@ class ThemeBuilder
                     if ($fields['templates'] == '*') {
                         foreach (self::$_fileTemplateBlocks as $template => $blocks) {
                             self::$_fileTemplateBlocks[$template][] = $block;
+                            self::$_template = $template;
+                            self::block($block, []);
                         }
                     } else {
                         $templates = explode(',', $fields['templates']);
@@ -228,6 +230,8 @@ class ThemeBuilder
                             foreach ($templates as $template) {
                                 if (isset(self::$_fileTemplateBlocks[$template])) {
                                     self::$_fileTemplateBlocks[$template][] = $block;
+                                    self::$_template = $template;
+                                    self::block($block, []);
                                 }
                             }
                         }
