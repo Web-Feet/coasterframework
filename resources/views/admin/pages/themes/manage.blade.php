@@ -21,7 +21,7 @@
         $(document).ready(function () {
             $('.activateTheme').click(function () {
                 themeSelected = $(this).data('theme');
-                    $.ajax({
+                $.ajax({
                     url: get_admin_url() + 'themes/manage',
                     type: 'POST',
                     data: {
@@ -30,7 +30,12 @@
                     },
                     success: function (r) {
                         if (r == 1) {
-                            $('.activeSwitch').toggleClass('hidden');
+                            console.log(1);
+                            $('.activeTheme .activeSwitch').toggleClass('hidden');
+                            $('#theme'+themeSelected+' .activeSwitch').toggleClass('hidden');
+                            $('.activeTheme').removeClass('activeTheme');
+                            $('#theme'+themeSelected+' .thumbnail').addClass('activeTheme');
+
                         }
                     }
                 });

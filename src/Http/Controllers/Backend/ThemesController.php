@@ -49,7 +49,35 @@ class ThemesController extends _Base
 
     public function getManage()
     {
-        $this->layout->content = View::make('coaster::pages.themes.manage', ['error' => self::$_error, 'themes_installed' => ThemeBuilder::installThumbs()]);
+        $thumbs = [];
+
+        $themesPath = base_path('resources/views/themes');
+        if (is_dir($themesPath)) {
+            foreach (Theme::all() as $databaseTheme) {
+                $databaseThemes[$databaseTheme->theme] = $databaseTheme;
+            }
+            foreach (scandir($themesPath) as $themeFolder) {
+                if (is_dir($themesPath . '/' . $themeFolder) && strpos($themeFolder, '.') !== 0) {
+                    $theme = new \stdClass;
+                    $theme->name = $themeFolder;
+                    $theme->image = 'http://www.placehold.it/300x250/EFEFEF/AAAAAA&text=no+image';
+                    if (isset($databaseThemes[$themeFolder])) {
+                        if ($databaseThemes[$themeFolder]->id != config('coaster::frontend.theme')) {
+                            $theme->activate = 1;
+                        } else {
+                            $theme->active = 1;
+                        }
+                    } else {
+                        $theme->install = 1;
+                    }
+                    $thumbs[] = $theme;
+                }
+            }
+        }
+
+        $themes_installed = View::make('coaster::partials.themes.thumbs', ['thumbs' => $thumbs]);
+
+        $this->layout->content = View::make('coaster::pages.themes.manage', ['error' => self::$_error, 'themes_installed' => $themes_installed]);
         $this->layout->modals = View::make('coaster::modals.themes.delete_theme');
     }
 

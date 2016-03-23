@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Models;
 
+use CoasterCms\Helpers\File;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Validator;
@@ -99,8 +100,8 @@ Class Theme extends Eloquent
                     if (!empty($extractItems)) {
                         $zip->extractTo($uploadTo, $extractItems);
                         if (($uploadTo . $filePathInfo['filename']) != $themeDir) {
-                            self::_copyDirectory($uploadTo . $filePathInfo['filename'], $themeDir);
-                            self::_removeDirectory($uploadTo . $filePathInfo['filename']);
+                            File::copyDirectory($uploadTo . $filePathInfo['filename'], $themeDir);
+                            File::removeDirectory($uploadTo . $filePathInfo['filename']);
                         }
                     } else {
                         $zip->extractTo($themeDir);
@@ -124,10 +125,10 @@ Class Theme extends Eloquent
         $themePath = base_path() . '/resources/views/themes/'.$themeName;
         $theme = self::where('theme', '=', $themeName)->first();
         if (empty($theme) && is_dir($themePath) && is_dir($themePath.'/views')) {
-            self::_copyDirectory($themePath.'/public', public_path().'/themes/'.$themeName);
-            self::_removeDirectory($themePath.'/public');
-            self::_copyDirectory($themePath.'/views', $themePath);
-            self::_removeDirectory($themePath.'/views');
+            File::copyDirectory($themePath.'/public', public_path().'/themes/'.$themeName);
+            File::removeDirectory($themePath.'/public');
+            File::copyDirectory($themePath.'/views', $themePath);
+            File::removeDirectory($themePath.'/views');
             $newTheme = new self;
             $newTheme->theme = $themeName;
             $newTheme->save();
@@ -165,37 +166,12 @@ Class Theme extends Eloquent
             $theme->delete();
         }
         if (is_dir(base_path() . '/resources/views/themes/' . $themeName)) {
-            self::_removeDirectory(base_path() . '/resources/views/themes/' . $themeName);
+            File::removeDirectory(base_path() . '/resources/views/themes/' . $themeName);
         }
         if (is_dir(base_path() . '/public/themes/' . $themeName)) {
-            self::_removeDirectory(base_path() . '/public/themes/' . $themeName);
+            File::removeDirectory(base_path() . '/public/themes/' . $themeName);
         }
         return 1;
-    }
-
-    private static function _removeDirectory($dir)
-    {
-        foreach(scandir($dir) as $file) {
-            if (in_array($file, ['.', '..'])) continue;
-            $fileFullPath = $dir.DIRECTORY_SEPARATOR.$file;
-            if (is_dir($fileFullPath)) self::_removeDirectory($fileFullPath); else unlink($fileFullPath);
-        }
-        rmdir($dir);
-    }
-
-    private static function _copyDirectory($srcDir, $dstDir) {
-        $dir = opendir($srcDir);
-        @mkdir($dstDir);
-        while(($file = readdir($dir)) !== false) {
-            if (!in_array($file, ['.', '..'])) {
-                if (is_dir($srcDir . '/' . $file)) {
-                    self::_copyDirectory($srcDir.'/'.$file, $dstDir.'/'.$file);
-                } else {
-                    copy($srcDir.'/'.$file, $dstDir.'/'.$file);
-                }
-            }
-        }
-        closedir($dir);
     }
 
 }
