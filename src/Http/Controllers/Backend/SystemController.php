@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
+use CoasterCms\Helpers\File;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\Language;
@@ -31,6 +32,52 @@ class SystemController extends _Base
                 $setting = str_replace($this->dot_replace, '.', $setting);
                 $current_setting = Setting::where('name', '=', $setting)->where('editable', '=', 1)->first();
                 if (!empty($current_setting)) {
+                    if ($setting == 'site.secure_folders') {
+                        $newValues = explode(',',$value);
+                        foreach ($newValues as $k => $folder) {
+                            $folder = trim($folder);
+                            if (empty($folder)) {
+                                unset($newValues[$k]);
+                            } else {
+                                $newValues[$k] = '/'.trim($folder, '/').'/';
+                            }
+                        }
+                        foreach ($newValues as $k => $folder) {
+                            foreach ($newValues as $kCheck => $folderCheck) {
+                                if ($k != $kCheck && strpos($folder, $folderCheck) === 0) {
+                                    unset($newValues[$k]);
+                                }
+                            }
+                        }
+                        $oldValues = explode(',', $current_setting->value);
+                        foreach ($oldValues as $k => $folder) {
+                            $folder = trim($folder);
+                            if (empty($folder)) {
+                                unset($oldValues[$k]);
+                            } else {
+                                $oldValues[$k] = '/'.trim($folder, '/').'/';
+                            }
+                        }
+                        $toSecure = array_diff($newValues, $oldValues);
+                        $toUnSecure = array_diff($oldValues, $newValues);
+                        foreach ($toSecure as $newSecureFolder) {
+                            if (is_dir(public_path().'/uploads'.$newSecureFolder)) {
+                                File::copyDirectory(public_path() . '/uploads' . $newSecureFolder, base_path() . '/storage/uploads' . $newSecureFolder);
+                                File::removeDirectory(public_path() . '/uploads' . $newSecureFolder, true);
+                            } else {
+                                @mkdir(base_path() . '/storage/uploads' . $newSecureFolder, 0777, true);
+                            }
+                        }
+                        foreach ($toUnSecure as $newUnSecureFolder) {
+                            if (is_dir(base_path() . '/storage/uploads' . $newUnSecureFolder)) {
+                                File::copyDirectory(base_path().'/storage/uploads'.$newUnSecureFolder, public_path().'/uploads'.$newUnSecureFolder);
+                                File::removeDirectory(base_path().'/storage/uploads'.$newUnSecureFolder);
+                            } else {
+                                @mkdir(public_path().'/uploads'.$newUnSecureFolder, 0777, true);
+                            }
+                        }
+                        $value = implode(',',$newValues);
+                    }
                     $current_setting->value = $value;
                     $current_setting->save();
                 }
@@ -104,6 +151,9 @@ class SystemController extends _Base
                         $true_total_pages = Page::get_total(true);
                         $note .= ', total including group pages is ' . $true_total_pages;
                     }
+                    break;
+                case 'site.secure_folders':
+                    $note = 'list of comma separated folders, will copy files to secure folders and vice versa on update';
                     break;
                 default:
                     $custom = null;
