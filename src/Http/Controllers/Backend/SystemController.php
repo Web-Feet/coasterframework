@@ -62,16 +62,16 @@ class SystemController extends _Base
                         $toUnSecure = array_diff($oldValues, $newValues);
                         foreach ($toSecure as $newSecureFolder) {
                             if (is_dir(public_path().'/uploads'.$newSecureFolder)) {
-                                File::copyDirectory(public_path() . '/uploads' . $newSecureFolder, base_path() . '/storage/uploads' . $newSecureFolder);
+                                File::copyDirectory(public_path() . '/uploads' . $newSecureFolder, storage_path() . '/uploads' . $newSecureFolder);
                                 File::removeDirectory(public_path() . '/uploads' . $newSecureFolder, true);
                             } else {
-                                @mkdir(base_path() . '/storage/uploads' . $newSecureFolder, 0777, true);
+                                @mkdir(storage_path() . '/uploads' . $newSecureFolder, 0777, true);
                             }
                         }
                         foreach ($toUnSecure as $newUnSecureFolder) {
-                            if (is_dir(base_path() . '/storage/uploads' . $newUnSecureFolder)) {
-                                File::copyDirectory(base_path().'/storage/uploads'.$newUnSecureFolder, public_path().'/uploads'.$newUnSecureFolder);
-                                File::removeDirectory(base_path().'/storage/uploads'.$newUnSecureFolder);
+                            if (is_dir(storage_path() . '/uploads' . $newUnSecureFolder)) {
+                                File::copyDirectory(storage_path().'/uploads'.$newUnSecureFolder, public_path().'/uploads'.$newUnSecureFolder);
+                                File::removeDirectory(storage_path().'/uploads'.$newUnSecureFolder);
                             } else {
                                 @mkdir(public_path().'/uploads'.$newUnSecureFolder, 0777, true);
                             }
