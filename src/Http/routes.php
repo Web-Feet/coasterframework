@@ -26,13 +26,14 @@ Route::group(['middleware' => ['web', 'admin']], function () {
 });
 
 // Files override to enable hosting secure docs
-Route::get('uploads/{file_path}', ['middleware' => 'web', function($file_path)
+Route::get('uploads/{file_path}', ['middleware' => ['web', 'auth'], function($file_path)
 {
     $file_full_path = storage_path().'/uploads/'.$file_path;
 
     if (file_exists($file_full_path)) {
         $size = filesize($file_full_path);
-        return response()->download($file_full_path, null, ['size' => $size], null);
+        $type = \GuzzleHttp\Psr7\mimetype_from_filename($file_path);
+        return response()->download($file_full_path, null, ['size' => $size, 'Content-Type' => $type], null);
     }
 }])->where('file_path', '.*');
 
