@@ -20,14 +20,6 @@ if (file_exists($coasterPublicFolder . '/app/')) {
 $coasterStorageFolder = storage_path();
 $coasterPublicUploadsFolder = public_path() . '/uploads/';
 
-// update app folder
-if (file_exists($coasterPublicUploadsFolder)) {
-    recursive_copy($coasterPublicUploadsFolder, $coasterStorageFolder . '/uploads/');
-    rename($coasterPublicUploadsFolder, str_replace('/uploads/', "/old_upload_structure/", $coasterPublicUploadsFolder));
-    echo "Coaster Framework: Moved document storage to secure location\n";
-}
-
-
 function recursive_copy($src,$dst) {
     $dir = opendir($src);
     @mkdir($dst);

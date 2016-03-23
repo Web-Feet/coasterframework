@@ -123,7 +123,7 @@ class CreateAdminMenu
                     'action_id' => 64,
                     'parent' => 0,
                     'order' => 9,
-                    'icon' => 'fa-bluetooth-b',
+                    'icon' => 'fa fa-bluetooth-b',
                     'item_name' => 'Beacons',
                     'item_desc' => '',
                     'created_at' => $date,
