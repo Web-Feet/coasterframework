@@ -322,7 +322,7 @@ input[type=checkbox].form-control {width: 25px;margin: 0; box-shadow: none;}
     position: relative;
     overflow: hidden;
 }
-.fileinput-nice .glyphicon {
+i.glyphicon-white {
     color: white;
 }
 .fileinput-nice input {
@@ -332,3 +332,4 @@ input[type=checkbox].form-control {width: 25px;margin: 0; box-shadow: none;}
     transform: translate(-300px, 0) scale(4);
     cursor: pointer;
 }
+#uploadThemeForm {display: inline-block;}

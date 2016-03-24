@@ -3,6 +3,7 @@
 use CoasterCms\Helpers\BlockManager;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockCategory;
+use CoasterCms\Models\BlockFormRule;
 use CoasterCms\Models\BlockRepeater;
 use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\Template;
@@ -57,6 +58,7 @@ class ThemeBuilder
 
     // load block category ids for use in category guess
     private static $_categoryIds;
+    private static $_categoryNames;
     private static $_guessedCategoryIds;
 
     public static function processFiles($themeId)
@@ -99,6 +101,109 @@ class ThemeBuilder
 
         if (empty(self::$_fileBlocks)) {
             throw new \Exception('no blocks found, theme or templates may not exist');
+        }
+    }
+
+    public static function processDatabase($themeId)
+    {
+        // convert db data to blocks override file
+        self::$_theme = Theme::find($themeId);
+
+        if (!empty(self::$_theme)) {
+
+            self::_processDatabaseBlocks();
+
+            @mkdir(base_path().'/resources/views/themes/'.self::$_theme->theme.'/import');
+            @mkdir(base_path().'/resources/views/themes/'.self::$_theme->theme.'/import/blocks');
+            $blocksCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/import/blocks.csv', 'w');
+            $selectOptionsCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/import/blocks/select_options.csv', 'w');
+            $formRulesCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/import/blocks/form_rules.csv', 'w');
+
+            fputcsv($selectOptionsCsv, [
+                'Block Name',
+                'Option',
+                'Value'
+            ]);
+
+            $blockSelectOptions = [];
+            $selectOptions = BlockSelectOption::all();
+            if (!$selectOptions->isEmpty()) {
+                foreach ($selectOptions as $selectOption) {
+                    if (!isset($blockSelectOptions[$selectOption->block_id])) {
+                        $blockSelectOptions[$selectOption->block_id] = [];
+                    }
+                    $blockSelectOptions[$selectOption->block_id][] = [
+                        $selectOption->option,
+                        $selectOption->value
+                    ];
+                }
+            }
+
+            fputcsv($formRulesCsv, [
+                'Form Template',
+                'Field',
+                'Rule'
+            ]);
+
+            $formRules = BlockFormRule::all();
+            if (!$formRules->isEmpty()) {
+                $formsDir = base_path().'/resources/views/themes/'.self::$_theme->theme.'/blocks/forms';
+                if (is_dir($formsDir)) {
+                    $themeForms = [];
+                    foreach (scandir($formsDir) as $formTemplate) {
+                        if (!in_array($formTemplate, ['.', '..'])) {
+                            $themeForms[] = $formTemplate;
+                        }
+                    }
+                    foreach ($formRules as $formRule) {
+                        if (in_array($formRule->form_template, $themeForms)) {
+                            fputcsv($formRulesCsv, [
+                                $formRule->form_template,
+                                $formRule->field,
+                                $formRule->rule
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            fputcsv($blocksCsv, [
+                'Block Name',
+                'Block Label',
+                'Block Category',
+                'Block Type',
+                'Global (show in site-wide)',
+                'Global (show in pages)',
+                'Templates',
+                'Block Order'
+            ]);
+
+            foreach (self::$_databaseBlocks as $blockName => $block) {
+                fputcsv($blocksCsv, [
+                    $blockName,
+                    self::$_databaseBlocks[$blockName]->label,
+                    self::_getBlockCategoryName($block->category_id),
+                    self::$_databaseBlocks[$blockName]->type,
+                    isset(self::$_databaseGlobalBlocks[$blockName])&&$block->show_in_global?'yes':'no',
+                    isset(self::$_databaseGlobalBlocks[$blockName])&&$block->show_in_pages?'yes':'no',
+                    isset(self::$_databaseBlockTemplates[$blockName])?implode(',', self::$_databaseBlockTemplates[$blockName]):'',
+                    self::$_databaseBlocks[$blockName]->order
+                ]);
+                if (!empty($blockSelectOptions[$block->id])) {
+                    foreach ($blockSelectOptions[$block->id] as $blockSelectOption) {
+                        fputcsv($selectOptionsCsv, [
+                            $block->name,
+                            $blockSelectOption[0],
+                            $blockSelectOption[1]
+                        ]);
+                    }
+                }
+            }
+
+            fclose($blocksCsv);
+            fclose($selectOptionsCsv);
+            fclose($formRulesCsv);
+
         }
     }
 
@@ -150,7 +255,7 @@ class ThemeBuilder
             while (($data = fgetcsv($fileHandle)) !== false) {
                 if ($row++ == 0 && $data[0] == 'Block Name') continue;
                 if (!empty($data[0])) {
-                    $fields = ['name', 'label', 'category_id', 'type', 'global_site', 'global_pages', 'templates', 'order'];
+                    $fields = ['name', 'label', 'category', 'type', 'global_site', 'global_pages', 'templates', 'order'];
                     foreach ($fields as $fieldId => $field) {
                         if (isset($data[$fieldId])) {
                             $setting = trim($data[$fieldId]);
@@ -162,7 +267,7 @@ class ThemeBuilder
                                         $setting = true;
                                     }
                                 }
-                                if ($field == 'category_id') {
+                                if ($field == 'category') {
                                     $setting = self::_getBlockCategoryId($setting);
                                 }
                                 if ($field == 'name') {
@@ -194,6 +299,17 @@ class ThemeBuilder
         }
 
         return self::$_categoryIds[trim(strtolower($categoryName))];
+    }
+
+    private static function _getBlockCategoryName($categoryId)
+    {
+        if (!isset(self::$_categoryNames)) {
+            foreach (BlockCategory::all() as $category) {
+                self::$_categoryNames[$category->id] = $category->name;
+            }
+        }
+
+        return self::$_categoryNames[$categoryId];
     }
 
     private static function _processFileBlocks()

@@ -106,6 +106,11 @@ class ThemesController extends _Base
         }
     }
 
+    public function getExport()
+    {
+        return Theme::export(config('coaster::frontend.theme'));
+    }
+
     public function getBeacons()
     {
         $this->layout->content = View::make('coaster::pages.themes.beacons', ['rows' => BlockBeacon::getTableRows()]);

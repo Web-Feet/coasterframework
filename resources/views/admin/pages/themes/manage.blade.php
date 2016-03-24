@@ -6,14 +6,19 @@
 
 {!! $themes_installed !!}
 
-{!! Form::open(['url' => Request::url(), 'id' => 'uploadThemeForm', 'enctype' => 'multipart/form-data']) !!}
-<span class="btn btn-primary fileinput-nice">
-    <i class="glyphicon glyphicon-upload glyphicon-white"></i>
-    <span>Upload a new theme</span>
-    <input type="file" name="newTheme" id="newTheme">
-</span>
-{{ Form::close() }}
+<div class="row">
 
+    {!! Form::open(['url' => Request::url(), 'id' => 'uploadThemeForm', 'enctype' => 'multipart/form-data']) !!}
+    <span class="btn btn-primary fileinput-nice">
+        <i class="glyphicon glyphicon-upload glyphicon-white"></i>
+        <span>Upload a new theme</span>
+        <input type="file" name="newTheme" id="newTheme">
+    </span>
+    {{ Form::close() }}
+    &nbsp;
+    <a href="{{ URL::to(config('coaster::admin.url').'/themes/export') }}" class="btn btn-default"><i class="glyphicon glyphicon-download"></i> Export active theme</a>
+
+</div>
 
 @section('scripts')
     <script type="text/javascript">

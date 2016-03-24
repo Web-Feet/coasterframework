@@ -1,6 +1,8 @@
 <?php namespace CoasterCms\Models;
 
 use CoasterCms\Helpers\File;
+use CoasterCms\Helpers\Zip;
+use CoasterCms\Libraries\Builder\ThemeBuilder;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Validator;
@@ -172,6 +174,29 @@ Class Theme extends Eloquent
             File::removeDirectory(base_path() . '/public/themes/' . $themeName);
         }
         return 1;
+    }
+
+    public static function export($themeId)
+    {
+        $theme = self::find($themeId);
+        if (!empty($theme)) {
+            $themesDir = base_path() . '/resources/views/themes/';
+            $zipFileName = $theme->theme.'.zip';
+            ThemeBuilder::processDatabase($themeId);
+            $zip = new Zip;
+            $zip->open($themesDir . $zipFileName, Zip::CREATE);
+            $zip->addDir($themesDir . $theme->theme, 'views');
+            $zip->addDir(public_path() . '/themes/' . $theme->theme, 'public');
+            $zip->close();
+            header("Content-type: application/zip");
+            header("Content-Disposition: attachment; filename=" . $zipFileName);
+            header("Pragma: no-cache");
+            header("Expires: 0");
+            readfile($themesDir . $zipFileName);
+            unlink($themesDir . $zipFileName);
+            exit;
+        }
+        return 0;
     }
 
 }
