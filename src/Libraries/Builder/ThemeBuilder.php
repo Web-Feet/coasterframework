@@ -69,6 +69,7 @@ class ThemeBuilder
 
             self::_checkRepeaterTemplates();
             self::_checkSelectBlocks();
+            self::_checkFormRules();
 
             self::_getBlockOverwriteFile();
 
@@ -231,15 +232,36 @@ class ThemeBuilder
         if (file_exists($selectOptions) && ($fileHandle = fopen($selectOptions, 'r')) !== false) {
             $row = 0;
             while (($data = fgetcsv($fileHandle)) !== false) {
-                if (count($data) == 3) {
-                    if ($row++ == 0 && $data[0] == 'Block Name') {
-                        continue;
-                    }
-                    if (!isset(self::$_selectBlocks[$data[0]])) {
-                        self::$_selectBlocks[$data[0]] = [];
-                    }
-                    self::$_selectBlocks[$data[0]][$data[2]] = $data[1];
+                if ($row++ == 0 && $data[0] == 'Block Name') {
+                    continue;
                 }
+                if (!isset(self::$_selectBlocks[$data[0]])) {
+                    self::$_selectBlocks[$data[0]] = [];
+                }
+                self::$_selectBlocks[$data[0]][$data[2]] = $data[1];
+            }
+            fclose($fileHandle);
+        }
+    }
+
+    private static function _checkFormRules()
+    {
+        self::$_formRules = [];
+
+        $formRules = base_path('resources/views/themes/' . self::$_theme->theme . '/import/blocks/form_rules.csv');
+        if (file_exists($formRules) && ($fileHandle = fopen($formRules, 'r')) !== false) {
+            $row = 0;
+            while (($data = fgetcsv($fileHandle)) !== false) {
+                if ($row++ == 0 && $data[0] == 'Form Template') {
+                    continue;
+                }
+                if (!empty(self::$_formRules[$data[0]])) {
+                    self::$_formRules[$data[0]] = [];
+                }
+                self::$_formRules[$data[0]][] = [
+                    $data[1],
+                    $data[2]
+                ];
             }
             fclose($fileHandle);
         }
