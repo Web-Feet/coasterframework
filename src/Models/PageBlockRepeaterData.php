@@ -52,7 +52,7 @@ class PageBlockRepeaterData extends Eloquent
             $row_keys[] = $row_keys_object->id;
             $row_key_data[$row_keys_object->id] = $row_keys_object;
         }
-        $repeater_data = BlockManager::get_data_for_version(DB::getTablePrefix() . (new self)->getTable(), $version, array('row_key'), array($row_keys));
+        $repeater_data = BlockManager::get_data_for_version(new self, $version, array('row_key'), array($row_keys));
         if (!empty($repeater_data)) {
             $repeater_blocks = Block::get_repeater_blocks();
             foreach ($repeater_data as $repeater) {
@@ -73,9 +73,9 @@ class PageBlockRepeaterData extends Eloquent
         $repeater_block_ids = Block::get_repeater_blocks();
         if (!empty($repeater_block_ids)) {
             if (!empty($page_id)) {
-                $repeater_blocks = BlockManager::get_data_for_version(DB::getTablePrefix() . (new PageBlock)->getTable(), $version, array('block_id', 'page_id'), array($repeater_block_ids, $page_id));
+                $repeater_blocks = BlockManager::get_data_for_version(new PageBlock, $version, array('block_id', 'page_id'), array($repeater_block_ids, $page_id));
             } else {
-                $repeater_blocks = BlockManager::get_data_for_version(DB::getTablePrefix() . (new PageBlockDefault)->getTable(), $version, array('block_id'), array($repeater_block_ids));
+                $repeater_blocks = BlockManager::get_data_for_version(new PageBlockDefault, $version, array('block_id'), array($repeater_block_ids));
             }
             if (!empty($repeater_blocks)) {
                 $repeater_data = [];
@@ -106,8 +106,7 @@ class PageBlockRepeaterData extends Eloquent
             $row_keys[] = $row_keys_object->id;
             $row_keys_data[$row_keys_object->id] = $row_keys_object;
         }
-        $table_name = DB::getTablePrefix() . (new self)->getTable();
-        $repeaters_data = BlockManager::get_data_for_version($table_name, $version, array('row_key'), array($row_keys));
+        $repeaters_data = BlockManager::get_data_for_version(new self, $version, array('row_key'), array($row_keys));
         if (!empty($repeaters_data)) {
             foreach ($repeaters_data as $repeater_data) {
                 $repeater_data->row_id = $row_keys_data[$repeater_data->row_key]->row_id;

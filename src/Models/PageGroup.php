@@ -27,7 +27,7 @@ class PageGroup extends Eloquent
                         $sort_by_attribute = PageGroupAttribute::find($group->order_by_attribute_id);
                         // sort via live version attributes
                         $sorted_pages = BlockManager::get_data_for_version(
-                            DB::getTablePrefix() . (new PageBlock)->getTable(),
+                            new PageBlock,
                             -1,
                             array('block_id', 'page_id'),
                             array($sort_by_attribute->item_block_id, $page_ids),

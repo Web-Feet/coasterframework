@@ -273,7 +273,7 @@ class BlockManager
         return self::$_blockClasses;
     }
 
-    public static function get_data_for_version($table_name, $version, $filter_on = array(), $filter_values = array(), $order_by = null)
+    public static function get_data_for_version($model, $version, $filter_on = array(), $filter_values = array(), $order_by = null)
     {
         $parameters = [];
         $where_qs['j'] = [];
@@ -313,7 +313,7 @@ class BlockManager
             $where_qs['j'][] = 'version <= :version';
             $parameters['version'] = $version;
         }
-        $max_live = ($version == -1) ? 'join coaster_page_lang pl on pl.page_id = inr.page_id and pl.language_id = inr.language_id and pl.live_version >= inr.version' : '';
+        $max_live = ($version == -1) ? 'join page_lang pl on pl.page_id = inr.page_id and pl.language_id = inr.language_id and pl.live_version >= inr.version' : '';
         foreach ($where_qs as $k => $where_q) {
             if (!empty($where_q)) {
                 $where_qs[$k] = 'where ' . implode(' and ', $where_q);
@@ -322,7 +322,9 @@ class BlockManager
             }
         }
         $on_clause = 'main.version = j.version';
-        switch (str_replace(DB::getTablePrefix(), '', $table_name)) {
+        $table_name = $model->getTable();
+        $full_table_name = DB::getTablePrefix() . $table_name;
+        switch ($table_name) {
             case 'page_blocks':
                 $identifiers = array('block_id', 'language_id', 'page_id');
                 break;
@@ -333,7 +335,7 @@ class BlockManager
                 $identifiers = array('block_id', 'row_key');
                 break;
             default:
-                throw new \Exception('unknown blocks data table: ' . $table_name);
+                throw new \Exception('unknown blocks data table: ' . $full_table_name);
         }
         foreach ($identifiers as $identifier) {
             $on_clause .= ' and main.' . $identifier . ' = j.' . $identifier;
@@ -341,9 +343,9 @@ class BlockManager
         $select_identifiers = 'inr.' . implode(', inr.', $identifiers);
         $order_by = !empty($order_by) ? ' order by main.' . $order_by : '';
         $correct_versions_query = "
-            select main.* from " . $table_name . " main
+            select main.* from " . $full_table_name . " main
             inner join(
-                select " . $select_identifiers . ", max(inr.version) version from " . $table_name . " inr " . $max_live . "
+                select " . $select_identifiers . ", max(inr.version) version from " . $full_table_name . " inr " . $max_live . "
                 " . $where_qs['j'] . "
                 group by " . $select_identifiers . "
             ) j on " . $on_clause . "
