@@ -23,10 +23,8 @@ class File
         while(($file = readdir($dir)) !== false) {
             if (!in_array($file, ['.', '..'])) {
                 if (is_dir($srcDir . '/' . $file)) {
-                    var_dump($srcDir.'/'.$file, $dstDir.'/'.$file);
                     self::copyDirectory($srcDir.'/'.$file, $dstDir.'/'.$file);
                 } else {
-                    var_dump($srcDir.'/'.$file, $dstDir.'/'.$file);
                     copy($srcDir.'/'.$file, $dstDir.'/'.$file);
                 }
             }
