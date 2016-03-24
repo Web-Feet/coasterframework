@@ -96,6 +96,10 @@ class ThemeBuilder
                 self::_processFileBlocks();
             }
         }
+
+        if (empty(self::$_fileBlocks)) {
+            throw new \Exception('no blocks found, theme or templates may not exist');
+        }
     }
 
     private static function _checkRepeaterTemplates()

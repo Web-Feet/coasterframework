@@ -362,7 +362,6 @@ class PagesController extends _Base
                         $li_info->url = $page_url;
                         $li_info->type = 'type_link';
                     } else {
-                        $li_info->url = URL::to($li_info->url);
                         $li_info->type = 'type_normal';
                     }
                 }
