@@ -40,6 +40,9 @@ class ThemeBuilder
     // block overwrite guesses
     private static $_blockSettings;
 
+    // core templates (used if actual template can't be determined)
+    private static $_coreTemplates;
+
     // all blocks in theme files
     private static $_fileBlocks;
     private static $_fileGlobalBlocks;
@@ -84,10 +87,11 @@ class ThemeBuilder
             \CoasterCms\Libraries\Builder\PageBuilder::$page_info = self::$page_info;
 
             if (is_dir($themePath)) {
-                self::$_fileTemplateBlocks = [
-                    '__core_category' => [],
-                    '__core_repeater' => []
-                ];
+                self::$_fileTemplateBlocks = [];
+                self::$_coreTemplates = ['__core_category', '__core_otherPage', '__core_repeater'];
+                foreach (self::$_coreTemplates as $coreTemplate) {
+                    self::$_fileTemplateBlocks[$coreTemplate] = [];
+                }
                 foreach (scandir($themePath) as $templateFile) {
                     if (self::$_template = explode('.', $templateFile)[0]) {
                         self::$page_info->template_name = self::$_template;
@@ -644,16 +648,29 @@ class ThemeBuilder
             if (empty($themeBlocks[$blockName]['templates'])) {
                 $themeBlocks[$blockName]['templates'] = 'block only found inside categories templates, can\'t determine which page templates use this block';
             } else {
-                $themeBlocks[$blockName]['templates'] .= ', block also found in categories template so it may be required in other page templates';
+                $themeBlocks[$blockName]['templates'] .= ', block also found in categories template so it may be used in other page templates';
             }
             if ($themeBlocks[$blockName]['rowClass'] == 5) {
                 $themeBlocks[$blockName]['rowClass'] = 4; // info, there may be changes in blocks in the category templates
             }
-        } elseif (empty($themeBlocks[$blockName]['templates'])) {
-            if ($themeBlocks[$blockName]['rowClass'] == 5) {
-                $themeBlocks[$blockName]['rowClass'] = 4; // info, there may be changes to some core templates
+        } else {
+            $coreTemplateFound = false;
+            foreach (self::$_coreTemplates as $coreTemplate) {
+                if (in_array($coreTemplate, $coreTemplates)) {
+                    $coreTemplateFound = true;
+                    break;
+                }
             }
-            $themeBlocks[$blockName]['templates'] = 'can\'t determine which page templates use this block';
+            if ($coreTemplateFound) {
+                if (empty($themeBlocks[$blockName]['templates'])) {
+                    $themeBlocks[$blockName]['templates'] = 'can\'t determine which page templates use this block (block may use a custom page_id)';
+                } else {
+                    $themeBlocks[$blockName]['templates'] .= ', the block may be used in other page templates (block may use a custom page_id in places)';
+                }
+                if ($themeBlocks[$blockName]['rowClass'] == 5) {
+                    $themeBlocks[$blockName]['rowClass'] = 4; // info, there may be changes to some core templates
+                }
+            }
         }
     }
 
@@ -972,7 +989,11 @@ class ThemeBuilder
             $template = '__core_repeater';
         } else {
             // if in a normal template
-            $template = self::$_template;
+            if (!array_key_exists('page_id', $options)) {
+                $template = self::$_template;
+            } else {
+                $template = '__core_otherPage';
+            }
         }
 
         if (!in_array($block_name, self::$_fileTemplateBlocks[$template])) {
