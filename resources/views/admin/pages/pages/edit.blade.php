@@ -64,6 +64,21 @@
             @else
             selected_tab('#editForm', 1);
             @endif
+
+            $('#page_info\\[name\\]').change(function () {
+                if ($('#page_info_url').val().substr($('#page_info_url').val().length - 10) == '-duplicate') {
+                    $('#page_info_url').val(
+                        $(this).val()
+                            .toLowerCase()
+                            .replace(/\s+/g, '-')
+                            .replace(/[^\w-]/g, '-')
+                            .replace(/-{2,}/g, '-')
+                            .replace(/^-+/g, '')
+                            .replace(/-+$/g, '')
+                    );
+                }
+            });
+
             load_editor_js();
 
         });

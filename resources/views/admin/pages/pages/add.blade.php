@@ -54,9 +54,14 @@
                 $('#url-prefix').html(urlArray[$(this).val()]);
             });
             $('#page_info\\[name\\]').change(function () {
-                console.log('546');
                 $('#page_info_url').val(
-                        $(this).val().toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '-').replace(/-{2,}/g, '-').replace(/^-+/g, '').replace(/-+$/g, '')
+                    $(this).val()
+                        .toLowerCase()
+                        .replace(/\s+/g, '-')
+                        .replace(/[^\w-]/g, '-')
+                        .replace(/-{2,}/g, '-')
+                        .replace(/^-+/g, '')
+                        .replace(/-+$/g, '')
                 );
             });
             load_editor_js();
