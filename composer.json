@@ -1,7 +1,7 @@
 {
     "name": "web-feet/coasterframework",
     "description": "Coaster CMS Framework",
-    "license": "CC-BY-NC-SA-3.0",
+    "license": "GPLv3",
     "authors": [
         {
             "name": "Neil Jennings",
