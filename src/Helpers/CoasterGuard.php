@@ -41,6 +41,10 @@ class CoasterGuard extends SessionGuard
 
     public function actionRoute(array $route, $parameters)
     {
+        if ($this->user()->role->admin < 1) {
+            return false;
+        }
+
         $options = [];
         switch ($route[0]) {
             case 'forms':

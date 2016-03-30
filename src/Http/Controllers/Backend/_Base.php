@@ -129,7 +129,7 @@ class _Base extends Controller
     public function missingMethod($parameters = array())
     {
         $list_view = 'coaster::lists/' . str_plural(strtolower($this->model_name));
-        if (View::exists($list_view)) {
+        if (Auth::actionRoute([$this->model_name]) && View::exists($list_view)) {
             $ms = $this->model_name;
             $items = $ms::all();
             $this->layout->content = View::make($list_view)->with('items', $items)->render();
