@@ -185,7 +185,15 @@ Class Theme extends Eloquent
             ThemeBuilder::processDatabase($themeId);
             $zip = new Zip;
             $zip->open($themesDir . $zipFileName, Zip::CREATE);
-            $zip->addDir($themesDir . $theme->theme, 'views');
+            $zip->addDir($themesDir . $theme->theme, 'views', function($addFrom, $addTo) {
+                if ($addTo == 'views/import') {
+                    $addTo = '';
+                }
+                if (stripos($addTo, 'views/export') === 0) {
+                    $addTo = 'views/import'.substr($addTo, 12);
+                }
+                return [$addFrom, $addTo];
+            });
             $zip->addDir(public_path() . '/themes/' . $theme->theme, 'public');
             $zip->close();
             header("Content-type: application/zip");

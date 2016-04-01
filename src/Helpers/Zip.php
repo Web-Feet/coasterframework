@@ -3,17 +3,24 @@
 class Zip extends \ZipArchive
 {
 
-    public function addDir($dirname, $localname = null)
+    public function addDir($dirName, $localName = null, $callback = '')
     {
-        $dirname = rtrim($dirname, '/');
-        $localname = rtrim($localname, '/');
-        $dir = opendir($dirname);
+        $dirName = rtrim($dirName, '/');
+        $localName = rtrim($localName, '/');
+        $dir = opendir($dirName);
         while(($file = readdir($dir)) !== false) {
             if (!in_array($file, ['.', '..'])) {
-                if (is_dir($dirname . '/' . $file)) {
-                    $this->addDir($dirname.'/'.$file, $localname.'/'.$file);
-                } else {
-                    $this->addFile($dirname.'/'.$file, $localname.'/'.$file);
+                $addFrom = $dirName . '/' . $file;
+                $addTo = $localName . '/' . $file;
+                if ($callback) {
+                    list($addFrom, $addTo) = $callback($addFrom, $addTo);
+                }
+                if (!empty($addFrom) && !empty($addToDir)) {
+                    if (is_dir($addFrom)) {
+                        $this->addDir($addFrom, $addTo, $callback);
+                    } else {
+                        $this->addFile($addFrom, $addTo);
+                    }
                 }
             }
         }

@@ -118,11 +118,11 @@ class ThemeBuilder
 
             self::_processDatabaseBlocks();
 
-            @mkdir(base_path().'/resources/views/themes/'.self::$_theme->theme.'/import');
-            @mkdir(base_path().'/resources/views/themes/'.self::$_theme->theme.'/import/blocks');
-            $blocksCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/import/blocks.csv', 'w');
-            $selectOptionsCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/import/blocks/select_options.csv', 'w');
-            $formRulesCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/import/blocks/form_rules.csv', 'w');
+            @mkdir(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export');
+            @mkdir(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/blocks');
+            $blocksCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/blocks.csv', 'w');
+            $selectOptionsCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/blocks/select_options.csv', 'w');
+            $formRulesCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/blocks/form_rules.csv', 'w');
 
             fputcsv($selectOptionsCsv, [
                 'Block Name',
