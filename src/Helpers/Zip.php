@@ -15,7 +15,7 @@ class Zip extends \ZipArchive
                 if ($callback) {
                     list($addFrom, $addTo) = $callback($addFrom, $addTo);
                 }
-                if (!empty($addFrom) && !empty($addToDir)) {
+                if (!empty($addFrom) && !empty($addTo)) {
                     if (is_dir($addFrom)) {
                         $this->addDir($addFrom, $addTo, $callback);
                     } else {
