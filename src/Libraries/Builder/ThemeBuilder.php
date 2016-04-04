@@ -10,6 +10,7 @@ use CoasterCms\Models\Language;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageBlock;
 use CoasterCms\Models\PageBlockDefault;
+use CoasterCms\Models\PageBlockRepeaterData;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\TemplateBlock;
@@ -114,7 +115,7 @@ class ThemeBuilder
         }
     }
 
-    public static function processDatabase($themeId)
+    public static function processDatabase($themeId, $withPageData)
     {
         // convert db data to blocks override file
         self::$_theme = Theme::find($themeId);
@@ -129,7 +130,9 @@ class ThemeBuilder
             $selectOptionsCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/blocks/select_options.csv', 'w');
             $formRulesCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/blocks/form_rules.csv', 'w');
 
-            self::_pageData();
+            if ($withPageData) {
+                self::_pageData();
+            }
 
             fputcsv($selectOptionsCsv, [
                 'Block Name',
@@ -222,19 +225,28 @@ class ThemeBuilder
     private static function _pageData()
     {
         @mkdir(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/pages');
-        //$pagesCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/pages.csv', 'w');
+        $pagesCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/pages.csv', 'w');
         $pageBlocksCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/pages/page_blocks.csv', 'w');
-        //$repeaterBlocksCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/pages/repeater_blocks.csv', 'w');
+        $repeaterBlocksCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/pages/repeater_blocks.csv', 'w');
+
+        fputcsv($pagesCsv, [
+            'Page Id',
+            'Page Name',
+            'Page Url'
+        ]);
 
         $pageLangData = [];
-        $pageLangs = PageLang::where('language_id', '=', Language::current())->get();
+        $pageLangs = PageLang::where('language_id', '=', Language::current())->orderBy('page_id')->get();
         foreach($pageLangs as $pageLang) {
             $pageLangData[$pageLang->page_id] = $pageLang;
         }
 
-        $blocksById = [];
-        foreach (self::$_databaseBlocks as $block) {
-            $blocksById[$block->id] = $block->label;
+        foreach ($pageLangs as $pageLang) {
+            fputcsv($pagesCsv, [
+                $pageLang->page_id,
+                $pageLang->name,
+                $pageLang->url
+            ]);
         }
 
         fputcsv($pageBlocksCsv, [
@@ -243,11 +255,17 @@ class ThemeBuilder
             'Content'
         ]);
 
-        $pageBlocks = array_merge(PageBlockDefault::all()->all(), PageBlock::all()->all());
+        $blocksById = [];
+        foreach (self::$_databaseBlocks as $block) {
+            $blocksById[$block->id] = $block;
+        }
+
+        $pageBlocks = array_merge(BlockManager::get_data_for_version(new PageBlock, 0), BlockManager::get_data_for_version(new PageBlockDefault, 0));
+        $repeaterBlocks = [];
 
         $pageBlockArr = [];
         foreach ($pageBlocks as $pageBlock) {
-            $blockName = !empty($blocksById[$pageBlock->block_id])?$blocksById[$pageBlock->block_id]:null;
+            $blockName = !empty($blocksById[$pageBlock->block_id])?$blocksById[$pageBlock->block_id]->label:null;
 
             $unserialized = @unserialize($pageBlock->content);
             if ($unserialized !== false) {
@@ -255,8 +273,13 @@ class ThemeBuilder
             }
 
             if (!empty($blockName) && !empty($pageBlock->content)) {
+                if (strtolower($blocksById[$pageBlock->block_id]->type) == 'repeater') {
+                    $repeaterBlocks[$pageBlock->content] = PageBlockRepeaterData::load_by_repeater_id($pageBlock->content);
+                    $repeaterBlockArr[] = $pageBlock->block_id;
+                }
+
                 $pageBlockArr[] = [
-                    $pageBlock->page_id,
+                    isset($pageBlock->page_id)?$pageBlock->page_id:0,
                     $blockName,
                     $pageBlock->content
                 ];
@@ -274,10 +297,39 @@ class ThemeBuilder
             fputcsv($pageBlocksCsv, $pageBlock);
         }
 
-        //fclose($pagesCsv);
-        fclose($pageBlocksCsv);
-        //fclose($repeaterBlocksCsv);
+        fputcsv($repeaterBlocksCsv, [
+            'Repeater Id',
+            'Repeater Row',
+            'Block Name',
+            'Content'
+        ]);
 
+        ksort($repeaterBlocks);
+        foreach ($repeaterBlocks as $repeaterId => $repeaterRows) {
+            foreach ($repeaterRows as $repeaterRowId => $repeaterBlocks) {
+                foreach ($repeaterBlocks as $repeaterBlockId => $repeaterContent) {
+                    $blockName = !empty($blocksById[$repeaterBlockId])?$blocksById[$repeaterBlockId]->label:null;
+
+                    $unserialized = @unserialize($repeaterContent);
+                    if ($unserialized !== false) {
+                        $repeaterContent = json_encode($unserialized);
+                    }
+
+                    if (!empty($blockName) && $repeaterContent) {
+                        fputcsv($repeaterBlocksCsv, [
+                            $repeaterId,
+                            $repeaterRowId,
+                            $blockName,
+                            $repeaterContent
+                        ]);
+                    }
+                }
+            }
+        }
+
+        fclose($pagesCsv);
+        fclose($pageBlocksCsv);
+        fclose($repeaterBlocksCsv);
     }
 
     private static function _checkRepeaterTemplates()

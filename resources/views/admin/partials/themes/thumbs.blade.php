@@ -2,6 +2,7 @@
     @foreach($thumbs as $thumb)
         <div class="col-sm-6 col-md-3" id="theme{{ $thumb->name }}">
             <div class="thumbnail{{ isset($thumb->active)?' activeTheme':'' }}">
+                <i class="glyphicon glyphicon-remove deleteTheme activeSwitch {{ (isset($thumb->active))?' hidden':'' }}" data-theme="{{ $thumb->name }}" title="Delete"></i>
                 <img src="{{ $thumb->image }}" class="img-responsive" alt="{{ $thumb->name }}">
                 <div class="caption">
                     <p>
@@ -11,11 +12,12 @@
                     </p>
                     <h3>{{ $thumb->name }}</h3>
                     <p>
-                        <button data-theme="{{ $thumb->name }}" class="btn btn-default activateTheme activeSwitch {{ (isset($thumb->active)||isset($thumb->install))?' hidden':'' }}">Activate</button>
+                        <button data-theme="{{ $thumb->name }}" class="btn btn-default activateTheme activeSwitch {{ (isset($thumb->active)||isset($thumb->install))?' hidden':'' }}"><span class="glyphicon glyphicon-ok"></span> Activate</button>
                         @if (isset($thumb->install))
-                            <button data-theme="{{ $thumb->name }}" class="btn btn-default installTheme">Install</button>
+                            <button data-theme="{{ $thumb->name }}" class="btn btn-default installTheme"><span class="glyphicon glyphicon-cog"></span> Install</button>
+                        @else
+                            <button data-theme="{{ $thumb->name }}" data-theme-id="{{ $thumb->id }}" class="btn btn-default exportTheme"><span class="glyphicon glyphicon-download"></span> Export</button>
                         @endif
-                        <button data-theme="{{ $thumb->name }}" class="btn btn-default deleteTheme activeSwitch {{ (isset($thumb->active)||isset($thumb->install))?' hidden':'' }}">Delete</button>
                     </p>
                 </div>
             </div>

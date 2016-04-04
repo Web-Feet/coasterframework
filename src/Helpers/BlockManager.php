@@ -313,7 +313,6 @@ class BlockManager
             $where_qs['j'][] = 'version <= :version';
             $parameters['version'] = $version;
         }
-        $max_live = ($version == -1) ? 'join page_lang pl on pl.page_id = inr.page_id and pl.language_id = inr.language_id and pl.live_version >= inr.version' : '';
         foreach ($where_qs as $k => $where_q) {
             if (!empty($where_q)) {
                 $where_qs[$k] = 'where ' . implode(' and ', $where_q);
@@ -322,10 +321,12 @@ class BlockManager
             }
         }
         $on_clause = 'main.version = j.version';
+        $max_live = '';
         $table_name = $model->getTable();
         $full_table_name = DB::getTablePrefix() . $table_name;
         switch ($table_name) {
             case 'page_blocks':
+                $max_live = ($version == -1) ? 'join page_lang pl on pl.page_id = inr.page_id and pl.language_id = inr.language_id and pl.live_version >= inr.version' : '';
                 $identifiers = array('block_id', 'language_id', 'page_id');
                 break;
             case 'page_blocks_default':

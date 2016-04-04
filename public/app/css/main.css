@@ -316,8 +316,6 @@ input[type=checkbox].form-control {width: 25px;margin: 0; box-shadow: none;}
 
 .repeater-table td.repeater-action {padding:8px 2px;}
 
-.installThumbs .btn {padding: 10px 20px;}
-
 .fileinput-nice {
     position: relative;
     overflow: hidden;
@@ -333,3 +331,12 @@ i.glyphicon-white {
     cursor: pointer;
 }
 #uploadThemeForm {display: inline-block;}
+
+.installThumbs {padding-bottom: 20px;}
+.installThumbs .thumbnail:hover {border-color: #337ab7;}
+.installThumbs .btn {padding: 5px 15px; border-radius: 4px;}
+.thumbnail .glyphicon-remove { /* select the close button */
+    position: absolute;
+    top:10px;
+    right:25px;
+}

@@ -117,16 +117,22 @@ Class Theme extends Eloquent
                 $error = 'Theme with the same name already exists';
             }
         } else {
-            $error = 'Uploaded theme must be a zip file.';
+            $error = 'The theme uploaded must be a zip file format.';
         }
         return $error;
     }
 
-    public static function install($themeName)
+    public static function install($themeName, $options)
     {
         $themePath = base_path() . '/resources/views/themes/'.$themeName;
         $theme = self::where('theme', '=', $themeName)->first();
         if (empty($theme) && is_dir($themePath) && is_dir($themePath.'/views')) {
+            if (!empty($options['check'])) {
+                if (is_dir($themePath.'/views/import/pages')) {
+                    return 2;
+                }
+                return 1;
+            }
             File::copyDirectory($themePath.'/public', public_path().'/themes/'.$themeName);
             File::removeDirectory($themePath.'/public');
             File::copyDirectory($themePath.'/views', $themePath);
@@ -176,17 +182,20 @@ Class Theme extends Eloquent
         return 1;
     }
 
-    public static function export($themeId)
+    public static function export($themeId, $withPageData)
     {
         $theme = self::find($themeId);
         if (!empty($theme)) {
             $themesDir = base_path() . '/resources/views/themes/';
             $zipFileName = $theme->theme.'.zip';
-            ThemeBuilder::processDatabase($themeId);
+            ThemeBuilder::processDatabase($themeId, $withPageData);
             $zip = new Zip;
             $zip->open($themesDir . $zipFileName, Zip::CREATE);
-            $zip->addDir($themesDir . $theme->theme, 'views', function($addFrom, $addTo) {
+            $zip->addDir($themesDir . $theme->theme, 'views', function($addFrom, $addTo) use($withPageData) {
                 if ($addTo == 'views/import') {
+                    $addTo = '';
+                }
+                if (!$withPageData && stripos($addTo, 'views/export/pages') === 0) {
                     $addTo = '';
                 }
                 if (stripos($addTo, 'views/export') === 0) {
@@ -202,6 +211,7 @@ Class Theme extends Eloquent
             header("Expires: 0");
             readfile($themesDir . $zipFileName);
             unlink($themesDir . $zipFileName);
+            File::removeDirectory($themesDir.$theme->theme.'/export');
             exit;
         }
         return 0;

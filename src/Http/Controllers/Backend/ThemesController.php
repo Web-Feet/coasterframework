@@ -62,6 +62,7 @@ class ThemesController extends _Base
                     $theme->name = $themeFolder;
                     $theme->image = 'http://www.placehold.it/300x250/EFEFEF/AAAAAA&text=no+image';
                     if (isset($databaseThemes[$themeFolder])) {
+                        $theme->id = $databaseThemes[$themeFolder]->id;
                         if ($databaseThemes[$themeFolder]->id != config('coaster::frontend.theme')) {
                             $theme->activate = 1;
                         } else {
@@ -77,8 +78,19 @@ class ThemesController extends _Base
 
         $themes_installed = View::make('coaster::partials.themes.thumbs', ['thumbs' => $thumbs]);
 
-        $this->layout->content = View::make('coaster::pages.themes.manage', ['error' => self::$_error, 'themes_installed' => $themes_installed]);
-        $this->layout->modals = View::make('coaster::modals.themes.delete_theme');
+        if (!empty(self::$_error)) {
+            $this->layout->alert = new \stdClass;
+            $this->layout->alert->type = 'danger';
+            $this->layout->alert->header = self::$_error;
+            $this->layout->alert->content = '';
+        }
+
+        $this->layout->content = View::make('coaster::pages.themes.manage', ['themes_installed' => $themes_installed]);
+        $this->layout->modals = View::make('coaster::modals.themes.delete').
+            View::make('coaster::modals.themes.export').
+            View::make('coaster::modals.themes.install').
+            View::make('coaster::modals.themes.install_confirm');
+        View::make('coaster::modals.themes.install_error');
     }
 
     public function postManage()
@@ -102,13 +114,17 @@ class ThemesController extends _Base
         }
 
         if (!empty($request['install'])) {
-            return Theme::install($request['theme']);
+            if (!empty($request['check'])) {
+                return Theme::install($request['theme'], ['check' => 1]);
+            } else {
+                return Theme::install($request['theme'], ['withPageData' => $request['withPageData']]);
+            }
         }
     }
 
-    public function getExport()
+    public function getExport($themeId, $withPageData = false)
     {
-        return Theme::export(config('coaster::frontend.theme'));
+        return Theme::export($themeId, (bool) $withPageData);
     }
 
     public function getBeacons()
@@ -275,8 +291,7 @@ class ThemesController extends _Base
                 $options = $options->isEmpty()?[]:$options;
                 $this->layout->content = View::make('coaster::pages.themes.selects', ['block' => $block, 'options' => $options]);
             }
-        }
-        else {
+        } else {
 
             $selectBlocks = [];
 

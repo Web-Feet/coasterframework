@@ -19,15 +19,16 @@ class AdminAuth
         $action = $request->segment(3);
         $parameters = $request->route()->parameters();
 
-        if (Auth::actionRoute(array($controller, $action), $parameters)) {
-            return $next($request);
-        } elseif (Auth::admin()) {
-            return abort(403, 'Action not permitted');
-        } else {
-            return redirect()->action('\CoasterCms\Http\Controllers\Backend\AuthController@getLogin')
-                ->withCookie(cookie('login_path', $request->getRequestUri()));
+        if (Auth::check()) {
+            if (Auth::actionRoute(array($controller, $action), $parameters)) {
+                return $next($request);
+            } elseif (Auth::admin()) {
+                return abort(403, 'Action not permitted');
+            }
         }
 
+        return redirect()->action('\CoasterCms\Http\Controllers\Backend\AuthController@getLogin')
+            ->withCookie(cookie('login_path', $request->getRequestUri()));
     }
 
 }
