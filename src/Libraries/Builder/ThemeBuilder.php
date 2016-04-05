@@ -683,18 +683,22 @@ class ThemeBuilder
                 if (!empty($fields['templates'])) {
                     if ($fields['templates'] == '*') {
                         foreach (self::$_fileTemplateBlocks as $template => $blocks) {
-                            self::$_fileTemplateBlocks[$template][] = $block;
-                            self::$_template = $template;
-                            self::block($block, []);
+                            if (!in_array($block, self::$_fileTemplateBlocks[$template])) {
+                                self::$_fileTemplateBlocks[$template][] = $block;
+                                self::$_template = $template;
+                                self::block($block, []);
+                            }
                         }
                     } else {
                         $templates = explode(',', $fields['templates']);
                         if (!empty($templates)) {
                             foreach ($templates as $template) {
                                 if (isset(self::$_fileTemplateBlocks[$template])) {
-                                    self::$_fileTemplateBlocks[$template][] = $block;
-                                    self::$_template = $template;
-                                    self::block($block, []);
+                                    if (!in_array($block, self::$_fileTemplateBlocks[$template])) {
+                                        self::$_fileTemplateBlocks[$template][] = $block;
+                                        self::$_template = $template;
+                                        self::block($block, []);
+                                    }
                                 }
                             }
                         }
@@ -789,11 +793,13 @@ class ThemeBuilder
                         $templateBlock->delete();
                     } else {
                         self::$_databaseBlocks[$blocksById[$templateBlock->block_id]->name] = $blocksById[$templateBlock->block_id];
-                        self::$_databaseTemplateBlocks[self::$_databaseTemplateIds[$templateBlock->template_id]->template][] = $blocksById[$templateBlock->block_id]->name;
+                        self::$_databaseTemplateBlocks[self::$_databaseTemplateIds[$templateBlock->template_id]->template][$templateBlock->block_id] = $blocksById[$templateBlock->block_id]->name;
                         if (!isset(self::$_databaseBlockTemplates[$blocksById[$templateBlock->block_id]->name])) {
                             self::$_databaseBlockTemplates[$blocksById[$templateBlock->block_id]->name] = [];
                         }
-                        self::$_databaseBlockTemplates[$blocksById[$templateBlock->block_id]->name][] = self::$_databaseTemplateIds[$templateBlock->template_id]->template;
+                        if (!in_array(self::$_databaseTemplateIds[$templateBlock->template_id]->template, self::$_databaseBlockTemplates[$blocksById[$templateBlock->block_id]->name])) {
+                            self::$_databaseBlockTemplates[$blocksById[$templateBlock->block_id]->name][] = self::$_databaseTemplateIds[$templateBlock->template_id]->template;
+                        }
                     }
                 }
             }
