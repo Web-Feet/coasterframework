@@ -89,8 +89,8 @@ class ThemesController extends _Base
         $this->layout->modals = View::make('coaster::modals.themes.delete').
             View::make('coaster::modals.themes.export').
             View::make('coaster::modals.themes.install').
-            View::make('coaster::modals.themes.install_confirm');
-        View::make('coaster::modals.themes.install_error');
+            View::make('coaster::modals.themes.install_confirm').
+            View::make('coaster::modals.themes.install_error');
     }
 
     public function postManage()
@@ -146,9 +146,6 @@ class ThemesController extends _Base
 
     public function getUpdate($themeId)
     {
-        $loader = \Illuminate\Foundation\AliasLoader::getInstance();
-        $loader->alias('PageBuilder', 'CoasterCms\Libraries\Builder\ThemeBuilder');
-
         ThemeBuilder::processFiles($themeId);
 
         $this->layout->content = View::make('coaster::pages.themes.update',
@@ -160,34 +157,15 @@ class ThemesController extends _Base
                 'templateList' => ThemeBuilder::getTemplateList()
             ]
         );
-
-        $loader->alias('PageBuilder', 'CoasterCms\Libraries\Builder\PageBuilder');
     }
 
     public function postUpdate($themeId)
     {
-        $loader = \Illuminate\Foundation\AliasLoader::getInstance();
-        $loader->alias('PageBuilder', 'CoasterCms\Libraries\Builder\ThemeBuilder');
-
-        ThemeBuilder::processFiles($themeId);
-
-        // add any new templates
-        ThemeBuilder::saveTemplates();
-
         $blocks = Request::input('block');
 
-        // Update Blocks Table
-        foreach ($blocks as $block => $details) {
-            // Update Blocks
-            ThemeBuilder::saveBlock($block, $details);
-
-            // Update ThemeBlocks/TemplateBlocks
-            if (!empty($details['run_template_update'])) {
-                ThemeBuilder::updateBlockTemplates($block, $details);
-            }
+        if (!empty($blocks)) {
+            ThemeBuilder::updateTheme($themeId, $blocks);
         }
-
-        ThemeBuilder::updateBlockRepeaters();
 
         $this->layout->content = View::make('coaster::pages.themes.update',
             [
@@ -195,8 +173,6 @@ class ThemesController extends _Base
                 'saved' => true
             ]
         );
-
-        $loader->alias('PageBuilder', 'CoasterCms\Libraries\Builder\PageBuilder');
     }
 
     public function getForms($template = null)

@@ -80,6 +80,9 @@ class SystemController extends _Base
                     }
                     $current_setting->value = $value;
                     $current_setting->save();
+                    if (in_array($setting, ['frontend.theme', 'admin.default_template'])) {
+                        Theme::templateIdUpdate();
+                    }
                 }
             }
             AdminLog::new_log('System settings updated');

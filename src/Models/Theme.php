@@ -2,8 +2,10 @@
 
 use CoasterCms\Helpers\File;
 use CoasterCms\Helpers\Zip;
+use CoasterCms\Libraries\Blocks\Repeater;
 use CoasterCms\Libraries\Builder\ThemeBuilder;
 use Illuminate\Database\Eloquent\Model as Eloquent;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -126,21 +128,159 @@ Class Theme extends Eloquent
     {
         $themePath = base_path() . '/resources/views/themes/'.$themeName;
         $theme = self::where('theme', '=', $themeName)->first();
-        if (empty($theme) && is_dir($themePath) && is_dir($themePath.'/views')) {
+        if (empty($theme) && is_dir($themePath) && is_dir($themePath.'/views') && is_dir($themePath.'/public')) {
+
             if (!empty($options['check'])) {
                 if (is_dir($themePath.'/views/import/pages')) {
                     return 2;
                 }
                 return 1;
             }
+
+            // extract public folder and move views to themes root
             File::copyDirectory($themePath.'/public', public_path().'/themes/'.$themeName);
             File::removeDirectory($themePath.'/public');
             File::copyDirectory($themePath.'/views', $themePath);
             File::removeDirectory($themePath.'/views');
+
+            // add theme to database
             $newTheme = new self;
             $newTheme->theme = $themeName;
             $newTheme->save();
-            return $newTheme->id;
+
+            // install theme blocks and templates
+            try {
+                ThemeBuilder::updateTheme($newTheme->id);
+            } catch (\Exception $e) {
+                // ignore no blocks found ?
+            }
+
+            // install page data
+            $importPath = $themePath.'/views/import/';
+            if (!empty($options['withPageData']) && is_dir($importPath)) {
+
+                // wipe data
+                Page::truncate();
+                PageLang::truncate();
+                PageVersion::truncate();
+                PageGroup::truncate();
+                PageGroupAttribute::truncate();
+                Menu::truncate();
+                MenuItem::truncate();
+                PageBlockDefault::truncate();
+                PageBlock::truncate();
+                PageBlockRepeaterData::truncate();
+                PageBlockRepeaterRows::truncate();
+
+                $templateIds = [];
+                $templates = Template::where('theme_id', '=', $newTheme->id)->get();
+                foreach ($templates as $template) {
+                    $templateIds[$template->template] = $template->id;
+                }
+
+                $blockIds = [];
+                $blocks = Block::all();
+                foreach ($blocks as $block) {
+                    $blockIds[$block->name] = $block->id;
+                }
+
+                // add pages
+                $pagesCsv = $importPath.'pages.csv';
+                if (file_exists($pagesCsv) && ($fileHandle = fopen($pagesCsv, 'r')) !== false) {
+                    $row = 0;
+                    while (($data = fgetcsv($fileHandle)) !== false) {
+                        if ($row++ == 0 && $data[0] == 'Page Id') continue;
+                        list($pageId, $pageName, $pageUrl, $templateName, $parentId, $defaultChildTemplateName, $order, $link, $live, $groupContainer, $groupItem) = $data;
+
+                        $newPage = new Page;
+                        $newPage->id = $pageId;
+                        $newPage->template = !empty($templateIds[$templateName])?$templateIds[$templateName]:0;
+                        $newPage->parent = $parentId;
+                        $newPage->childTemplate = !empty($templateIds[$defaultChildTemplateName])?$templateIds[$defaultChildTemplateName]:0;
+                        $newPage->order = $order;
+                        $newPage->link = $link;
+                        $newPage->live = $live;
+                        $newPage->group_container = $groupContainer;
+                        $newPage->in_group = $groupItem;
+                        $newPage->save();
+
+                        $newPageLang = new PageLang;
+                        $newPageLang->page_id = $pageId;
+                        $newPageLang->language_id = Language::current();
+                        $newPageLang->name = $pageName;
+                        $newPageLang->url = $pageUrl;
+                        $newPageLang->live_version = 1;
+                        $newPageLang->save();
+
+                        PageVersion::add_new($pageId);
+                    }
+                }
+
+                // add page groups
+                $groupsCsv = $importPath.'groups.csv';
+                if (file_exists($groupsCsv) && ($fileHandle = fopen($groupsCsv, 'r')) !== false) {
+                    while (($data = fgetcsv($fileHandle)) !== false) {
+                        list($groupId, $groupName, $itemName, $defaultContainerPageId, $defaultTemplate, $orderAttributeId, $orderDirection) = $data;
+                        $newGroup = new PageGroup;
+                        $newGroup->id = $groupId;
+                        $newGroup->name = $groupName;
+                        $newGroup->item_name = $itemName;
+                        $newGroup->default_parent = $defaultContainerPageId;
+                        $newGroup->default_template = !empty($templateIds[$defaultTemplate])?$templateIds[$defaultTemplate]:0;
+                        $newGroup->order_by_attribute_id = $orderAttributeId;
+                        $newGroup->order_dir = $orderDirection;
+                        $newGroup->save();
+                    }
+                }
+                $groupAttributesCsv = $importPath.'group_attributes.csv';
+                if (file_exists($groupAttributesCsv) && ($fileHandle = fopen($groupAttributesCsv, 'r')) !== false) {
+                    while (($data = fgetcsv($fileHandle)) !== false) {
+                        list($attributeId, $groupId, $blockName, $filerByBlockName) = $data;
+                        $newGroupAttribute = new PageGroup;
+                        $newGroupAttribute->id = $attributeId;
+                        $newGroupAttribute->name = $groupId;
+                        $newGroupAttribute->item_name = !empty($blockIds[$blockName])?$blockIds[$blockName]:0;
+                        $newGroupAttribute->default_parent = !empty($blockIds[$filerByBlockName])?$blockIds[$filerByBlockName]:0;
+                        $newGroupAttribute->save();
+                    }
+                }
+
+                // add menus
+                $menusCsv = $importPath.'menus.csv';
+                $menuIds = [];
+                if (file_exists($menusCsv) && ($fileHandle = fopen($menusCsv, 'r')) !== false) {
+                    while (($data = fgetcsv($fileHandle)) !== false) {
+                        list($name, $label, $maxSublevel) = $data;
+                        $newMenu = new Menu;
+                        $newMenu->label = $label;
+                        $newMenu->name = $name;
+                        $newMenu->max_sublevel = $maxSublevel;
+                        $newMenu->save();
+                        $menuIds[$name] = $newMenu->id;
+                    }
+                }
+                $menuItemsCsv = $importPath.'menus_items.csv';
+                if (file_exists($menuItemsCsv) && ($fileHandle = fopen($menuItemsCsv, 'r')) !== false) {
+                    while (($data = fgetcsv($fileHandle)) !== false) {
+                        list($menuIdentifier, $pageId, $order, $subLevels, $customName) = $data;
+
+                        if (!empty($menuIds[$menuIdentifier])) {
+                            $newMenuItem = new MenuItem;
+                            $newMenuItem->menu_item = $menuIds[$menuIdentifier];
+                            $newMenuItem->page_id = $pageId;
+                            $newMenuItem->order = $order;
+                            $newMenuItem->max_sublevel = $subLevels;
+                            $newMenuItem->custom_name = $customName;
+                            $newMenuItem->save();
+                        }
+                    }
+                }
+
+                // add page content
+
+            }
+
+            return 1;
         }
         return 0;
     }
@@ -150,18 +290,92 @@ Class Theme extends Eloquent
         $theme = self::where('theme', '=', $themeName)->first();
         if (!empty($theme)) {
             Setting::where('name', '=', 'frontend.theme')->update(['value' => $theme->id]);
+            self::templateIdUpdate($theme->id);
             return 1;
         }
         return 0;
     }
 
+    public static function templateIdUpdate($themeId = 0, $force = false)
+    {
+        $themeTemplatesByName = [];
+        $themeTemplatesById = [];
+        $templatesById = [];
+
+        if (!$themeId) {
+            $themeId = Setting::where('name', '=', 'frontend.theme')->get();
+        }
+
+        $templates = Template::all();
+        if (!$templates->isEmpty()) {
+
+            foreach ($templates as $template) {
+                if ($template->theme_id == $themeId) {
+                    $themeTemplatesByName[$template->template] = $template;
+                    $themeTemplatesById[$template->id] = $template;
+                }
+                $templatesById[$template->id] = $template;
+            }
+
+            if (!empty($themeTemplatesById)) {
+
+                // get default template id
+                $defaultTemplate = Setting::where('name', '=', 'admin.default_template')->first();
+                if (empty($defaultTemplate)) {
+                    $defaultTemplateId = $defaultTemplate->value;
+                } else {
+                    $defaultTemplateId = config('coaster::admin.default_template');
+                }
+
+                // update default template id if not a theme template
+                if (empty($defaultTemplateId) || !array_key_exists($defaultTemplateId, $themeTemplatesById)) {
+                    if (!empty($templatesById[$defaultTemplateId])) {
+                        $defaultTemplateName = $templatesById[$defaultTemplateId]->template;
+                        if (!empty($themeTemplatesByName[$defaultTemplateName])) {
+                            $newDefaultTemplateId = $themeTemplatesByName[$defaultTemplateName]->id;
+                        }
+                    }
+                    if (empty($newDefaultTemplateId)) {
+                        reset($themeTemplatesById);
+                        $newDefaultTemplateId = key($themeTemplatesById);
+                    }
+                    Setting::where('name', '=', 'admin.default_template')->update(['value' => $newDefaultTemplateId]);
+                    $defaultTemplateId = $newDefaultTemplateId;
+                }
+
+                // update all page templates if not in theme
+                $pages = Page::all();
+                foreach ($pages as $page) {
+                    if ($page->template > 0 && !array_key_exists($page->template, $themeTemplatesById)) {
+                        $newPageTemplateId = 0;
+                        if (!empty($templatesById[$page->template])) {
+                            $pageTemplateName = $templatesById[$page->template]->template;
+                            if (!empty($themeTemplatesByName[$pageTemplateName])) {
+                                $newPageTemplateId = $themeTemplatesByName[$pageTemplateName]->id;
+                            }
+                        }
+                        if (empty($newPageTemplateId) && ($force || empty($templatesById[$page->template]))) {
+                            $newPageTemplateId = $defaultTemplateId;
+                        }
+                        if (!empty($newPageTemplateId)) {
+                            $page->template = $newPageTemplateId;
+                            $page->save();
+                        }
+                    }
+                }
+
+            }
+
+        }
+    }
+
     public static function remove($themeName)
     {
         $theme = self::where('theme', '=', $themeName)->first();
-        if (!empty($theme) && $theme->id == config('coaster::frontend.theme')) {
-            return 0;
-        }
         if (!empty($theme)) {
+            if ($theme->id == config('coaster::frontend.theme')) {
+                return 0;
+            }
             $templates = Template::where('theme_id', '=', $theme->id)->get();
             if (!$templates->isEmpty()) {
                 $templateIds = [];
@@ -170,6 +384,7 @@ Class Theme extends Eloquent
                 }
                 TemplateBlock::whereIn('template_id', $templateIds)->delete();
             }
+            Template::where('theme_id', '=', $theme->id)->delete();
             ThemeBlock::where('theme_id', '=', $theme->id)->delete();
             $theme->delete();
         }
@@ -214,7 +429,7 @@ Class Theme extends Eloquent
             File::removeDirectory($themesDir.$theme->theme.'/export');
             exit;
         }
-        return 0;
+        return 'error';
     }
 
 }

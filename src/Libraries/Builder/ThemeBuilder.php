@@ -7,10 +7,14 @@ use CoasterCms\Models\BlockFormRule;
 use CoasterCms\Models\BlockRepeater;
 use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\Language;
+use CoasterCms\Models\Menu;
+use CoasterCms\Models\MenuItem;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageBlock;
 use CoasterCms\Models\PageBlockDefault;
 use CoasterCms\Models\PageBlockRepeaterData;
+use CoasterCms\Models\PageGroup;
+use CoasterCms\Models\PageGroupAttribute;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\TemplateBlock;
@@ -70,10 +74,47 @@ class ThemeBuilder
     private static $_categoryNames;
     private static $_guessedCategoryIds;
 
+    public static function updateTheme($themeId, $blocks = [])
+    {
+        // process theme templates
+        self::processFiles($themeId);
+
+        // add any new templates
+        self::saveTemplates();
+
+        if (empty($blocks)) {
+            // by default get all unmodified file blocks data
+            $blocks = self::getFileBlocksData();
+            // and run all template updates
+            foreach ($blocks as $block => $details) {
+                if (!empty($details['templates'])) {
+                    $blocks[$block]['run_template_update'] = 1;
+                }
+            }
+        }
+
+        // update Blocks Table
+        foreach ($blocks as $block => $details) {
+            // update Blocks
+            self::saveBlock($block, $details);
+
+            // update ThemeBlocks/TemplateBlocks
+            if (!empty($details['run_template_update'])) {
+                self::updateBlockTemplates($block, $details);
+            }
+        }
+
+        // update block repeaters table
+        self::updateBlockRepeaters();
+    }
+
     public static function processFiles($themeId)
     {
         self::$_theme = Theme::find($themeId);
         if (!empty(self::$_theme)) {
+            $loader = \Illuminate\Foundation\AliasLoader::getInstance();
+            $loader->alias('PageBuilder', 'CoasterCms\Libraries\Builder\ThemeBuilder');
+
             $themePath = base_path('resources/views/themes/' . self::$_theme->theme . '/templates');
 
             self::_checkRepeaterTemplates();
@@ -108,6 +149,8 @@ class ThemeBuilder
                 self::_processDatabaseBlocks();
                 self::_processFileBlocks();
             }
+
+            $loader->alias('PageBuilder', 'CoasterCms\Libraries\Builder\PageBuilder');
         }
 
         if (empty(self::$_fileBlocks)) {
@@ -131,7 +174,7 @@ class ThemeBuilder
             $formRulesCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/blocks/form_rules.csv', 'w');
 
             if ($withPageData) {
-                self::_pageData();
+                self::_pageData($themeId);
             }
 
             fputcsv($selectOptionsCsv, [
@@ -222,18 +265,39 @@ class ThemeBuilder
         }
     }
 
-    private static function _pageData()
+    private static function _pageData($themeId)
     {
         @mkdir(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/pages');
         $pagesCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/pages.csv', 'w');
         $pageBlocksCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/pages/page_blocks.csv', 'w');
         $repeaterBlocksCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/pages/repeater_blocks.csv', 'w');
+        $menusCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/pages/menus.csv', 'w');
+        $menuItemsCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/pages/menu_items.csv', 'w');
 
         fputcsv($pagesCsv, [
             'Page Id',
             'Page Name',
-            'Page Url'
+            'Page Url',
+            'Page Template',
+            'Parent Page Id',
+            'Default Child Template',
+            'Page Order Value',
+            'Is Link (0 or 1)',
+            'Is Live (0 or 1)',
+            'Container for Group Id',
+            'Item in Group Id'
         ]);
+
+        $groupIds = [];
+
+        $pagesData = [];
+        $pages = Page::all();
+        foreach($pages as $page) {
+            $pagesData[$page->id] = $page;
+            if ($page->group_container) {
+                $groupIds[] = $page->group_container;
+            }
+        }
 
         $pageLangData = [];
         $pageLangs = PageLang::where('language_id', '=', Language::current())->orderBy('page_id')->get();
@@ -241,12 +305,143 @@ class ThemeBuilder
             $pageLangData[$pageLang->page_id] = $pageLang;
         }
 
+        $templatesById = [];
+        $templates = Template::where('theme_id', '=', $themeId)->get();
+        foreach ($templates as $template) {
+            $templatesById[$template->id] = $template->template;
+        }
+
         foreach ($pageLangs as $pageLang) {
-            fputcsv($pagesCsv, [
-                $pageLang->page_id,
-                $pageLang->name,
-                $pageLang->url
+            if (!empty($pagesData[$pageLang->page_id])) {
+                $page = $pagesData[$pageLang->page_id];
+                if (empty($groups)) {
+                    $page->group_container = 0;
+                    $page->in_group = 0;
+                }
+                fputcsv($pagesCsv, [
+                    $pageLang->page_id,
+                    $pageLang->name,
+                    $pageLang->url,
+                    !empty($templatesById[$page->template])?$templatesById[$page->template]:'',
+                    $page->parent?:'',
+                    !empty($templatesById[$page->child_template])?$templatesById[$page->child_template]:'',
+                    $page->order,
+                    $page->link,
+                    $page->live,
+                    $page->group_container?:'',
+                    $page->in_group?:''
+                ]);
+            }
+        }
+
+        fputcsv($menusCsv, [
+            'Menu Identifier',
+            'Menu Name',
+            'Menu Max Sublevels'
+        ]);
+
+        $menuIds = [];
+        $menuIdentifiers = [];
+        $menus = Menu::all();
+        foreach ($menus as $menu) {
+            $menuIds[] = $menu->id;
+            $menuIdentifiers[$menu->id] = $menu->name;
+            fputcsv($menusCsv, [
+                $menu->name,
+                $menu->label,
+                $menu->max_sublevel
             ]);
+        }
+
+        fputcsv($menuItemsCsv, [
+            'Menu Identifier',
+            'Item Page Id',
+            'Item Order',
+            'Item Sublevels',
+            'Item Custom Name'
+        ]);
+
+        $menuItems = MenuItem::whereIn('menu_id', $menuIds)->get()->all();
+
+        usort($menuItems, function ($a, $b) {
+            if ($a->menu_id == $b->menu_id) {
+                if ($a->order == $b->order) {
+                    return 0;
+                }
+                return $a->order < $b->order ? -1 : 1;
+            }
+            return $a->menu_id < $b->menu_id ? -1 : 1;
+        });
+
+        foreach($menuItems as $menuItem) {
+            fputcsv($menuItemsCsv, [
+                $menuIdentifiers[$menuItem->menu_id],
+                $menuItem->page_id,
+                $menuItem->order,
+                $menuItem->sub_levels,
+                $menuItem->custom_name
+            ]);
+        }
+
+        if (!empty($groupIds)) {
+            $pageGroups = PageGroup::whereIn('id', $groupIds)->orderBy('id')->get();
+            if (!$pageGroups->isEmpty()) {
+
+                $groupsCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/pages/groups.csv', 'w');
+                $groupAttributesCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/pages/group_attributes.csv', 'w');
+
+                fputcsv($groupsCsv, [
+                    'Group Id',
+                    'Group Name',
+                    'Group Item Name',
+                    'Default Container Page Id',
+                    'Default Template',
+                    'Order By Attribute Id',
+                    'Order Direction (default: asc)'
+                ]);
+
+                fputcsv($groupAttributesCsv, [
+                    'Attribute Id',
+                    'Group Id',
+                    'Block Name',
+                    'Container Filter by Block Name'
+                ]);
+
+                $groupAttributesByGroupId = [];
+                $groupAttributes = PageGroupAttribute::orderBy('group_id')->get();
+                foreach ($groupAttributes as $groupAttribute) {
+                    if (!isset($groupAttributesByGroupId[$groupAttribute->group_id])) {
+                        $groupAttributesByGroupId[$groupAttribute->group_id] = [];
+                    }
+                    $groupAttributesByGroupId[$groupAttribute->group_id][] = $groupAttribute;
+                }
+
+                foreach ($pageGroups as $pageGroup) {
+
+                    fputcsv($groupsCsv, [
+                        $pageGroup->id,
+                        $pageGroup->name,
+                        $pageGroup->item_name,
+                        $pageGroup->default_parent,
+                        !empty($templatesById[$pageGroup->default_template])?$templatesById[$pageGroup->default_template]:'',
+                        $pageGroup->order_by_attribute_id,
+                        $pageGroup->order_dir
+                    ]);
+
+                    foreach ($groupAttributesByGroupId as $groupId => $attributes) {
+                        foreach ($attributes as $attribute) {
+                            fputcsv($groupAttributesCsv, [
+                                $attribute->id,
+                                $groupId,
+                                Block::preload($attribute->item_block_id)->name,
+                                $attribute->filter_by_block_id?:''
+                            ]);
+                        }
+                    }
+                }
+                fclose($groupsCsv);
+                fclose($groupAttributesCsv);
+            }
         }
 
         fputcsv($pageBlocksCsv, [
@@ -265,7 +460,7 @@ class ThemeBuilder
 
         $pageBlockArr = [];
         foreach ($pageBlocks as $pageBlock) {
-            $blockName = !empty($blocksById[$pageBlock->block_id])?$blocksById[$pageBlock->block_id]->label:null;
+            $blockName = !empty($blocksById[$pageBlock->block_id])?$blocksById[$pageBlock->block_id]->name:null;
 
             $unserialized = @unserialize($pageBlock->content);
             if ($unserialized !== false) {
@@ -308,7 +503,7 @@ class ThemeBuilder
         foreach ($repeaterBlocks as $repeaterId => $repeaterRows) {
             foreach ($repeaterRows as $repeaterRowId => $repeaterBlocks) {
                 foreach ($repeaterBlocks as $repeaterBlockId => $repeaterContent) {
-                    $blockName = !empty($blocksById[$repeaterBlockId])?$blocksById[$repeaterBlockId]->label:null;
+                    $blockName = !empty($blocksById[$repeaterBlockId])?$blocksById[$repeaterBlockId]->name:null;
 
                     $unserialized = @unserialize($repeaterContent);
                     if ($unserialized !== false) {
@@ -327,6 +522,8 @@ class ThemeBuilder
             }
         }
 
+        fclose($menuItemsCsv);
+        fclose($menusCsv);
         fclose($pagesCsv);
         fclose($pageBlocksCsv);
         fclose($repeaterBlocksCsv);
@@ -401,7 +598,7 @@ class ThemeBuilder
             while (($data = fgetcsv($fileHandle)) !== false) {
                 if ($row++ == 0 && $data[0] == 'Block Name') continue;
                 if (!empty($data[0])) {
-                    $fields = ['name', 'label', 'category', 'type', 'global_site', 'global_pages', 'templates', 'order'];
+                    $fields = ['name', 'label', 'category_id', 'type', 'global_site', 'global_pages', 'templates', 'order'];
                     foreach ($fields as $fieldId => $field) {
                         if (isset($data[$fieldId])) {
                             $setting = trim($data[$fieldId]);
@@ -413,7 +610,7 @@ class ThemeBuilder
                                         $setting = true;
                                     }
                                 }
-                                if ($field == 'category') {
+                                if ($field == 'category_id') {
                                     $setting = self::_getBlockCategoryId($setting);
                                 }
                                 if ($field == 'name') {
@@ -678,6 +875,27 @@ class ThemeBuilder
         return array_diff_key(self::$_databaseBlocks, self::$_fileBlocks);
     }
 
+    public static function getFileBlocksData()
+    {
+        // array of all block data for the current theme (with full block details)
+        $fileBlocksData = [];
+        foreach (self::$_fileBlocks as $fileBlock => $details) {
+            $fileBlocksData[$fileBlock] = self::_getBlockData($fileBlock, $details);
+        }
+        return $fileBlocksData;
+    }
+
+    public static function getTemplateList()
+    {
+        $templates = array_keys(self::$_fileTemplateBlocks);
+        foreach ($templates as $i => $template) {
+            if (strpos($template, '__core_') === 0) {
+                unset($templates[$i]);
+            }
+        }
+        return implode(', ', $templates);
+    }
+
     public static function getMainTableData()
     {
         $themeBlocks = [];
@@ -794,17 +1012,6 @@ class ThemeBuilder
         }
     }
 
-    public static function getTemplateList()
-    {
-        $templates = array_keys(self::$_fileTemplateBlocks);
-        foreach ($templates as $i => $template) {
-            if (strpos($template, '__core_') === 0) {
-                unset($templates[$i]);
-            }
-        }
-        return implode(', ', $templates);
-    }
-
     private static function _getBlockData($block, $details = [])
     {
         $processedData = [];
@@ -813,7 +1020,6 @@ class ThemeBuilder
             $processedData['label'] = self::$_allBlocks[$block]->label;
             $processedData['name'] = self::$_allBlocks[$block]->name;
             $processedData['type'] = self::$_allBlocks[$block]->type;
-
         } else {
             $processedData['category_id'] = self::_categoryGuess($block);
             $processedData['label'] = ucwords(str_replace('_', ' ', $block));

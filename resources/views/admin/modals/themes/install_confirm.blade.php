@@ -7,7 +7,7 @@
             </div>
             <div class="modal-body">
                 <p>Are you really sure you want to do this and overwrite existing page data ?</p>
-                <p class="text-danger">Warning: This will permanently remove all existing pages.</p>
+                <p class="text-danger">Warning: This will permanently remove all existing pages, site-wide content and menu items.</p>
             </div>
             <div class="modal-footer">
                 <button class="btn no" data-dismiss="modal"><i class="fa fa-times"></i> &nbsp; No</button>

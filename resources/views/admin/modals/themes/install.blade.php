@@ -7,7 +7,7 @@
             </div>
             <div class="modal-body">
                 <p>Block details may be changed when installing a theme if existing themes use the same block identifiers.</p>
-                <p class="text-danger page-data">Warning: If you install the theme with page data this will remove all existing pages.</p>
+                <p class="text-danger page-data">Warning: If you install the theme with page data this will overwrite all existing pages.</p>
             </div>
             <div class="modal-footer">
                 <button class="btn page-data" data-dismiss="modal"><i class="fa fa-file-text-o"></i> &nbsp; Install theme with page data</button>
