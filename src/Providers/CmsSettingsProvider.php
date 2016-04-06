@@ -43,8 +43,6 @@ class CmsSettingsProvider extends ServiceProvider
             }
         }
 
-        $this->app['config']['coaster::site.secure'] = Request::isSecure();
-
         Setting::loadAll(__DIR__ . '/../../config', 'coaster', $db);
         // override croppa settings
         $this->app['config']['croppa.src_dir'] = public_path();

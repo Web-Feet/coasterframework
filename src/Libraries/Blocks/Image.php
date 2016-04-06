@@ -46,7 +46,7 @@ class Image extends _Base
         if (!empty($options['group'])) {
             $image_data->group = $options['group'];
         }
-        $image_data->original = URL::to($image_data->file, config('coaster::site.secure'));
+        $image_data->original = URL::to($image_data->file);
         $height = !empty($options['height']) ? $options['height'] : null;
         $width = !empty($options['width']) ? $options['width'] : null;
         $croppaOptions = !empty($options['croppaOptions']) ? $options['croppaOptions'] : array();

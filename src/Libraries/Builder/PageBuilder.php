@@ -513,12 +513,12 @@ class PageBuilder
 
     public static function css($file_name)
     {
-        return URL::to('/themes/' . self::$theme . '/css/' . $file_name . '.css', config('coaster::site.secure'));
+        return URL::to('/themes/' . self::$theme . '/css/' . $file_name . '.css');
     }
 
     public static function js($file_name)
     {
-        return URL::to('/themes/' . self::$theme . '/js/' . $file_name . '.js', config('coaster::site.secure'));
+        return URL::to('/themes/' . self::$theme . '/js/' . $file_name . '.js');
     }
 
     public static function set_custom_block_data($block_name, $content)
