@@ -6,6 +6,7 @@ use CoasterCms\Libraries\Blocks\Repeater;
 use CoasterCms\Libraries\Builder\ThemeBuilder;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -156,21 +157,21 @@ Class Theme extends Eloquent
             }
 
             // install page data
-            $importPath = $themePath.'/views/import/';
+            $importPath = $themePath.'/import/';
             if (!empty($options['withPageData']) && is_dir($importPath)) {
 
                 // wipe data
-                Page::truncate();
-                PageLang::truncate();
-                PageVersion::truncate();
-                PageGroup::truncate();
-                PageGroupAttribute::truncate();
-                Menu::truncate();
-                MenuItem::truncate();
-                PageBlockDefault::truncate();
-                PageBlock::truncate();
-                PageBlockRepeaterData::truncate();
-                PageBlockRepeaterRows::truncate();
+                DB::table((new Page)->getTable())->truncate();
+                DB::table((new PageLang)->getTable())->truncate();
+                DB::table((new PageVersion)->getTable())->truncate();
+                DB::table((new PageGroup)->getTable())->truncate();
+                DB::table((new PageGroupAttribute)->getTable())->truncate();
+                DB::table((new Menu)->getTable())->truncate();
+                DB::table((new MenuItem)->getTable())->truncate();
+                DB::table((new PageBlockDefault)->getTable())->truncate();
+                DB::table((new PageBlock)->getTable())->truncate();
+                DB::table((new PageBlockRepeaterData)->getTable())->truncate();
+                DB::table((new PageBlockRepeaterRows)->getTable())->truncate();
 
                 $templateIds = [];
                 $templates = Template::where('theme_id', '=', $newTheme->id)->get();
@@ -196,7 +197,7 @@ Class Theme extends Eloquent
                         $newPage->id = $pageId;
                         $newPage->template = !empty($templateIds[$templateName])?$templateIds[$templateName]:0;
                         $newPage->parent = $parentId;
-                        $newPage->childTemplate = !empty($templateIds[$defaultChildTemplateName])?$templateIds[$defaultChildTemplateName]:0;
+                        $newPage->child_template = !empty($templateIds[$defaultChildTemplateName])?$templateIds[$defaultChildTemplateName]:0;
                         $newPage->order = $order;
                         $newPage->link = $link;
                         $newPage->live = $live;
@@ -217,9 +218,11 @@ Class Theme extends Eloquent
                 }
 
                 // add page groups
-                $groupsCsv = $importPath.'groups.csv';
+                $groupsCsv = $importPath.'pages/groups.csv';
                 if (file_exists($groupsCsv) && ($fileHandle = fopen($groupsCsv, 'r')) !== false) {
+                    $row = 0;
                     while (($data = fgetcsv($fileHandle)) !== false) {
+                        if ($row++ == 0 && $data[0] == 'Group Id') continue;
                         list($groupId, $groupName, $itemName, $defaultContainerPageId, $defaultTemplate, $orderAttributeId, $orderDirection) = $data;
                         $newGroup = new PageGroup;
                         $newGroup->id = $groupId;
@@ -232,24 +235,28 @@ Class Theme extends Eloquent
                         $newGroup->save();
                     }
                 }
-                $groupAttributesCsv = $importPath.'group_attributes.csv';
+                $groupAttributesCsv = $importPath.'pages/group_attributes.csv';
                 if (file_exists($groupAttributesCsv) && ($fileHandle = fopen($groupAttributesCsv, 'r')) !== false) {
+                    $row = 0;
                     while (($data = fgetcsv($fileHandle)) !== false) {
+                        if ($row++ == 0 && $data[0] == 'Attribute Id') continue;
                         list($attributeId, $groupId, $blockName, $filerByBlockName) = $data;
-                        $newGroupAttribute = new PageGroup;
+                        $newGroupAttribute = new PageGroupAttribute;
                         $newGroupAttribute->id = $attributeId;
-                        $newGroupAttribute->name = $groupId;
-                        $newGroupAttribute->item_name = !empty($blockIds[$blockName])?$blockIds[$blockName]:0;
-                        $newGroupAttribute->default_parent = !empty($blockIds[$filerByBlockName])?$blockIds[$filerByBlockName]:0;
+                        $newGroupAttribute->group_id = $groupId;
+                        $newGroupAttribute->item_block_id = !empty($blockIds[$blockName])?$blockIds[$blockName]:0;
+                        $newGroupAttribute->filter_by_block_id = !empty($blockIds[$filerByBlockName])?$blockIds[$filerByBlockName]:0;
                         $newGroupAttribute->save();
                     }
                 }
 
                 // add menus
-                $menusCsv = $importPath.'menus.csv';
+                $menusCsv = $importPath.'pages/menus.csv';
                 $menuIds = [];
                 if (file_exists($menusCsv) && ($fileHandle = fopen($menusCsv, 'r')) !== false) {
+                    $row = 0;
                     while (($data = fgetcsv($fileHandle)) !== false) {
+                        if ($row++ == 0 && $data[0] == 'Menu Identifier') continue;
                         list($name, $label, $maxSublevel) = $data;
                         $newMenu = new Menu;
                         $newMenu->label = $label;
@@ -259,17 +266,18 @@ Class Theme extends Eloquent
                         $menuIds[$name] = $newMenu->id;
                     }
                 }
-                $menuItemsCsv = $importPath.'menus_items.csv';
+                $menuItemsCsv = $importPath.'pages/menu_items.csv';
                 if (file_exists($menuItemsCsv) && ($fileHandle = fopen($menuItemsCsv, 'r')) !== false) {
+                    $row = 0;
                     while (($data = fgetcsv($fileHandle)) !== false) {
+                        if ($row++ == 0 && $data[0] == 'Menu Identifier') continue;
                         list($menuIdentifier, $pageId, $order, $subLevels, $customName) = $data;
-
                         if (!empty($menuIds[$menuIdentifier])) {
                             $newMenuItem = new MenuItem;
-                            $newMenuItem->menu_item = $menuIds[$menuIdentifier];
+                            $newMenuItem->menu_id = $menuIds[$menuIdentifier];
                             $newMenuItem->page_id = $pageId;
                             $newMenuItem->order = $order;
-                            $newMenuItem->max_sublevel = $subLevels;
+                            $newMenuItem->sub_levels = $subLevels;
                             $newMenuItem->custom_name = $customName;
                             $newMenuItem->save();
                         }
