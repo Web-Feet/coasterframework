@@ -47,7 +47,7 @@ class ThemesController extends _Base
         $this->layout->content = View::make('coaster::pages.themes', ['themes' => $themes, 'themes_count' => Theme::count(), 'blockSettings' => $blockSettings]);
     }
 
-    public function getManage()
+    public function getList()
     {
         $thumbs = [];
 
@@ -76,7 +76,13 @@ class ThemesController extends _Base
             }
         }
 
-        $themes_installed = View::make('coaster::partials.themes.thumbs', ['thumbs' => $thumbs]);
+        $theme_auth = [
+            'update' => Auth::action('themes.update'),
+            'manage' => Auth::action('themes.manage'),
+            'export' => Auth::action('themes.export'),
+        ];
+
+        $themes_installed = View::make('coaster::partials.themes.thumbs', ['thumbs' => $thumbs, 'auth' => $theme_auth]);
 
         if (!empty(self::$_error)) {
             $this->layout->alert = new \stdClass;
@@ -109,7 +115,7 @@ class ThemesController extends _Base
             if (!self::$_error = Theme::upload($request['newTheme'])) {
                 return redirect(config('coaster::admin.url') . '/themes/manage')->send();
             } else {
-                $this->getManage();
+                $this->getList();
             }
         }
 
