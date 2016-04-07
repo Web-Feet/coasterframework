@@ -973,7 +973,7 @@ class ThemeBuilder
                 $themeBlocks[$existingBlock]['rowClass'] = 5; // unchanged
                 $themeBlocks[$existingBlock]['templates'] = '';
                 $themeBlocks[$existingBlock]['run_template_update'] = -1;
-            } elseif (array_diff(self::$_fileBlockTemplates[$existingBlock], self::$_databaseBlockTemplates[$existingBlock])) {
+            } elseif (isset(self::$_databaseBlockTemplates[$existingBlock]) && array_diff(self::$_fileBlockTemplates[$existingBlock], self::$_databaseBlockTemplates[$existingBlock])) {
                 $themeBlocks[$existingBlock]['run_template_update'] = 1;
                 $themeBlocks[$existingBlock]['rowClass'] = 2; // changed templates
                 $themeBlocks[$existingBlock]['templates'] = implode(', ', self::$_fileBlockTemplates[$existingBlock]);
