@@ -152,6 +152,7 @@ Class Theme extends Eloquent
             // install theme blocks and templates
             try {
                 ThemeBuilder::updateTheme($newTheme->id);
+                ThemeBuilder::cleanOverwriteFile($newTheme->id);
             } catch (\Exception $e) {
                 // ignore no blocks found ?
             }
@@ -192,7 +193,6 @@ Class Theme extends Eloquent
                     while (($data = fgetcsv($fileHandle)) !== false) {
                         if ($row++ == 0 && $data[0] == 'Page Id') continue;
                         list($pageId, $pageName, $pageUrl, $templateName, $parentId, $defaultChildTemplateName, $order, $link, $live, $groupContainer, $groupItem) = $data;
-
                         $newPage = new Page;
                         $newPage->id = $pageId;
                         $newPage->template = !empty($templateIds[$templateName])?$templateIds[$templateName]:0;
@@ -204,7 +204,6 @@ Class Theme extends Eloquent
                         $newPage->group_container = $groupContainer;
                         $newPage->in_group = $groupItem;
                         $newPage->save();
-
                         $newPageLang = new PageLang;
                         $newPageLang->page_id = $pageId;
                         $newPageLang->language_id = Language::current();
@@ -212,7 +211,6 @@ Class Theme extends Eloquent
                         $newPageLang->url = $pageUrl;
                         $newPageLang->live_version = 1;
                         $newPageLang->save();
-
                         PageVersion::add_new($pageId);
                     }
                 }
@@ -285,6 +283,61 @@ Class Theme extends Eloquent
                 }
 
                 // add page content
+                $pageBlocksCsv = $importPath.'pages/page_blocks.csv';
+                if (file_exists($pageBlocksCsv) && ($fileHandle = fopen($pageBlocksCsv, 'r')) !== false) {
+                    $row = 0;
+                    while (($data = fgetcsv($fileHandle)) !== false) {
+                        if ($row++ == 0 && $data[0] == 'Page Id') continue;
+                        list($pageId, $blockName, $content) = $data;
+                        if (!empty($blockIds[$blockName])) {
+                            if ($pageId) {
+                                $newPageBlock = new PageBlock;
+                                $newPageBlock->page_id = $pageId;
+                            } else {
+                                $newPageBlock = new PageBlockDefault;
+                            }
+                            $newPageBlock->block_id = $blockIds[$blockName];
+                            $newPageBlock->version = 1;
+                            $newPageBlock->content = $content;
+                            $newPageBlock->save();
+                        }
+                    }
+                }
+                $repeaterBlocksCsv = $importPath.'pages/repeater_blocks.csv';
+                if (file_exists($repeaterBlocksCsv) && ($fileHandle = fopen($repeaterBlocksCsv, 'r')) !== false) {
+                    $row = 0;
+                    $existingRepeaterRowKeys = [];
+                    while (($data = fgetcsv($fileHandle)) !== false) {
+                        if ($row++ == 0 && $data[0] == 'Repeater Id') continue;
+                        list($repeaterId, $repeaterRowId, $blockName, $content) = $data;
+                        if (!empty($blockIds[$blockName])) {
+                            if ($decodedContent = json_decode($content)) {
+                                if (!is_string($decodedContent)) {
+                                    $content = serialize($decodedContent);
+                                }
+                            }
+                            if (!isset($existingRepeaterRowKeys[$repeaterId.'-'.$repeaterRowId])) {
+                                $newRepeaterRow = new PageBlockRepeaterRows;
+                                $newRepeaterRow->repeater_id = $repeaterId;
+                                $newRepeaterRow->row_id = $repeaterRowId;
+                                $newRepeaterRow->save();
+                                $existingRepeaterRowKeys[$repeaterId.'-'.$repeaterRowId] = $newRepeaterRow->id;
+                                $newRepeaterData = new PageBlockRepeaterData;
+                                $newRepeaterData->row_key = $existingRepeaterRowKeys[$repeaterId.'-'.$repeaterRowId];
+                                $newRepeaterData->block_id = 0;
+                                $newRepeaterData->version = 1;
+                                $newRepeaterData->content = $repeaterRowId;
+                                $newRepeaterData->save();
+                            }
+                            $newRepeaterData = new PageBlockRepeaterData;
+                            $newRepeaterData->row_key = $existingRepeaterRowKeys[$repeaterId.'-'.$repeaterRowId];
+                            $newRepeaterData->block_id = $blockIds[$blockName];
+                            $newRepeaterData->version = 1;
+                            $newRepeaterData->content = $content;
+                            $newRepeaterData->save();
+                        }
+                    }
+                }
 
             }
 
