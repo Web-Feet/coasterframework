@@ -365,7 +365,7 @@ class PagesController extends _Base
                         $li_info->type = 'type_normal';
                     }
                 }
-                if (trim($li_info->url, '/') == trim(config('coaster::blog.url'), '/')) {
+                if (trim($li_info->url, '/') != '' && trim($li_info->url, '/') == trim(config('coaster::blog.url'), '/')) {
                     $li_info->blog = URL::to(config('coaster::admin.url') . '/system/wp-login');
                 } else {
                     $li_info->blog = '';
