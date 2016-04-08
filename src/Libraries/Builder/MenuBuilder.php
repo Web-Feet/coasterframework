@@ -51,6 +51,7 @@ class MenuBuilder
         $total = count($items);
         $menu_items = '';
         $item_data = new \stdClass;
+        $default_sub_levels = $sub_levels;
         foreach ($items as $item) {
             $custom_name = trim($item->custom_name);
             if (!empty($custom_name)) {
@@ -70,8 +71,10 @@ class MenuBuilder
             }
 
             $sub_menu = '';
-            if ($item->sub_levels >= 0) {
+            if ($item->sub_levels > 0) {
                 $sub_levels = $item->sub_levels;
+            } else {
+                $sub_levels = $default_sub_levels;
             }
             if ($sub_levels > 0) {
                 $child_page_ids = Page::child_page_ids($item->page->id);
