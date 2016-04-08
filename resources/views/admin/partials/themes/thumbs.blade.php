@@ -5,7 +5,9 @@
                 @if ($auth['manage'])
                     <i class="glyphicon glyphicon-remove deleteTheme activeSwitch {{ (isset($thumb->active))?' hidden':'' }}" data-theme="{{ $thumb->name }}" title="Delete"></i>
                 @endif
-                <img src="{{ $thumb->image }}" class="img-responsive" alt="{{ $thumb->name }}">
+                <div class="img-container">
+                    <img src="{{ $thumb->image }}" class="img-responsive" alt="{{ $thumb->name }}">
+                </div>
                 <div class="caption">
                     <p>
                         <span class="label label-success {{ !isset($thumb->active)?' hidden':'' }} activeSwitch">Active</span>

@@ -333,6 +333,16 @@ i.glyphicon-white {
 #uploadThemeForm {display: inline-block;}
 
 .installThumbs {padding-bottom: 20px;}
+.installThumbs .thumbnail {height: 410px;}
+.installThumbs .img-container {height: 215px; position: relative; background-color: #efefef;}
+.installThumbs .img-container img {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+}
 .installThumbs .thumbnail:hover {border-color: #337ab7;}
 .installThumbs .btn {padding: 5px 15px; border-radius: 4px; margin-bottom: 5px; margin-right: 2px;}
 .thumbnail .glyphicon-remove { /* select the close button */

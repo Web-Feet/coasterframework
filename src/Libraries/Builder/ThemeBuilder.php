@@ -279,8 +279,8 @@ class ThemeBuilder
                     self::$_databaseBlocks[$blockName]->label,
                     self::_getBlockCategoryName($block->category_id),
                     self::$_databaseBlocks[$blockName]->type,
-                    isset(self::$_databaseGlobalBlocks[$blockName])&&$block->show_in_global?'yes':'no',
-                    isset(self::$_databaseGlobalBlocks[$blockName])&&$block->show_in_pages?'yes':'no',
+                    isset(self::$_databaseGlobalBlocks[$blockName])&&self::$_databaseGlobalBlocks[$blockName]->show_in_global?'yes':'no',
+                    isset(self::$_databaseGlobalBlocks[$blockName])&&self::$_databaseGlobalBlocks[$blockName]->show_in_pages?'yes':'no',
                     isset(self::$_databaseBlockTemplates[$blockName])?implode(',', self::$_databaseBlockTemplates[$blockName]):'',
                     self::$_databaseBlocks[$blockName]->order
                 ]);
@@ -617,7 +617,7 @@ class ThemeBuilder
         if (!empty(self::$_databaseRepeaterBlocks[$repeaterBlockId])) {
             $blockIds = explode(',', self::$_databaseRepeaterBlocks[$repeaterBlockId]->blocks);
             foreach ($blockIds as $blockId) {
-                if (!isset(self::$_databaseBlocks[$blocksById[$blockId]]) && !isset(self::$_databaseBlocks[$blocksById[$blockId]->name])) {
+                if (isset($blocksById[$blockId]) && !isset(self::$_databaseBlocks[$blocksById[$blockId]->name])) {
                     self::$_databaseBlocks[$blocksById[$blockId]->name] = $blocksById[$blockId];
                     if ($blocksById[$blockId]->type == 'repeater') {
                         self::_loadDatabaseRepeaterBlocks($blockId, $blocksById);
