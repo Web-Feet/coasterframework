@@ -256,8 +256,6 @@ class SystemController extends _Base
             $upgradeLog = file_get_contents(storage_path('app').'/upgrade.log');
 
             if (!empty($upgradeLog) && stripos($upgradeLog, 'Generating autoload files') !== false) {
-                Artisan::call('migrate', ['--path' => '/vendor/web-feet/coasterframework/database/migrations']);
-
                 Cache::put('coaster::site.version', $this->_latestTag(), 30);
                 $message = 'Successfully upgraded to version '.$this->_latestTag();
             } else {

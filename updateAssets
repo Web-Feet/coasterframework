@@ -3,6 +3,7 @@
 
 if (version_compare(phpversion(), '5.5.9', '<')) {
     echo "Coaster Framework: Can't run updateAsset script with PHP Version ".phpversion()." (5.5.9+ required)\n";
+    echo "Coaster Framework: manually run - php ".__DIR__."/updateAssets";
     exit;
 } else {
     require __DIR__.'/hooks/laravel_basic.php';
@@ -16,6 +17,8 @@ if (file_exists($coasterPublicFolder . '/app/')) {
     recursive_copy($updateFrom . '/app/', $coasterPublicFolder . '/app/');
     echo "Coaster Framework: Updated public coaster app assets\n";
 }
+
+Artisan::call('migrate', ['--path' => '/vendor/web-feet/coasterframework/database/migrations']);
 
 $coasterStorageFolder = storage_path();
 $coasterPublicUploadsFolder = public_path() . '/uploads/';
