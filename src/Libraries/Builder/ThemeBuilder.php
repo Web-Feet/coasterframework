@@ -617,7 +617,7 @@ class ThemeBuilder
         if (!empty(self::$_databaseRepeaterBlocks[$repeaterBlockId])) {
             $blockIds = explode(',', self::$_databaseRepeaterBlocks[$repeaterBlockId]->blocks);
             foreach ($blockIds as $blockId) {
-                if (!isset(self::$_databaseBlocks[$blocksById[$blockId]->name])) {
+                if (!isset(self::$_databaseBlocks[$blocksById[$blockId]]) && !isset(self::$_databaseBlocks[$blocksById[$blockId]->name])) {
                     self::$_databaseBlocks[$blocksById[$blockId]->name] = $blocksById[$blockId];
                     if ($blocksById[$blockId]->type == 'repeater') {
                         self::_loadDatabaseRepeaterBlocks($blockId, $blocksById);
