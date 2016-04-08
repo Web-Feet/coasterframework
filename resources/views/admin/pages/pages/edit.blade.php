@@ -8,6 +8,12 @@
             <p><a href="{!! URL::to(config('coaster::admin.url').'/groups/pages/'.$page_details->in_group) !!}">Back
                     to {!! $page_details->group_name !!}</a></p>
         @endif
+        @if ($publishing)
+            <p class="well">
+                Published/Live Version: #<span class="live_version_id">{{ $live_version }}</span>@if ($live_version != $editing_version) &nbsp; <b><span class="text-danger"> - latest version not published</span></b>@endif<br />
+                Editing From Version: #{{ $editing_version }} &nbsp;&nbsp; (Latest Version: #{{ $latest_version }})
+            </p>
+        @endif
     </div>
     <div class="col-sm-6 text-right">
         @if ($can_duplicate)
@@ -68,13 +74,13 @@
             $('#page_info\\[name\\]').change(function () {
                 if ($('#page_info_url').val().substr($('#page_info_url').val().length - 10) == '-duplicate') {
                     $('#page_info_url').val(
-                        $(this).val()
-                            .toLowerCase()
-                            .replace(/\s+/g, '-')
-                            .replace(/[^\w-]/g, '-')
-                            .replace(/-{2,}/g, '-')
-                            .replace(/^-+/g, '')
-                            .replace(/-+$/g, '')
+                            $(this).val()
+                                    .toLowerCase()
+                                    .replace(/\s+/g, '-')
+                                    .replace(/[^\w-]/g, '-')
+                                    .replace(/-{2,}/g, '-')
+                                    .replace(/^-+/g, '')
+                                    .replace(/-+$/g, '')
                     );
                 }
             });

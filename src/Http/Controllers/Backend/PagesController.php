@@ -584,7 +584,10 @@ class PagesController extends _Base
 
         $publishing = (config('coaster::admin.publishing') > 0) ? true : false;
         $preview = 0;
+
         $live_version = 0;
+        $editing_version = 0;
+        $latest_version = 0;
 
         if (!empty($page_id)) {
             $page = Page::find($page_id);
@@ -611,8 +614,10 @@ class PagesController extends _Base
             $in_menus = MenuItem::get_page_menus($page_id);
             $template = $page->template;
 
+            $latest_version = PageVersion::latest_version($page_id);
+            $editing_version = ($version == 0 || $version > $latest_version) ? $latest_version : $version;
+            $live_version = $page_lang->live_version;
             if (!$page->is_live()) {
-                $live_version = $page_lang->live_version;
                 $live_version_model = PageVersion::where('page_id', '=', $page_id)->where('version_id', '=', $page_lang->live_version)->first();
                 $preview = $live_version ? $live_version_model->preview_key : 0;
             }
@@ -750,7 +755,7 @@ class PagesController extends _Base
             }
             $can_duplicate = Auth::action('pages.add', ['page_id' => $duplicate_parent]);
 
-            return View::make('coaster::pages.pages.edit', array('page_details' => $page_details, 'tab' => $tab_data, 'publishing' => $publishing, 'preview' => $preview, 'live_version' => $live_version, 'can_duplicate' => $can_duplicate, 'can_publish' => Auth::action('pages.version-publish', ['page_id' => $page_id])));
+            return View::make('coaster::pages.pages.edit', array('page_details' => $page_details, 'tab' => $tab_data, 'publishing' => $publishing, 'preview' => $preview, 'live_version' => $live_version, 'editing_version' => $editing_version, 'latest_version' => $latest_version, 'can_duplicate' => $can_duplicate, 'can_publish' => Auth::action('pages.version-publish', ['page_id' => $page_id])));
         } else {
             $tab_data = BlockManager::tab_contents($blocks, $blocks_content, $page_details->item_name, 'add', $page_details);
             return View::make('coaster::pages.pages.add', array('page_details' => $page_details, 'tab' => $tab_data));
