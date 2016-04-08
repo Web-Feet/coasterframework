@@ -14,18 +14,20 @@
                     </p>
                     <h3>{{ $thumb->name }}</h3>
                     <p>
-                        @if ($auth['manage'])
-                            <button data-theme="{{ $thumb->name }}" class="btn btn-default activateTheme activeSwitch {{ (isset($thumb->active)||isset($thumb->install))?' hidden':'' }}"><span class="glyphicon glyphicon-ok"></span> Activate</button>
-                        @endif
                         @if (isset($thumb->install))
                             @if ($auth['manage'])
                                 <button data-theme="{{ $thumb->name }}" class="btn btn-default installTheme"><span class="glyphicon glyphicon-cog"></span> Install</button>
                             @endif
-                        @elseif ($auth['export'])
-                            <button data-theme="{{ $thumb->name }}" data-theme-id="{{ $thumb->id }}" class="btn btn-default exportTheme"><span class="glyphicon glyphicon-download"></span> Export</button>
-                        @endif
-                        @if ($auth['update'])
-                            <a href="{{ URL::to(config('coaster::admin.url').'/themes/update/'.$thumb->id) }}" class="btn btn-default"><span class="glyphicon glyphicon-flag"></span> Review Block Changes</a>
+                        @else
+                            @if ($auth['manage'])
+                                <button data-theme="{{ $thumb->name }}" class="btn btn-default activateTheme activeSwitch {{ (isset($thumb->active)||isset($thumb->install))?' hidden':'' }}"><span class="glyphicon glyphicon-ok"></span> Activate</button>
+                            @endif
+                            @if ($auth['export'])
+                                <button data-theme="{{ $thumb->name }}" data-theme-id="{{ $thumb->id }}" class="btn btn-default exportTheme"><span class="glyphicon glyphicon-download"></span> Export</button>
+                            @endif
+                            @if ($auth['update'])
+                                <a href="{{ URL::to(config('coaster::admin.url').'/themes/update/'.$thumb->id) }}" class="btn btn-default"><span class="glyphicon glyphicon-flag"></span> Review Block Changes</a>
+                            @endif
                         @endif
                     </p>
                 </div>

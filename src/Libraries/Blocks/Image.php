@@ -98,4 +98,19 @@ class Image extends _Base
         }
     }
 
+    public static function exportFiles($block, $block_data)
+    {
+        $images= [];
+        if (!empty($block_data)) {
+            $image_data = unserialize($block_data);
+            if (!empty($image_data)) {
+                $imageFile = str_replace(URL::to('/'), '', $image_data->file);
+                if (!empty($imageFile)) {
+                    $images[] = $imageFile;
+                }
+            }
+        }
+        return $images;
+    }
+
 }

@@ -8,7 +8,7 @@
 
     <div class="col-sm-12">
 
-        {!! Form::open(['url' => Request::url(), 'id' => 'uploadThemeForm', 'enctype' => 'multipart/form-data']) !!}
+        {!! Form::open(['url' => URL::to(config('coaster::admin.url').'/themes/manage'), 'id' => 'uploadThemeForm', 'enctype' => 'multipart/form-data']) !!}
         <span class="btn btn-primary fileinput-nice">
             <i class="glyphicon glyphicon-upload glyphicon-white"></i>
             <span>Upload a new theme</span>

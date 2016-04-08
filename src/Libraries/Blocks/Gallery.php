@@ -46,6 +46,18 @@ class Gallery extends _Base
         return $gallery_data;
     }
 
+    public static function exportFiles($block, $block_data)
+    {
+        $images = [];
+        $gallery_data = @unserialize($block_data);
+        if (!empty($gallery_data)) {
+            foreach ($gallery_data as $image => $image_data) {
+                $images[] = '/uploads/system/gallery/' . $block->id . $image_data->path . $image;
+            }
+        }
+        return $images;
+    }
+
     // gallery specific functions below
 
     public static function page($block_id, $page_id)

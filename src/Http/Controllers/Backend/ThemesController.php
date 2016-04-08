@@ -112,8 +112,8 @@ class ThemesController extends _Base
         }
 
         if (!empty($request['newTheme'])) {
-            if (!self::$_error = Theme::upload($request['newTheme'])) {
-                return redirect(config('coaster::admin.url') . '/themes/manage')->send();
+            if (!(self::$_error = Theme::upload($request['newTheme']))) {
+                return redirect(config('coaster::admin.url') . '/themes/list')->send();
             } else {
                 $this->getList();
             }

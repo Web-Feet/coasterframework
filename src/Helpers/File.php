@@ -15,17 +15,25 @@ class File
         }
     }
 
-    public static function copyDirectory($srcDir, $dstDir) {
+    public static function copyDirectory($srcDir, $dstDir, $callback = '') {
         $srcDir = rtrim($srcDir, '/');
         $dstDir = rtrim($dstDir, '/');
         $dir = opendir($srcDir);
         @mkdir($dstDir, 0777, true);
         while(($file = readdir($dir)) !== false) {
             if (!in_array($file, ['.', '..'])) {
-                if (is_dir($srcDir . '/' . $file)) {
-                    self::copyDirectory($srcDir.'/'.$file, $dstDir.'/'.$file);
+                $addFrom = $srcDir . '/' . $file;
+                $addTo = $dstDir . '/' . $file;
+                if ($callback) {
+                    list($addFrom, $addTo) = $callback($addFrom, $addTo);
+                    if (dirname($addTo) != $dstDir) {
+                        @mkdir(dirname($addTo), 0777, true);
+                    }
+                }
+                if (is_dir($addFrom)) {
+                    self::copyDirectory($addFrom, $addTo);
                 } else {
-                    copy($srcDir.'/'.$file, $dstDir.'/'.$file);
+                    copy($addFrom, $addTo);
                 }
             }
         }

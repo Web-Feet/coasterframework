@@ -39,7 +39,7 @@ class CoasterGuard extends SessionGuard
         }
     }
 
-    public function actionRoute(array $route, $parameters)
+    public function actionRoute(array $route, $parameters = [])
     {
         if ($this->user()->role->admin < 1) {
             return false;

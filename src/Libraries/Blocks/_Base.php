@@ -51,7 +51,7 @@ class _Base
     /**
      * @param int $page_id
      * @param string $blocks_key
-     * @param null $repeater_info
+     * @param \stdClass $repeater_info
      */
     public static function submit($page_id, $blocks_key, $repeater_info = null)
     {
@@ -82,6 +82,12 @@ class _Base
         }
     }
 
+    /**
+     * @param int $block_id
+     * @param string $search
+     * @param string $type
+     * @return array
+     */
     public static function filter($block_id, $search, $type)
     {
         $live_blocks = PageBlock::page_blocks_on_live_page_versions($block_id);
@@ -105,6 +111,19 @@ class _Base
         return $page_ids;
     }
 
+    /**
+     * @param \CoasterCms\Models\Block $block
+     * @param string $block_data
+     * @return array
+     */
+    public static function exportFiles($block, $block_data)
+    {
+        return [];
+    }
+
+    /**
+     * @return array
+     */
     public static function block_settings_action()
     {
         return ['action' => '', 'name' => ''];

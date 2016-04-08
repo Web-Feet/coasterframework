@@ -6,16 +6,6 @@ use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\BlockFormRule;
 use CoasterCms\Models\BlockRepeater;
 use CoasterCms\Models\BlockSelectOption;
-use CoasterCms\Models\Language;
-use CoasterCms\Models\Menu;
-use CoasterCms\Models\MenuItem;
-use CoasterCms\Models\Page;
-use CoasterCms\Models\PageBlock;
-use CoasterCms\Models\PageBlockDefault;
-use CoasterCms\Models\PageBlockRepeaterData;
-use CoasterCms\Models\PageGroup;
-use CoasterCms\Models\PageGroupAttribute;
-use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\TemplateBlock;
 use CoasterCms\Models\Theme;
@@ -209,13 +199,13 @@ class ThemeBuilder
         }
     }
 
-    public static function processDatabase($themeId, $withPageData)
+    public static function exportBlocks($theme)
     {
         // convert db data to blocks override file
-        self::$_theme = Theme::find($themeId);
 
-        if (!empty(self::$_theme)) {
+        if (!empty($theme)) {
 
+            self::$_theme = $theme;
             self::_processDatabaseBlocks();
 
             @mkdir(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export');
@@ -223,10 +213,6 @@ class ThemeBuilder
             $blocksCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/blocks.csv', 'w');
             $selectOptionsCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/blocks/select_options.csv', 'w');
             $formRulesCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/blocks/form_rules.csv', 'w');
-
-            if ($withPageData) {
-                self::_pageData($themeId);
-            }
 
             fputcsv($selectOptionsCsv, [
                 'Block Name',
@@ -314,265 +300,6 @@ class ThemeBuilder
             fclose($formRulesCsv);
 
         }
-    }
-
-    private static function _pageData($themeId)
-    {
-        @mkdir(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/pages');
-        $pagesCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/pages.csv', 'w');
-        $pageBlocksCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/pages/page_blocks.csv', 'w');
-        $repeaterBlocksCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/pages/repeater_blocks.csv', 'w');
-        $menusCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/pages/menus.csv', 'w');
-        $menuItemsCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/pages/menu_items.csv', 'w');
-
-        $groupIds = [];
-        $pagesData = [];
-        $pages = Page::all();
-        foreach($pages as $page) {
-            $pagesData[$page->id] = $page;
-            if ($page->group_container) {
-                $groupIds[] = $page->group_container;
-            }
-        }
-        $pageLangData = [];
-        $pageLangs = PageLang::where('language_id', '=', Language::current())->orderBy('page_id')->get();
-        foreach($pageLangs as $pageLang) {
-            $pageLangData[$pageLang->page_id] = $pageLang;
-        }
-        $templatesById = [];
-        $templates = Template::where('theme_id', '=', $themeId)->get();
-        foreach ($templates as $template) {
-            $templatesById[$template->id] = $template->template;
-        }
-
-        // export pages
-
-        fputcsv($pagesCsv, [
-            'Page Id',
-            'Page Name',
-            'Page Url',
-            'Page Template',
-            'Parent Page Id',
-            'Default Child Template',
-            'Page Order Value',
-            'Is Link (0 or 1)',
-            'Is Live (0 or 1)',
-            'Container for Group Id',
-            'Item in Group Id'
-        ]);
-
-        foreach ($pageLangs as $pageLang) {
-            if (!empty($pagesData[$pageLang->page_id])) {
-                $page = $pagesData[$pageLang->page_id];
-                if (empty($groupIds)) {
-                    $page->group_container = 0;
-                    $page->in_group = 0;
-                }
-                fputcsv($pagesCsv, [
-                    $pageLang->page_id,
-                    $pageLang->name,
-                    $pageLang->url,
-                    !empty($templatesById[$page->template])?$templatesById[$page->template]:'',
-                    $page->parent?:'',
-                    !empty($templatesById[$page->child_template])?$templatesById[$page->child_template]:'',
-                    $page->order,
-                    $page->link,
-                    $page->live,
-                    $page->group_container?:'',
-                    $page->in_group?:''
-                ]);
-            }
-        }
-
-        // export menus
-
-        fputcsv($menusCsv, [
-            'Menu Identifier',
-            'Menu Name',
-            'Menu Max Sublevels'
-        ]);
-
-        $menuIds = [];
-        $menuIdentifiers = [];
-        $menus = Menu::all();
-        foreach ($menus as $menu) {
-            $menuIds[] = $menu->id;
-            $menuIdentifiers[$menu->id] = $menu->name;
-            fputcsv($menusCsv, [
-                $menu->name,
-                $menu->label,
-                $menu->max_sublevel
-            ]);
-        }
-
-        fputcsv($menuItemsCsv, [
-            'Menu Identifier',
-            'Item Page Id',
-            'Item Order',
-            'Item Sublevels',
-            'Item Custom Name'
-        ]);
-
-        $menuItems = MenuItem::whereIn('menu_id', $menuIds)->get()->all();
-
-        usort($menuItems, function ($a, $b) {
-            if ($a->menu_id == $b->menu_id) {
-                if ($a->order == $b->order) {
-                    return 0;
-                }
-                return $a->order < $b->order ? -1 : 1;
-            }
-            return $a->menu_id < $b->menu_id ? -1 : 1;
-        });
-
-        foreach($menuItems as $menuItem) {
-            fputcsv($menuItemsCsv, [
-                $menuIdentifiers[$menuItem->menu_id],
-                $menuItem->page_id,
-                $menuItem->order,
-                $menuItem->sub_levels,
-                $menuItem->custom_name
-            ]);
-        }
-
-        // export page groups
-
-        if (!empty($groupIds)) {
-            $pageGroups = PageGroup::whereIn('id', $groupIds)->orderBy('id')->get();
-            if (!$pageGroups->isEmpty()) {
-
-                $groupsCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/pages/groups.csv', 'w');
-                $groupAttributesCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/pages/group_attributes.csv', 'w');
-
-                fputcsv($groupsCsv, [
-                    'Group Id',
-                    'Group Name',
-                    'Group Item Name',
-                    'Default Container Page Id',
-                    'Default Template',
-                    'Order By Attribute Id',
-                    'Order Direction (default: asc)'
-                ]);
-
-                fputcsv($groupAttributesCsv, [
-                    'Attribute Id',
-                    'Group Id',
-                    'Block Name',
-                    'Container Filter by Block Name'
-                ]);
-
-                $groupAttributesByGroupId = [];
-                $groupAttributes = PageGroupAttribute::orderBy('group_id')->get();
-                foreach ($groupAttributes as $groupAttribute) {
-                    if (!isset($groupAttributesByGroupId[$groupAttribute->group_id])) {
-                        $groupAttributesByGroupId[$groupAttribute->group_id] = [];
-                    }
-                    $groupAttributesByGroupId[$groupAttribute->group_id][] = $groupAttribute;
-                }
-
-                foreach ($pageGroups as $pageGroup) {
-
-                    fputcsv($groupsCsv, [
-                        $pageGroup->id,
-                        $pageGroup->name,
-                        $pageGroup->item_name,
-                        $pageGroup->default_parent,
-                        !empty($templatesById[$pageGroup->default_template])?$templatesById[$pageGroup->default_template]:'',
-                        $pageGroup->order_by_attribute_id,
-                        $pageGroup->order_dir
-                    ]);
-
-                    foreach ($groupAttributesByGroupId as $groupId => $attributes) {
-                        foreach ($attributes as $attribute) {
-                            fputcsv($groupAttributesCsv, [
-                                $attribute->id,
-                                $groupId,
-                                Block::preload($attribute->item_block_id)->name,
-                                $attribute->filter_by_block_id?:''
-                            ]);
-                        }
-                    }
-                }
-                fclose($groupsCsv);
-                fclose($groupAttributesCsv);
-            }
-        }
-
-        // export page block data
-
-        fputcsv($pageBlocksCsv, [
-            'Page Id',
-            'Block Name',
-            'Content'
-        ]);
-
-        $blocksById = [];
-        foreach (self::$_databaseBlocks as $block) {
-            $blocksById[$block->id] = $block;
-        }
-
-        $pageBlocks = array_merge(BlockManager::get_data_for_version(new PageBlock, 0), BlockManager::get_data_for_version(new PageBlockDefault, 0));
-        $repeaterBlocks = [];
-
-        $pageBlockArr = [];
-        foreach ($pageBlocks as $pageBlock) {
-            $blockName = !empty($blocksById[$pageBlock->block_id])?$blocksById[$pageBlock->block_id]->name:null;
-
-            if (!empty($blockName) && !empty($pageBlock->content)) {
-                if (strtolower($blocksById[$pageBlock->block_id]->type) == 'repeater') {
-                    $repeaterBlocks[$pageBlock->content] = PageBlockRepeaterData::load_by_repeater_id($pageBlock->content);
-                    $repeaterBlockArr[] = $pageBlock->block_id;
-                }
-
-                $pageBlockArr[] = [
-                    isset($pageBlock->page_id)?$pageBlock->page_id:0,
-                    $blockName,
-                    $pageBlock->content
-                ];
-            }
-        }
-
-        usort($pageBlockArr, function ($a, $b) {
-            if ($a[0] == $b[0]) {
-                return strcmp($a[1], $b[1]);
-            }
-            return $a[0] < $b[0] ? -1 : 1;
-        });
-
-        foreach ($pageBlockArr as $pageBlock) {
-            fputcsv($pageBlocksCsv, $pageBlock);
-        }
-
-        fputcsv($repeaterBlocksCsv, [
-            'Repeater Id',
-            'Repeater Row',
-            'Block Name',
-            'Content'
-        ]);
-
-        ksort($repeaterBlocks);
-        foreach ($repeaterBlocks as $repeaterId => $repeaterRows) {
-            foreach ($repeaterRows as $repeaterRowId => $repeaterBlocks) {
-                foreach ($repeaterBlocks as $repeaterBlockId => $repeaterContent) {
-                    $blockName = !empty($blocksById[$repeaterBlockId])?$blocksById[$repeaterBlockId]->name:null;
-
-                    if (!empty($blockName) && $repeaterContent) {
-                        fputcsv($repeaterBlocksCsv, [
-                            $repeaterId,
-                            $repeaterRowId,
-                            $blockName,
-                            $repeaterContent
-                        ]);
-                    }
-                }
-            }
-        }
-
-        fclose($menuItemsCsv);
-        fclose($menusCsv);
-        fclose($pagesCsv);
-        fclose($pageBlocksCsv);
-        fclose($repeaterBlocksCsv);
     }
 
     private static function _checkRepeaterTemplates()
@@ -935,6 +662,15 @@ class ThemeBuilder
             $fileBlocksData[$fileBlock] = self::_getBlockData($fileBlock, $details);
         }
         return $fileBlocksData;
+    }
+
+    public static function getDatabaseBlocks($themeId)
+    {
+        if (empty(self::$_databaseBlocks)) {
+            self::$theme = Theme::find($themeId);
+            self::_processDatabaseBlocks();
+        }
+        return self::$_databaseBlocks;
     }
 
     public static function getTemplateList()

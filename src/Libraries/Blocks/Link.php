@@ -4,6 +4,7 @@ use CoasterCms\Helpers\BlockManager;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageLang;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\URL;
 
 class Link extends _Base
 {
@@ -78,6 +79,20 @@ class Link extends _Base
                 BlockManager::update_block($block_id, $block_content, $page_id, $repeater_info);
             }
         }
+    }
+
+    public static function exportFiles($block, $block_data)
+    {
+        $doc = [];
+        If (!empty($block_data)) {
+            $block_data = unserialize($block_data);
+            if (!empty($block_data['link'])) {
+                if (strpos($block_data['link'], '/') === 0 || strpos($block_data['link'], URL::to('/')) === 0) {
+                    $doc[] = str_replace(URL::to('/'), '', $block_data['link']);
+                }
+            }
+        }
+        return $doc;
     }
 
 }
