@@ -280,8 +280,8 @@ class ThemeBuilder
                 fputcsv($blocksCsv, [
                     $blockName,
                     self::$_databaseBlocks[$blockName]->label,
-                    self::_getBlockCategoryName($block->category_id),
                     self::$_databaseBlocks[$blockName]->note,
+                    self::_getBlockCategoryName($block->category_id),
                     self::$_databaseBlocks[$blockName]->type,
                     isset(self::$_databaseGlobalBlocks[$blockName])&&self::$_databaseGlobalBlocks[$blockName]->show_in_global?'yes':'no',
                     isset(self::$_databaseGlobalBlocks[$blockName])&&self::$_databaseGlobalBlocks[$blockName]->show_in_pages?'yes':'no',
