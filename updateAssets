@@ -18,7 +18,9 @@ if (file_exists($coasterPublicFolder . '/app/')) {
     echo "Coaster Framework: Updated public coaster app assets\n";
 }
 
-Artisan::call('migrate', ['--path' => '/vendor/web-feet/coasterframework/database/migrations']);
+if (config('coaster::installed')) {
+    Artisan::call('migrate', ['--path' => '/vendor/web-feet/coasterframework/database/migrations']);
+}
 
 $coasterStorageFolder = storage_path();
 $coasterPublicUploadsFolder = public_path() . '/uploads/';
