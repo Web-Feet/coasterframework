@@ -1122,12 +1122,12 @@ class ThemeBuilder
             self::$_fileTemplateBlocks[$template][] = $block_name;
         }
 
-        if (empty($option['import_note'])) {
+        if (!empty($options['import_note'])) {
             if (!isset(self::$_blockSettings[$block_name])) {
                 self::$_blockSettings[$block_name] = [];
             }
             if (!isset(self::$_blockSettings[$block_name]['note'])) {
-                self::$_blockSettings[$block_name]['note'] = $option['import_note'];
+                self::$_blockSettings[$block_name]['note'] = $options['import_note'];
             }
         }
 
