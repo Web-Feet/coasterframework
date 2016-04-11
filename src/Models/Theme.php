@@ -247,7 +247,6 @@ Class Theme extends Eloquent
             // install theme blocks and templates
             try {
                 ThemeBuilder::updateTheme($newTheme->id);
-                ThemeBuilder::cleanOverwriteFile($newTheme->id);
             } catch (\Exception $e) {
                 // ignore no blocks found ?
             }
@@ -255,6 +254,12 @@ Class Theme extends Eloquent
             // install pages and page block data
             if (!empty($options['withPageData'])) {
                 self::_pageImportData($newTheme);
+            }
+
+            try {
+                ThemeBuilder::cleanOverwriteFile($newTheme->id);
+            } catch (\Exception $e) {
+                // ignore no blocks found ?
             }
 
             return 1;

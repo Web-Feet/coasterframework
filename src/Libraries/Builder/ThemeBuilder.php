@@ -119,6 +119,8 @@ class ThemeBuilder
             }
         }
 
+        dd($blocksFound, $extraTemplates);
+
         if (!empty($extraTemplates)) {
             $blocksCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/import/blocks.csv', 'w');
             fputcsv($blocksCsv, [
@@ -1114,6 +1116,10 @@ class ThemeBuilder
 
         if (!in_array($block_name, self::$_fileTemplateBlocks[$template])) {
             self::$_fileTemplateBlocks[$template][] = $block_name;
+        }
+
+        if (!empty($options['import_return_value'])) {
+            $output = $options['import_return_value'];
         }
 
         return $output;
