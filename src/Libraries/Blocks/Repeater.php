@@ -174,6 +174,12 @@ class Repeater extends _Base
             }
         }
 
+        foreach ($existing_repeaters as $repeater_id => $existing_repeater) {
+            if (empty($existing_repeater) && empty($repeaters[$repeater_id]) && !empty($submitted_repeaters[$repeater_id])) {
+                BlockManager::update_block($submitted_repeaters[$repeater_id]['block_id'], '', $page_id);
+            }
+        }
+
         if (!empty($repeaters)) {
             foreach ($repeaters as $repeater_id => $repeater) {
                 $repeater_info = new \stdClass;

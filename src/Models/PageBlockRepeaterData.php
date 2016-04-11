@@ -80,16 +80,24 @@ class PageBlockRepeaterData extends Eloquent
             if (!empty($repeater_blocks)) {
                 $repeater_data = [];
                 foreach ($repeater_blocks as $repeater_block) {
-                    $repeater_data = array_merge(self::get_sub_repeater_data($repeater_block->content, $version), $repeater_data);
+                    $sub_repeater_data = self::get_sub_repeater_data($repeater_block->content, $version);
+                    if (empty($sub_repeater_data)) {
+                        $empty_repeater = new \stdClass;
+                        $empty_repeater->repeater_id = $repeater_block->content;
+                        $sub_repeater_data = [$empty_repeater];
+                    }
+                    $repeater_data = array_merge($sub_repeater_data, $repeater_data);
                 }
                 foreach ($repeater_data as $repeater_block) {
                     if (!isset($organised_data[$repeater_block->repeater_id])) {
                         $organised_data[$repeater_block->repeater_id] = [];
                     }
-                    if (!isset($organised_data[$repeater_block->repeater_id][$repeater_block->row_id])) {
-                        $organised_data[$repeater_block->repeater_id][$repeater_block->row_id] = [];
+                    if (isset($repeater_block->row_id)) {
+                        if (!isset($organised_data[$repeater_block->repeater_id][$repeater_block->row_id])) {
+                            $organised_data[$repeater_block->repeater_id][$repeater_block->row_id] = [];
+                        }
+                        $organised_data[$repeater_block->repeater_id][$repeater_block->row_id][] = $repeater_block;
                     }
-                    $organised_data[$repeater_block->repeater_id][$repeater_block->row_id][] = $repeater_block;
                 }
             }
         }
