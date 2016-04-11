@@ -124,6 +124,7 @@ class ThemeBuilder
             fputcsv($blocksCsv, [
                 'Block Name',
                 'Block Label',
+                'Block Note',
                 'Block Category',
                 'Block Type',
                 'Global (show in site-wide)',
@@ -134,6 +135,7 @@ class ThemeBuilder
             foreach ($extraTemplates as $block => $templates) {
                 fputcsv($blocksCsv, [
                     $block,
+                    '',
                     '',
                     '',
                     '',
@@ -265,6 +267,7 @@ class ThemeBuilder
             fputcsv($blocksCsv, [
                 'Block Name',
                 'Block Label',
+                'Block Note',
                 'Block Category',
                 'Block Type',
                 'Global (show in site-wide)',
@@ -278,6 +281,7 @@ class ThemeBuilder
                     $blockName,
                     self::$_databaseBlocks[$blockName]->label,
                     self::_getBlockCategoryName($block->category_id),
+                    self::$_databaseBlocks[$blockName]->note,
                     self::$_databaseBlocks[$blockName]->type,
                     isset(self::$_databaseGlobalBlocks[$blockName])&&self::$_databaseGlobalBlocks[$blockName]->show_in_global?'yes':'no',
                     isset(self::$_databaseGlobalBlocks[$blockName])&&self::$_databaseGlobalBlocks[$blockName]->show_in_pages?'yes':'no',
@@ -371,7 +375,7 @@ class ThemeBuilder
             while (($data = fgetcsv($fileHandle)) !== false) {
                 if ($row++ == 0 && $data[0] == 'Block Name') continue;
                 if (!empty($data[0])) {
-                    $fields = ['name', 'label', 'category_id', 'type', 'global_site', 'global_pages', 'templates', 'order'];
+                    $fields = ['name', 'label', 'note', 'category_id', 'type', 'global_site', 'global_pages', 'templates', 'order'];
                     foreach ($fields as $fieldId => $field) {
                         if (isset($data[$fieldId])) {
                             $setting = trim($data[$fieldId]);
@@ -814,6 +818,7 @@ class ThemeBuilder
             $processedData['label'] = ucwords(str_replace('_', ' ', $block));
             $processedData['name'] = $block;
             $processedData['type'] = !empty($details['type']) ? $details['type'] : self::_typeGuess($block);
+            $processedData['note'] = !empty($details['note']) ? $details['note'] : '';
         }
         if (!empty(self::$_databaseBlocks[$block])) {
             $processedData['global_site'] = (bool)(!empty(self::$_databaseGlobalBlocks[$block]) ? self::$_databaseGlobalBlocks[$block]->show_in_global : 0);
@@ -958,6 +963,7 @@ class ThemeBuilder
                 $newBlock->category_id = $blockData['category_id'];
                 $newBlock->name = $block;
                 $newBlock->type = $blockData['type'];
+                $newBlock->note = !empty($blockData['note'])?$blockData['note']:'';
                 $newBlock->label = $blockData['label'];
                 $newBlock->order = self::$_fileBlocks[$block]['order'];
                 $newBlock->save();
@@ -1114,6 +1120,15 @@ class ThemeBuilder
 
         if (!in_array($block_name, self::$_fileTemplateBlocks[$template])) {
             self::$_fileTemplateBlocks[$template][] = $block_name;
+        }
+
+        if (empty($option['import_note'])) {
+            if (!isset(self::$_blockSettings[$block_name])) {
+                self::$_blockSettings[$block_name] = [];
+            }
+            if (!isset(self::$_blockSettings[$block_name]['note'])) {
+                self::$_blockSettings[$block_name]['note'] = $option['import_note'];
+            }
         }
 
         if (!empty($options['import_return_value'])) {

@@ -52,6 +52,7 @@ class CmsBlockInput
             'class' => '',
             'content' => '',
             'name' => '',
+            'note' => '',
             'label' => 'None set',
             'submitted_data' => '',
             'form_class' => '',

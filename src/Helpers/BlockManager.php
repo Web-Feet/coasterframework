@@ -190,7 +190,7 @@ class BlockManager
             $field_key = self::_get_input_key($block_class, $repeater_info);
             $parent_repeater = !empty($repeater_info) ? serialize($repeater_info) : null;
 
-            return CmsBlockInput::make($block->type, array('name' => $field_key, 'content' => $field_content, 'block_id' => $block->id, 'label' => $block->label, 'page_id' => $page_id, 'parent_repeater' => $parent_repeater, 'input_id' => $block_class::$edit_id, 'extra_data' => $block_class::$extra_data));
+            return CmsBlockInput::make($block->type, array('name' => $field_key, 'content' => $field_content, 'note' => $block->note, 'block_id' => $block->id, 'label' => $block->label, 'page_id' => $page_id, 'parent_repeater' => $parent_repeater, 'input_id' => $block_class::$edit_id, 'extra_data' => $block_class::$extra_data));
         }
     }
 
