@@ -77,7 +77,7 @@ class ThemeBuilder
             $blocks = self::getFileBlocksData();
             // and run all template updates
             foreach ($blocks as $block => $details) {
-                if (!empty($details['templates'])) {
+                if (!empty(self::$_fileBlockTemplates[$block])) {
                     $blocks[$block]['run_template_update'] = 1;
                 }
             }
@@ -419,13 +419,14 @@ class ThemeBuilder
 
     private static function _getBlockCategoryName($categoryId)
     {
+
         if (!isset(self::$_categoryNames)) {
             foreach (BlockCategory::all() as $category) {
                 self::$_categoryNames[$category->id] = $category->name;
             }
         }
 
-        return self::$_categoryNames[$categoryId];
+        return isset(self::$_categoryNames[$categoryId])?self::$_categoryNames[$categoryId]:'';
     }
 
     private static function _processFileBlocks()
@@ -942,6 +943,7 @@ class ThemeBuilder
     public static function saveBlock($block, $blockData)
     {
         if (isset(self::$_fileBlocks[$block])) {
+            $blockData['category_id'] = !empty($blockData['category_id'])?$blockData['category_id']:0;
             if (!empty(self::$_allBlocks[$block])) {
                 $existingBlock = self::$_allBlocks[$block];
                 if ($existingBlock->type != $blockData['type'] || $existingBlock->label != $blockData['label'] || $existingBlock->category_id != $blockData['category_id']) {

@@ -346,6 +346,7 @@ i.glyphicon-white {
 .installThumbs .thumbnail:hover {border-color: #337ab7;}
 .installThumbs .btn {padding: 5px 15px; border-radius: 4px; margin-bottom: 5px; margin-right: 2px;}
 .thumbnail .glyphicon-remove { /* select the close button */
+    z-index: 10;
     position: absolute;
     top:10px;
     right:25px;
