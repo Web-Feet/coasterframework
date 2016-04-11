@@ -465,6 +465,11 @@ class PageBuilder
         if (!View::exists('themes.' . self::$theme . '.breadcrumbs.' . $options['view'] . '.wrap')) {
             return null;
         }
+        if (View::exists('themes.' . self::$theme . '.breadcrumbs.' . $options['view'] . '.active_element')) {
+            $use_active_view = true;
+        } else {
+            $use_active_view = false;
+        }
         $crumbs = '';
         if (!empty(self::$page_levels)) {
             $url = '';
@@ -477,10 +482,17 @@ class PageBuilder
                     $crumb->url = $url;
                 }
                 if ($active_key == $key) {
+                    $crumb->active = true;
+                } else {
+                    $crumb->active = false;
+                }
+                if ($use_active_view && $crumb->active) {
                     $crumbs .= View::make('themes.' . self::$theme . '.breadcrumbs.' . $options['view'] . '.active_element', array('crumb' => $crumb));
                 } else {
                     $crumbs .= View::make('themes.' . self::$theme . '.breadcrumbs.' . $options['view'] . '.link_element', array('crumb' => $crumb));
-                    $crumbs .= View::make('themes.' . self::$theme . '.breadcrumbs.' . $options['view'] . '.separator');
+                    if (!$crumb->active) {
+                        $crumbs .= View::make('themes.' . self::$theme . '.breadcrumbs.' . $options['view'] . '.separator');
+                    }
                 }
             }
         }
