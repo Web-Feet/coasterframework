@@ -119,8 +119,6 @@ class ThemeBuilder
             }
         }
 
-        dd($blocksFound, $extraTemplates);
-
         if (!empty($extraTemplates)) {
             $blocksCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/import/blocks.csv', 'w');
             fputcsv($blocksCsv, [
