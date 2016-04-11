@@ -18,7 +18,7 @@ class Zip extends \ZipArchive
                 if (!empty($addFrom) && !empty($addTo)) {
                     if (is_dir($addFrom)) {
                         $this->addDir($addFrom, $addTo, $callback);
-                    } else {
+                    } elseif (file_exists($addFrom)) {
                         $this->addFile($addFrom, $addTo);
                     }
                 }

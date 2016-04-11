@@ -335,7 +335,9 @@ Class Theme extends Eloquent
             $zip->addDir(public_path() . '/themes/' . $theme->theme, 'public');
             if (!empty(self::$_uploadsToAdd)) {
                 foreach (self::$_uploadsToAdd as $zipPath => $dirPath) {
-                    $zip->addFile($dirPath, $zipPath);
+                    if (file_exists($dirPath)) {
+                        $zip->addFile($dirPath, $zipPath);
+                    }
                 }
             }
             $zip->close();
@@ -377,9 +379,11 @@ Class Theme extends Eloquent
             $pageLangData[$pageLang->page_id] = $pageLang;
         }
         $templatesById = [];
+        $templatesByName = [];
         $templates = Template::where('theme_id', '=', $theme->id)->get();
         foreach ($templates as $template) {
             $templatesById[$template->id] = $template->template;
+            $templatesByName[$template->template] = $template->id;
         }
 
         // export pages
@@ -550,8 +554,36 @@ Class Theme extends Eloquent
         $blockClasses = BlockManager::getBlockClasses();
 
         $blocksById = [];
+        $blocksByName = [];
         foreach (ThemeBuilder::getDatabaseBlocks($theme->id) as $block) {
             $blocksById[$block->id] = $block;
+            $blocksByName[$block->name] = $block;
+        }
+
+        $blockTemplatesById = [];
+        $templateBlocks = TemplateBlock::whereIn('template_id', $templatesByName)->get();
+        if (!$templateBlocks->isEmpty()) {
+            foreach ($templateBlocks as $templateBlock) {
+                if (!isset($blockTemplatesById[$templateBlock->template_id])) {
+                    $blockTemplatesById[$templateBlock->template_id] = [];
+                }
+                $blockTemplatesById[$templateBlock->template_id][] = $templateBlock->block_id;
+            }
+        }
+        $themeBlocks = ThemeBlock::where('theme_id', '=', $theme->id)->where('show_in_pages', '=', 1)->get();
+        if (!$themeBlocks->isEmpty()) {
+            foreach ($themeBlocks as $themeBlock) {
+                $ignoreTemplates = explode(',', $themeBlock->exclude_templates);
+                foreach ($templatesByName as $templateById) {
+                    if (!in_array($templateById, $ignoreTemplates)) {
+                        if (!isset($blockTemplatesById[$templateById])) {
+                            $blockTemplatesById[$templateById] = [];
+                        }
+                        $blockTemplatesById[$templateById][] = $themeBlock->block_id;
+                    }
+                }
+
+            }
         }
 
         $pageBlocks = array_merge(BlockManager::get_data_for_version(new PageBlock, 0), BlockManager::get_data_for_version(new PageBlockDefault, 0));
@@ -562,6 +594,16 @@ Class Theme extends Eloquent
             $blockName = !empty($blocksById[$pageBlock->block_id])?$blocksById[$pageBlock->block_id]->name:null;
 
             if (!empty($blockName) && !empty($pageBlock->content)) {
+
+                // don't add data for blocks that aren't set as template blocks even if data exists (sort of a cleanup on export)
+                if (isset($pageBlock->page_id)) {
+                    if (empty($pagesData[$pageBlock->page_id]->template) || empty($blockTemplatesById[$pagesData[$pageBlock->page_id]->template])) {
+                        continue;
+                    } elseif (!in_array($pageBlock->block_id, $blockTemplatesById[$pagesData[$pageBlock->page_id]->template])) {
+                        continue;
+                    }
+                }
+
                 if (strtolower($blocksById[$pageBlock->block_id]->type) == 'repeater') {
                     $repeaterBlocks[$pageBlock->content] = PageBlockRepeaterData::load_by_repeater_id($pageBlock->content);
                     $repeaterBlockArr[] = $pageBlock->block_id;
