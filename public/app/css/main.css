@@ -308,7 +308,7 @@ input[type=checkbox].form-control {width: 25px;margin: 0; box-shadow: none;}
 
 .select2 .select2-container--default .select2-selection--multiple .select2-selection__choice {padding: 4px 8px;}
 .select2 .select2-search__field {margin: 6px; height: 30px;}
-.select2 .select2-selection, .select2-container--default.select2-container--focus .select2-selection--multiple {height: 44px; border-color: rgb(204, 204, 204);}
+.select2 .select2-selection, .select2-container--default.select2-container--focus .select2-selection--multiple {min-height: 44px; border-color: rgb(204, 204, 204);}
 
 .select2-selection__rendered {padding: 6px 12px; font-size: 16px;}
 .select2-container--default .select2-selection--single .select2-selection__arrow {top:8px; right:6px;}
