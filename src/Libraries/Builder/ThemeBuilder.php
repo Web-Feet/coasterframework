@@ -69,9 +69,6 @@ class ThemeBuilder
         // process theme templates
         self::processFiles($themeId);
 
-        // add any new templates
-        self::saveTemplates();
-
         if (empty($blocks)) {
             // by default get all unmodified file blocks data
             $blocks = self::getFileBlocksData();
@@ -560,9 +557,12 @@ class ThemeBuilder
         $templates = Template::where('theme_id', '=', self::$_theme->id)->get();
         if (!$templates->isEmpty()) {
             foreach ($templates as $template) {
-                self::$_databaseTemplateBlocks[$template->template] = [];
                 self::$_databaseTemplates[$template->template] = $template;
                 self::$_databaseTemplateIds[$template->id] = $template;
+            }
+            self::saveTemplates(); // save any new templates
+            foreach ($templates as $template) {
+                self::$_databaseTemplateBlocks[$template->template] = [];
             }
             $templateBlocks = TemplateBlock::whereIn('template_id', array_keys(self::$_databaseTemplateIds))->get();
             if (!$templateBlocks->isEmpty()) {
@@ -956,15 +956,17 @@ class ThemeBuilder
 
     public static function saveTemplates()
     {
-        foreach (self::$_fileTemplateBlocks as $template => $blocks) {
-            if (empty(self::$_databaseTemplates[$template]) && strpos($template, '__core_') !== 0) {
-                $newTemplate = new Template;
-                $newTemplate->theme_id = self::$_theme->id;
-                $newTemplate->template = $template;
-                $newTemplate->label = ucwords(str_replace('_', ' ', $template)).' Template';
-                $newTemplate->save();
-                self::$_databaseTemplates[$template] = $newTemplate;
-                self::$_databaseTemplateIds[$newTemplate->id] = $newTemplate;
+        if (!empty(self::$_fileTemplateBlocks)) {
+            foreach (self::$_fileTemplateBlocks as $template => $blocks) {
+                if (empty(self::$_databaseTemplates[$template]) && strpos($template, '__core_') !== 0) {
+                    $newTemplate = new Template;
+                    $newTemplate->theme_id = self::$_theme->id;
+                    $newTemplate->template = $template;
+                    $newTemplate->label = ucwords(str_replace('_', ' ', $template)) . ' Template';
+                    $newTemplate->save();
+                    self::$_databaseTemplates[$template] = $newTemplate;
+                    self::$_databaseTemplateIds[$newTemplate->id] = $newTemplate;
+                }
             }
         }
     }
