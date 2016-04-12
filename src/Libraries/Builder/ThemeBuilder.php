@@ -560,8 +560,10 @@ class ThemeBuilder
                 self::$_databaseTemplates[$template->template] = $template;
                 self::$_databaseTemplateIds[$template->id] = $template;
             }
-            self::saveTemplates(); // save any new templates
-            foreach ($templates as $template) {
+        }
+        self::saveTemplates(); // save any new templates
+        if (!empty(self::$_databaseTemplates)) {
+            foreach (self::$_databaseTemplates as $template) {
                 self::$_databaseTemplateBlocks[$template->template] = [];
             }
             $templateBlocks = TemplateBlock::whereIn('template_id', array_keys(self::$_databaseTemplateIds))->get();
@@ -744,9 +746,11 @@ class ThemeBuilder
             $databaseTemplates = !empty(self::$_databaseBlockTemplates[$deletedBlock])?self::$_databaseBlockTemplates[$deletedBlock]:[];
             if (!empty($databaseTemplates)) {
                 $themeBlocks[$deletedBlock]['updates'] .= 'block removed from the '.implode(' & ', $databaseTemplates) . ' ' . str_plural('template', count($databaseTemplates)) . ', ';
+                $themeBlocks[$deletedBlock]['run_template_update'] = 1;
+            } else {
+                $themeBlocks[$deletedBlock]['run_template_update'] = -1;
             }
             $themeBlocks[$deletedBlock]['updates'] .= 'block no longer used and will be removed from theme on update';
-            $themeBlocks[$deletedBlock]['run_template_update'] = 1;
             $themeBlocks[$deletedBlock]['rowClass'] = 2; // block in no longer found templates
             $themeBlocks[$deletedBlock]['templates'] = 'none';
         }
