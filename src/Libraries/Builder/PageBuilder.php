@@ -557,6 +557,7 @@ class PageBuilder
             'search_query' => ''
         );
         $options = array_merge($default_options, $options);
+        $options['view'] = $options['view']?:'default';
         // select page of selected type
         $page_list = array();
         if ($options['type'] == 'all') {
