@@ -5,13 +5,15 @@ class File
 
     public static function removeDirectory($dir, $keepTop = false)
     {
-        foreach(scandir($dir) as $file) {
-            if (in_array($file, ['.', '..'])) continue;
-            $fileFullPath = $dir.DIRECTORY_SEPARATOR.$file;
-            if (is_dir($fileFullPath)) self::removeDirectory($fileFullPath); else unlink($fileFullPath);
-        }
-        if (!$keepTop) {
-            rmdir($dir);
+        if (is_dir($dir)) {
+            foreach (scandir($dir) as $file) {
+                if (in_array($file, ['.', '..'])) continue;
+                $fileFullPath = $dir . DIRECTORY_SEPARATOR . $file;
+                if (is_dir($fileFullPath)) self::removeDirectory($fileFullPath); else unlink($fileFullPath);
+            }
+            if (!$keepTop) {
+                rmdir($dir);
+            }
         }
     }
 

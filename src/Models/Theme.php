@@ -262,6 +262,10 @@ Class Theme extends Eloquent
                 // ignore no blocks found ?
             }
 
+            File::removeDirectory($themePath.'/import/blocks');
+            File::removeDirectory($themePath.'/import/pages');
+            unlink($themePath.'/import/pages.csv');
+
             return 1;
         }
         return 0;
