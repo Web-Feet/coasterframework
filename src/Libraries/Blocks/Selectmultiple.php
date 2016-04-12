@@ -11,7 +11,11 @@ class Selectmultiple extends _Base
 
     public static function display($block, $block_data, $options = null)
     {
-        return unserialize($block_data);
+        if (!empty($block_data)) {
+            return unserialize($block_data);
+        } else {
+            return [];
+        }
     }
 
     public static function edit($block, $block_data, $page_id = 0, $parent_repeater = null)
@@ -43,10 +47,7 @@ class Selectmultiple extends _Base
         if (!empty($check_for_empty_multiple_selects)) {
             foreach ($check_for_empty_multiple_selects as $block_id => $v) {
                 if (empty($updated_text_blocks[$block_id]) && Request::input($blocks_key . '.' . $block_id) == null) {
-                    $block = Block::preload($block_id);
-                    $block_class = __NAMESPACE__ . '\\' . ucwords($block->type);
-                    $block_content = $block_class::save(array());
-                    BlockManager::update_block($block_id, $block_content, $page_id, $repeater_info);
+                    BlockManager::update_block($block_id, '', $page_id, $repeater_info);
                 }
             }
         }

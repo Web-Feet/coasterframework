@@ -9,7 +9,14 @@ class Stringwprice extends _Base
 
     public static function display($block, $block_data, $options = array())
     {
-        return unserialize($block_data);
+        if (!empty($block_data)) {
+            return unserialize($block_data);
+        } else {
+            $text = new \stdClass;
+            $text->text = '';
+            $text->price = 0;
+            return $text;
+        }
     }
 
     public static function edit($block, $block_data, $page_id = 0, $parent_repeater = null)
@@ -31,7 +38,12 @@ class Stringwprice extends _Base
                 $text = new \stdClass;
                 $text->text = $block_content;
                 $text->price = Request::input($blocks_key . '_price.' . $block_id);
-                BlockManager::update_block($block_id, serialize($text), $page_id, $repeater_info);
+                if (empty($text->text) && empty($text->price)) {
+                    $text = '';
+                } else {
+                    $text = serialize($text);
+                }
+                BlockManager::update_block($block_id, $text, $page_id, $repeater_info);
             }
         }
     }

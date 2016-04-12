@@ -28,7 +28,7 @@ class Video extends _Base
                 return 'Video template not found';
             }
         } else {
-            return null;
+            return '';
         }
     }
 

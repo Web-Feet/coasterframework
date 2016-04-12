@@ -12,7 +12,8 @@ class Selectpages extends _Base
 
     public static function display($block, $block_data, $options = null)
     {
-        $pages = array();
+        $pages = [];
+        $page_ids = [];
         if (isset($options['reverse'])) {
             // get page_ids on which current page is selected in this block
             if (!empty(PageBuilder::$page_info->page_id)) {
@@ -31,7 +32,7 @@ class Selectpages extends _Base
                     }
                 }
             }
-        } else {
+        } elseif (!empty($block_data)) {
             $page_ids = unserialize($block_data);
         }
         if (!empty($page_ids)) {
@@ -56,7 +57,7 @@ class Selectpages extends _Base
     public static function edit($block, $block_data, $page_id = 0, $parent_repeater = null)
     {
         $list_options = array();
-        $parent = BlockSelectOption::where('block_id', '=', $block->id)->first();
+        $parent = BlockSelectOption::where('block_id', '=', $block->id)->where('option', '=', 'parent')->first();
         if (!empty($parent)) {
             $list_options['parent'] = $parent->value;
         }
@@ -69,7 +70,11 @@ class Selectpages extends _Base
 
     public static function save($block_content)
     {
-        return serialize($block_content);
+        if (!empty($block_content)) {
+            return serialize($block_content);
+        } else {
+            return '';
+        }
     }
 
 }

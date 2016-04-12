@@ -90,10 +90,15 @@ class Image extends _Base
         if (!empty($image_blocks)) {
             // loop through images to upload
             foreach ($image_blocks as $block_id => $image_data) {
-                $image = new \stdClass;
-                $image->title = $image_data['alt'];
-                $image->file = $image_data['source'];
-                BlockManager::update_block($block_id, serialize($image), $page_id, $repeater_info);
+                if (!empty($image_data['alt']) || !empty($image_data['source'])) {
+                    $image = new \stdClass;
+                    $image->title = $image_data['alt'];
+                    $image->file = $image_data['source'];
+                    $image = serialize($image);
+                } else {
+                    $image = '';
+                }
+                BlockManager::update_block($block_id, $image, $page_id, $repeater_info);
             }
         }
     }

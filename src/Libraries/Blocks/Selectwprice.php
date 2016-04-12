@@ -10,7 +10,14 @@ class Selectwprice extends _Base
 
     public static function display($block, $block_data, $options = null)
     {
-        return unserialize($block_data);
+        if (!empty($block_data)) {
+            return unserialize($block_data);
+        } else {
+            $text = new \stdClass;
+            $text->selected = 0;
+            $text->price = 0;
+            return $text;
+        }
     }
 
     public static function edit($block, $block_data, $page_id = 0, $parent_repeater = null)
@@ -42,7 +49,12 @@ class Selectwprice extends _Base
                 $text = new \stdClass;
                 $text->selected = $block_content;
                 $text->price = Request::input($blocks_key . '_price.' . $block_id);
-                BlockManager::update_block($block_id, serialize($text), $page_id, $repeater_info);
+                if (empty($text->selected) && empty($text->price)) {
+                    $text = '';
+                } else {
+                    $text = serialize($text);
+                }
+                BlockManager::update_block($block_id, $text, $page_id, $repeater_info);
             }
         }
 

@@ -66,16 +66,20 @@ class Link extends _Base
         $link_blocks = Request::input($blocks_key);
         if (!empty($link_blocks)) {
             foreach ($link_blocks as $block_id => $link) {
-                $data = array();
-                if (empty($link['internal'])) {
-                    $data['link'] = $link['custom'];
-                } else {
+                $data = [];
+                if (!empty($link['internal'])) {
                     $data['link'] = 'internal://' . $link['internal'];
+                } elseif (!empty($link['custom'])) {
+                    $data['link'] = $link['custom'];
                 }
                 if (!empty($link['target'])) {
                     $data['target'] = $link['target'];
                 }
-                $block_content = serialize($data);
+                if (!empty($data)) {
+                    $block_content = serialize($data);
+                } else {
+                    $block_content = '';
+                }
                 BlockManager::update_block($block_id, $block_content, $page_id, $repeater_info);
             }
         }

@@ -9,7 +9,7 @@ class Selectpage extends _Base
     public static function edit($block, $block_data, $page_id = 0, $parent_repeater = null)
     {
         $list_options = array();
-        $parent = BlockSelectOption::where('block_id', '=', $block->id)->first();
+        $parent = BlockSelectOption::where('block_id', '=', $block->id)->where('option', '=', 'parent')->first();
         if (!empty($parent)) {
             $list_options['parent'] = $parent->value;
         }
@@ -18,6 +18,14 @@ class Selectpage extends _Base
         $field_data->selected = $block_data;
         self::$edit_id = array($block->id);
         return $field_data;
+    }
+
+    public static function save($block_content)
+    {
+        if (empty($block_content)) {
+            $block_content = '';
+        }
+        return $block_content;
     }
 
 }
