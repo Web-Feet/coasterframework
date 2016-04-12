@@ -50,7 +50,7 @@
             </thead>
 
             <tbody>
-            <?php $rowClasses = [1 => 'success', 2 => 'warning', 3 => '', 4 => 'info', 5 => '']; ?>
+            <?php $rowClasses = [1 => 'success', 2 => 'danger', 3 => 'warning', 4 => 'info', 5 => '']; ?>
             @foreach($blocksData as $block => $blockData)
                 <tr class="{{ isset($blockData['rowClass'])?$rowClasses[$blockData['rowClass']]:'' }}">
                     <td>{!! ($blockData['run_template_update'] >= 0)?Form::checkbox('block['.$block.'][run_template_update]', 1, $blockData['run_template_update'], ['class' => 'form-control run-template-updates']):'' !!}</td>
