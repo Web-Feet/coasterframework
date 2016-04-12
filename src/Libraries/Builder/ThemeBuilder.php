@@ -710,15 +710,25 @@ class ThemeBuilder
         foreach (self::getExistingBlocks() as $existingBlock => $details) {
             $themeBlocks[$existingBlock] = self::_getBlockData($existingBlock);
             $themeBlocks[$existingBlock]['updates'] = '';
-            if (empty(self::$_fileBlockTemplates[$existingBlock])) {
-                $themeBlocks[$existingBlock]['rowClass'] = 5; // unchanged
+            $databaseTemplates = !empty(self::$_databaseBlockTemplates[$existingBlock])?self::$_databaseBlockTemplates[$existingBlock]:[];
+            $fileTemplates = !empty(self::$_fileBlockTemplates[$existingBlock])?self::$_fileBlockTemplates[$existingBlock]:[];
+            if (empty($databaseTemplates) && empty($fileTemplates)) {
+                $themeBlocks[$existingBlock]['rowClass'] = 5; // unchanged (repeater block)
                 $themeBlocks[$existingBlock]['templates'] = '';
                 $themeBlocks[$existingBlock]['run_template_update'] = -1;
-            } elseif (isset(self::$_databaseBlockTemplates[$existingBlock]) && array_diff(self::$_fileBlockTemplates[$existingBlock], self::$_databaseBlockTemplates[$existingBlock])) {
+            } elseif (empty($databaseTemplates) || empty($fileTemplates) || array_diff($databaseTemplates, $fileTemplates) || array_diff($fileTemplates, $databaseTemplates)) {
+                $addedTemplates = array_diff($fileTemplates, $databaseTemplates);
+                $removedTemplates = array_diff($databaseTemplates, $fileTemplates);
                 $themeBlocks[$existingBlock]['run_template_update'] = 1;
                 $themeBlocks[$existingBlock]['rowClass'] = 2; // changed templates
                 $themeBlocks[$existingBlock]['templates'] = implode(', ', self::$_fileBlockTemplates[$existingBlock]);
-                $themeBlocks[$existingBlock]['updates'] = 'block removed or added to new templates, template update required';
+                if (!empty($addedTemplates)) {
+                    $themeBlocks[$existingBlock]['updates'] .= 'block added to the '.implode(' & ', $addedTemplates) . ' ' . str_plural('template', count($addedTemplates)) . ', ';
+                }
+                if (!empty($removedTemplates)) {
+                    $themeBlocks[$existingBlock]['updates'] .= 'block removed from the '.implode(' & ', $removedTemplates) . ' ' . str_plural('template', count($removedTemplates)) . ', ';
+                }
+                $themeBlocks[$existingBlock]['updates'] .= 'template update required';
             } else {
                 $themeBlocks[$existingBlock]['run_template_update'] = 0;
                 $themeBlocks[$existingBlock]['rowClass'] = 5; // unchanged
