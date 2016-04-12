@@ -340,7 +340,11 @@ Class Theme extends Eloquent
             if (!empty(self::$_uploadsToAdd)) {
                 foreach (self::$_uploadsToAdd as $zipPath => $dirPath) {
                     if (file_exists($dirPath)) {
-                        $zip->addDir($dirPath, $zipPath);
+                        if (is_dir($dirPath)) {
+                            $zip->addDir($dirPath, $zipPath);
+                        } else {
+                            $zip->addFile($dirPath, $zipPath);
+                        }
                     }
                 }
             }
