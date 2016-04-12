@@ -345,8 +345,10 @@ Class Theme extends Eloquent
                 }
             }
             $zip->close();
+
             header("Content-type: application/zip");
             header("Content-Disposition: attachment; filename=" . $zipFileName);
+            header('Content-Length', filesize($themesDir . $zipFileName));
             header("Pragma: no-cache");
             header("Expires: 0");
             readfile($themesDir . $zipFileName);
