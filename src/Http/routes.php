@@ -34,6 +34,8 @@ Route::get('uploads/{file_path}', ['middleware' => ['web', 'auth'], function($fi
         $size = filesize($file_full_path);
         $type = \GuzzleHttp\Psr7\mimetype_from_filename($file_path);
         return response()->download($file_full_path, null, ['size' => $size, 'Content-Type' => $type], null);
+    } else {
+        return response('upload not found', 404);
     }
 }])->where('file_path', '.*');
 
