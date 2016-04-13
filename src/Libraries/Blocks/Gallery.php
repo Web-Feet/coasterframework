@@ -25,7 +25,7 @@ class Gallery extends _Base
             foreach ($gallery_data as $image => $image_data) {
                 $data = new \stdClass;
                 $data->caption = $image_data->caption;
-                $data->file = '/uploads/system/gallery/' . $block->id . $image_data->path . $image;
+                $data->file = '/uploads/system/gallery/' . $block->name . $image_data->path . $image;
                 array_push($images, $data);
             }
         }
@@ -52,7 +52,7 @@ class Gallery extends _Base
         $gallery_data = @unserialize($block_data);
         if (!empty($gallery_data)) {
             foreach ($gallery_data as $image => $image_data) {
-                $images[] = '/uploads/system/gallery/' . $block->id . $image_data->path . $image;
+                $images[] = '/uploads/system/gallery/' . $block->name . $image_data->path . $image;
             }
         }
         return $images;
@@ -126,10 +126,10 @@ class Gallery extends _Base
                 } else {
                     $path = '/' . $page_id . '/';
                 }
-                if (file_exists(public_path() . '/uploads/system/gallery/' . $block_id . $path . 'thumbnail/' . $file))
-                    unlink(public_path() . '/uploads/system/gallery/' . $block_id . $path . 'thumbnail/' . $file);
-                if (file_exists(public_path() . '/uploads/system/gallery/' . $block_id . $path . $file))
-                    unlink(public_path() . '/uploads/system/gallery/' . $block_id . $path . $file);
+                if (file_exists(public_path() . '/uploads/system/gallery/' . $block_data->name . $path . 'thumbnail/' . $file))
+                    unlink(public_path() . '/uploads/system/gallery/' . $block_data->name . $path . 'thumbnail/' . $file);
+                if (file_exists(public_path() . '/uploads/system/gallery/' . $block_data->name . $path . $file))
+                    unlink(public_path() . '/uploads/system/gallery/' . $block_data->name . $path . $file);
             }
             return 1;
         }
@@ -176,8 +176,8 @@ class Gallery extends _Base
                     'script_url' => Request::url(),
                     'max_file_size' => 2000000, //2MB   (will also error if over php.ini post_max_size)
                     'accept_file_types' => '/\.(gif|jpe?g|png)$/i',
-                    'upload_dir' => public_path() . '/uploads/system/gallery/' . $block_id . '/' . $page_id . '/',
-                    'upload_url' => URL::to('/uploads/system/gallery/' . $block_id . '/' . $page_id) . '/')
+                    'upload_dir' => public_path() . '/uploads/system/gallery/' . $block_data->name . '/' . $page_id . '/',
+                    'upload_url' => URL::to('/uploads/system/gallery/' . $block_data->name . '/' . $page_id) . '/')
             );
             if (!empty($upload_handler->name)) {
                 $gallery_data_s = BlockManager::get_block($block_id, $page_id);

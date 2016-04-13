@@ -7,36 +7,7 @@ if (version_compare(phpversion(), '5.5.9', '<')) {
     exit;
 } else {
     require __DIR__.'/hooks/laravel_basic.php';
-}
-
-$coasterPublicFolder = public_path() . config('coaster::admin.public');
-$updateFrom = __DIR__.'/public';
-
-// update app folder
-if (file_exists($coasterPublicFolder . '/app/')) {
-    recursive_copy($updateFrom . '/app/', $coasterPublicFolder . '/app/');
-    echo "Coaster Framework: Updated public coaster app assets\n";
-}
-
-if (config('coaster::installed')) {
-    Artisan::call('migrate', ['--path' => '/vendor/web-feet/coasterframework/database/migrations']);
-}
-
-$coasterStorageFolder = storage_path();
-$coasterPublicUploadsFolder = public_path() . '/uploads/';
-
-function recursive_copy($src,$dst) {
-    $dir = opendir($src);
-    @mkdir($dst);
-    while(false !== ( $file = readdir($dir)) ) {
-        if (( $file != '.' ) && ( $file != '..' )) {
-            if ( is_dir($src . '/' . $file) ) {
-                recursive_copy($src . '/' . $file,$dst . '/' . $file);
-            }
-            else {
-                copy($src . '/' . $file,$dst . '/' . $file);
-            }
-        }
-    }
-    closedir($dir);
+    include __DIR__.'/updates/publicAssets.php';
+    include __DIR__.'/updates/databaseMigrations.php';
+    include __DIR__.'/updates/galleryMoveFiles.php';
 }
