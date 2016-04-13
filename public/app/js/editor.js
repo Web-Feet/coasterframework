@@ -103,6 +103,17 @@ function load_editor_js(rerun) {
     // multi-select / video select
     var ytapikey;
     $(".chosen-select").select2();
+    $(".chosen-select-class").select2({
+        escapeMarkup: function (m) {
+            return m;
+        },
+        templateResult: function (data) {
+            return '<span class="'+data.text+'"></span> '+" &nbsp; "+data.text;
+        },
+        templateSelection: function (data) {
+            return '<span class="'+data.text+'"></span> '+" &nbsp; "+data.text;
+        }
+    });
     $.ajax({
         url: get_admin_url()+'system/keys/yt_browser',
         type: 'POST',
