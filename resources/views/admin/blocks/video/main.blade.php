@@ -1,10 +1,14 @@
-<?php $input_id = str_replace(array('[', ']'), array('_', ''), $name); ?>
+<?php
+$input_id = str_replace(array('[', ']'), array('_', ''), $name);
+$videoData = \CoasterCms\Libraries\Blocks\Video::dl('videos', array('id' => $content?:$submitted_data, 'part' => 'id,snippet'));
+$placeHolderData = (!empty($videoData)&&!empty($videoData->items[0]))?[$content?:$submitted_data => $videoData->items[0]->snippet->title]:[];
+?>
 
 <div class="form-group {{ $field_class }}">
     {!! Form::label($name, $label, ['class' => 'control-label col-sm-2']) !!}
     <div class="col-sm-10">
-        {!! Form::select($name, [], $content?:$submitted_data, ['class' => 'form-control video-search', 'id' => $input_id, 'style' => 'width:100%;']) !!}
-        <a href="javascript:$('#{!! $input_id !!}').select2('val', ''); $('#{!! $input_id !!}_preview').attr('src', 'http://www.youtube.com/embed/{!! $content !!}').css('display', 'none');">
+        {!! Form::select($name, $placeHolderData, $content?:$submitted_data, ['class' => 'form-control video-search', 'id' => $input_id, 'style' => 'width:100%;']) !!}
+        <a href="javascript:$('#{!! $input_id !!}').select2('val', ''); $('#{!! $input_id !!}_preview').css('display', 'none');">
             Clear selection</a>
         <div style="padding-top: 10px;">
             <iframe id="{!! $input_id !!}_preview" class="pull-left"
