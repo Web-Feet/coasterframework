@@ -63,6 +63,9 @@
         }
         $(document).ready(function () {
 
+            liveDateOptions();
+            $('#page_info\\[live\\]').change(liveDateOptions);
+
             page_id = {{ $page_details->id }};
 
             @if ($page_details->link == 1)
@@ -74,13 +77,13 @@
             $('#page_info\\[name\\]').change(function () {
                 if ($('#page_info_url').val().substr($('#page_info_url').val().length - 10) == '-duplicate') {
                     $('#page_info_url').val(
-                            $(this).val()
-                                    .toLowerCase()
-                                    .replace(/\s+/g, '-')
-                                    .replace(/[^\w-]/g, '-')
-                                    .replace(/-{2,}/g, '-')
-                                    .replace(/^-+/g, '')
-                                    .replace(/-+$/g, '')
+                        $(this).val()
+                            .toLowerCase()
+                            .replace(/\s+/g, '-')
+                            .replace(/[^\w-]/g, '-')
+                            .replace(/-{2,}/g, '-')
+                            .replace(/^-+/g, '')
+                            .replace(/-+$/g, '')
                     );
                 }
             });

@@ -33,7 +33,12 @@
     <script type='text/javascript'>
         var link_show, url_prefix;
         $(document).ready(function () {
+
+            liveDateOptions();
+            $('#page_info\\[live\\]').change(liveDateOptions);
+
             selected_tab('#addForm', 0);
+
             $('#page_info\\[type\\]').change(function () {
                 if ($(this).val() == 'link') {
                     url_prefix = $('#url-prefix').detach();
@@ -50,9 +55,11 @@
                     $('#template_select').show();
                 }
             }).trigger('change');
+
             $('#page_info\\[parent\\]').change(function () {
                 $('#url-prefix').html(urlArray[$(this).val()]);
             });
+
             $('#page_info\\[name\\]').change(function () {
                 $('#page_info_url').val(
                     $(this).val()
@@ -64,7 +71,9 @@
                         .replace(/-+$/g, '')
                 );
             });
+
             load_editor_js();
+
         });
     </script>
 @stop
