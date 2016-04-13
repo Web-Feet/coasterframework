@@ -1130,7 +1130,21 @@ class ThemeBuilder
 
             self::$_repeater = $currentRepeater;
         } else {
-            $output = forward_static_call(array('\CoasterCms\Libraries\Builder\PageBuilder', 'block'), $block_name, $options);
+
+            // always use blank data for processing blocks
+            if (isset(self::$_blockSettings[$block_name]['type'])) {
+                $block = new Block;
+                $block->type = self::$_blockSettings[$block_name]['type'];
+            } else {
+                $block = Block::preload($block_name);
+            }
+            if (empty($block)) {
+                $block = new Block;
+                $block->type = self::_typeGuess($block_name);
+            }
+
+            $block_class = $block->get_class();
+            $output = $block_class::display($block, '', $options);
         }
 
         if (self::$_repeater) {
