@@ -263,16 +263,30 @@ class ThemesController extends _Base
         return redirect(config('coaster::admin.url').'/themes/forms');
     }
 
-    public function getSelects($block_id = null)
+    public function getSelects($block_id = null, $import = 0)
     {
         if ($block_id) {
             $block = Block::where('type', 'LIKE', '%select%')->where('type', 'NOT LIKE', '%selectpage%')->where('id', '=', $block_id)->first();
+        }
 
-            if (!empty($block)) {
+        if (!empty($block)) {
+
+            if ($import) {
+
+                $import = [
+                    'fa-4.6' => 'Font Awesome Class List 4.6.1'
+                ];
+
+                $this->layout->content = View::make('coaster::pages.themes.selects', ['block' => $block, 'import' => $import]);
+
+            } else {
+
                 $options = BlockSelectOption::where('block_id', '=', $block_id)->get();
                 $options = $options->isEmpty()?[]:$options;
                 $this->layout->content = View::make('coaster::pages.themes.selects', ['block' => $block, 'options' => $options]);
+
             }
+
         } else {
 
             $selectBlocks = [];
@@ -288,14 +302,43 @@ class ThemesController extends _Base
         }
     }
 
-    public function postSelects($block_id)
+    public function postSelects($block_id, $import = 0)
     {
         $inputOptions = [];
-        $options = Request::get('selectOption');
-        if (!empty($options)) {
-            foreach ($options as $option) {
-                $inputOptions[$option['value']] = $option['option'];
+
+        if ($import) {
+
+            $optionText = Request::get('selectOptionText');
+            $optionValue = Request::get('selectOptionValue');
+            $importOption = Request::get('selectOptionImport');
+
+            $importUrls = [
+                'fa-4.6' => 'https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css'
+            ];
+            $importRegex = [
+                'fa-4.6' => '.(fa-\w+):before{content:"\\\\\w{4}"}'
+            ];
+
+            $client = new \GuzzleHttp\Client();
+            $response = $client->get($importUrls[$importOption]);
+            $matches = [];
+
+            preg_match_all('#'.$importRegex[$importOption].'#', $response->getBody(), $matches);
+            if (!empty($matches[1])) {
+                foreach ($matches[1] as $match) {
+                    $inputOptions[str_replace('$match', $match, $optionValue)] = str_replace('$match', $match, $optionText);
+                }
             }
+
+        } else {
+
+            $options = Request::get('selectOption');
+            if (!empty($options)) {
+                foreach ($options as $option) {
+                    $inputOptions[$option['value']] = $option['option'];
+                }
+            }
+
         }
 
         BlockSelectOption::import($block_id, $inputOptions);

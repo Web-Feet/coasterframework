@@ -10,7 +10,7 @@
 
     <link href='https://fonts.googleapis.com/css?family=Raleway:400,100,300,500,600,700,800,900' rel='stylesheet' type='text/css'>
     {!! AssetBuilder::styles() !!}
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
     @yield('styles')
 
 </head>
@@ -89,11 +89,11 @@
 {!! AssetBuilder::scripts() !!}
 @yield('scripts')
 @if (!empty($alert))
-<script type="text/javascript">
-    $(document).ready(function () {
-        cms_alert('{!! $alert->type !!}', '{!! $alert->header !!}', '{!! $alert->content !!}');
-    });
-</script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            cms_alert('{!! $alert->type !!}', '{!! $alert->header !!}', '{!! $alert->content !!}');
+        });
+    </script>
 @endif
 
 </body>
