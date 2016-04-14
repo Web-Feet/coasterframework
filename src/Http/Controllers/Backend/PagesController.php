@@ -650,7 +650,11 @@ class PagesController extends _Base
             if ($page_details->link == 0) {
                 // load template blocks
                 $theme = Theme::find(config('coaster::frontend.theme'));
-                $blocks = Template::template_blocks($theme->id, $template);
+                if (!empty($theme)) {
+                    $blocks = Template::template_blocks($theme->id, $template);
+                } else {
+                    $blocks = [];
+                }
             }
 
         } else {

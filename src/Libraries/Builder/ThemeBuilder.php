@@ -61,8 +61,9 @@ class ThemeBuilder
 
     // load block category ids for use in category guess
     private static $_categoryIds;
-    private static $_categoryNames;
+    private static $_blockCategories;
     private static $_guessedCategoryIds;
+    private static $_csvCategoryData;
 
     public static function updateTheme($themeId, $blocks = [])
     {
@@ -213,6 +214,7 @@ class ThemeBuilder
             @mkdir(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export');
             @mkdir(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/blocks');
             $blocksCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/blocks.csv', 'w');
+            $blockCategoriesCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/blocks/categories.csv', 'w');
             $selectOptionsCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/blocks/select_options.csv', 'w');
             $formRulesCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/blocks/form_rules.csv', 'w');
 
@@ -277,12 +279,14 @@ class ThemeBuilder
                 'Block Order'
             ]);
 
+            $categoryIds = [];
             foreach (self::$_databaseBlocks as $blockName => $block) {
+                $categoryIds[$block->category_id] = $block->category_id;
                 fputcsv($blocksCsv, [
                     $blockName,
                     self::$_databaseBlocks[$blockName]->label,
                     self::$_databaseBlocks[$blockName]->note,
-                    self::_getBlockCategoryName($block->category_id),
+                    self::_getBlockCategory($block->category_id, 'name'),
                     self::$_databaseBlocks[$blockName]->type,
                     isset(self::$_databaseGlobalBlocks[$blockName])&&self::$_databaseGlobalBlocks[$blockName]->show_in_global?'yes':'no',
                     isset(self::$_databaseGlobalBlocks[$blockName])&&self::$_databaseGlobalBlocks[$blockName]->show_in_pages?'yes':'no',
@@ -300,7 +304,22 @@ class ThemeBuilder
                 }
             }
 
+            fputcsv($blockCategoriesCsv, [
+                'Block Category',
+                'Category Order'
+            ]);
+
+            foreach ($categoryIds as $categoryId) {
+                if ($category = self::_getBlockCategory($categoryId)) {
+                    fputcsv($blockCategoriesCsv, [
+                        $category->name,
+                        $category->order
+                    ]);
+                }
+            }
+
             fclose($blocksCsv);
+            fclose($blockCategoriesCsv);
             fclose($selectOptionsCsv);
             fclose($formRulesCsv);
 
@@ -414,11 +433,24 @@ class ThemeBuilder
             foreach (BlockCategory::all() as $category) {
                 self::$_categoryIds[trim(strtolower($category->name))] = $category->id;
             }
+            $categoryCsv = base_path('resources/views/themes/' . self::$_theme->theme . '/import/blocks/categories.csv');
+            if (file_exists($categoryCsv) && ($fileHandle = fopen($categoryCsv, 'r')) !== false) {
+                $row = 0;
+                while (($data = fgetcsv($fileHandle)) !== false) {
+                    if ($row++ == 0 && $data[0] == 'Block Category') continue;
+                    if (!empty($data[0])) {
+                        list($name, $order) = $data;
+                        self::$_csvCategoryData[trim(strtolower($name))] = $order;
+                    }
+                }
+                fclose($fileHandle);
+            }
         }
 
         if (empty(self::$_categoryIds[trim(strtolower($categoryName))])) {
             $newBlockCategory = new BlockCategory;
             $newBlockCategory->name = trim($categoryName);
+            $newBlockCategory->order = !empty(self::$_csvCategoryData[trim(strtolower($categoryName))])?self::$_csvCategoryData[trim(strtolower($categoryName))]:0;
             $newBlockCategory->save();
             self::$_categoryIds[trim(strtolower($categoryName))] = $newBlockCategory->id;
         }
@@ -426,16 +458,24 @@ class ThemeBuilder
         return self::$_categoryIds[trim(strtolower($categoryName))];
     }
 
-    private static function _getBlockCategoryName($categoryId)
+    private static function _getBlockCategory($categoryId, $field = null)
     {
-
-        if (!isset(self::$_categoryNames)) {
+        if (!isset(self::$_blockCategories)) {
             foreach (BlockCategory::all() as $category) {
-                self::$_categoryNames[$category->id] = $category->name;
+                self::$_blockCategories[$category->id] = $category;
             }
         }
 
-        return isset(self::$_categoryNames[$categoryId])?self::$_categoryNames[$categoryId]:'';
+        if (isset(self::$_blockCategories[$categoryId])) {
+            if ($field) {
+                if (isset(self::$_blockCategories[$categoryId]->{$field})) {
+                    return self::$_blockCategories[$categoryId]->{$field};
+                }
+            } else {
+                return self::$_blockCategories[$categoryId];
+            }
+        }
+        return null;
     }
 
     private static function _processFileBlocks()
