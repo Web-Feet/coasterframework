@@ -264,7 +264,9 @@ Class Theme extends Eloquent
 
             File::removeDirectory($themePath.'/import/blocks');
             File::removeDirectory($themePath.'/import/pages');
-            unlink($themePath.'/import/pages.csv');
+            if (file_exists($themePath.'/import/pages.csv')) {
+                unlink($themePath . '/import/pages.csv');
+            }
 
             return 1;
         }
