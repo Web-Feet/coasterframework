@@ -91,6 +91,9 @@ class ThemeBuilder
             }
         }
 
+        // update form block rules table
+        self::updateFormRules();
+
         // update block repeaters table
         self::updateBlockRepeaters();
     }
@@ -246,7 +249,8 @@ class ThemeBuilder
                     $themeForms = [];
                     foreach (scandir($formsDir) as $formTemplate) {
                         if (!in_array($formTemplate, ['.', '..'])) {
-                            $themeForms[] = $formTemplate;
+                            $formTemplateParts = explode('.', $formTemplate);
+                            $themeForms[] = $formTemplateParts[0];
                         }
                     }
                     foreach ($formRules as $formRule) {
@@ -350,15 +354,19 @@ class ThemeBuilder
                 if ($row++ == 0 && $data[0] == 'Form Template') {
                     continue;
                 }
-                if (!empty(self::$_formRules[$data[0]])) {
+                if (!isset(self::$_formRules[$data[0]])) {
                     self::$_formRules[$data[0]] = [];
                 }
-                self::$_formRules[$data[0]][] = [
-                    $data[1],
-                    $data[2]
-                ];
+                self::$_formRules[$data[0]][$data[1]] = $data[2];
             }
             fclose($fileHandle);
+        }
+    }
+
+    public static function updateFormRules()
+    {
+        if (!empty(self::$_formRules)) {
+            BlockFormRule::import(self::$_formRules);
         }
     }
 

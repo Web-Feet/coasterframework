@@ -11,7 +11,7 @@ Class BlockSelectOption extends Eloquent
         if (!empty($inputOptions)) {
 
             $databaseOptions = [];
-            $options = BlockSelectOption::where('block_id', '=', $block_id)->get();
+            $options = self::where('block_id', '=', $block_id)->get();
             if (!$options->isEmpty()) {
                 foreach ($options as $option) {
                     $databaseOptions[$option->value] = $option;
@@ -23,12 +23,12 @@ Class BlockSelectOption extends Eloquent
             $toDelete = array_diff_key($databaseOptions, $inputOptions);
 
             if (!empty($toDelete)) {
-                BlockSelectOption::where('block_id', '=', $block_id)->whereIn('value', array_keys($toDelete))->delete();
+                self::where('block_id', '=', $block_id)->whereIn('value', array_keys($toDelete))->delete();
             }
 
             if (!empty($toAdd)) {
                 foreach ($toAdd as $value => $option) {
-                    $newBlockSelectOption = new BlockSelectOption;
+                    $newBlockSelectOption = new self;
                     $newBlockSelectOption->block_id = $block_id;
                     $newBlockSelectOption->value = $value;
                     $newBlockSelectOption->option = $option;
