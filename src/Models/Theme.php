@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Models;
 
+use Bkwld\Croppa\Exception;
 use CoasterCms\Helpers\BlockManager;
 use CoasterCms\Helpers\File;
 use CoasterCms\Helpers\Zip;
@@ -203,41 +204,50 @@ Class Theme extends Eloquent
     {
         $themePath = base_path() . '/resources/views/themes/'.$themeName;
         $theme = self::where('theme', '=', $themeName)->first();
-        if (empty($theme) && is_dir($themePath) && is_dir($themePath.'/views') && is_dir($themePath.'/public')) {
+
+        $unpacked = is_dir($themePath.'/templates') && is_dir(public_path().'/themes/'.$themeName);
+        $packed = is_dir($themePath.'/views') && is_dir($themePath.'/public');
+
+        if (empty($theme) && is_dir($themePath) && ($unpacked || $packed)) {
 
             if (!empty($options['check'])) {
-                if (is_dir($themePath.'/views/import/pages')) {
+                $pagesImport = ($packed)?$themePath.'/views/import/pages':$themePath.'/import/pages';
+                if (is_dir($pagesImport)) {
                     return 2;
                 }
                 return 1;
             }
 
-            // extract public folder, extract uploads folder, and move views to themes root
-            File::copyDirectory($themePath.'/public', public_path().'/themes/'.$themeName);
-            File::removeDirectory($themePath.'/public');
+            if ($packed) {
 
-            if (is_dir($themePath.'/uploads')) {
-                $securePaths = [];
-                $secureUploadPaths = explode(',', config('coaster::site.secure_folders'));
-                foreach ($secureUploadPaths as $secureUploadPath) {
-                    $securePaths[] = '/uploads/'.trim($secureUploadPath, '/');
-                }
+                // extract public folder, extract uploads folder, and move views to themes root
+                File::copyDirectory($themePath . '/public', public_path() . '/themes/' . $themeName);
+                File::removeDirectory($themePath . '/public');
 
-                File::copyDirectory($themePath.'/uploads', public_path().'/uploads', function($addFrom, $addTo) use($securePaths, $themePath) {
-                    $uploadPath = str_replace(public_path(), '', $addTo);
-                    foreach ($securePaths as $securePath) {
-                        if (strpos($uploadPath, $securePath) === 0) {
-                            $addTo = str_replace(public_path().'/uploads', storage_path().'/uploads', $addTo);
-                            break;
-                        }
+                if (is_dir($themePath . '/uploads')) {
+                    $securePaths = [];
+                    $secureUploadPaths = explode(',', config('coaster::site.secure_folders'));
+                    foreach ($secureUploadPaths as $secureUploadPath) {
+                        $securePaths[] = '/uploads/' . trim($secureUploadPath, '/');
                     }
-                    return [$addFrom, $addTo];
-                });
-            }
-            File::removeDirectory($themePath.'/uploads');
 
-            File::copyDirectory($themePath.'/views', $themePath);
-            File::removeDirectory($themePath.'/views');
+                    File::copyDirectory($themePath . '/uploads', public_path() . '/uploads', function ($addFrom, $addTo) use ($securePaths, $themePath) {
+                        $uploadPath = str_replace(public_path(), '', $addTo);
+                        foreach ($securePaths as $securePath) {
+                            if (strpos($uploadPath, $securePath) === 0) {
+                                $addTo = str_replace(public_path() . '/uploads', storage_path() . '/uploads', $addTo);
+                                break;
+                            }
+                        }
+                        return [$addFrom, $addTo];
+                    });
+                }
+                File::removeDirectory($themePath . '/uploads');
+
+                File::copyDirectory($themePath . '/views', $themePath);
+                File::removeDirectory($themePath . '/views');
+
+            }
 
             // add theme to database
             $newTheme = new self;
@@ -248,7 +258,8 @@ Class Theme extends Eloquent
             try {
                 ThemeBuilder::updateTheme($newTheme->id);
             } catch (\Exception $e) {
-                // ignore no blocks found ?
+                $newTheme->delete();
+                return $e->getMessage();
             }
 
             // install pages and page block data
@@ -256,11 +267,7 @@ Class Theme extends Eloquent
                 self::_pageImportData($newTheme);
             }
 
-            try {
-                ThemeBuilder::cleanOverwriteFile($newTheme->id);
-            } catch (\Exception $e) {
-                // ignore no blocks found ?
-            }
+            ThemeBuilder::cleanOverwriteFile($newTheme->id);
 
             File::removeDirectory($themePath.'/import/blocks');
             File::removeDirectory($themePath.'/import/pages');
@@ -270,6 +277,7 @@ Class Theme extends Eloquent
 
             return 1;
         }
+
         return 0;
     }
 

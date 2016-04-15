@@ -65,6 +65,8 @@ class ThemeBuilder
     private static $_guessedCategoryIds;
     private static $_csvCategoryData;
 
+    private static $_error;
+
     public static function updateTheme($themeId, $blocks = [])
     {
         // process theme templates
@@ -188,6 +190,10 @@ class ThemeBuilder
                         self::$page_info->template_name = self::$_template;
                         self::$_fileTemplateBlocks[self::$_template] = [];
                         View::make('themes.' . self::$_theme->theme . '.templates.' . self::$_template)->render();
+                        if (self::$_error) {
+                            $error = 'Error processing "'.'themes.' . self::$_theme->theme . '.templates.' . self::$_template . '"';
+                            throw new \Exception($error . "\r\n" . self::$_error);
+                        }
                     }
                 }
                 self::_processDatabaseBlocks();
@@ -1259,6 +1265,7 @@ class ThemeBuilder
         try {
             return forward_static_call_array(['\CoasterCms\Libraries\Builder\PageBuilder', $name], $arguments);
         } catch (\Exception $e) {
+            self::$_error = $e->getMessage();
             return '';
         }
     }

@@ -59,13 +59,13 @@
                         withPageData: wPageData
                     },
                     success: function (r) {
-                        if (r != 0) {
+                        if (r === 1) {
                             location.reload();
                         } else {
-                            cms_alert('danger', 'Error', 'An error occured installing the theme');
+                            cms_alert('danger', 'Error', 'An error occurred installing the theme: <br />'+ r.replace("\r\n", '<br />'));
                         }
                     }, error: function() {
-                        cms_alert('danger', 'Error', 'An error occured installing the theme');
+                        cms_alert('danger', 'Error', 'An error occurred installing the theme: <br />'+r.replace("\r\n", '<br />'));
                     }
                 });
             }
