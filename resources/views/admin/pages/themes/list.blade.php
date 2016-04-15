@@ -49,6 +49,7 @@
 
             // install
             function installTheme() {
+                $('#themewebfeet .installTheme').html('Installing please wait ...');
                 $.ajax({
                     url: get_admin_url() + 'themes/manage',
                     type: 'POST',
@@ -59,7 +60,7 @@
                         withPageData: wPageData
                     },
                     success: function (r) {
-                        if (r === 1) {
+                        if (r === '1') {
                             location.reload();
                         } else {
                             cms_alert('danger', 'Error', 'An error occurred installing the theme: <br />'+ r.replace("\r\n", '<br />'));
