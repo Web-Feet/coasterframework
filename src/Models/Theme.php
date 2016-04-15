@@ -338,6 +338,9 @@ Class Theme extends Eloquent
                 if ($addTo == 'views/import') {
                     $addTo = '';
                 }
+                if (stripos($addTo, '/.svn/') !== false) {
+                    $addTo = '';
+                }
                 if (!$withPageData && stripos($addTo, 'views/export/pages') === 0) {
                     $addTo = '';
                 }
@@ -346,15 +349,16 @@ Class Theme extends Eloquent
                 }
                 return [$addFrom, $addTo];
             });
-            $zip->addDir(public_path() . '/themes/' . $theme->theme, 'public');
+            $zip->addDir(public_path() . '/themes/' . $theme->theme, 'public', function($addFrom, $addTo) {
+                if (stripos($addTo, '/.svn/') !== false) {
+                    $addTo = '';
+                }
+                return [$addFrom, $addTo];
+            });
             if (!empty(self::$_uploadsToAdd)) {
                 foreach (self::$_uploadsToAdd as $zipPath => $dirPath) {
-                    if (file_exists($dirPath)) {
-                        if (is_dir($dirPath)) {
-                            $zip->addDir($dirPath, $zipPath);
-                        } else {
-                            $zip->addFile($dirPath, $zipPath);
-                        }
+                    if (file_exists($dirPath) && !is_dir($dirPath)) {
+                        $zip->addFile($dirPath, $zipPath);
                     }
                 }
             }
@@ -362,7 +366,7 @@ Class Theme extends Eloquent
 
             header("Content-type: application/zip");
             header("Content-Disposition: attachment; filename=" . $zipFileName);
-            header('Content-Length', filesize($themesDir . $zipFileName));
+            header('Content-Length: ' . filesize($themesDir . $zipFileName));
             header("Pragma: no-cache");
             header("Expires: 0");
             readfile($themesDir . $zipFileName);

@@ -10,7 +10,16 @@
         @endif
         @if ($publishing)
             <p class="well">
-                Published/Live Version: #<span class="live_version_id">{{ $live_version }}</span>@if ($live_version != $latest_version) &nbsp; <b><span class="text-danger"> - latest version not published</span></b>@else &nbsp; <b><span class="text-success"> - latest version live</span></b>@endif<br />
+                Published/Live Version: #<span class="live_version_id">{{ $live_version }}</span>
+                @if ($page_details->currently_live)
+                    @if ($live_version != $latest_version) &nbsp; <b><span class="text-danger"> - latest version not published</span></b>
+                    @else &nbsp; <b><span class="text-success"> - latest version live</span></b>@endif
+                @else
+                    @if ($live_version != $latest_version) &nbsp; <b><span class="text-danger"> - latest version not published & page not live</span></b>
+                    @else &nbsp; <b><span class="text-danger"> - latest version published (page not live)</span></b>@endif
+                @endif
+                <br />
+
                 Editing From Version: #{{ $editing_version }} &nbsp;&nbsp; (Latest Version: #{{ $latest_version }})
             </p>
         @endif
@@ -77,13 +86,13 @@
             $('#page_info\\[name\\]').change(function () {
                 if ($('#page_info_url').val().substr($('#page_info_url').val().length - 10) == '-duplicate') {
                     $('#page_info_url').val(
-                        $(this).val()
-                            .toLowerCase()
-                            .replace(/\s+/g, '-')
-                            .replace(/[^\w-]/g, '-')
-                            .replace(/-{2,}/g, '-')
-                            .replace(/^-+/g, '')
-                            .replace(/-+$/g, '')
+                            $(this).val()
+                                    .toLowerCase()
+                                    .replace(/\s+/g, '-')
+                                    .replace(/[^\w-]/g, '-')
+                                    .replace(/-{2,}/g, '-')
+                                    .replace(/^-+/g, '')
+                                    .replace(/-+$/g, '')
                     );
                 }
             });

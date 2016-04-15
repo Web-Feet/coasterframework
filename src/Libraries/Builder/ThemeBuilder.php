@@ -23,7 +23,7 @@ class ThemeBuilder
 
     // current settings
     private static $_theme;
-    private static $_template;
+    public static $_template;
     private static $_repeater;
 
     // all blocks in blocks table
@@ -65,7 +65,11 @@ class ThemeBuilder
     private static $_guessedCategoryIds;
     private static $_csvCategoryData;
 
+    // return error message if error found in a template
     private static $_error;
+
+    // keep track of view to stop infinite loops
+    private static $_currentView;
 
     public static function updateTheme($themeId, $blocks = [])
     {
@@ -512,7 +516,7 @@ class ThemeBuilder
                 if (!empty($fields['templates'])) {
                     if ($fields['templates'] == '*') {
                         foreach (self::$_fileTemplateBlocks as $template => $blocks) {
-                            if (!in_array($block, self::$_fileTemplateBlocks[$template])) {
+                            if (!in_array($block, self::$_fileTemplateBlocks[$template]) && strpos($template, '__core_') !== 0) {
                                 self::$_fileTemplateBlocks[$template][] = $block;
                                 self::$_template = $template;
                                 self::block($block, []);
@@ -745,6 +749,31 @@ class ThemeBuilder
         return implode(', ', $templates);
     }
 
+    private static function _printTemplates($block)  {
+        $templates = [];
+        if (!empty(self::$_blockSettings[$block]['templates'])) {
+            if (self::$_blockSettings[$block]['templates'] == '*') {
+                foreach (self::$_fileBlockTemplates[$block] as $template) {
+                    $templates[] = '<span class="text-danger">'.$template.'</span>';
+                }
+            } else {
+                $overwriteTemplates = explode(',', self::$_blockSettings[$block]['templates']);
+                foreach (self::$_fileBlockTemplates[$block] as $template) {
+                    if (in_array($template, $overwriteTemplates)) {
+                        $templates[] = '<span class="text-danger">'.$template.'</span>';
+                    } else {
+                        $templates[] = '<span class="text-success">'.$template.'</span>';
+                    }
+                }
+            }
+        } else {
+            foreach (self::$_fileBlockTemplates[$block] as $template) {
+                $templates[] = '<span class="text-success">'.$template.'</span>';
+            }
+        }
+        return implode(', ', $templates);
+    }
+
     public static function getMainTableData()
     {
 
@@ -759,7 +788,7 @@ class ThemeBuilder
                 $themeBlocks[$newBlock]['run_template_update'] = -1;
                 $themeBlocks[$newBlock]['templates'] = '';
             } else {
-                $themeBlocks[$newBlock]['templates'] = implode(', ', self::$_fileBlockTemplates[$newBlock]);
+                $themeBlocks[$newBlock]['templates'] = self::_printTemplates($newBlock);
             }
             self::_coreTemplateCheck($themeBlocks, $newBlock);
         }
@@ -778,7 +807,7 @@ class ThemeBuilder
                 $removedTemplates = array_diff($databaseTemplates, $fileTemplates);
                 $themeBlocks[$existingBlock]['run_template_update'] = 1;
                 $themeBlocks[$existingBlock]['rowClass'] = 3; // changed templates
-                $themeBlocks[$existingBlock]['templates'] = implode(', ', self::$_fileBlockTemplates[$existingBlock]);
+                $themeBlocks[$existingBlock]['templates'] = self::_printTemplates($existingBlock);
                 if (!empty($addedTemplates)) {
                     $themeBlocks[$existingBlock]['updates'] .= 'block added to the '.implode(' & ', $addedTemplates) . ' ' . str_plural('template', count($addedTemplates)) . ', ';
                 }
@@ -789,7 +818,7 @@ class ThemeBuilder
             } else {
                 $themeBlocks[$existingBlock]['run_template_update'] = 0;
                 $themeBlocks[$existingBlock]['rowClass'] = 5; // unchanged
-                $themeBlocks[$existingBlock]['templates'] = implode(', ', self::$_fileBlockTemplates[$existingBlock]);
+                $themeBlocks[$existingBlock]['templates'] = self::_printTemplates($existingBlock);
             }
             self::_coreTemplateCheck($themeBlocks, $existingBlock);
         }
@@ -852,21 +881,30 @@ class ThemeBuilder
 
     private static function _coreTemplateCheck(&$themeBlocks, $blockName)
     {
+        $coreFound = false;
+        $repeaterFound = false;
         $coreTemplates = self::$_fileCoreBlockTemplates[$blockName];
-        if (in_array('__core_repeater', $coreTemplates) && count($coreTemplates) == 1) {
-            if (empty($themeBlocks[$blockName]['templates'])) {
+        if (in_array('__core_repeater', $coreTemplates)) {
+            if (empty($themeBlocks[$blockName]['templates']) && count($coreTemplates) == 1) {
                 $themeBlocks[$blockName]['templates'] = 'block only found inside repeaters, no template updates required';
             }
-        } elseif (in_array('__core_category', $coreTemplates)) {
-            if (empty($themeBlocks[$blockName]['templates'])) {
-                $themeBlocks[$blockName]['templates'] = 'block only found inside categories templates, can\'t determine which page templates use this block';
-            } else {
-                $themeBlocks[$blockName]['templates'] .= ', block also found in categories template so it may be used in other page templates';
-            }
+            $repeaterFound = true;
+        }
+        if (in_array('__core_category', $coreTemplates)) {
+            $themeBlocks[$blockName]['templates'] .= ', block also found in a category template';
             if ($themeBlocks[$blockName]['rowClass'] == 5) {
                 $themeBlocks[$blockName]['rowClass'] = 4; // info, there may be changes in blocks in the category templates
             }
-        } else {
+            $coreFound = true;
+        }
+        if (in_array('__core_otherPage', $coreTemplates)) {
+            $themeBlocks[$blockName]['templates'] .= ', block also called with a custom page_id';
+            if ($themeBlocks[$blockName]['rowClass'] == 5) {
+                $themeBlocks[$blockName]['rowClass'] = 4; // info, there may be changes in to the template used by the page with page_id
+            }
+            $coreFound = true;
+        }
+        if (!$coreFound && !$repeaterFound) {
             $coreTemplateFound = false;
             foreach (self::$_coreTemplates as $coreTemplate) {
                 if (in_array($coreTemplate, $coreTemplates)) {
@@ -876,14 +914,16 @@ class ThemeBuilder
             }
             if ($coreTemplateFound) {
                 if (empty($themeBlocks[$blockName]['templates'])) {
-                    $themeBlocks[$blockName]['templates'] = 'can\'t determine which page templates use this block (block may use a custom page_id)';
+                    $themeBlocks[$blockName]['templates'] = 'can\'t automatically determine which page templates';
                 } else {
-                    $themeBlocks[$blockName]['templates'] .= ', the block may be used in other page templates (block may use a custom page_id in places)';
+                    $themeBlocks[$blockName]['templates'] .= ', can\'t automatically determine all page templates';
                 }
                 if ($themeBlocks[$blockName]['rowClass'] == 5) {
                     $themeBlocks[$blockName]['rowClass'] = 4; // info, there may be changes to some core templates
                 }
             }
+        } elseif ($coreFound) {
+            $themeBlocks[$blockName]['templates'] .= ' so can\'t automatically determine all page templates';
         }
     }
 
@@ -1255,10 +1295,36 @@ class ThemeBuilder
                 return forward_static_call_array(['self', 'block'], $arguments);
             }
         }
-        if ($name == 'category') {
+        if (in_array($name, ['category', 'category_filter', 'filter', 'search', 'sitemap'])) {
             $tmp = self::$_template;
             self::$_template = '__core_category';
-            $output = forward_static_call_array(['\CoasterCms\Libraries\Builder\PageBuilder', 'category'], $arguments);
+
+            $page_info = new \stdClass;
+            $page_info->id = 1;
+            $page_info->name = '';
+            $page_info->full_name = '';
+            $page_info->url = '';
+
+            $options = !empty($arguments[count($arguments)-1])?$arguments[count($arguments)-1]:[];
+            $view = !empty($options['view'])?$options['view']:'default';
+
+            if (!isset(self::$_currentView) || self::$_currentView != self::$_template . '_' . $view) {
+
+                self::$_currentView = self::$_template . '_' . $view;
+
+                $list = View::make(
+                    'themes.' . self::$_theme->theme . '.categories.' . $view . '.page',
+                    ['page' => $page_info, 'category_id' => 1, 'is_first' => true, 'is_last' => true, 'count' => 1, 'total' => 1]
+                )->render();
+
+                $output = View::make('themes.' . self::$_theme->theme . '.categories.' . $view . '.pages_wrap',
+                    ['pages' => $list, 'pagination' => '', 'links' => '', 'content' => '', 'category_id' => 1, 'total' => 1, 'html_content' => '', 'search_query' => '']
+                )->render();
+
+            } else {
+                $output = '';
+            }
+
             self::$_template = $tmp;
             return $output;
         }

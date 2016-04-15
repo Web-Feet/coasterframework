@@ -7,23 +7,20 @@
 
 @else
 
-    <p>&nbsp;</p>
+    <p>Here is a list of all blocks found in the theme.</p>
 
     <p>
-        Here is a list of all blocks found in the theme.
+        Newly found blocks that aren't currently in the theme are highlighted green.<br />
+        Existing theme blocks that have template changes and repeater blocks with changes to their repeaters template are highlighted yellow.<br />
+        Blocks that are no longer found in the theme templates are highlighted red.<br />
+        For blocks that rely on a page_id or page data, the templates can't be determined exactly and they are highlighted blue.
     </p>
+
     <p>
-        Blocks with the "update template" option checked will be added to any templates they are found in (and removed from ones they are no longer in).<br/>
-        Newly found blocks will have the option automatically checked (and are highlighted green).<br />
-        Existing blocks found in new templates or no longer found in others will have this option checked as well (and are highlighted yellow).
-    </p>
-    <p>
-        Repeater blocks will also be highlighted yellow if blocks within the repeaters template change.
-    </p>
-    <p>
+        Blocks with the "update template" option checked will have their associated templates updated<br />
         A block with the "show in site-wide content" option checked will appear in the site-wide content section of the admin.<br/>
-        A block with the "show in pages" option checked will be created as a site-wide block and shown on any page templates it's in.<br />
-        If both options check the block will appear in both pages and site-wide content.
+        A block with the "show in pages" option checked will be created as a site-wide block but still be shown on any page templates it's in.<br />
+        If both the options above are checked, the block will appear in both pages and site-wide content.
     </p>
 
     <p>&nbsp;</p>
@@ -31,6 +28,8 @@
     <p><b>Templates Found:</b> {{ $templateList }}</p>
 
     <p><b>Number of blocks found:</b> {{ count($blocksData) }}</p>
+
+    <p>&nbsp;</p>
 
     {!! Form::open(['url' => Request::url()]) !!}
 
@@ -62,7 +61,7 @@
                     <td>{!! ($blockData['run_template_update'] >= 0)?Form::checkbox('block['.$block.'][global_pages]', 1, $blockData['global_pages'], ['class' => 'form-control based-on-template-updates']):'' !!}</td>
                 </tr>
                 <tr class="hidden" id="{{ $block }}_note">
-                    <td colspan="7">{!! !empty($blockData['updates'])?'<b>Updates: </b>'.$blockData['updates'].'<br />':'' !!}<b>Found in templates: </b>{{ $blockData['templates'] }}</td>
+                    <td colspan="7">{!! !empty($blockData['updates'])?'<b>Updates: </b>'.$blockData['updates'].'<br />':'' !!}<b>Found in templates: </b>{!! $blockData['templates'] !!}</td>
                 </tr>
             @endforeach
             </tbody>
