@@ -92,7 +92,8 @@ Class Theme extends Eloquent
         $templatesById = [];
 
         if (!$themeId) {
-            $themeId = Setting::where('name', '=', 'frontend.theme')->get();
+            $themeSetting = Setting::where('name', '=', 'frontend.theme')->get();
+            $themeId = $themeSetting->value;
         }
 
         $templates = Template::all();

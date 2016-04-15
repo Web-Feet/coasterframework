@@ -10,7 +10,7 @@
         @endif
         @if ($publishing)
             <p class="well">
-                Published/Live Version: #<span class="live_version_id">{{ $live_version }}</span>
+                Published Version: #<span class="live_version_id">{{ $live_version }}</span>
                 @if ($page_details->currently_live)
                     @if ($live_version != $latest_version) &nbsp; <b><span class="text-danger"> - latest version not published</span></b>
                     @else &nbsp; <b><span class="text-success"> - latest version live</span></b>@endif

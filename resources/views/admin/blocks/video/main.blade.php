@@ -1,7 +1,10 @@
 <?php
 $input_id = str_replace(array('[', ']'), array('_', ''), $name);
-$videoData = \CoasterCms\Libraries\Blocks\Video::dl('videos', array('id' => $content?:$submitted_data, 'part' => 'id,snippet'));
-$placeHolderData = (!empty($videoData)&&!empty($videoData->items[0]))?[$content?:$submitted_data => $videoData->items[0]->snippet->title]:[];
+$placeHolderData = [];
+if ($content?:$submitted_data) {
+    $videoData = \CoasterCms\Libraries\Blocks\Video::dl('videos', array('id' => $content?:$submitted_data, 'part' => 'id,snippet'));
+    $placeHolderData = (!empty($videoData)&&!empty($videoData->items[0]))?[$content?:$submitted_data => $videoData->items[0]->snippet->title]:[];
+}
 ?>
 
 <div class="form-group {{ $field_class }}">
@@ -19,4 +22,3 @@ $placeHolderData = (!empty($videoData)&&!empty($videoData->items[0]))?[$content?
         <span class="help-block">{{ $field_message }}</span>
     </div>
 </div>
-

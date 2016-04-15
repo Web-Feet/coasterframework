@@ -23,7 +23,7 @@ class ThemeBuilder
 
     // current settings
     private static $_theme;
-    public static $_template;
+    private static $_template;
     private static $_repeater;
 
     // all blocks in blocks table
