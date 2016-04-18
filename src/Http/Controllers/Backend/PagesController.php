@@ -744,7 +744,7 @@ class PagesController extends _Base
         $page_details->name = !empty($submitted_data['name']) ? $submitted_data['name'] : '';
         $page_details->url = !empty($submitted_data['url']) ? $submitted_data['url'] : '';
         $page_details->live = new \stdClass;
-        $page_details->live->options = array(0 => 'Not Live (Hidden)', 1 => 'Live (Ignores Dates)', 2 => 'Live Between Dates Below');
+        $page_details->live->options = array(0 => 'Not Live (Hidden)', 1 => 'Live (Ignores Dates)', 2 => 'Live Between Specific Dates/Times');
         $page_details->live->selected = isset($submitted_data['live']) ? $submitted_data['live'] : 1;
         $page_details->live_start = !empty($submitted_data['live_start']) ? $submitted_data['live_start'] : '';
         $page_details->live_end = !empty($submitted_data['live_end']) ? $submitted_data['live_end'] : '';
