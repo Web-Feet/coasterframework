@@ -93,7 +93,7 @@ class SystemController extends _Base
             $this->layout->alert = $alert;
         }
 
-        return $this->get_index();
+        return redirect(config('coaster::admin.url').'/system');
     }
 
     public function get_index()
