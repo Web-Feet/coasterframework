@@ -21,7 +21,9 @@ Class Setting extends Eloquent
         if ($db) {
             $settings = self::all();
             foreach ($settings as $setting) {
-                Config::set($namespace . '::' . $setting->name, $setting->value);
+                if ($setting->value != '' || strpos($setting->name, 'key') !== 0) {
+                    Config::set($namespace . '::' . $setting->name, $setting->value);
+                }
             }
         }
 
