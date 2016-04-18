@@ -441,7 +441,7 @@ class ThemeBuilder
     {
         if (!isset(self::$_categoryIds)) {
             foreach (BlockCategory::all() as $category) {
-                self::$_categoryIds[trim(strtolower($category->name))] = $category->id;
+                self::$_categoryIds[trim(strtolower($category->name))] = $category;
             }
             $categoryCsv = base_path('resources/views/themes/' . self::$_theme->theme . '/import/blocks/categories.csv');
             if (file_exists($categoryCsv) && ($fileHandle = fopen($categoryCsv, 'r')) !== false) {
@@ -451,6 +451,17 @@ class ThemeBuilder
                     if (!empty($data[0])) {
                         list($name, $order) = $data;
                         self::$_csvCategoryData[trim(strtolower($name))] = $order;
+
+                        if (empty(self::$_categoryIds[trim(strtolower($name))])) {
+                            $newBlockCategory = new BlockCategory;
+                            $newBlockCategory->name = trim($name);
+                            $newBlockCategory->order = $order;
+                            $newBlockCategory->save();
+                            self::$_categoryIds[trim(strtolower($name))] = $newBlockCategory;
+                        } else {
+                            self::$_categoryIds[trim(strtolower($name))]->order = $order;
+                            self::$_categoryIds[trim(strtolower($name))]->save();
+                        }
                     }
                 }
                 fclose($fileHandle);
@@ -460,12 +471,12 @@ class ThemeBuilder
         if (empty(self::$_categoryIds[trim(strtolower($categoryName))])) {
             $newBlockCategory = new BlockCategory;
             $newBlockCategory->name = trim($categoryName);
-            $newBlockCategory->order = !empty(self::$_csvCategoryData[trim(strtolower($categoryName))])?self::$_csvCategoryData[trim(strtolower($categoryName))]:0;
+            $newBlockCategory->order = 0;
             $newBlockCategory->save();
-            self::$_categoryIds[trim(strtolower($categoryName))] = $newBlockCategory->id;
+            self::$_categoryIds[trim(strtolower($categoryName))] = $newBlockCategory;
         }
 
-        return self::$_categoryIds[trim(strtolower($categoryName))];
+        return self::$_categoryIds[trim(strtolower($categoryName))]->id;
     }
 
     private static function _getBlockCategory($categoryId, $field = null)
