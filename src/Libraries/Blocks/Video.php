@@ -35,16 +35,16 @@ class Video extends _Base
     public static function save($block_content)
     {
         if (!empty($block_content)) {
-            $data = self::dl('videos', array('id' => $block_content, 'part' => 'id,snippet'));
-            if (!empty($data->items[0])) {
+            $videoData = self::dl('videos', array('id' => $block_content, 'part' => 'id,snippet'));
+            if (!empty($videoData)) {
                 $cached_video = BlockVideoCache::where('videoId', '=', $block_content)->first();
                 if (empty($cached_video)) {
                     $new_video = new BlockVideoCache;
                     $new_video->videoId = $block_content;
-                    $new_video->videoInfo = serialize($data->items[0]);
+                    $new_video->videoInfo = serialize($videoData);
                     $new_video->save();
                 } else {
-                    $cached_video->videoInfo = serialize($data->items[0]);
+                    $cached_video->videoInfo = serialize($videoData);
                     $cached_video->save();
                 }
             }
@@ -52,17 +52,25 @@ class Video extends _Base
         return $block_content;
     }
 
-    public static function dl($request, $params = array(), $json = true)
+    public static function dl($request, $params = array())
     {
         // youtube api address and key
-        $json_data = file_get_contents('https://www.googleapis.com/youtube/v3/' . $request . '?' . http_build_query(array_merge(array('key' => config('coaster::key.yt_server')), $params)));
-        if (!$json_data) {
-            throw new \Exception("Error fetching youtube video results");
+        try {
+            $youTube = new \GuzzleHttp\Client(
+                [
+                    'base_uri' => 'https://www.googleapis.com/youtube/v3/'
+                ]
+            );
+            $response = $youTube->request('GET', $request, ['query' => array_merge(array('key' => config('coaster::key.yt_server')), $params)]);
+            $data = json_decode($response->getBody());
+            if (!empty($data) && !empty($data->items[0])) {
+                return $data->items[0];
+            } else {
+                return null;
+            }
+        } catch (\Exception $e) {
+            return null;
         }
-        if ($json) {
-            $json_data = json_decode($json_data);
-        }
-        return $json_data;
     }
 
 }

@@ -1,10 +1,7 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Helpers\BlockManager;
-use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\PageBlock;
-use Illuminate\Support\Facades\Request;
 
 class Selectmultiple extends _Base
 {
@@ -37,19 +34,10 @@ class Selectmultiple extends _Base
 
     public static function save($block_content)
     {
-        return serialize($block_content);
-    }
-
-    public static function submit($page_id, $blocks_key, $repeater_info = null)
-    {
-        // check for empty multiple selects with hidden block_exists field
-        $check_for_empty_multiple_selects = Request::input($blocks_key . '_exists');
-        if (!empty($check_for_empty_multiple_selects)) {
-            foreach ($check_for_empty_multiple_selects as $block_id => $v) {
-                if (empty($updated_text_blocks[$block_id]) && Request::input($blocks_key . '.' . $block_id) == null) {
-                    BlockManager::update_block($block_id, '', $page_id, $repeater_info);
-                }
-            }
+        if (!empty($block_content)) {
+            return serialize($block_content);
+        } else {
+            return '';
         }
     }
 

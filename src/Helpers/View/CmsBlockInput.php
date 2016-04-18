@@ -27,6 +27,15 @@ class CmsBlockInput
         return null;
     }
 
+    public static function appendName($name, $append)
+    {
+        if ($pos = strpos($name, '[')) {
+            return substr_replace($name, $append, $pos, 0);
+        } else {
+            return $name.$append;
+        }
+    }
+
     public static function make($type, $options = array())
     {
         if (!($location = self::exists($type))) {

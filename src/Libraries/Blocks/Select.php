@@ -1,6 +1,8 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
 use CoasterCms\Models\BlockSelectOption;
+use CoasterCms\Helpers\BlockManager;
+use Illuminate\Support\Facades\Request;
 
 class Select extends _Base
 {
@@ -20,6 +22,19 @@ class Select extends _Base
         }
         self::$edit_id = array($block->id);
         return $field_data;
+    }
+
+    public static function submit($page_id, $blocks_key, $repeater_info = null)
+    {
+        // check for empty selects using a block_exists field
+        $check_for_empty_selects = Request::input($blocks_key . '_exists');
+        if (!empty($check_for_empty_selects)) {
+            foreach ($check_for_empty_selects as $block_id => $v) {
+                if (Request::input($blocks_key . '.' . $block_id) == null) {
+                    BlockManager::update_block($block_id, '', $page_id, $repeater_info);
+                }
+            }
+        }
     }
 
     public static function block_settings_action()

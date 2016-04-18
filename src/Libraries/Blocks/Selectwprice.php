@@ -43,12 +43,12 @@ class Selectwprice extends _Base
 
     public static function submit($page_id, $blocks_key, $repeater_info = null)
     {
-        $text_blocks = Request::input($blocks_key);
+        $text_blocks = Request::input($blocks_key . '_price');
         if (!empty($text_blocks)) {
             foreach ($text_blocks as $block_id => $block_content) {
                 $text = new \stdClass;
-                $text->selected = $block_content;
-                $text->price = Request::input($blocks_key . '_price.' . $block_id);
+                $text->selected = Request::input($blocks_key . $block_id);
+                $text->price = $block_content;
                 if (empty($text->selected) && empty($text->price)) {
                     $text = '';
                 } else {

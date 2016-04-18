@@ -77,4 +77,30 @@ class Selectpages extends _Base
         }
     }
 
+    public static function filter($block_id, $search, $type)
+    {
+        $live_blocks = PageBlock::page_blocks_on_live_page_versions($block_id);
+        $page_ids = array();
+        if (!empty($live_blocks)) {
+            foreach ($live_blocks as $live_block) {
+                $items = !empty($live_block->content) ? unserialize($live_block->content) : array();
+                switch ($type) {
+                    case '=':
+                        if (in_array($search, $items)) {
+                            $page_ids[] = $live_block->page_id;
+                        }
+                        break;
+                    case 'in':
+                        foreach ($items as $item) {
+                            if (strpos($item, $search) !== false) {
+                                $page_ids[] = $live_block->page_id;
+                            }
+                        }
+                        break;
+                }
+            }
+        }
+        return $page_ids;
+    }
+
 }
