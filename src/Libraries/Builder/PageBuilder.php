@@ -236,7 +236,7 @@ class PageBuilder
         $topLevelPages = Page::where('parent', '=', 0)->where('in_group', '=', 0)->get();
         $topLevelPages = $topLevelPages->isEmpty() ? [] : $topLevelPages;
         foreach ($topLevelPages as $key => $page) {
-            if (!$page->is_live()) {
+            if (!$page->is_live() || !$page->sitemap) {
                 unset($topLevelPages[$key]);
             }
         }
@@ -253,6 +253,13 @@ class PageBuilder
         if ($page_id > 0) {
             $pages = Page::category_pages($page_id, true);
             if (!empty($pages)) {
+                if (!empty($options['sitemap'])) {
+                    foreach ($pages as $key => $page) {
+                        if (!$page->sitemap) {
+                            unset($pages[$key]);
+                        }
+                    }
+                }
                 return self::_cat_view($page_id, $pages, $options);
             }
         }

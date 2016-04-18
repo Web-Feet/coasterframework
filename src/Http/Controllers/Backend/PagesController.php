@@ -460,6 +460,7 @@ class PagesController extends _Base
             $page->live = $page_info['live'];
             $page->live_start = Datetime::jQueryToMysql($page_info['live_start']);
             $page->live_end = Datetime::jQueryToMysql($page_info['live_end']);
+            $page->sitemap = $page_info['sitemap'];
         } elseif ($page_id == 0) {
             $page->live = 0;
             $page->live_start = null;
@@ -599,6 +600,7 @@ class PagesController extends _Base
             $submitted_data['live'] = $page->live;
             $submitted_data['live_start'] = Datetime::mysqlToJQuery($page->live_start);
             $submitted_data['live_end'] = Datetime::mysqlToJQuery($page->live_end);
+            $submitted_data['sitemap'] = $page->sitemap;
             $page_lang = PageLang::where('page_id', '=', $page_id)->where('language_id', '=', Language::current())->first();
             if (empty($page_lang)) {
                 $page_lang_duplicate = PageLang::where('page_id', '=', $page_id)->where('language_id', '=', Language::current())->first();
@@ -746,6 +748,9 @@ class PagesController extends _Base
         $page_details->live->selected = isset($submitted_data['live']) ? $submitted_data['live'] : 1;
         $page_details->live_start = !empty($submitted_data['live_start']) ? $submitted_data['live_start'] : '';
         $page_details->live_end = !empty($submitted_data['live_end']) ? $submitted_data['live_end'] : '';
+        $page_details->sitemap = new \stdClass;
+        $page_details->sitemap->options = array(0 => 'Excluded From Sitemap', 1 => 'Included in Sitemap');
+        $page_details->sitemap->selected = isset($submitted_data['sitemap']) ? $submitted_data['sitemap'] : 1;
 
         if ($page_id > 0) {
             $buttons = $publishing ? 'publish' : 'edit';

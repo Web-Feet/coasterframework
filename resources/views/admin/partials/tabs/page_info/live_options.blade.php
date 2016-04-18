@@ -4,3 +4,4 @@
     {!! CmsBlockInput::make('datetime', ['name' => 'page_info[live_start]', 'label' => 'Live From Date', 'content' => $page_details->live_start, 'disabled' => $page_details->disabled]) !!}
     {!! CmsBlockInput::make('datetime', ['name' => 'page_info[live_end]', 'label' => 'Live Until Date', 'content' => $page_details->live_end, 'disabled' => $page_details->disabled]) !!}
 </div>
+{!! CmsBlockInput::make('select', ['name' => 'page_info[sitemap]', 'label' => 'Show in sitemap', 'content' => $page_details->sitemap]) !!}
