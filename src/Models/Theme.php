@@ -425,6 +425,7 @@ Class Theme extends Eloquent
             'Page Order Value',
             'Is Link (0 or 1)',
             'Is Live (0 or 1)',
+            'In Sitemap (0 or 1)',
             'Container for Group Id',
             'Item in Group Id'
         ]);
@@ -449,7 +450,8 @@ Class Theme extends Eloquent
                     !empty($templatesById[$page->child_template])?$templatesById[$page->child_template]:'',
                     $page->order,
                     $page->link,
-                    $page->live,
+                    $page->live?1:0,
+                    $page->sitemap,
                     $page->group_container?:'',
                     $page->in_group?:''
                 ]);
@@ -753,7 +755,7 @@ Class Theme extends Eloquent
                 $row = 0;
                 while (($data = fgetcsv($fileHandle)) !== false) {
                     if ($row++ == 0 && $data[0] == 'Page Id') continue;
-                    list($pageId, $pageName, $pageUrl, $templateName, $parentId, $defaultChildTemplateName, $order, $link, $live, $groupContainer, $groupItem) = $data;
+                    list($pageId, $pageName, $pageUrl, $templateName, $parentId, $defaultChildTemplateName, $order, $link, $live, $sitemap, $groupContainer, $groupItem) = $data;
                     $newPage = new Page;
                     $newPage->id = $pageId;
                     $newPage->template = !empty($templateIds[$templateName]) ? $templateIds[$templateName] : 0;
@@ -762,6 +764,7 @@ Class Theme extends Eloquent
                     $newPage->order = $order;
                     $newPage->link = $link;
                     $newPage->live = $live;
+                    $newPage->sitemap = $sitemap;
                     $newPage->group_container = $groupContainer;
                     $newPage->in_group = $groupItem;
                     $newPage->save();
