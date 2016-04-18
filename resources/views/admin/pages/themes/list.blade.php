@@ -49,7 +49,7 @@
 
             // install
             function installTheme() {
-                $('.installThumbs .installTheme').html('Installing please wait ...');
+                $('#theme'+themeSelected+' .installTheme').html('Installing please wait ...');
                 $.ajax({
                     url: get_admin_url() + 'themes/manage',
                     type: 'POST',
