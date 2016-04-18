@@ -210,7 +210,7 @@ class ThemesController extends _Base
                     }
                 }
             }
-            $this->layout->content = View::make('coaster::pages.themes.forms', ['templates' => $formTemplates]);
+            $this->layout->content = View::make('coaster::pages.themes.forms', ['templates' => array_unique($formTemplates)]);
         }
     }
 
