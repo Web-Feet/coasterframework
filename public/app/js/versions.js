@@ -1,4 +1,4 @@
-var page_id, version_id;
+var page_id, version_id, latest_version;
 
 function version_pagination(e) {
     e.preventDefault();
@@ -50,8 +50,7 @@ function version_publish() {
         },
         success: function() {
             $('.live_page_name').html('');
-            $('.live_version_id').html(version_id);
-            $('#publishModal').modal('show');
+            update_version_js();
         }
     });
 }
@@ -113,8 +112,7 @@ function request_publish_action() {
             if (r == 1) {
                 if (request_action == 'approve') {
                     $('.live_page_name').html(' for page '+page_name);
-                    $('.live_version_id').html(version_id);
-                    $('#publishModal').modal('show');
+                    update_version_js();
                 }
                 if (page_id !== undefined) {
                     update_request_table();
@@ -152,6 +150,19 @@ function request_table_pagination(e) {
     update_request_table(page);
 }
 
+function update_version_js() {
+    $('.live_version_id').html(version_id);
+    if (version_id == latest_version) {
+        console.log(1);
+        $('#version-well .version-p').removeClass('hidden');
+        $('#version-well .version-up').addClass('hidden');
+    } else {
+        console.log(0);
+        $('#version-well .version-p').addClass('hidden');
+        $('#version-well .version-up').removeClass('hidden');
+    }
+    $('#publishModal').modal('show');
+}
 
 $(document).ready(function() {
     $('#version_pagination').find('a').click(version_pagination);

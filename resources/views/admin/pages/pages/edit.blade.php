@@ -9,17 +9,21 @@
                     to {!! $page_details->group_name !!}</a></p>
         @endif
         @if ($publishing)
-            <p class="well">
+            <p id="version-well" class="well">
                 Published Version: #<span class="live_version_id">{{ $live_version }}</span>
                 @if ($page_details->currently_live)
-                    @if ($live_version != $latest_version) &nbsp; <b><span class="text-danger"> - latest version not published</span></b>
-                    @else &nbsp; <b><span class="text-success"> - latest version live</span></b>@endif
+                    <?php $published = '<b>&nbsp;<span class="text-success version-p"> - latest version live</span></b>'; ?>
+                    <?php $unPublished = '<b>&nbsp;<span class="text-danger version-up"> - latest version not published</span></b>'; ?>
                 @else
-                    @if ($live_version != $latest_version) &nbsp; <b><span class="text-danger"> - latest version not published & page not live</span></b>
-                    @else &nbsp; <b><span class="text-danger"> - latest version published (page not live)</span></b>@endif
+                    <?php $published = '<b>&nbsp;<span class="text-warning version-p"> - latest version published (page not live)</span></b>'; ?>
+                    <?php $unPublished = ' <b>&nbsp;<span class="text-danger version-up"> - latest version not published & page not live</span></b>'; ?>
+                @endif
+                @if ($live_version != $latest_version)
+                    {!! str_replace('version-p', 'version-p hidden', $published).$unPublished !!}
+                @else
+                    {!! $published.str_replace('version-up', 'version-up hidden', $unPublished) !!}
                 @endif
                 <br />
-
                 Editing From Version: #{{ $editing_version }} &nbsp;&nbsp; (Latest Version: #{{ $latest_version }})
             </p>
         @endif
@@ -66,6 +70,7 @@
 
 @section('scripts')
     <script type='text/javascript'>
+        latest_version = '{{ $latest_version }}';
         function duplicate_page() {
             $('#duplicate_set').val(1);
             $('#editForm').trigger('submit');
