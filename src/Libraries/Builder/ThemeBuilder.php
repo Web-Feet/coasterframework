@@ -868,7 +868,7 @@ class ThemeBuilder
                     }
                 }
                 if ($changed) {
-                    $themeBlocks[$existingBlock]['rowClass'] = 2;
+                    $themeBlocks[$existingBlock]['rowClass'] = 3;
                     $themeBlocks[$existingBlock]['updates'] = 'blocks added or removed from the repeater template, will save changes on update';
                 }
             }
