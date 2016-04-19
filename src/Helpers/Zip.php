@@ -49,7 +49,21 @@ class Zip extends \ZipArchive
                 fclose($fpw);
             }
         }
+    }
 
+    public function extractFile($localName, $dst)
+    {
+        $dstDir = dirname($dst);
+        if (!is_dir($dstDir)) {
+            mkdir($dstDir, 0777, true);
+        }
+        $fpr = $this->getStream($localName);
+        $fpw = fopen($dst, 'w');
+        while ($data = fread($fpr, 1024)) {
+            fwrite($fpw, $data);
+        }
+        fclose($fpr);
+        fclose($fpw);
     }
 
 }
