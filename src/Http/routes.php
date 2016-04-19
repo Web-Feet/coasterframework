@@ -39,20 +39,6 @@ Route::get('uploads/{file_path}', ['middleware' => ['web', 'auth'], function($fi
     }
 }])->where('file_path', '.*');
 
-// get screenshot from theme if not installed
-Route::get('themes/{theme}/{screenshot}', ['middleware' => ['web'], function($theme, $screenShot)
-{
-    $file_full_path = base_path('resources/views/themes/'.$theme.'/public/'.$screenShot);
-
-    if (file_exists($file_full_path)) {
-        $size = filesize($file_full_path);
-        $type = \GuzzleHttp\Psr7\mimetype_from_filename($screenShot);
-        return response()->download($file_full_path, null, ['size' => $size, 'Content-Type' => $type], null);
-    } else {
-        return response('screenshot not found', 404);
-    }
-}])->where('theme', '\w+')->where('screenshot', '^screenshot\.\w+');;
-
 Route::group(['middleware' => 'web'], function () {
     // catch invalid admin routes
     Route::controller(config('coaster::admin.url'), 'CoasterCms\Http\Controllers\Backend\_Base');

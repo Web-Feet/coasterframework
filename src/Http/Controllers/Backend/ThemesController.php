@@ -10,6 +10,7 @@ use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\Theme;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 
 class ThemesController extends _Base
@@ -60,7 +61,28 @@ class ThemesController extends _Base
                 if (is_dir($themesPath . '/' . $themeFolder) && strpos($themeFolder, '.') !== 0) {
                     $theme = new \stdClass;
                     $theme->name = $themeFolder;
-                    $theme->image = 'http://www.placehold.it/300x250/EFEFEF/AAAAAA&text=no+image';
+
+                    $theme->image = 'http://www.placehold.it/252x142/EFEFEF/AAAAAA&text=no+image';
+                    $publicLocations = [public_path('themes/' . $themeFolder), $themesPath . '/' . $themeFolder . '/public'];
+                    foreach ($publicLocations as $k => $publicLocation) {
+                        if (is_dir($publicLocation)) {
+                            foreach (scandir($publicLocation) as $file) {
+                                if (!is_dir($publicLocation. '/'. $file)) {
+                                    if (strpos($file, 'screenshot.') === 0) {
+                                        if ($k == 0) {
+                                            $theme->image = \Croppa::url(URL::to('themes/' . $themeFolder . '/' . $file), 252, 142);
+                                        } else {
+                                            $saveInCache = public_path('coaster/tmp/themes/' . $themeFolder);
+                                            @mkdir($saveInCache, 0777, true);
+                                            copy($publicLocation . '/'.  $file, $saveInCache . '/'.  $file);
+                                            $theme->image = \Croppa::url(URL::to('coaster/tmp/themes/' . $themeFolder . '/' . $file), 252, 142);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     if (isset($databaseThemes[$themeFolder])) {
                         $theme->id = $databaseThemes[$themeFolder]->id;
                         if ($databaseThemes[$themeFolder]->id != config('coaster::frontend.theme')) {
