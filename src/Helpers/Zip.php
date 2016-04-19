@@ -27,4 +27,29 @@ class Zip extends \ZipArchive
         closedir($dir);
     }
 
+    public function extractDir($localName, $dstDir)
+    {
+        if (!is_dir($dstDir)) {
+            mkdir($dstDir, 0777, true);
+        }
+        for($i=0; $i<$this->numFiles; $i++) {
+            $name = $this->getNameIndex($i);
+            if (strpos($name, "{$localName}/") === 0 && substr($name, -1) != '/') {
+                $file = $dstDir . '/' . substr($name, strlen($localName) + 1);
+                $inDir = dirname($file);
+                if (!is_dir($inDir)) {
+                    mkdir($inDir, 0777, true);
+                }
+                $fpr = $this->getStream($name);
+                $fpw = fopen($file, 'w');
+                while ($data = fread($fpr, 1024)) {
+                    fwrite($fpw, $data);
+                }
+                fclose($fpr);
+                fclose($fpw);
+            }
+        }
+
+    }
+
 }
