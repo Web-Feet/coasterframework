@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Http\Controllers\Frontend;
 
 use CoasterCms\Helpers\View\FormMessage;
+use CoasterCms\Models\Theme;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -139,6 +140,55 @@ class InstallController extends Controller
             )
         );
 
+        Storage::put('install.txt', 'add-user');
+
+        return redirect('install/theme')->send();
+    }
+
+    public function getTheme()
+    {
+        if ($redirect = $this->_checkRedirect('install/theme')) {
+            return redirect($redirect)->send();
+        }
+
+        View::make('coaster::asset_builder.main')->render();
+
+        $themes = ['' => '-- None --'];
+
+        $themesPath = base_path('resources/views/themes');
+        if (is_dir($themesPath)) {
+            foreach (scandir($themesPath) as $themeFile) {
+                if (!is_dir($themesPath . '/' . $themeFile) && substr($themeFile, -4) == '.zip') {
+                    $themeName = substr($themeFile, 0, -4);
+                    $themes[$themeName] = $themeName;
+                    if ($themeName == 'default') {
+                        $themes[$themeName] = 'default (minimal theme)';
+                    }
+                }
+            }
+        }
+
+        $installContent = View::make('coaster::pages.install', ['stage' => 'theme', 'themes' => $themes, 'defaultTheme' => 'coaster2016']);
+
+        return View::make('coaster::template.main', ['site_name' => 'Coaster CMS', 'title' => 'Install User', 'content' => $installContent, 'modals' => '', 'system_menu_icons' => []]);
+    }
+
+
+    public function postTheme()
+    {
+        if ($redirect = $this->_checkRedirect('install/theme')) {
+            return redirect($redirect)->send();
+        }
+
+        $details = Request::all();
+
+        if (!empty($details['theme'])) {
+            if (Theme::unzip($details['theme']) == '') {
+                $withPageData = !empty($details['page-data'])?1:0;
+                Theme::install($details['theme'], ['withPageData' => $withPageData]);
+            }
+        }
+
         Storage::put('install.txt', 'complete-welcome');
 
         View::make('coaster::asset_builder.main')->render();
@@ -164,6 +214,9 @@ class InstallController extends Controller
                 break;
             case 'add-user':
                 $redirect = 'install/admin';
+                break;
+            case 'theme':
+                $redirect = 'install/theme';
                 break;
             default:
                 $redirect = '';

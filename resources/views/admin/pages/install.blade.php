@@ -8,6 +8,29 @@
     <p><a href="{{ URL::to(config('coaster::admin.url')) }}">Go to back-end and login</a></p>
     <p><a href="{{ URL::to('/') }}">Go to front-end</a></p>
 
+@elseif ($stage == 'theme')
+
+    {!! Form::open(['url' => Request::url()]) !!}
+
+    <p>Select a theme to use</p>
+    <p>&nbsp;</p>
+
+    <div class="form-group {!! FormMessage::get_class('theme') !!}">
+        {!! Form::label('theme', 'Theme', ['class' => 'control-label']) !!}
+        {!! Form::select('theme', $themes, $defaultTheme, ['class' => 'form-control']) !!}
+        <span class="help-block">{!! FormMessage::get_message('theme') !!}</span>
+    </div>
+    <div class="form-group {!! FormMessage::get_class('page-data') !!} page-data-group">
+        {!! Form::label('page-data', 'Install with page data (recommended)', ['class' => 'control-label']) !!}
+        {!! Form::checkbox('page-data', 1, true, ['class' => 'form-control']) !!}
+        <span class="help-block">{!! FormMessage::get_message('page-data') !!}</span>
+    </div>
+
+    <!-- submit button -->
+    {!! Form::submit('Complete Install', ['class' => 'btn btn-primary']) !!}
+
+    {!! Form::close() !!}
+
 @elseif ($stage == 'adduser')
 
     {!! Form::open(['url' => Request::url()]) !!}
@@ -74,3 +97,21 @@
     {!! Form::close() !!}
 
 @endif
+
+@section('scripts')
+    <script type="text/javascript">
+        function updatePageDataOption() {
+            if ($('#theme').val() == '') {
+                $('.page-data-group').hide();
+                $('#page-data').prop('checked', false);
+            } else {
+                $('.page-data-group').show();
+                $('#page-data').prop('checked', true);
+            }
+        }
+        $(document).ready(function() {
+            updatePageDataOption();
+            $('#theme').change(updatePageDataOption);
+        });
+    </script>
+@endsection
