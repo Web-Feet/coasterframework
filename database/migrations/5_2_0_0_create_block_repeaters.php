@@ -20,20 +20,6 @@ class CreateBlockRepeaters
             $table->string('blocks');
             $table->timestamps();
         });
-
-        $date = new \DateTime;
-
-        DB::table('block_repeaters')->insert(
-            array(
-                array(
-                    'block_id' => 13,
-                    'blocks' => '15,16',
-                    'created_at' => $date,
-                    'updated_at' => $date
-                )
-            )
-        );
-
     }
 
     /**

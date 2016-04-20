@@ -21,35 +21,6 @@ class CreateBlockFormRules
             $table->string('rule');
             $table->timestamps();
         });
-
-        $date = new \DateTime;
-
-        DB::table('block_form_rules')->insert(
-            array(
-                array(
-                    'form_template' => 'contact',
-                    'field' => 'name',
-                    'rule' => 'required',
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'form_template' => 'contact',
-                    'field' => 'email',
-                    'rule' => 'required|email',
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'form_template' => 'contact',
-                    'field' => 'message',
-                    'rule' => 'required',
-                    'created_at' => $date,
-                    'updated_at' => $date
-                )
-            )
-        );
-
     }
 
     /**

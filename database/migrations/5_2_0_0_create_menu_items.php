@@ -23,35 +23,6 @@ class CreateMenuItems
             $table->text('custom_name');
             $table->timestamps();
         });
-
-        $date = new \DateTime;
-
-        DB::table('menu_items')->insert(
-            array(
-                array(
-                    'menu_id' => 1,
-                    'page_id' => '1',
-                    'order' => 1,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'menu_id' => 1,
-                    'page_id' => '2',
-                    'order' => 2,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'menu_id' => 1,
-                    'page_id' => '3',
-                    'order' => 3,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                )
-            )
-        );
-
     }
 
     /**

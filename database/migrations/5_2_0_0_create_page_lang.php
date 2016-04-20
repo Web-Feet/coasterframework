@@ -23,45 +23,6 @@ class CreatePageLang
             $table->integer('live_version');
             $table->timestamps();
         });
-
-        $date = new \DateTime;
-
-        DB::table('page_lang')->insert(
-            array(
-                array(
-                    'page_id' => 1,
-                    'language_id' => 1,
-                    'url' => '/',
-                    'name' => 'Home',
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'page_id' => 2,
-                    'language_id' => 1,
-                    'url' => 'about',
-                    'name' => 'About Us',
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'page_id' => 3,
-                    'language_id' => 1,
-                    'url' => 'contact',
-                    'name' => 'Contact Us',
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'page_id' => 4,
-                    'language_id' => 1,
-                    'url' => 'confirm',
-                    'name' => 'Thank You',
-                    'created_at' => $date,
-                    'updated_at' => $date
-                )
-            )
-        );
     }
 
     /**

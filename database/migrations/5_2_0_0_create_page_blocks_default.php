@@ -22,27 +22,6 @@ class CreatePageBlocksDefault
             $table->integer('version');
             $table->timestamps();
         });
-
-        $date = new \DateTime;
-
-        DB::table('page_blocks_default')->insert(
-            array(
-                array(
-                    'block_id' => 1,
-                    'content' => '%page_name% | %site_name%',
-                    'version' => 1,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'block_id' => 2,
-                    'content' => '%page_name%',
-                    'version' => 1,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                )
-            )
-        );
     }
 
     /**

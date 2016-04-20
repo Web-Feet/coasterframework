@@ -23,37 +23,6 @@ class CreateTemplates
             $table->integer('hidden')->default(0);
             $table->timestamps();
         });
-
-        $date = new \DateTime;
-
-        DB::table('templates')->insert(
-            array(
-                array(
-                    'theme_id' => 1,
-                    'label' => 'Contact Template',
-                    'template' => 'contact',
-                    'hidden' => 0,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'theme_id' => 1,
-                    'label' => 'Internal Template',
-                    'template' => 'internal',
-                    'hidden' => 0,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'theme_id' => 1,
-                    'label' => 'Home Template',
-                    'template' => 'home',
-                    'hidden' => 0,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                )
-            )
-        );
     }
 
     /**

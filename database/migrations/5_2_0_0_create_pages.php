@@ -28,65 +28,6 @@ class CreatePages
             $table->timestamp('live_end')->nullable();
             $table->timestamps();
         });
-
-        $date = new \DateTime;
-
-        DB::table('pages')->insert(
-            array(
-                array(
-                    'template' => 3,
-                    'parent' => 0,
-                    'order' => 1,
-                    'group_container' => 0,
-                    'in_group' => 0,
-                    'link' => 0,
-                    'live' => 1,
-                    'live_start' => null,
-                    'live_end' => null,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'template' => 2,
-                    'parent' => 0,
-                    'order' => 1,
-                    'group_container' => 0,
-                    'in_group' => 0,
-                    'link' => 0,
-                    'live' => 1,
-                    'live_start' => null,
-                    'live_end' => null,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'template' => 1,
-                    'parent' => 0,
-                    'order' => 1,
-                    'group_container' => 0,
-                    'in_group' => 0,
-                    'link' => 0,
-                    'live' => 1,
-                    'live_start' => null,
-                    'live_end' => null,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'template' => 2,
-                    'parent' => 3,
-                    'order' => 1,
-                    'group_container' => 0,
-                    'in_group' => 0,
-                    'link' => 0,
-                    'live' => 1,
-                    'live_start' => null,
-                    'live_end' => null,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                )
-            )
-        );
     }
 
     /**

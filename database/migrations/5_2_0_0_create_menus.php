@@ -21,20 +21,6 @@ class CreateMenus
             $table->integer('max_sublevel')->default(0);
             $table->timestamps();
         });
-
-        $date = new \DateTime;
-
-        DB::table('menus')->insert(
-            array(
-                array(
-                    'label' => 'Main Menu',
-                    'name' => 'main_menu',
-                    'max_sublevel' => 1,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                )
-            )
-        );
     }
 
     /**

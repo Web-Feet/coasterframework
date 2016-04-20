@@ -21,7 +21,6 @@ class CreateBlockBeacons
             $table->integer('removed')->default(0);
             $table->timestamps();
         });
-
     }
 
     /**

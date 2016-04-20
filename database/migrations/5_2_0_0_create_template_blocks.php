@@ -20,69 +20,6 @@ class CreateTemplateBlocks
             $table->integer('block_id');
             $table->timestamps();
         });
-
-        $date = new \DateTime;
-
-        DB::table('template_blocks')->insert(
-            array(
-                array(
-                    'template_id' => 1,
-                    'block_id' => 5,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'template_id' => 2,
-                    'block_id' => 5,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'template_id' => 3,
-                    'block_id' => 5,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'template_id' => 1,
-                    'block_id' => 6,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'template_id' => 2,
-                    'block_id' => 6,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'template_id' => 3,
-                    'block_id' => 6,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'template_id' => 1,
-                    'block_id' => 7,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'template_id' => 2,
-                    'block_id' => 13,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-                array(
-                    'template_id' => 3,
-                    'block_id' => 14,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                ),
-
-            )
-        );
-
     }
 
     /**

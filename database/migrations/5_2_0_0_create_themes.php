@@ -19,18 +19,6 @@ class CreateThemes
             $table->string('theme');
             $table->timestamps();
         });
-
-        $date = new \DateTime;
-
-        DB::table('themes')->insert(
-            array(
-                array(
-                    'theme' => 'default',
-                    'created_at' => $date,
-                    'updated_at' => $date
-                )
-            )
-        );
     }
 
     /**
