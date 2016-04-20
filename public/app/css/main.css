@@ -351,3 +351,5 @@ i.glyphicon-white {
     top:10px;
     right:25px;
 }
+
+.ui-datepicker{ z-index: 9999 !important;}

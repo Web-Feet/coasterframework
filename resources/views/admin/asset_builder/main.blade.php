@@ -18,8 +18,8 @@ AssetBuilder::set('jquery-ui', [
 AssetBuilder::set('jquery-sortable', [
         '/jquery-ui/jquery-ui.min.js',
         '/jquery-ui/jquery.ui.touch-punch.min.js',
-        '/jquery/nested-sortable/jquery.mjs.nestedSortable.js',
-        '/jquery/nested-sortable/sortable.css'
+        '/jquery/jquery.mjs.nestedSortable.js',
+        '/app/css/sortable.css'
 ], false, 5);
 
 AssetBuilder::set('cms-main', [
@@ -32,13 +32,13 @@ AssetBuilder::set('cms-editor', [
         '/jquery-ui/jquery-ui.min.js',
         '/jquery-ui/jquery-ui.min.css',
         '/jquery-ui/jquery.ui.touch-punch.min.js',
-        '/jquery/jquery.mousewheel-3.0.6.pack.js',
+        '/jquery/jquery.mousewheel.js',
         '/jquery/fancybox/jquery.fancybox.pack.js',
         '/jquery/fancybox/jquery.fancybox.css',
         '/jquery-ui/jquery-ui-timepicker-addon.js',
         '/jquery/select2/select2.min.js',
         '/jquery/select2/select2.min.css',
-        '/jquery/tinymce/tinymce.min.js',
+        '/jquery/tinymce/tinymce.jquery.min.js',
         '/app/js/functions.js',
         '/app/js/editor.js'
 ], false, 5);

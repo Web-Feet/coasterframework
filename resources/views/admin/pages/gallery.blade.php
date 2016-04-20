@@ -22,7 +22,7 @@
     <div class="row textbox fileupload-buttonbar">
         <div class="col-sm-7">
             <!-- The fileinput-button span is used to style the file input field as button -->
-            <span class="btn btn-warning fileinput-button2">
+            <span class="btn btn-warning fileinput-nice">
                 <i class="glyphicon glyphicon-plus"></i> &nbsp; Add files...
                 <input type="file" name="files[]" multiple>
             </span> &nbsp;
@@ -147,7 +147,7 @@
 
 </script>
 
-<?php $assets_path = URL::to(config('coaster::admin.public').'/jquery/file-upload-9.11.2') ?>
+<?php $assets_path = URL::to(config('coaster::admin.public').'/jquery/gallery-upload') ?>
 
         <!-- The Templates plugin is included to render the upload/download listings -->
 <script src="{!! $assets_path !!}/js/external/tmpl.min.js"></script>
@@ -233,9 +233,8 @@
 @stop
 
 @section('styles')
-        <!-- blueimp Gallery styles -->
+<!-- blueimp Gallery styles -->
 <link rel="stylesheet" href="http://blueimp.github.io/Gallery/css/blueimp-gallery.min.css">
 <!-- CSS to style the file input field as button and adjust the Bootstrap progress bars -->
 <link rel="stylesheet" href="{!! $assets_path !!}/css/jquery.fileupload-ui.css">
-<link rel="stylesheet" href="{!! $assets_path !!}/css/style.css">
 @stop
