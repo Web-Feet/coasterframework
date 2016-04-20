@@ -140,7 +140,7 @@ class InstallController extends Controller
             )
         );
 
-        Storage::put('install.txt', 'add-user');
+        Storage::put('install.txt', 'theme');
 
         return redirect('install/theme')->send();
     }
@@ -160,9 +160,9 @@ class InstallController extends Controller
             foreach (scandir($themesPath) as $themeFile) {
                 if (!is_dir($themesPath . '/' . $themeFile) && substr($themeFile, -4) == '.zip') {
                     $themeName = substr($themeFile, 0, -4);
-                    $themes[$themeName] = $themeName;
+                    $themes[$themeFile] = $themeName;
                     if ($themeName == 'default') {
-                        $themes[$themeName] = 'default (minimal theme)';
+                        $themes[$themeFile] .= ' (minimal theme)';
                     }
                 }
             }
@@ -183,9 +183,13 @@ class InstallController extends Controller
         $details = Request::all();
 
         if (!empty($details['theme'])) {
-            if (Theme::unzip($details['theme']) == '') {
+            $error = Theme::unzip($details['theme']);
+            if (!$error) {
                 $withPageData = !empty($details['page-data'])?1:0;
-                Theme::install($details['theme'], ['withPageData' => $withPageData]);
+                Theme::install(substr($details['theme'], 0, -4), ['withPageData' => $withPageData]);
+            } else {
+                FormMessage::add('theme', $error);
+                return $this->getTheme();
             }
         }
 
