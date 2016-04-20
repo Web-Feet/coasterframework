@@ -163,42 +163,49 @@ Class Theme extends Eloquent
 
     public static function upload($newTheme)
     {
-        $error = '';
         $file = Request::file('newTheme');
         $validator = Validator::make(['theme' => $newTheme], ['theme' => 'required']);
         if (!$validator->fails() && $file->getClientOriginalExtension() == 'zip') {
-            $filePathInfo = pathinfo($file->getClientOriginalName());
             $uploadTo = base_path() . '/resources/views/themes/';
-            $themeDir = $uploadTo . str_replace('.', '_', $filePathInfo['filename']);
-            if (!is_dir($themeDir)) {
-                $file->move($uploadTo, $file->getClientOriginalName());
-                $zip = new \ZipArchive;
-                if ($zip->open($uploadTo . $file->getClientOriginalName()) === true) {
-                    $extractItems = [];
-                    for($i = 0; $i < $zip->numFiles; $i++) {
-                        if (strpos($zip->getNameIndex($i), $filePathInfo['filename'].'/') === 0) {
-                            $extractItems[] = $zip->getNameIndex($i);
-                        }
-                    }
-                    if (!empty($extractItems)) {
-                        $zip->extractTo($uploadTo, $extractItems);
-                        if (($uploadTo . $filePathInfo['filename']) != $themeDir) {
-                            File::copyDirectory($uploadTo . $filePathInfo['filename'], $themeDir);
-                            File::removeDirectory($uploadTo . $filePathInfo['filename']);
-                        }
-                    } else {
-                        $zip->extractTo($themeDir);
-                    }
-                    $zip->close();
-                    unlink($uploadTo . $file->getClientOriginalName());
-                } else {
-                    $error = 'Error uploading zip file, file may bigger than the server upload limit.';
-                }
-            } else {
-                $error = 'Theme with the same name already exists';
-            }
+            $file->move($uploadTo, $file->getClientOriginalName());
+            $error = self::unzip($file->getClientOriginalName());
         } else {
             $error = 'The theme uploaded must be a zip file format.';
+        }
+        return $error;
+    }
+
+    public static function unzip($themeZip)
+    {
+        $filePathInfo = pathinfo($themeZip);
+        $uploadTo = base_path() . '/resources/views/themes/';
+        $themeDir = $uploadTo . str_replace('.', '_', $filePathInfo['filename']);
+        $error = '';
+        if (!is_dir($themeDir)) {
+            $zip = new \ZipArchive;
+            if ($zip->open($uploadTo . $themeZip) === true) {
+                $extractItems = [];
+                for ($i = 0; $i < $zip->numFiles; $i++) {
+                    if (strpos($zip->getNameIndex($i), $filePathInfo['filename'] . '/') === 0) {
+                        $extractItems[] = $zip->getNameIndex($i);
+                    }
+                }
+                if (!empty($extractItems)) {
+                    $zip->extractTo($uploadTo, $extractItems);
+                    if (($uploadTo . $filePathInfo['filename']) != $themeDir) {
+                        File::copyDirectory($uploadTo . $filePathInfo['filename'], $themeDir);
+                        File::removeDirectory($uploadTo . $filePathInfo['filename']);
+                    }
+                } else {
+                    $zip->extractTo($themeDir);
+                }
+                $zip->close();
+                unlink($uploadTo . $themeZip);
+            } else {
+                $error = 'Error uploading zip file, file may bigger than the server upload limit.';
+            }
+        } else {
+            $error = 'Theme with the same name already exists';
         }
         return $error;
     }

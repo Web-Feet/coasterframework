@@ -57,6 +57,11 @@ class ThemesController extends _Base
             foreach (Theme::all() as $databaseTheme) {
                 $databaseThemes[$databaseTheme->theme] = $databaseTheme;
             }
+            foreach (scandir($themesPath) as $themeFile) {
+                if (!is_dir($themesPath . '/' . $themeFile) && substr($themeFile, -4) == '.zip') {
+                    Theme::unzip($themeFile);
+                }
+            }
             foreach (scandir($themesPath) as $themeFolder) {
                 if (is_dir($themesPath . '/' . $themeFolder) && strpos($themeFolder, '.') !== 0) {
                     $theme = new \stdClass;
