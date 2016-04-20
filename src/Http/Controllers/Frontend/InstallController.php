@@ -20,6 +20,13 @@ class InstallController extends Controller
             return redirect($redirect)->send();
         }
 
+        $assetsFile = storage_path('app/assets.json');
+        if (!file_exists($assetsFile)) {
+            echo "Coaster Framework: updateAssets script not run after composer create-project ?<br />";
+            echo "Coaster Framework: manually run - php ".base_path('vendor/web-feet/coasterframework/updateAssets');
+            exit;
+        }
+
         View::make('coaster::asset_builder.main')->render();
 
         $installContent = View::make('coaster::pages.install', ['stage' => 'database']);
