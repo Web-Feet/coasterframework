@@ -23,7 +23,7 @@ class InstallController extends Controller
         $assetsFile = storage_path('app/assets.json');
         if (!file_exists($assetsFile)) {
             echo "Coaster Framework: updateAssets script not run after composer create-project ?<br />";
-            echo "Coaster Framework: manually run - php ".base_path('vendor/web-feet/coasterframework/updateAssets');
+            echo "Coaster Framework: manually run the cmd - php ".base_path('vendor/web-feet/coasterframework/updateAssets');
             exit;
         }
 
@@ -175,7 +175,7 @@ class InstallController extends Controller
             }
         }
 
-        $installContent = View::make('coaster::pages.install', ['stage' => 'theme', 'themes' => $themes, 'defaultTheme' => 'coaster2016']);
+        $installContent = View::make('coaster::pages.install', ['stage' => 'theme', 'themes' => $themes, 'defaultTheme' => 'coaster2016.zip']);
 
         return View::make('coaster::template.main', ['site_name' => 'Coaster CMS', 'title' => 'Install User', 'content' => $installContent, 'modals' => '', 'system_menu_icons' => []]);
     }
