@@ -16,7 +16,7 @@ $guzzleClient = new \GuzzleHttp\Client;
 
 if (empty($assetsVersions['app']) || version_compare($assetsVersions['app'], config('coaster::site.version'), '<')) {
 
-    echo "Coaster Framework: Updating public coaster app assets .";
+    echo "Coaster Framework: Updating core coaster app assets .";
 
     if (!file_exists($coasterPublicFolder . '/app/')) {
         mkdir($coasterPublicFolder . '/app/', 0777, true);
