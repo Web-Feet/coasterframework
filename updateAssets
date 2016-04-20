@@ -9,5 +9,6 @@ if (version_compare(phpversion(), '5.5.9', '<')) {
     require __DIR__.'/hooks/laravel_basic.php';
     include __DIR__.'/updates/publicAssets.php';
     include __DIR__.'/updates/databaseMigrations.php';
+    include __DIR__.'/updates/fileManagerConfig.php';
     include __DIR__.'/updates/galleryMoveFiles.php';
 }
