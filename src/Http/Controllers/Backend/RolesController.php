@@ -96,7 +96,7 @@ class RolesController extends _Base
     public function post_add()
     {
         $v = Validator::make(Request::all(), array(
-            'name' => 'required|alpha',
+            'name' => 'required',
             'copy' => 'required|integer'
         ));
         if ($v->passes()) {
