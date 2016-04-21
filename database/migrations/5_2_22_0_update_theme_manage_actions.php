@@ -23,7 +23,7 @@ class UpdateThemeManageActions extends Migration
                     'action' => 'manage',
                     'inherit' => 0,
                     'edit_based' => 0,
-                    'name' => 'Manage Uploaded Themes',
+                    'name' => 'Add/Remove Themes',
                     'about' => null,
                     'created_at' => $date,
                     'updated_at' => $date

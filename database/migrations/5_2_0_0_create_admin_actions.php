@@ -647,7 +647,7 @@ class CreateAdminActions extends Migration
                     'action' => 'index',
                     'inherit' => 0,
                     'edit_based' => 0,
-                    'name' => 'Block Importer/Updater',
+                    'name' => 'Show Theme Management',
                     'about' => null,
                     'created_at' => $date,
                     'updated_at' => $date
@@ -657,7 +657,7 @@ class CreateAdminActions extends Migration
                     'action' => 'update',
                     'inherit' => 62,
                     'edit_based' => 0,
-                    'name' => 'Block Importer/Updater',
+                    'name' => 'Theme Block Updater',
                     'about' => null,
                     'created_at' => $date,
                     'updated_at' => $date
