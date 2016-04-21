@@ -24,7 +24,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\View;
 
 class PagesController extends _Base
@@ -68,7 +67,7 @@ class PagesController extends _Base
         $page_info = $input['page_info'];
         $page = Page::find($page_id);
         $in_group = !empty($page) ? $page->in_group : 0; // ignore page limit for group pages
-        if (Page::at_limit() && $page_info['type'] != 'link' && $in_group) {
+        if (Page::at_limit() && $page_info['link'] != 1 && $in_group) {
             $this->layout->content = 'Page Limit Reached';
         } else {
             $new_page_id = $this->_save_page_info();
@@ -382,108 +381,157 @@ class PagesController extends _Base
 
     private function _save_page_info($page_id = 0)
     {
-
         $input = Request::all();
-        $page_info = $input['page_info'];
+        $canPublish = (config('coaster::admin.publishing') > 0 && Auth::action('pages.version-publish', ['page_id' => $page_id])) || config('coaster::admin.publishing') == 0;
 
-        // load previous data if not new
+        /*
+         * Load data from request / db
+         */
         if (!empty($page_id)) {
             $page = Page::find($page_id);
-            $page_info['type'] = ($page->link == 1) ? 'link' : null;
-            $page_info['parent'] = $page->parent;
+            if (empty($page)) {
+                throw new \Exception('page not found');
+            }
+            foreach ($page->getAttributes() as $attribute => $value) {
+                if (!in_array($attribute, ['updated_at', 'created_at']) && empty($input['page_info'][$attribute])) {
+                    $input['page_info'][$attribute] = $page->$attribute;
+                }
+            }
+            $page_info = $input['page_info'];
             $page_lang = PageLang::preload($page_id);
+            foreach ($page_lang->getAttributes() as $attribute => $value) {
+                if (!in_array($attribute, ['updated_at', 'created_at']) && empty($input['page_info_lang'][$attribute])) {
+                    $input['page_info_lang'][$attribute] = $page_lang->$attribute;
+                }
+            }
+            $page_info_lang = $input['page_info_lang'];
         } else {
             $page = new Page;
-            // check parent exists if set
-            if (isset($page_info['parent']) && $page_info['parent'] != 0) {
-                $parent = Page::find($page_info['parent']);
-                if (empty($parent)) {
-                    return false;
+            $page_lang = new PageLang;
+            $page_info = array_merge([
+                'template' => 0,
+                'parent' => 0,
+                'child_template' => 0,
+                'order' => 0,
+                'group_container' => 0,
+                'in_group' => 0,
+                'link' => 0,
+                'live' => 0,
+                'sitemap' => 1,
+                'live_start'=> null,
+                'live_end' => null
+            ], $input['page_info']);
+            $page_info_lang = array_merge([
+                'url' => '/',
+                'name' => ''
+            ], $input['page_info_lang']);
+        }
+        $page_info_other = !empty($input['page_info_other'])?$input['page_info_other']:[];
+
+        /*
+         * Save Page
+         */
+        if ($page_info['parent'] > 0) {
+            $parent = Page::find($page_info['parent']);
+            if (empty($parent) && !empty($page_id)) {
+                return false;
+            }
+        }
+
+        if (!empty($parent) && $parent->group_container > 0) {
+            $page_info['parent'] = -1;
+            $page_info['in_group'] = $parent->group_container;
+            $siblings = PageGroup::page_ids($page_info['in_group']);
+            $page_info['order'] = 0;
+        } else {
+            $siblings = Page::child_page_ids($page_info['parent']);
+            if (isset($page->order)) {
+                $page_info['order'] = $page->order;
+            } else {
+                $page_order = Page::where('parent', '=', $page_info['parent'])->orderBy('order', 'desc')->first();
+                if (!empty($page_order)) {
+                    $page_info['order'] = $page_order->order + 1;
                 }
             }
         }
 
-        $input['page_info']['url'] = str_replace('/', '-', $input['page_info']['url']);
-
-        if ($input['page_info']['url'] == '' && (isset($page_info['parent']) && $page_info['parent'] == 0)) {
-            $input['page_info']['url'] = '/';
-            $page_info['url'] = $input['page_info']['url'];
+        $versionTemplate = $page_info['template'];
+        if (empty($input['publish']) && $page_id) {
+            $page_info['template'] = $page->template;
         }
-
-        // check essential fields
-        $v = Validator::make($input, array('page_info.name' => 'required', 'page_info.url' => 'required'));
-        if (!$v->passes()) {
-            FormMessage::set($v->messages());
-            return false;
-        }
-
-        if (!empty($page_info['type']) && $page_info['type'] == 'link') {
-            $link = 1;
+        if ($page_info['link'] == 1) {
             $page_info['template'] = 0;
-        } else {
-            $link = 0;
-            $page_info['template'] = !empty($page_info['template']) ? $page_info['template'] : 0;
         }
 
-        $order = 0;
-        if (!empty($parent) && $parent->group_container) {
-            $page_info['in_group'] = $parent->group_container;
-            $siblings = PageGroup::page_ids($page_info['in_group']);
-            $page_info['parent'] = -1;
-        } else {
-            $siblings = Page::child_page_ids($page_info['parent']);
-            $page_order = Page::where('parent', '=', $page_info['parent'])->orderBy('order', 'desc')->first();
-            if (!empty($page_order)) {
-                $order = $page_order->order + 1;
+        if (!empty($siblings) && $page_info['link'] == 0) {
+            $same_level = PageLang::where('url', '=', $page_info_lang['url'])->where('page_id', '!=', $page_id)->whereIn('page_id', $siblings)->get();
+            if (!$same_level->isEmpty()) {
+                FormMessage::add('page_info[url]', 'Url in use by another page!');
+                return false;
             }
-            $page_info['in_group'] = 0;
         }
 
         if ($page_info['live'] == 2 && empty($page_info['live_start'])) {
             $page_info['live_start'] = date("Y-m-d H:i:s", time());
         }
+        $page_info['live_start'] = Datetime::jQueryToMysql($page_info['live_start']);
+        $page_info['live_end'] = Datetime::jQueryToMysql($page_info['live_end']);
 
-        if (empty($page_id) || config('coaster::admin.publishing') == 0 || (config('coaster::admin.publishing') > 0 && Request::input('publish') != '' && Auth::action('pages.version-publish', ['page_id' => $page_id]))) {
-            $page->template = $page_info['template'];
+        if (!$canPublish) {
+            if ($page_id == 0) {
+                $page_info['live'] = 0;
+            } else {
+                foreach ($page_info as $attribute => $value) {
+                    if (!in_array($attribute, ['updated_at', 'created_at'])) {
+                        $page_info[$attribute] = $page->$attribute;
+                    }
+                }
+            }
         }
 
-        if ($page_id == 0) {
-            $page->parent = $page_info['parent'];
-            $page->child_template = 0;
-            $page->order = $order;
-            $page->group_container = !empty($page_info['group_container']) ? $page_info['group_container'] : 0;
-            $page->in_group = $page_info['in_group'];
-            $page->link = $link;
+        foreach ($page_info as $attribute => $value) {
+            if (!in_array($attribute, ['updated_at', 'created_at'])) {
+                $page->$attribute = $page_info[$attribute];
+            }
+        }
+        $page->save();
+
+        /*
+         * Save Page Lang
+         */
+        $page_info_lang['url'] = strtolower(str_replace('/', '-', $page_info_lang['url']));
+        if ($page_info_lang['url'] == '' && (isset($page_info['parent']) && $page_info['parent'] == 0)) {
+            $page_info_lang['url'] = '/';
         }
 
-        if ((config('coaster::admin.publishing') > 0 && Auth::action('pages.version-publish', ['page_id' => $page_id])) || config('coaster::admin.publishing') == 0) {
-            $page->live = $page_info['live'];
-            $page->live_start = Datetime::jQueryToMysql($page_info['live_start']);
-            $page->live_end = Datetime::jQueryToMysql($page_info['live_end']);
-            $page->sitemap = $page_info['sitemap'];
-        } elseif ($page_id == 0) {
-            $page->live = 0;
-            $page->live_start = null;
-            $page->live_end = null;
-        }
-
-        // set url
-        if (!empty($siblings) && $page->link == 0) {
-            $same_level = PageLang::where('url', '=', $page_info['url'])->where('page_id', '!=', $page_id)->whereIn('page_id', $siblings)->get();
-        }
-        if (!isset($same_level) || $same_level->isEmpty()) {
-            $page_info['url'] = strtolower($page_info['url']);
-        } else {
-            FormMessage::add('page_info[url]', 'Url in use by another page!');
+        if ($page_info_lang['name'] == '') {
+            FormMessage::add('page_info_lang[name]', 'page name required');
             return false;
         }
 
-        $page->save();
+        if (empty($page_lang->page_id)) {
+            $page_lang->page_id = $page->id;
+        }
+        if ($canPublish || $page_id == 0) {
+            $page_lang->language_id = Language::current();
+            $page_lang->url = $page_info_lang['url'];
+            $page_lang->name = $page_info_lang['name'];
+            $page_lang->save();
+        }
 
-        if (!empty($page_id)) {
+        $title_block = Block::where('name', '=', config('coaster::admin.title_block'))->first();
+        if (!empty($title_block)) {
+            BlockManager::update_block($title_block->id, $page_lang->name, $page->id);
+        }
+        PageSearchData::update_processed_text(0, strip_tags($page_lang->name), $page->id, Language::current());
+
+        /*
+         * Save Page Version
+         */
+        if ($page_id != 0) {
             // save page versions template
             $page_version = PageVersion::where('page_id', '=', $page->id)->where('version_id', '=', BlockManager::$to_version)->first();
-            $page_version->template = $page_info['template'];
+            $page_version->template = $versionTemplate;
             $page_version->save();
         } else {
             // duplicate role actions from parent page
@@ -505,66 +553,55 @@ class PagesController extends _Base
             }
         }
 
-        if ((config('coaster::admin.publishing') > 0 && Auth::action('pages.version-publish', ['page_id' => $page_id])) || config('coaster::admin.publishing') == 0 || $page_id == 0) {
+        /*
+         * Save Menu Item
+         */
+        if ($canPublish || $page_id == 0) {
             // set menu options
             if (Auth::action('menus')) {
-                $page_info['menus'] = !empty($page_info['menus']) ? $page_info['menus'] : null;
-                MenuItem::set_page_menus($page->id, $page_info['menus']);
+                $menus = !empty($page_info_other['menus']) ? $page_info_other['menus'] : [];
+                MenuItem::set_page_menus($page->id, $menus);
             }
         }
 
-        if (empty($page_lang)) {
-            $page_lang = new PageLang;
-            $page_lang->page_id = $page->id;
-            $page_lang->language_id = Language::current();
-            $page_lang->live_version = 1;
-        }
-        if ((config('coaster::admin.publishing') > 0 && Auth::action('pages.version-publish', ['page_id' => $page_id])) || config('coaster::admin.publishing') == 0 || $page_id == 0) {
-            $page_lang->name = $page_info['name'];
-            $page_lang->url = $page_info['url'];
-        }
-        $page_lang->save();
-
-        PageSearchData::update_processed_text(0, strip_tags($page_lang->name), $page->id, Language::current());
-
+        /*
+         * Save Beacons
+         */
         if (Auth::action('themes.beacons-update')) {
-            BlockBeacon::preload(); // get latest urls
-
-            // beacons
-            if (!empty($page_info['beacons']) && !empty($page->id)) {
-                foreach ($page_info['beacons'] as $uniqueId) {
+            $existingBeacons = [];
+            $setBeacons = BlockBeacon::where('page_id', '=', $page->id)->get();
+            foreach ($setBeacons as $setBeacon) {
+                $existingBeacons[$setBeacon->uniqueId] = $setBeacon->uniqueId;
+            }
+            if (!empty($existingBeacons)) {
+                BlockBeacon::preload(); // check page relations (remove page id off beacons if url changed)
+            }
+            if (!empty($page_info_other['beacons'])) {
+                foreach ($page_info_other['beacons'] as $uniqueId) {
+                    if (!empty($existingBeacons[$uniqueId])) {
+                        unset($existingBeacons[$uniqueId]);
+                    }
                     BlockBeacon::updateUrl($uniqueId, $page->id);
                 }
+                foreach ($existingBeacons as $uniqueId) {
+                    BlockBeacon::updateUrl($uniqueId, 0);
+                }
             }
-
-            // update empty multiple selects
-            $pageInfoMultipleSelects = Request::input('page_info_exist');
-            if (!empty($pageInfoMultipleSelects)) {
-                foreach ($pageInfoMultipleSelects as $field => $v) {
-                    if (empty($page_info[$field]) && $field == 'beacons') {
-
-                        $setBeacons = BlockBeacon::where('page_id', '=', $page->id)->get();
-                        foreach ($setBeacons as $setBeacon) {
-                            BlockBeacon::updateUrl($setBeacon->unique_id, 0);
-                        }
-                    }
+            if (!empty($input['page_info_other_exists']['beacons'])) {
+                foreach ($existingBeacons as $uniqueId) {
+                    BlockBeacon::updateUrl($uniqueId, 0);
                 }
             }
         }
 
+        /*
+         * Log and return saved page id
+         */
         if ($page_id == 0) {
-            $title_block_name = config('coaster::admin.title_block');
-            if (!empty($title_block_name)) {
-                $title_block = Block::where('name', '=', $title_block_name)->first();
-                if (!empty($title_block)) {
-                    BlockManager::update_block($title_block->id, $page_lang->name, $page->id); // will save first version
-                }
-            }
             AdminLog::new_log('Added page \'' . $page_lang->name . '\' (Page ID ' . $page->id . ')');
         } else {
             AdminLog::new_log('Updated page \'' . $page_lang->name . '\' (Page ID ' . $page->id . ')');
         }
-
         return $page->id;
     }
 
@@ -670,9 +707,9 @@ class PagesController extends _Base
             $page_details->pages = new \stdClass;
             $page_details->pages->options = array('0' => '-- Top Level Page --') + Page::get_page_list(array('links' => false, 'exclude_home' => true, 'group_pages' => false));
             $page_details->pages->selected = $extra_info['parent'] ?: 0;
-            $page_details->types = new \stdClass;
-            $page_details->types->options = array('normal' => 'Normal', 'link' => 'Link / Document');
-            $page_details->types->selected = !empty($submitted_data['type']) ? $submitted_data['type'] : 'normal';
+            $page_details->links = new \stdClass;
+            $page_details->links->options = array(0 => 'Normal', 1 => 'Link / Document');
+            $page_details->links->selected = !empty($submitted_data['link']) ? $submitted_data['link'] : 'normal';
 
             $template = !empty($submitted_data['template']) ? $submitted_data['template'] : null;
 

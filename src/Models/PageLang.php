@@ -39,10 +39,12 @@ class PageLang extends Eloquent
         if (!empty(self::$preloaded_page_lang[$page_id])) {
             return self::$preloaded_page_lang[$page_id];
         } else {
-            $null = new \stdClass;
+            $null = new self;
+            $null->page_id = $page_id;
+            $null->language_id = Language::current();
             $null->url = 'not_set';
             $null->name = 'Not set';
-            $null->live_version = 0;
+            $null->live_version = 1;
             return $null;
         }
     }

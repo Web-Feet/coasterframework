@@ -101,7 +101,7 @@
             $("#redirects tbody").append('<tr id="redirect_' + id + '">' +
                     '<td><input class="form-control" name="redirect[' + id + '][from]" type="text"></td>' +
                     '<td><input class="form-control" name="redirect[' + id + '][to]" type="text"></td>' +
-                    '<td><input name="redirect[' + id + '][force]" type="checkbox" value="1"></td>' +
+                    '<td><input name="redirect[' + id + '][force]" class="form-control" type="checkbox" value="1"></td>' +
                     '<td><i class="glyphicon glyphicon-remove itemTooltip" title="Remove Redirect" onclick="delete_redirect(\'' + id + '\')"></i></td>' +
                     '</tr>'
             );

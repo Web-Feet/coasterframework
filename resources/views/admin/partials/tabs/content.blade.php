@@ -33,7 +33,7 @@
             @elseif ($button == 'edit')
                 <div class="form-group">
                     <div class="col-sm-10 col-sm-offset-2">
-                        <button class="btn btn-primary" name="publish" type="submit"><i class="fa fa-floppy-o"></i>
+                        <button class="btn btn-primary" name="publish" value="publish" type="submit"><i class="fa fa-floppy-o"></i>
                             &nbsp; Update {{ $item }}</button>
                     </div>
                 </div>

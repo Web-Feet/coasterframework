@@ -39,8 +39,8 @@
 
             selected_tab('#addForm', 0);
 
-            $('#page_info\\[type\\]').change(function () {
-                if ($(this).val() == 'link') {
+            $('#page_info\\[link\\]').change(function () {
+                if ($(this).val() == 1) {
                     url_prefix = $('#url-prefix').detach();
                     if (link_show) {
                         link_show.appendTo('#url-group');
@@ -60,7 +60,7 @@
                 $('#url-prefix').html(urlArray[$(this).val()]);
             });
 
-            $('#page_info\\[name\\]').change(function () {
+            $('#page_info_lang\\[name\\]').change(function () {
                 $('#page_info_url').val(
                     $(this).val()
                         .toLowerCase()

@@ -80,7 +80,7 @@ class BlockManager
                     $page_details->link = 0;
                 } else {
                     $tab_contents[0] .=
-                        CmsBlockInput::make('select', array('name' => 'page_info[type]', 'label' => 'Page Type', 'content' => $page_details->types)) .
+                        CmsBlockInput::make('select', array('name' => 'page_info[link]', 'label' => 'Page Type', 'content' => $page_details->links)) .
                         CmsBlockInput::make('select', array('name' => 'page_info[parent]', 'label' => 'Parent Page', 'content' => $page_details->pages));
                 }
 
@@ -88,7 +88,7 @@ class BlockManager
                 $dropdownOptions = BlockBeacon::getDropdownOptions($page_details->id);
                 if (!empty($dropdownOptions->options)) {
                     $tab_contents[0] .=
-                        CmsBlockInput::make('selectmultiple', array('name' => 'page_info[beacons]', 'label' => 'Page Beacons', 'content' => $dropdownOptions));
+                        CmsBlockInput::make('selectmultiple', array('name' => 'page_info_other[beacons]', 'label' => 'Page Beacons', 'content' => $dropdownOptions));
                 }
             }
 

@@ -21,7 +21,7 @@
     <h2>Block Settings</h2>
 
     @foreach($blockSettings as $name => $url)
-        <p><a href="{{  $url }}">{{ $name }}</a></p>
+        <p><a href="{{ $url }}">{{ $name }}</a></p>
     @endforeach
 
 @endif

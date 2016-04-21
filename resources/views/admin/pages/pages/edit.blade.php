@@ -88,7 +88,7 @@
             selected_tab('#editForm', 1);
             @endif
 
-            $('#page_info\\[name\\]').change(function () {
+            $('#page_info_lang\\[name\\]').change(function () {
                 if ($('#page_info_url').val().substr($('#page_info_url').val().length - 10) == '-duplicate') {
                     $('#page_info_url').val(
                             $(this).val()
