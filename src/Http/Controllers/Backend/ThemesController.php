@@ -118,7 +118,7 @@ class ThemesController extends _Base
             $this->layout->alert->content = '';
         }
 
-        $this->layout->content = View::make('coaster::pages.themes.list', ['themes_installed' => $themes_installed]);
+        $this->layout->content = View::make('coaster::pages.themes.list', ['themes_installed' => $themes_installed, 'can_upload' => $theme_auth['manage']]);
         $this->layout->modals = View::make('coaster::modals.themes.delete').
             View::make('coaster::modals.themes.export').
             View::make('coaster::modals.themes.install').

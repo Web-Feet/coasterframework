@@ -4,6 +4,7 @@
 
 {!! $themes_installed !!}
 
+@if ($can_upload)
 <div class="row">
 
     <div class="col-sm-12">
@@ -19,6 +20,7 @@
     </div>
 
 </div>
+@endif
 
 @section('scripts')
     <script type="text/javascript">
