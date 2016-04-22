@@ -8,7 +8,7 @@
             <p><a href="{!! URL::to(config('coaster::admin.url').'/groups/pages/'.$page->in_group) !!}">Back
                     to {!! $group_name !!}</a></p>
         @endif
-        @if ($auth['can_publish'])
+        @if ($publishingOn)
             <p id="version-well" class="well">
                 Published Version: #<span class="live_version_id">{{ $version['live'] }}</span>
                 @if ($page->is_live())

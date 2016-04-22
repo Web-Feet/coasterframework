@@ -154,18 +154,24 @@ class BlockManager
                 $versions_table = self::version_table($page_id);
 
                 $tab_headers[-1] = 'Versions';
-                $tab_contents[-1] = View::make('coaster::partials.tabs.versions.main', array('content' => $versions_table))->render();
+                $tab_contents[-1] = View::make('coaster::partials.tabs.versions.main', ['content' => $versions_table])->render();
 
-                $requests = PagePublishRequests::all_requests($page_id, ['status' => 'awaiting']);
-                $tab_headers[-2] = 'Publish Requests';
-                if ($requests->isEmpty()) {
-                    $requests = 'No awaiting requests';
+                $allRequests = PagePublishRequests::all_requests($page_id);
+                if (!$allRequests->isEmpty()) {
+                    $awaitingRequests = PagePublishRequests::all_requests($page_id, ['status' => 'awaiting']);
+                    $tab_headers[-2] = 'Publish Requests';
+                    if ($count = $awaitingRequests->count()) {
+                        $tab_headers[-2] .= ' &nbsp; <span class="badge">'.$count.'</span>';
+                    }
+                    if ($awaitingRequests->isEmpty()) {
+                        $awaitingRequests = 'No awaiting requests';
+                    }
+
+                    $version_id = self::$current_version ?: PageVersion::latest_version($page_id);
+
+                    $requests_table = View::make('coaster::partials.tabs.publish_requests.table', ['show' => ['page' => false, 'status' => true, 'requested_by' => true], 'requests' => $awaitingRequests])->render();
+                    $tab_contents[-2] = View::make('coaster::partials.tabs.publish_requests.main', ['requests_table' => $requests_table, 'version_id' => $version_id]);
                 }
-
-                $version_id = self::$current_version ?: PageVersion::latest_version($page_id);
-
-                $requests_table = View::make('coaster::partials.tabs.publish_requests.table', array('show' => ['page' => false, 'status' => true, 'requested_by' => true], 'requests' => $requests))->render();
-                $tab_contents[-2] = View::make('coaster::partials.tabs.publish_requests.main', array('requests_table' => $requests_table, 'version_id' => $version_id));
             }
 
         }
