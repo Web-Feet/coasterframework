@@ -168,12 +168,16 @@ class PagesController extends _Base
         $pages = Request::input('list');
         $order = array();
         $logged = [];
+        $homePage = Page::join('page_lang', 'page_lang.page_id', '=', 'pages.id')->where(function ($query) {
+            $query->where('page_lang.url', '=', '/')->orWhere('page_lang.url', '=', '');
+        })->where('page_lang.language_id', '=', Language::current())->where('parent', '=', 0)->first();
+        $homePageId = $homePage->page_id;
         if (!empty($pages)) {
             foreach ($pages as $pageId => $parent) {
                 $currentPage = Page::preload($pageId);
                 if (empty($currentPage))
                     return 0;
-                $parent = (!empty($parent) && $parent != 'null') ? $parent : 0;
+                $parent = (!empty($parent) && $parent != 'null' && $parent != $homePageId) ? $parent : 0;
                 if (!isset($order[$parent]))
                     $order[$parent] = 1;
                 else
@@ -393,14 +397,14 @@ class PagesController extends _Base
                 throw new \Exception('page not found');
             }
             foreach ($page->getAttributes() as $attribute => $value) {
-                if (!in_array($attribute, ['updated_at', 'created_at']) && empty($input['page_info'][$attribute])) {
+                if (!in_array($attribute, ['updated_at', 'created_at']) && !isset($input['page_info'][$attribute])) {
                     $input['page_info'][$attribute] = $page->$attribute;
                 }
             }
             $page_info = $input['page_info'];
             $page_lang = PageLang::preload($page_id);
             foreach ($page_lang->getAttributes() as $attribute => $value) {
-                if (!in_array($attribute, ['updated_at', 'created_at']) && empty($input['page_info_lang'][$attribute])) {
+                if (!in_array($attribute, ['updated_at', 'created_at']) && !isset($input['page_info_lang'][$attribute])) {
                     $input['page_info_lang'][$attribute] = $page_lang->$attribute;
                 }
             }
@@ -438,11 +442,6 @@ class PagesController extends _Base
             }
         }
 
-        if ($page_info_lang['name'] == '') {
-            FormMessage::add('page_info_lang[name]', 'page name required');
-            return false;
-        }
-
         if (!empty($parent) && $parent->group_container > 0) {
             $page_info['parent'] = -1;
             $page_info['in_group'] = $parent->group_container;
@@ -457,14 +456,6 @@ class PagesController extends _Base
                 if (!empty($page_order)) {
                     $page_info['order'] = $page_order->order + 1;
                 }
-            }
-        }
-
-        if (!empty($siblings) && $page_info['link'] == 0) {
-            $same_level = PageLang::where('url', '=', $page_info_lang['url'])->where('page_id', '!=', $page_id)->whereIn('page_id', $siblings)->get();
-            if (!$same_level->isEmpty()) {
-                FormMessage::add('page_info_lang[url]', 'Url in use by another page!');
-                return false;
             }
         }
 
@@ -499,15 +490,38 @@ class PagesController extends _Base
                 $page->$attribute = $page_info[$attribute];
             }
         }
-        $page->save();
 
         /*
          * Save Page Lang
          */
+        if ($page_info_lang['name'] == '') {
+            FormMessage::add('page_info_lang[name]', 'page name required');
+            return false;
+        }
+
         $page_info_lang['url'] = strtolower(str_replace('/', '-', $page_info_lang['url']));
+        if (preg_match('#^[-]+$#', $page_info_lang['url'])) {
+            $page_info_lang['url'] = '';
+        }
+
         if ($page_info_lang['url'] == '' && (isset($page_info['parent']) && $page_info['parent'] == 0)) {
             $page_info_lang['url'] = '/';
         }
+
+        if ($page_info_lang['url'] == '') {
+            FormMessage::add('page_info_lang[url]', 'page url required');
+            return false;
+        }
+
+        if (!empty($siblings) && $page_info['link'] == 0) {
+            $same_level = PageLang::where('url', '=', $page_info_lang['url'])->where('page_id', '!=', $page_id)->whereIn('page_id', $siblings)->get();
+            if (!$same_level->isEmpty()) {
+                FormMessage::add('page_info_lang[url]', 'url in use by another page!');
+                return false;
+            }
+        }
+
+        $page->save();
 
         if (empty($page_lang->page_id)) {
             $page_lang->page_id = $page->id;
