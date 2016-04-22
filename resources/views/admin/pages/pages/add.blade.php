@@ -61,15 +61,17 @@
             });
 
             $('#page_info_lang\\[name\\]').change(function () {
-                $('#page_info_url').val(
-                    $(this).val()
-                        .toLowerCase()
-                        .replace(/\s+/g, '-')
-                        .replace(/[^\w-]/g, '-')
-                        .replace(/-{2,}/g, '-')
-                        .replace(/^-+/g, '')
-                        .replace(/-+$/g, '')
-                );
+                if ($('#page_info\\[link\\]').val() == 0) {
+                    $('#page_info_url').val(
+                        $(this).val()
+                            .toLowerCase()
+                            .replace(/\s+/g, '-')
+                            .replace(/[^\w-]/g, '-')
+                            .replace(/-{2,}/g, '-')
+                            .replace(/^-+/g, '')
+                            .replace(/-+$/g, '')
+                    );
+                }
             });
 
             load_editor_js();

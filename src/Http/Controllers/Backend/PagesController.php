@@ -96,12 +96,14 @@ class PagesController extends _Base
                 $duplicate_parent = $existingPage->parent;
             }
             if (Auth::action('pages.add', ['page_id' => $duplicate_parent])) {
+                $page_lang_model = PageLang::preload($page_id);
+                $page_info_lang = Request::input('page_info_lang');
+                $page_info_lang['name'] = $page_lang_model->name.' Duplicate';
+                $page_info_lang['url'] = $page_lang_model->url.'-duplicate';
                 $page_info = Request::input('page_info');
-                $page_info['name'] .= ' Duplicate';
-                $page_info['url'] .= '-duplicate';
                 $page_info['parent'] = $duplicate_parent;
                 $page_info['group_container'] = $existingPage->group_container;
-                Request::merge(array('page_info' => $page_info));
+                Request::merge(array('page_info' => $page_info, 'page_info_lang' => $page_info_lang));
 
                 $new_page_id = $this->_save_page_info();
                 BlockManager::process_submission($new_page_id);
@@ -527,6 +529,9 @@ class PagesController extends _Base
             $page_lang->page_id = $page->id;
         }
         if ($canPublish || $page_id == 0) {
+            if ($page_id == 0) {
+                $page_lang->live_version = 1;
+            }
             $page_lang->language_id = Language::current();
             $page_lang->url = $page_info_lang['url'];
             $page_lang->name = $page_info_lang['name'];
@@ -535,7 +540,7 @@ class PagesController extends _Base
 
         $title_block = Block::where('name', '=', config('coaster::admin.title_block'))->first();
         if (!empty($title_block)) {
-            BlockManager::update_block($title_block->id, $page_lang->name, $page->id);
+            BlockManager::update_block($title_block->id, $page_lang->name, $page->id); // saves first page version
         }
         PageSearchData::update_processed_text(0, strip_tags($page_lang->name), $page->id, Language::current());
 
@@ -563,7 +568,6 @@ class PagesController extends _Base
                         }
                     }
                 }
-
             }
         }
 
@@ -669,16 +673,12 @@ class PagesController extends _Base
             $versionData['live'] = $page_lang->live_version;
 
             // get frontend link (preview or direct link if document)
-            $previewKey = '';
-            if (!$page->is_live()) {
-                $live_version_model = PageVersion::where('page_id', '=', $page_id)->where('version_id', '=', $versionData['editing'])->first();
-                if (!empty($live_version_model)) {
-                    $previewKey = $live_version_model->preview_key;
-                }
-            }
             $frontendLink = PageLang::full_url($page_id);
-            if ($page->link == 0 && $previewKey) {
-                $frontendLink .= '?preview=' . $previewKey;
+            if (!$page->is_live() && $page->link == 0) {
+                $live_page_version = PageVersion::where('page_id', '=', $page_id)->where('version_id', '=', $versionData['live'])->first();
+                if (!empty($live_page_version)) {
+                    $frontendLink .= '?preview=' . $live_page_version->preview_key;
+                }
             }
 
             // if loading previous version get version template rather than current page template
@@ -799,6 +799,7 @@ class PagesController extends _Base
                 'page_lang' => $page_lang,
                 'item_name' => $item_name,
                 'group_name' => $group_name,
+                'publishingOn' => $publishingOn,
                 'tab' => $tab_data,
                 'frontendLink' => $frontendLink,
                 'version' => $versionData,

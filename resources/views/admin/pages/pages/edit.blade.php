@@ -34,7 +34,12 @@
                 <i class="fa fa-files-o"></i> &nbsp; Duplicate Page
             </button> &nbsp;
         @endif
-        @if($page->link == 0)
+        @if ($page->link == 1)
+            <a href="{{ $frontendLink }}" class="btn btn-warning"
+               target="_blank">
+                <i class="fa fa-eye"></i> &nbsp; View Doc / Url
+            </a>
+        @elseif (!$page->is_live())
             <a href="{{ $frontendLink }}" class="btn btn-warning"
                target="_blank">
                 <i class="fa fa-eye"></i> &nbsp; Preview
