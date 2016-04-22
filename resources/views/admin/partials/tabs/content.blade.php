@@ -8,14 +8,14 @@
 
         @if ($index >= 0)
 
-            @if ($button == 'add')
+            @if ($site_wide || (!$new_page && !$publishing))
                 <div class="form-group">
                     <div class="col-sm-10 col-sm-offset-2">
-                        <button class="btn btn-primary" type="submit"><i class="fa fa-floppy-o"></i> &nbsp;
-                            Add {{ $item }}</button>
+                        <button class="btn btn-primary" name="publish" value="publish" type="submit"><i class="fa fa-floppy-o"></i>
+                            &nbsp; Update {{ $item }}</button>
                     </div>
                 </div>
-            @elseif ($button == 'publish')
+            @elseif (!$new_page && $publishing)
                 <div class="form-group">
                     <div class="col-sm-10 col-sm-offset-2">
                         <button class="btn btn-primary" type="submit"><i class="fa fa-floppy-o"></i> &nbsp;
@@ -30,11 +30,11 @@
                         @endif
                     </div>
                 </div>
-            @elseif ($button == 'edit')
+            @elseif ($new_page)
                 <div class="form-group">
                     <div class="col-sm-10 col-sm-offset-2">
-                        <button class="btn btn-primary" name="publish" value="publish" type="submit"><i class="fa fa-floppy-o"></i>
-                            &nbsp; Update {{ $item }}</button>
+                        <button class="btn btn-primary" type="submit"><i class="fa fa-floppy-o"></i> &nbsp;
+                            Add {{ $item }}</button>
                     </div>
                 </div>
             @endif

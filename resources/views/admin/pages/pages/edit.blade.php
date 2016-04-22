@@ -1,46 +1,46 @@
 <?php AssetBuilder::setStatus('cms-editor', true); ?>
 
-<h1>{!! $page_details->item_name !!}: {!! $page_details->name !!}</h1>
+<h1>{!! $item_name !!}: {!! $page_lang->name !!}</h1>
 
 <div class="row textbox">
     <div class="col-sm-6">
-        @if (!empty($page_details->in_group))
-            <p><a href="{!! URL::to(config('coaster::admin.url').'/groups/pages/'.$page_details->in_group) !!}">Back
-                    to {!! $page_details->group_name !!}</a></p>
+        @if (!empty($page->in_group))
+            <p><a href="{!! URL::to(config('coaster::admin.url').'/groups/pages/'.$page->in_group) !!}">Back
+                    to {!! $group_name !!}</a></p>
         @endif
-        @if ($publishing)
+        @if ($auth['can_publish'])
             <p id="version-well" class="well">
-                Published Version: #<span class="live_version_id">{{ $live_version }}</span>
-                @if ($page_details->currently_live)
+                Published Version: #<span class="live_version_id">{{ $version['live'] }}</span>
+                @if ($page->is_live())
                     <?php $published = '<b>&nbsp;<span class="text-success version-p"> - latest version live</span></b>'; ?>
                     <?php $unPublished = '<b>&nbsp;<span class="text-danger version-up"> - latest version not published</span></b>'; ?>
                 @else
                     <?php $published = '<b>&nbsp;<span class="text-warning version-p"> - latest version published (page not live)</span></b>'; ?>
                     <?php $unPublished = ' <b>&nbsp;<span class="text-danger version-up"> - latest version not published & page not live</span></b>'; ?>
                 @endif
-                @if ($live_version != $latest_version)
+                @if ($version['live'] != $version['latest'])
                     {!! str_replace('version-p', 'version-p hidden', $published).$unPublished !!}
                 @else
                     {!! $published.str_replace('version-up', 'version-up hidden', $unPublished) !!}
                 @endif
                 <br />
-                Editing From Version: #{{ $editing_version }} &nbsp;&nbsp; (Latest Version: #{{ $latest_version }})
+                Editing From Version: #{{ $version['editing'] }} &nbsp;&nbsp; (Latest Version: #{{ $version['latest'] }})
             </p>
         @endif
     </div>
     <div class="col-sm-6 text-right">
-        @if ($can_duplicate)
+        @if ($auth['can_duplicate'])
             <button class="btn btn-danger" onclick="duplicate_page()">
                 <i class="fa fa-files-o"></i> &nbsp; Duplicate Page
             </button> &nbsp;
         @endif
-        @if($preview)
-            <a href="{{ PageBuilder::page_url($page_details->id).'?preview='.$preview }}" class="btn btn-warning"
+        @if($page->link == 0)
+            <a href="{{ $frontendLink }}" class="btn btn-warning"
                target="_blank">
                 <i class="fa fa-eye"></i> &nbsp; Preview
             </a>
         @else
-            <a href="{{ $page_details->full_url }}" class="btn btn-warning" target="_blank">
+            <a href="{{ $frontendLink }}" class="btn btn-warning" target="_blank">
                 <i class="fa fa-eye"></i> &nbsp; View Live Page
             </a>
         @endif
@@ -70,7 +70,7 @@
 
 @section('scripts')
     <script type='text/javascript'>
-        latest_version = '{{ $latest_version }}';
+        latest_version = '{{ $version['latest'] }}';
         function duplicate_page() {
             $('#duplicate_set').val(1);
             $('#editForm').trigger('submit');
@@ -80,9 +80,9 @@
             liveDateOptions();
             $('#page_info\\[live\\]').change(liveDateOptions);
 
-            page_id = {{ $page_details->id }};
+            page_id = {{ $page->id }};
 
-            @if ($page_details->link == 1)
+            @if ($page->link == 1)
             selected_tab('#editForm', 0);
             @else
             selected_tab('#editForm', 1);

@@ -7,10 +7,15 @@ use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockBeacon;
 use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\Language;
+use CoasterCms\Models\Menu;
+use CoasterCms\Models\MenuItem;
+use CoasterCms\Models\Page;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\PagePublishRequests;
 use CoasterCms\Models\PageSearchData;
 use CoasterCms\Models\PageVersion;
+use CoasterCms\Models\Template;
+use CoasterCms\Models\Theme;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Request;
@@ -65,63 +70,99 @@ class BlockManager
         }
     }
 
-    public static function tab_contents($blocks, $block_contents, $item, $button, $page_details = null, $tab_index = 1)
+    public static function tab_contents($blocks, $block_contents, $item, $page = null, $page_lang = null)
     {
         $tab_headers = array();
         $tab_contents = array();
 
-        if (!empty($page_details)) {
+        $page_id = !empty($page) ? $page->id : 0;
+        $publishingOn = (config('coaster::admin.publishing') > 0) ? true : false;
+        $canPublish = ($publishingOn && Auth::action('pages.version-publish', ['page_id' => $page_id])) || !$publishingOn;
+
+        if (!empty($page)) {
+
             $tab_headers[0] = 'Page Info';
             $tab_contents[0] = '';
-            if (empty($page_details->id)) {
 
-                if (!empty($page_details->in_group)) {
-                    $tab_contents[0] .= \Form::hidden('page_info[parent]', $page_details->pages->selected);
-                    $page_details->link = 0;
+            // page type and location
+            if (empty($page_id)) {
+                if (!empty($page->in_group)) {
+                    $tab_contents[0] .= \Form::hidden('page_info[parent]', $page->parent);
                 } else {
+                    $pageSelect = new \stdClass;
+                    $pageSelect->options = ['0' => '-- Top Level Page --'] + Page::get_page_list(['links' => false, 'exclude_home' => true, 'group_pages' => false]);
+                    $pageSelect->selected = $page->parent;
+                    $linksSelect = new \stdClass;
+                    $linksSelect->options = [0 => 'Normal', 1 => 'Link / Document'];
+                    $linksSelect->selected = $page->link;
                     $tab_contents[0] .=
-                        CmsBlockInput::make('select', array('name' => 'page_info[link]', 'label' => 'Page Type', 'content' => $page_details->links)) .
-                        CmsBlockInput::make('select', array('name' => 'page_info[parent]', 'label' => 'Parent Page', 'content' => $page_details->pages));
-                }
-
-            } elseif (Auth::action('themes.beacons-update')) {
-                $dropdownOptions = BlockBeacon::getDropdownOptions($page_details->id);
-                if (!empty($dropdownOptions->options)) {
-                    $tab_contents[0] .=
-                        CmsBlockInput::make('selectmultiple', array('name' => 'page_info_other[beacons]', 'label' => 'Page Beacons', 'content' => $dropdownOptions));
+                        CmsBlockInput::make('select', array('name' => 'page_info[link]', 'label' => 'Page Type', 'content' => $linksSelect)) .
+                        CmsBlockInput::make('select', array('name' => 'page_info[parent]', 'label' => 'Parent Page', 'content' => $pageSelect));
                 }
             }
 
+            // beacons selection
+            if (Auth::action('themes.beacons-update') && !empty($page_id)) {
+                $beaconSelect = BlockBeacon::getDropdownOptions($page_id);
+                if (!empty($beaconSelect->options)) {
+                    $tab_contents[0] .=
+                        CmsBlockInput::make('selectmultiple', array('name' => 'page_info_other[beacons]', 'label' => 'Page Beacons', 'content' => $beaconSelect));
+                }
+            }
+
+            // page name, url, template
             $fullUrls = [0 => '/'];
             foreach (PageLang::getPreloadedFullPaths() as $pageId => $details) {
                 $fullUrls[$pageId] = rtrim($details->full_url, '/') . '/';
             }
+            $templateData = Template::find($page->template);
+            $selectData = new \stdClass;
+            $selectData->options = Theme::get_template_list($page->template);
+            $selectData->selected = $page->template;
+            $selectData->hidden = !empty($templateData) ? $templateData->hidden : 0;
+            $tab_contents[0] .= View::make('coaster::partials.tabs.page_info.page_info', ['page' => $page, 'page_lang' => $page_lang, 'urlArray' => $fullUrls, 'disabled_lang' => !($canPublish || empty($page_id)), 'template_select' => $selectData])->render();
 
-            $isEnabled = (config('coaster::admin.publishing') > 0 && Auth::action('pages.version-publish', ['page_id' => $page_details->id])) || config('coaster::admin.publishing') == 0;
-            $page_details->disabled = !($isEnabled || empty($page_details->id));
-            $tab_contents[0] .= View::make('coaster::partials.tabs.page_info.page_info', array('page_details' => $page_details, 'urlArray' => $fullUrls))->render();
-
-            if (!empty($page_details->menus) && Auth::action('menus')) {
-                $tab_contents[0] .= View::make('coaster::partials.tabs.page_info.menu_info', array('page_details' => $page_details))->render();
+            // menu selection
+            $menus = Menu::all();
+            if (!$menus->isEmpty() && Auth::action('menus')) {
+                if (!empty($page_id)) {
+                    $in_menus = MenuItem::get_page_menus($page_id);
+                } else {
+                    $in_menus = [];
+                }
+                foreach ($menus as $k => $menu) {
+                    if (in_array($menu->id, $in_menus)) {
+                        $menus[$k]->in_menu = true;
+                    } else {
+                        $menus[$k]->in_menu = false;
+                    }
+                }
+                $tab_contents[0] .= View::make('coaster::partials.tabs.page_info.menu_info', ['menus' => $menus, 'disabled' => !$canPublish])->render();
             }
 
-            $page_details->disabled = !$isEnabled;
-            $tab_contents[0] .= View::make('coaster::partials.tabs.page_info.live_options', array('page_details' => $page_details))->render();
+            // live options, sitemap
+            $liveSelect = new \stdClass;
+            $liveSelect->options = array(0 => 'Not Live (Hidden)', 1 => 'Live (Ignores Dates)', 2 => 'Live Between Specific Dates/Times');
+            $liveSelect->selected = $page->live;
+            $sitemapSelect = new \stdClass;
+            $sitemapSelect->options = array(0 => 'Excluded From Sitemap', 1 => 'Included in Sitemap');
+            $sitemapSelect->selected = $page->sitemap;
+            $tab_contents[0] .= View::make('coaster::partials.tabs.page_info.live_options', ['page' => $page, 'liveSelect' => $liveSelect, 'sitemapSelect' => $sitemapSelect, 'disabled' => !$canPublish])->render();
 
-            if (config('coaster::admin.publishing') && !empty($page_details->id)) {
+            if (config('coaster::admin.publishing') && !empty($page_id)) {
 
-                $versions_table = self::version_table($page_details->id);
+                $versions_table = self::version_table($page_id);
 
                 $tab_headers[-1] = 'Versions';
                 $tab_contents[-1] = View::make('coaster::partials.tabs.versions.main', array('content' => $versions_table))->render();
 
-                $requests = PagePublishRequests::all_requests($page_details->id, ['status' => 'awaiting']);
+                $requests = PagePublishRequests::all_requests($page_id, ['status' => 'awaiting']);
                 $tab_headers[-2] = 'Publish Requests';
                 if ($requests->isEmpty()) {
                     $requests = 'No awaiting requests';
                 }
 
-                $version_id = self::$current_version ?: PageVersion::latest_version($page_details->id);
+                $version_id = self::$current_version ?: PageVersion::latest_version($page_id);
 
                 $requests_table = View::make('coaster::partials.tabs.publish_requests.table', array('show' => ['page' => false, 'status' => true, 'requested_by' => true], 'requests' => $requests))->render();
                 $tab_contents[-2] = View::make('coaster::partials.tabs.publish_requests.main', array('requests_table' => $requests_table, 'version_id' => $version_id));
@@ -130,16 +171,12 @@ class BlockManager
         }
 
         if (!empty($blocks)) {
-
             $categories = BlockCategory::orderBy('order', 'asc')->get();
-            $page_id = !empty($page_details) ? $page_details->id : 0;
-
+            $tab_index = 1;
             foreach ($categories as $category) {
                 if (!empty($blocks[$category->id])) {
-
                     $tab_headers[$tab_index] = $category->name;
                     $tab_contents[$tab_index] = '';
-
                     foreach ($blocks[$category->id] as $block) {
                         if (isset($block_contents[$block->id][Language::current()])) {
                             $block_content = $block_contents[$block->id][Language::current()]->content;
@@ -148,17 +185,14 @@ class BlockManager
                         }
                         $tab_contents[$tab_index] .= self::get_field($block, $block_content, $page_id);
                     }
-
                     $tab_index++;
-
                 }
             }
-
         }
 
         return array(
             'headers' => View::make('coaster::partials.tabs.header', array('tabs' => $tab_headers))->render(),
-            'contents' => View::make('coaster::partials.tabs.content', array('tabs' => $tab_contents, 'item' => $item, 'button' => $button, 'can_publish' => Auth::action('pages.version-publish')))->render()
+            'contents' => View::make('coaster::partials.tabs.content', array('tabs' => $tab_contents, 'item' => $item, 'site_wide' => empty($page), 'new_page' => !$page_id, 'publishing' => $publishingOn, 'can_publish' => $canPublish))->render()
         );
     }
 

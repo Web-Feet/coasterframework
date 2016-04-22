@@ -23,7 +23,7 @@ class BlocksController extends _Base
 
         // load tab contents from categories & blocks (with default block contents)
         $default_blocks = PageBlockDefault::preload();
-        $tab_data = BlockManager::tab_contents($blocks, $default_blocks, 'Site-wide Content', 'edit');
+        $tab_data = BlockManager::tab_contents($blocks, $default_blocks, 'Site-wide Content');
 
         $this->layout->title = 'Site-wide Content';
         $this->layout->content = View::make('coaster::pages.blocks', array('tab' => $tab_data));

@@ -438,6 +438,11 @@ class PagesController extends _Base
             }
         }
 
+        if ($page_info_lang['name'] == '') {
+            FormMessage::add('page_info_lang[name]', 'page name required');
+            return false;
+        }
+
         if (!empty($parent) && $parent->group_container > 0) {
             $page_info['parent'] = -1;
             $page_info['in_group'] = $parent->group_container;
@@ -455,20 +460,20 @@ class PagesController extends _Base
             }
         }
 
+        if (!empty($siblings) && $page_info['link'] == 0) {
+            $same_level = PageLang::where('url', '=', $page_info_lang['url'])->where('page_id', '!=', $page_id)->whereIn('page_id', $siblings)->get();
+            if (!$same_level->isEmpty()) {
+                FormMessage::add('page_info_lang[url]', 'Url in use by another page!');
+                return false;
+            }
+        }
+
         $versionTemplate = $page_info['template'];
         if (empty($input['publish']) && $page_id) {
             $page_info['template'] = $page->template;
         }
         if ($page_info['link'] == 1) {
             $page_info['template'] = 0;
-        }
-
-        if (!empty($siblings) && $page_info['link'] == 0) {
-            $same_level = PageLang::where('url', '=', $page_info_lang['url'])->where('page_id', '!=', $page_id)->whereIn('page_id', $siblings)->get();
-            if (!$same_level->isEmpty()) {
-                FormMessage::add('page_info[url]', 'Url in use by another page!');
-                return false;
-            }
         }
 
         if ($page_info['live'] == 2 && empty($page_info['live_start'])) {
@@ -502,11 +507,6 @@ class PagesController extends _Base
         $page_info_lang['url'] = strtolower(str_replace('/', '-', $page_info_lang['url']));
         if ($page_info_lang['url'] == '' && (isset($page_info['parent']) && $page_info['parent'] == 0)) {
             $page_info_lang['url'] = '/';
-        }
-
-        if ($page_info_lang['name'] == '') {
-            FormMessage::add('page_info_lang[name]', 'page name required');
-            return false;
         }
 
         if (empty($page_lang->page_id)) {
@@ -607,206 +607,196 @@ class PagesController extends _Base
 
     private function _load_page_data($page_id = 0, $extra_info = array())
     {
+        $page_info = Request::input('page_info');
+        $page_info_lang = Request::input('page_info_lang');
 
-        $page_details = new \stdClass;
-        $page_details->id = $page_id;
-
-        $submitted_data = Request::input('page_info');
-
-        $extra_info_default = array('parent' => 0);
-        $extra_info = array_merge($extra_info_default, $extra_info);
-        $version = !empty($extra_info['version']) ? $extra_info['version'] : 0;
+        $extra_info = array_merge([
+            'parent' => 0,
+            'version' => 0
+        ], $extra_info);
 
         $blocks = null;
         $blocks_content = null;
+        $auth = [];
+        $versionData = [];
+        $frontendLink = '';
 
-        $publishing = (config('coaster::admin.publishing') > 0) ? true : false;
-        $preview = 0;
-
-        $live_version = 0;
-        $editing_version = 0;
-        $latest_version = 0;
+        $publishingOn = (config('coaster::admin.publishing') > 0) ? true : false;
+        $auth['can_publish'] = ($publishingOn && Auth::action('pages.version-publish', ['page_id' => $page_id])) || !$publishingOn;
 
         if (!empty($page_id)) {
+
+            // get page data
             $page = Page::find($page_id);
             if (empty($page)) {
                 return 'Page Not Found';
             }
+            $page->live_start = Datetime::mysqlToJQuery($page->live_start);
+            $page->live_end = Datetime::mysqlToJQuery($page->live_end);
+            $group = PageGroup::find($page->in_group);
+            $parent = Page::find($page->parent);
 
-            // load existing data instead of using submitted data
-            $submitted_data['live'] = $page->live;
-            $submitted_data['live_start'] = Datetime::mysqlToJQuery($page->live_start);
-            $submitted_data['live_end'] = Datetime::mysqlToJQuery($page->live_end);
-            $submitted_data['sitemap'] = $page->sitemap;
+            // get page lang data
             $page_lang = PageLang::where('page_id', '=', $page_id)->where('language_id', '=', Language::current())->first();
             if (empty($page_lang)) {
-                $page_lang_duplicate = PageLang::where('page_id', '=', $page_id)->where('language_id', '=', Language::current())->first();
-                if (empty($page_lang_duplicate)) {
-                    $page_lang_duplicate = PageLang::where('page_id', '=', $page_id)->first();
+                $page_lang = PageLang::where('page_id', '=', $page_id)->first();
+                if (empty($page_lang)) {
+                    return 'Page Lang Data Not Found';
                 }
-                $page_lang = $page_lang_duplicate->replicate();
+                $page_lang = $page_lang->replicate();
                 $page_lang->language_id = Language::current();
                 $page_lang->save();
             }
-            $submitted_data['name'] = $page_lang->name;
-            $submitted_data['url'] = ($page->link != 1) ? ltrim($page_lang->url, '/') : $page_lang->url;
-            $in_menus = MenuItem::get_page_menus($page_id);
-            $template = $page->template;
+            $page_lang->url = ltrim($page_lang->url, '/');
 
-            $latest_version = PageVersion::latest_version($page_id);
-            $editing_version = ($version == 0 || $version > $latest_version) ? $latest_version : $version;
-            $live_version = $page_lang->live_version;
+            // get version data
+            $versionData['latest'] = PageVersion::latest_version($page_id);
+            $versionData['editing'] = ($extra_info['version'] == 0 || $extra_info['version'] > $versionData['latest']) ? $versionData['latest'] : $extra_info['version'];
+            $versionData['live'] = $page_lang->live_version;
+
+            // get frontend link (preview or direct link if document)
+            $previewKey = '';
             if (!$page->is_live()) {
-                $live_version_model = PageVersion::where('page_id', '=', $page_id)->where('version_id', '=', $page_lang->live_version)->first();
-                $preview = $live_version ? $live_version_model->preview_key : 0;
+                $live_version_model = PageVersion::where('page_id', '=', $page_id)->where('version_id', '=', $versionData['editing'])->first();
+                if (!empty($live_version_model)) {
+                    $previewKey = $live_version_model->preview_key;
+                }
+            }
+            $frontendLink = PageLang::full_url($page_id);
+            if ($page->link == 0 && $previewKey) {
+                $frontendLink .= '?preview=' . $previewKey;
             }
 
             // if loading previous version get version template rather than current page template
-            if (!empty($version)) {
-                $page_version = PageVersion::where('version_id', '=', $version)->where('page_id', '=', $page_id)->first();
-                if (!empty($page_version)) {
-                    $template = $page_version->template;
+            if ($versionData['latest'] != $versionData['editing']) {
+                $page_version = PageVersion::where('version_id', '=', $versionData['editing'])->where('page_id', '=', $page_id)->first();
+                if (empty($page_version)) {
+                    return 'version not found';
+                } else {
+                    $page->template = $page_version->template;
                 }
             }
 
-            // get extra data for created pages
-            $page_details->in_group = $page->in_group;
-            $page_details->link = $page->link;
-            if ($page_details->link == 1) {
-                $page_details->full_url = $page_lang->url;
-            } else {
-                $page_details->full_url = PageLang::full_url($page_id);
-            }
-
-            // load blocks content
-            BlockManager::$current_version = $version; // used for repeater data
-            $blocks_content = PageBlock::preload_page($page_id, $version);
-
-            if (config('coaster::admin.publishing') > 0) {
-                $this->layout->modals = View::make('coaster::modals.pages.publish') . View::make('coaster::modals.pages.request_publish') . View::make('coaster::modals.pages.rename_version');
-            }
-
-            if ($page_details->link == 0) {
-                // load template blocks
+            // load blocks and content
+            if ($page->link == 0) {
                 $theme = Theme::find(config('coaster::frontend.theme'));
                 if (!empty($theme)) {
-                    $blocks = Template::template_blocks($theme->id, $template);
+                    $blocks = Template::template_blocks($theme->id, $page->template);
                 } else {
-                    $blocks = [];
+                    return 'active theme not found';
                 }
+                BlockManager::$current_version = $versionData['editing']; // used for repeater data
+                $blocks_content = PageBlock::preload_page($page_id, $versionData['editing']);
             }
 
-        } else {
-
-            // get parent page
-            if ((int)$extra_info['parent'] > 0) {
-                $parent = Page::find($extra_info['parent']);
-            }
-
-            $in_menus = array();
-            $page_details->pages = new \stdClass;
-            $page_details->pages->options = array('0' => '-- Top Level Page --') + Page::get_page_list(array('links' => false, 'exclude_home' => true, 'group_pages' => false));
-            $page_details->pages->selected = $extra_info['parent'] ?: 0;
-            $page_details->links = new \stdClass;
-            $page_details->links->options = array(0 => 'Normal', 1 => 'Link / Document');
-            $page_details->links->selected = !empty($submitted_data['link']) ? $submitted_data['link'] : 'normal';
-
-            $template = !empty($submitted_data['template']) ? $submitted_data['template'] : null;
-
-            // get group id if group container
-            if (!empty($parent) && $parent->group_container) {
-                $page_details->in_group = $parent->group_container;
-            }
-
-            // if no publish permissions
-            if (config('coaster::admin.publishing') > 0 && !Auth::action('pages.version-publish', ['page_id' => $page_id])) {
-                $submitted_data['live'] = 0;
-            }
-        }
-
-        // set group details if a group page
-        $page_details->item_name = 'Page';
-        if (!empty($page_details->in_group) && $page_details->in_group > 0) {
-            $group = PageGroup::find($page_details->in_group);
+            // check duplicate permission
             if (!empty($group)) {
-                $page_details->item_name = $group->item_name;
-                $page_details->group_name = $group->name;
-                $template = !empty($template) ? $template : $group->default_template;
-            }
-        }
-
-        // set parent page
-        if (!empty($group)) {
-            $page_details->parent = $group->default_parent;
-        } else {
-            $page_details->parent = !empty($page) ? $page->parent : $extra_info['parent'];
-        }
-
-        // load template details if a sub page
-        if (empty($template) && (int)$extra_info['parent'] > 0) {
-            $parent_info = Page::find($extra_info['parent']);
-            if (!empty($parent_info)) {
-                if ($parent_info->child_template > 0) {
-                    $template = $parent_info->child_template;
-                } else {
-                    $parent_template = Template::find($parent_info->template);
-                    if (!empty($parent_template) && $parent_template->child_template > 0) {
-                        $template = $parent_template->child_template;
-                    }
-                }
-            }
-        }
-
-        // get default template if not set above
-        if (empty($template)) {
-            $template = config('coaster::admin.default_template');
-        }
-        $templateData = Template::find($template);
-
-        // load menu options
-        $page_details->menus = Menu::all();
-        foreach ($page_details->menus as $k => $menu) {
-            if (in_array($menu->id, $in_menus)) {
-                $page_details->menus[$k]->in_menu = true;
-            } else {
-                $page_details->menus[$k]->in_menu = false;
-            }
-        }
-
-        // general page details
-        $page_details->page_template = new \stdClass;
-        $page_details->page_template->options = Theme::get_template_list($template);
-        $page_details->page_template->selected = $template;
-        $page_details->page_template->hidden = !empty($templateData) ? $templateData->hidden : 0;
-        $page_details->name = !empty($submitted_data['name']) ? $submitted_data['name'] : '';
-        $page_details->url = !empty($submitted_data['url']) ? $submitted_data['url'] : '';
-        $page_details->live = new \stdClass;
-        $page_details->live->options = array(0 => 'Not Live (Hidden)', 1 => 'Live (Ignores Dates)', 2 => 'Live Between Specific Dates/Times');
-        $page_details->live->selected = isset($submitted_data['live']) ? $submitted_data['live'] : 1;
-        $page_details->live_start = !empty($submitted_data['live_start']) ? $submitted_data['live_start'] : '';
-        $page_details->live_end = !empty($submitted_data['live_end']) ? $submitted_data['live_end'] : '';
-        $page_details->sitemap = new \stdClass;
-        $page_details->sitemap->options = array(0 => 'Excluded From Sitemap', 1 => 'Included in Sitemap');
-        $page_details->sitemap->selected = isset($submitted_data['sitemap']) ? $submitted_data['sitemap'] : 1;
-
-        if ($page_id > 0) {
-            $buttons = $publishing ? 'publish' : 'edit';
-            $tab_data = BlockManager::tab_contents($blocks, $blocks_content, $page_details->item_name, $buttons, $page_details);
-
-            if ($page->in_group) {
-                $page_group = PageGroup::find($page->in_group);
-                $duplicate_parent = $page_group->default_parent;
+                $duplicate_parent = $group->default_parent;
             } else {
                 $duplicate_parent = $page->parent;
             }
-            $can_duplicate = Auth::action('pages.add', ['page_id' => $duplicate_parent]);
+            $auth['can_duplicate'] = Auth::action('pages.add', ['page_id' => $duplicate_parent]);
 
-            $page_details->currently_live = $page->is_live();
+            // add required modals
+            if ($publishingOn) {
+                $this->layout->modals = View::make('coaster::modals.pages.publish') . View::make('coaster::modals.pages.request_publish') . View::make('coaster::modals.pages.rename_version');
+            }
 
-            return View::make('coaster::pages.pages.edit', array('page_details' => $page_details, 'tab' => $tab_data, 'publishing' => $publishing, 'preview' => $preview, 'live_version' => $live_version, 'editing_version' => $editing_version, 'latest_version' => $latest_version, 'can_duplicate' => $can_duplicate, 'can_publish' => Auth::action('pages.version-publish', ['page_id' => $page_id])));
         } else {
-            $tab_data = BlockManager::tab_contents($blocks, $blocks_content, $page_details->item_name, 'add', $page_details);
-            return View::make('coaster::pages.pages.add', array('page_details' => $page_details, 'tab' => $tab_data));
+
+            // set page data
+            $page = new Page;
+            $page->in_group = 0;
+            $page->parent = 0;
+            $page->group_container = 0;
+            if ($parent = Page::find($extra_info['parent'])) {
+                if ($parent->group_container) {
+                    $page->parent = -1;
+                    $page->in_group = $parent->group_container;
+                } else {
+                    $page->parent = $extra_info['parent'];
+                    $page->template = $parent->child_template;
+                }
+            }
+            $group = PageGroup::find($page->in_group);
+            if (!empty($group)) {
+                $page->template = $group->default_template;
+            }
+            $page->link = 0;
+            if (!$auth['can_publish']) {
+                $page->live = 0;
+            } else {
+                $page->live = 1;
+            }
+            $page->sitemap = 1;
+
+            // set page lang data
+            $page_lang = new PageLang;
+            $page_lang->name = '';
+            $page_lang->url = '';
+
+        }
+
+        // set group details if a group page
+        if (!empty($group)) {
+            $item_name = $group->item_name;
+            $group_name = $group->name;
+        } else {
+            $item_name = 'Page';
+            $group_name = '';
+        }
+
+        // load child template from parent page template
+        if (empty($page->template) && !empty($parent)) {
+            $parent_template = Template::find($parent->template);
+            if (!empty($parent_template)) {
+                $page->template = $parent_template->child_template;
+            }
+        }
+
+        // get default template if not still note set above
+        if (empty($page->template)) {
+            $page->template = config('coaster::admin.default_template');
+        }
+
+        // load submitted data
+        if (!empty($page_info)) {
+            foreach ($page_info as $attribute => $value) {
+                $page->$attribute = $page_info[$attribute];
+            }
+        }
+        if (!empty($page_info_lang)) {
+            foreach ($page_info_lang as $attribute => $value) {
+                $page_lang->$attribute = $page_info_lang[$attribute];
+            }
+        }
+
+        $tab_data = BlockManager::tab_contents(
+            $blocks,
+            $blocks_content,
+            $item_name,
+            $page,
+            $page_lang
+        );
+
+        if ($page_id > 0) {
+            return View::make('coaster::pages.pages.edit', [
+                'page' => $page,
+                'page_lang' => $page_lang,
+                'item_name' => $item_name,
+                'group_name' => $group_name,
+                'tab' => $tab_data,
+                'frontendLink' => $frontendLink,
+                'version' => $versionData,
+                'auth' => $auth
+            ]);
+        } else {
+            return View::make('coaster::pages.pages.add', [
+                'page' => $page,
+                'item_name' => $item_name,
+                'group_name' => $group_name,
+                'tab' => $tab_data
+            ]);
         }
     }
 

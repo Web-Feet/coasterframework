@@ -1,12 +1,12 @@
 <?php AssetBuilder::setStatus('cms-editor', true); ?>
 
-<h1>Adding New {!! $page_details->item_name !!}</h1>
+<h1>Adding New {!! $item_name !!}</h1>
 
-@if (!empty($page_details->in_group))
+@if (!empty($page->in_group))
     <div class="row textbox">
         <div class="col-sm-12">
-            <p><a href="{!! URL::to(config('coaster::admin.url').'/groups/pages/'.$page_details->in_group) !!}">Back
-                    to {!! $page_details->group_name !!}</a></p>
+            <p><a href="{!! URL::to(config('coaster::admin.url').'/groups/pages/'.$page->in_group) !!}">Back
+                    to {!! $group_name !!}</a></p>
         </div>
     </div>
 @endif

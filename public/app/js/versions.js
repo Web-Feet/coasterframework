@@ -99,7 +99,8 @@ function request_publish() {
 }
 
 function request_publish_action() {
-    var request_id = $(this).data('request'), request_action = $(this).data('action'), page_name = $(this).data('name'), request_page_id = $(this).data('page'), version_id = $(this).data('version_id');
+    var request_id = $(this).data('request'), request_action = $(this).data('action'), page_name = $(this).data('name'), request_page_id = $(this).data('page');
+    var request = $(this);
     var action_cell = $(this).parent();
     $.ajax({
         url: get_admin_url()+'pages/request-publish-action/'+request_page_id,
@@ -110,7 +111,9 @@ function request_publish_action() {
         },
         success: function(r) {
             if (r == 1) {
-                if (request_action == 'approve') {
+                if (request_action == 'approved') {
+                    version_id = request.data('version_id');
+                    page_name = request.data('name');
                     $('.live_page_name').html(' for page '+page_name);
                     update_version_js();
                 }
@@ -152,12 +155,11 @@ function request_table_pagination(e) {
 
 function update_version_js() {
     $('.live_version_id').html(version_id);
+    console.log('v'+version_id);
     if (version_id == latest_version) {
-        console.log(1);
         $('#version-well .version-p').removeClass('hidden');
         $('#version-well .version-up').addClass('hidden');
     } else {
-        console.log(0);
         $('#version-well .version-p').addClass('hidden');
         $('#version-well .version-up').removeClass('hidden');
     }
