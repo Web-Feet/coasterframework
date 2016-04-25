@@ -6,9 +6,9 @@
 
         {!! $content !!}
 
-        @if ($index >= 0)
+        @if ($index >= 0 && !$hideUpdate)
 
-            @if ($site_wide || (!$new_page && !$publishing))
+            @if ($updateOnly || (!$new_page && !$publishing))
                 <div class="form-group">
                     <div class="col-sm-10 col-sm-offset-2">
                         <button class="btn btn-primary" name="publish" value="publish" type="submit"><i class="fa fa-floppy-o"></i>

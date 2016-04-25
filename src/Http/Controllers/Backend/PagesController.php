@@ -86,9 +86,10 @@ class PagesController extends _Base
 
     public function post_edit($page_id)
     {
+        $existingPage = Page::find($page_id);
+
         // run if duplicate button was hit
         if (Request::input('duplicate') == 1) {
-            $existingPage = Page::find($page_id);
             if ($existingPage->in_group) {
                 $page_group = PageGroup::find($existingPage->in_group);
                 $duplicate_parent = $page_group->default_parent;
@@ -122,9 +123,11 @@ class PagesController extends _Base
         $new_version = PageVersion::add_new($page_id);
         BlockManager::$to_version = $new_version->version_id;
 
-        if (config('coaster::admin.publishing') > 0) {
+        $publishing = config('coaster::admin.publishing') ? true : false;
+        $canPublish = Auth::action('pages.version-publish', ['page_id' => $page_id]);
+        if ($publishing && $existingPage->link == 0) {
             // check if publish
-            if (Request::input('publish') != '' && Auth::action('pages.version-publish', ['page_id' => $page_id])) {
+            if (Request::input('publish') != '' && $canPublish) {
                 BlockManager::$publish = true;
                 $new_version->publish();
                 // check if there were requests to publish the version being edited
@@ -144,7 +147,7 @@ class PagesController extends _Base
             if (Request::input('publish_request') != '') {
                 PagePublishRequests::add($page_id, $new_version->version_id, Request::input('request_note'));
             }
-        } elseif (!config('coaster::admin.publishing')) {
+        } elseif (!$publishing || ($existingPage->link == 1 && $canPublish)) {
             BlockManager::$publish = true;
             $new_version->publish();
         }
@@ -437,16 +440,25 @@ class PagesController extends _Base
         /*
          * Save Page
          */
-        if ($page_info['parent'] > 0) {
-            $parent = Page::find($page_info['parent']);
+        if ($page_info['parent'] > 0 || $page_info['in_group'] > 0) {
+            if ($page_info['in_group']) {
+                $group = PageGroup::find($page_info['in_group']);
+                if (!empty($group)) {
+                    $parentId = $group->default_parent;
+                } else {
+                    $parentId = -1;
+                }
+            } else {
+                $parentId = $page_info['parent'];
+            }
+            $parent = Page::find($parentId);
             if (empty($parent) && !empty($page_id)) {
                 return false;
             }
         }
 
-        if (!empty($parent) && $parent->group_container > 0) {
+        if ($page_info['in_group'] > 0) {
             $page_info['parent'] = -1;
-            $page_info['in_group'] = $parent->group_container;
             $siblings = PageGroup::page_ids($page_info['in_group']);
             $page_info['order'] = 0;
         } else {
@@ -501,7 +513,9 @@ class PagesController extends _Base
             return false;
         }
 
-        $page_info_lang['url'] = strtolower(str_replace('/', '-', $page_info_lang['url']));
+        if ($page->link == 0) {
+            $page_info_lang['url'] = strtolower(str_replace('/', '-', $page_info_lang['url']));
+        }
         if (preg_match('#^[-]+$#', $page_info_lang['url'])) {
             $page_info_lang['url'] = '';
         }
@@ -623,7 +637,7 @@ class PagesController extends _Base
         return $page->id;
     }
 
-    private function _load_page_data($page_id = 0, $extra_info = array())
+    private function _load_page_data($page_id = 0, $extra_info = [])
     {
         $page_info = Request::input('page_info');
         $page_info_lang = Request::input('page_info_lang');

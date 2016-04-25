@@ -84,10 +84,16 @@ class BlockManager
             $tab_headers[0] = 'Page Info';
             $tab_contents[0] = '';
 
+            if ($publishingOn && !empty($page)) {
+                $tab_contents[0] .= '<div class="form-group"><p class="col-sm-offset-2 col-sm-10">Page info is not versioned apart from the page template, any changes made will be made live on save.</p></div>';
+            }
+
             // page type and location
             if (empty($page_id)) {
                 if (!empty($page->in_group)) {
-                    $tab_contents[0] .= \Form::hidden('page_info[parent]', $page->parent);
+                    $tab_contents[0] .= \Form::hidden('page_info[parent]', $page->parent, ['id' => 'page_info[parent]']);
+                    $tab_contents[0] .= \Form::hidden('page_info[link]', $page->link, ['id' => 'page_info[link]']);
+                    $tab_contents[0] .= \Form::hidden('page_info[in_group]', $page->in_group, ['id' => 'page_info[in_group]']);
                 } else {
                     $pageSelect = new \stdClass;
                     $pageSelect->options = ['0' => '-- Top Level Page --'] + Page::get_page_list(['links' => false, 'exclude_home' => true, 'group_pages' => false]);
@@ -120,7 +126,13 @@ class BlockManager
             $selectData->options = Theme::get_template_list($page->template);
             $selectData->selected = $page->template;
             $selectData->hidden = !empty($templateData) ? $templateData->hidden : 0;
-            $tab_contents[0] .= View::make('coaster::partials.tabs.page_info.page_info', ['page' => $page, 'page_lang' => $page_lang, 'urlArray' => $fullUrls, 'disabled_lang' => !($canPublish || empty($page_id)), 'template_select' => $selectData])->render();
+            $urlPrefixPage = $page->parent;
+            if ($page->in_group) {
+                if ($group = $page->group) {
+                    $urlPrefixPage = $group->default_parent;
+                }
+            }
+            $tab_contents[0] .= View::make('coaster::partials.tabs.page_info.page_info', ['page' => $page, 'page_lang' => $page_lang, 'urlArray' => $fullUrls, 'urlPrefixPage' => $urlPrefixPage, 'disabled_lang' => !($canPublish || empty($page_id)), 'template_select' => $selectData])->render();
 
             // menu selection
             $menus = Menu::all();
@@ -145,11 +157,11 @@ class BlockManager
             $liveSelect->options = array(0 => 'Not Live (Hidden)', 1 => 'Live (Ignores Dates)', 2 => 'Live Between Specific Dates/Times');
             $liveSelect->selected = $page->live;
             $sitemapSelect = new \stdClass;
-            $sitemapSelect->options = array(0 => 'Excluded From Sitemap', 1 => 'Included in Sitemap');
+            $sitemapSelect->options = array(0 => 'Excluded From Sitemap', 1 => 'Included in Sitemap (If Page Live)');
             $sitemapSelect->selected = $page->sitemap;
             $tab_contents[0] .= View::make('coaster::partials.tabs.page_info.live_options', ['page' => $page, 'liveSelect' => $liveSelect, 'sitemapSelect' => $sitemapSelect, 'disabled' => !$canPublish])->render();
 
-            if (config('coaster::admin.publishing') && !empty($page_id)) {
+            if (config('coaster::admin.publishing') && !empty($page_id) && !empty($blocks)) {
 
                 $versions_table = self::version_table($page_id);
 
@@ -176,6 +188,7 @@ class BlockManager
 
         }
 
+        $hideUpdate = false;
         if (!empty($blocks)) {
             $categories = BlockCategory::orderBy('order', 'asc')->get();
             $tab_index = 1;
@@ -194,11 +207,15 @@ class BlockManager
                     $tab_index++;
                 }
             }
+        } elseif (!empty($page) && $page->link == 1 && !$canPublish) {
+            $hideUpdate = true;
         }
+
+        $updateOnly = empty($page) || (!empty($page) && $page->link != 0);
 
         return array(
             'headers' => View::make('coaster::partials.tabs.header', array('tabs' => $tab_headers))->render(),
-            'contents' => View::make('coaster::partials.tabs.content', array('tabs' => $tab_contents, 'item' => $item, 'site_wide' => empty($page), 'new_page' => !$page_id, 'publishing' => $publishingOn, 'can_publish' => $canPublish))->render()
+            'contents' => View::make('coaster::partials.tabs.content', array('tabs' => $tab_contents, 'item' => $item, 'new_page' => !$page_id,  'updateOnly' => $updateOnly,  'hideUpdate' => $hideUpdate, 'publishing' => $publishingOn, 'can_publish' => $canPublish))->render()
         );
     }
 

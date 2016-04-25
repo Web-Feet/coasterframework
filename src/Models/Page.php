@@ -26,6 +26,11 @@ class Page extends Eloquent
         return $this->hasOne('CoasterCms\Models\PageLang')->where('language_id', '=', config('coaster::frontend.language'));
     }
 
+    public function group()
+    {
+        return $this->belongsTo('CoasterCms\Models\PageGroup', 'in_group');
+    }
+
     public function is_live()
     {
         if ($this->attributes['live'] == 1) {

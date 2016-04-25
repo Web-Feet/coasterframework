@@ -5,7 +5,7 @@
     <div class="col-sm-10">
         <div id="url-group" class="input-group">
             @if (!$page->id || $page->link == 0)
-                <span class="input-group-addon" id="url-prefix">{{ $urlArray[$page->parent] }}</span>
+                <span class="input-group-addon" id="url-prefix">{{ $urlArray[$urlPrefixPage] }}</span>
             @endif
             <?php $options = []; if ($disabled_lang): $options = ['disabled' => true]; endif; ?>
             {!! Form::text('page_info_lang[url]', urldecode($page_lang->url), ['class' => 'form-control', 'id' => 'page_info_url'] + $options) !!}
@@ -32,5 +32,5 @@
 @endif
 
 <script type="text/javascript">
-    var urlArray = {!!  json_encode($urlArray) !!};
+    var urlArray = {!! json_encode($urlArray) !!};
 </script>
