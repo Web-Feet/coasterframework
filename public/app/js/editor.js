@@ -142,7 +142,6 @@ function load_editor_js(rerun) {
                         maxResults: 10,
                         type: 'video',
                         pageToken: videoTokens[params.term]['next'],
-                        safeSearch: 'strict',
                         key: ytapikey
                     };
                 },
