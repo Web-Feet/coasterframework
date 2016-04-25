@@ -84,11 +84,11 @@ class BlockManager
             $tab_headers[0] = 'Page Info';
             $tab_contents[0] = '';
 
-            if ($publishingOn && !empty($page)) {
-                $tab_contents[0] .= '<div class="form-group"><p class="col-sm-offset-2 col-sm-10">Page info is not versioned apart from the page template, any changes made will be made live on save.</p></div>';
+            if ($publishingOn && !empty($page) && $page->link == 0) {
+                $tab_contents[0] .= View::make('coaster::partials.tabs.page_info.notice');
             }
 
-            // page type and location
+            // page type and location (only updated for new pages)
             if (empty($page_id)) {
                 if (!empty($page->in_group)) {
                     $tab_contents[0] .= \Form::hidden('page_info[parent]', $page->parent, ['id' => 'page_info[parent]']);
@@ -107,7 +107,7 @@ class BlockManager
                 }
             }
 
-            // beacons selection
+            // beacons selection (only updated for existing pages)
             if (Auth::action('themes.beacons-update') && !empty($page_id)) {
                 $beaconSelect = BlockBeacon::getDropdownOptions($page_id);
                 if (!empty($beaconSelect->options)) {
