@@ -1,3 +1,5 @@
+<?php AssetBuilder::setStatus('cms-versions', true); ?>
+
 <div class="row">
     <div id="version_pagination" class="pull-left">
         {!! $pagination !!}
