@@ -552,9 +552,11 @@ class PagesController extends _Base
             $page_lang->save();
         }
 
-        $title_block = Block::where('name', '=', config('coaster::admin.title_block'))->first();
-        if (!empty($title_block)) {
-            BlockManager::update_block($title_block->id, $page_lang->name, $page->id); // saves first page version
+        if (!$page_id) {
+            $title_block = Block::where('name', '=', config('coaster::admin.title_block'))->first();
+            if (!empty($title_block)) {
+                BlockManager::update_block($title_block->id, $page_lang->name, $page->id); // saves first page version
+            }
         }
         PageSearchData::update_processed_text(0, strip_tags($page_lang->name), $page->id, Language::current());
 

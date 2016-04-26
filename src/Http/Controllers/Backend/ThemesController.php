@@ -162,7 +162,7 @@ class ThemesController extends _Base
 
     public function getBeacons()
     {
-        $this->layout->content = View::make('coaster::pages.themes.beacons', ['rows' => BlockBeacon::getTableRows()]);
+        $this->layout->content = View::make('coaster::pages.themes.beacons', ['rows' => BlockBeacon::getTableRows(), 'bitly' => BlockBeacon::bitlyCheck()]);
     }
 
     public function postBeacons()

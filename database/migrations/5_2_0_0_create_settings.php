@@ -137,7 +137,7 @@ class CreateSettings
                     'updated_at' => $date
                 ),
                 array(
-                    'label' => 'Bitly API Key',
+                    'label' => 'Bitly Access Token',
                     'name' => 'key.bitly',
                     'value' => '',
                     'editable' => 1,

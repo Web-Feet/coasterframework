@@ -22,7 +22,20 @@ Class BlockBeacon extends Eloquent
             }
             try {
                 $devicesData = json_decode(self::_client()->request('GET', 'device')->getBody());
+                $pendingConfigs = [];
+                $getPendingConfigs = json_decode(self::_client()->request('GET', 'config', ['query' => ['deviceType' => 'beacon']])->getBody());
+                foreach ($getPendingConfigs->configs as $pendingConfig) {
+                    if (!empty($pendingConfig->url)) {
+                        $pendingConfigs[$pendingConfig->uniqueId] = $pendingConfig;
+                    }
+                }
                 foreach ($devicesData->devices as $device) {
+                    if (!empty($pendingConfigs[$device->uniqueId]) && isset($device->url) && $pendingConfigs[$device->uniqueId]->url != $device->url) {
+                        $device->url = $pendingConfigs[$device->uniqueId]->url;
+                        $device->pending = true;
+                    } else {
+                        $device->pending = false;
+                    }
                     if (isset(self::$_beacons[$device->uniqueId])) {
                         if (!self::$_beacons[$device->uniqueId]->visible && $addMissing) {
                             self::$_beacons[$device->uniqueId]->removed = 0;
@@ -59,8 +72,10 @@ Class BlockBeacon extends Eloquent
                 }
             } catch (\GuzzleHttp\Exception\RequestException $e) {
                 self::$_beacons = [];
+                return 0;
             }
         }
+        return 1;
     }
 
     public static function getVisibleBeacons($allTypes = true)
@@ -104,7 +119,10 @@ Class BlockBeacon extends Eloquent
         $options = [];
         $selected = [];
         foreach (self::getVisibleBeacons(false) as $beacon) {
-            $options[$beacon->unique_id] = $beacon->device->alias;
+            $options[$beacon->unique_id] = $beacon->device->uniqueId;
+            if ($beacon->device->alias) {
+                $options[$beacon->unique_id] .= ' ('.$beacon->device->alias.')';
+            }
             if ($beacon->page_id == $pageId) {
                 $selected[] = $beacon->unique_id;
             }
@@ -119,8 +137,11 @@ Class BlockBeacon extends Eloquent
     {
         $beacon = self::where('unique_id', '=', $uniqueId)->first();
 
-        if (!empty($beacon) && $pageId != $beacon->page_id) {
-
+        if (empty($beacon)) {
+            FormMessage::add('page_info_other[beacons]', 'A selected beacon was not found');
+        } elseif ($pageId == $beacon->page_id) {
+            return 1;
+        } else {
             $beaconUrl = URL::to('/');
             $beaconUrlParts = parse_url($beaconUrl);
             $beaconUrlEncoded = '02' . bin2hex($beaconUrlParts['host']);
@@ -128,17 +149,22 @@ Class BlockBeacon extends Eloquent
             if ($pageId) {
                 $pageUrl = PageLang::full_url($pageId);
                 $pageUrl = URL::to($pageUrl);
-                $bitlyResponse = json_decode(self::_bitly()->request('GET', 'v3/shorten', [
-                    'query' => [
-                        'access_token' => config('coaster::key.bitly'),
-                        'longUrl' => $pageUrl
-                    ]
-                ])->getBody());
-                if ($bitlyResponse->status_code == 200) {
-                    $beaconUrl = 'http://bit.ly/' . $bitlyResponse->data->hash;
-                    $beaconUrlEncoded = '02' . bin2hex('bit.ly/' . $bitlyResponse->data->hash);
-                } else {
-                    FormMessage::add('page_info[beacons]', 'Error generating bit.ly url (invalid API key or hostname)');
+                try {
+                    $bitlyResponse = json_decode(self::_bitly()->request('GET', 'v3/shorten', [
+                        'query' => [
+                            'access_token' => config('coaster::key.bitly'),
+                            'longUrl' => $pageUrl
+                        ]
+                    ])->getBody());
+                    if ($bitlyResponse->status_code == 200) {
+                        $beaconUrl = 'http://bit.ly/' . $bitlyResponse->data->hash;
+                        $beaconUrlEncoded = '02' . bin2hex('bit.ly/' . $bitlyResponse->data->hash);
+                    } else {
+                        FormMessage::add('page_info_other[beacons]', 'Error generating bit.ly url (response:  '.$bitlyResponse->status_txt.')');
+                        return 0;
+                    }
+                } catch (\GuzzleHttp\Exception\RequestException $e) {
+                    FormMessage::add('page_info_other[beacons]', 'Error generating bit.ly url (response: '.$e->getCode().')');
                     return 0;
                 }
             }
@@ -147,25 +173,14 @@ Class BlockBeacon extends Eloquent
                 return 1;
             }
 
-            self::_client()->request('POST', 'config/delete',
-                ['query' =>
-                    [
-                        'uniqueId' => $uniqueId
+            try {
+                self::_client()->request('POST', 'config/delete',
+                    ['query' =>
+                        [
+                            'uniqueId' => $uniqueId
+                        ]
                     ]
-                ]
-            );
-
-            $response = json_decode(self::_client()->request('POST', 'device/update',
-                ['query' =>
-                    [
-                        'uniqueId' => $uniqueId,
-                        'deviceType' => 'beacon',
-                        'url' => $beaconUrlEncoded
-                    ]
-                ]
-            )->getBody());
-
-            if ($response == 'Update successful.') {
+                );
 
                 self::_client()->request('POST', 'config/create',
                     ['query' =>
@@ -175,17 +190,17 @@ Class BlockBeacon extends Eloquent
                             'url' => $beaconUrlEncoded
                         ]
                     ]
-                );
+                )->getBody();
 
                 $beacon->page_id = $pageId;
                 $beacon->url = $beaconUrl;
                 $beacon->save();
                 return 1;
-            } else {
-                FormMessage::add('page_info[beacons]', 'Error updating device Url');
+
+            } catch (\GuzzleHttp\Exception\RequestException $e) {
+                $error = json_decode($e->getResponse()->getBody());
+                FormMessage::add('page_info_other[beacons]', 'Error updating device config with new URL ('.$error->status . ': ' . $error->message.')');
             }
-        } else {
-            FormMessage::add('page_info[beacons]', 'A selected beacon was not found');
         }
 
         return 0;
@@ -196,7 +211,7 @@ Class BlockBeacon extends Eloquent
         if ($uniqueId) {
 
         } else {
-            self::preload(true);
+            return self::preload(true);
         }
     }
 
@@ -208,6 +223,20 @@ Class BlockBeacon extends Eloquent
             $beacon->save();
         }
         unset(self::$_beacons[$uniqueId]);
+    }
+
+    public static function bitlyCheck()
+    {
+        try {
+            $bitlyResponse = json_decode(self::_bitly()->request('GET', 'v3/user/info', [
+                'query' => [
+                    'access_token' => config('coaster::key.bitly')
+                ]
+            ])->getBody());
+        } catch (\GuzzleHttp\Exception\RequestException $e) {
+            return false;
+        }
+        return $bitlyResponse->status_code == 200;
     }
 
     private static function _client()
