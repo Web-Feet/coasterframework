@@ -139,8 +139,6 @@ Class BlockBeacon extends Eloquent
 
         if (empty($beacon)) {
             FormMessage::add('page_info_other[beacons]', 'A selected beacon was not found');
-        } elseif ($pageId == $beacon->page_id) {
-            return 1;
         } else {
             $beaconUrl = URL::to('/');
             $beaconUrlParts = parse_url($beaconUrl);
