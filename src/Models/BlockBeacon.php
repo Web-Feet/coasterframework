@@ -153,7 +153,7 @@ Class BlockBeacon extends Eloquent
                     $bitlyResponse = json_decode(self::_bitly()->request('GET', 'v3/shorten', [
                         'query' => [
                             'access_token' => config('coaster::key.bitly'),
-                            'longUrl' => $pageUrl
+                            'longUrl' => $pageUrl.'?beacon_id='.$uniqueId
                         ]
                     ])->getBody());
                     if ($bitlyResponse->status_code == 200) {
