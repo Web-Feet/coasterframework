@@ -1218,16 +1218,31 @@ class ThemeBuilder
 
         $block_name = strtolower($block_name);
 
-        if (in_array($block_name, self::$_repeaterTemplates)) {
+        // get block type
+        if (isset(self::$_blockSettings[$block_name]['type'])) {
+            $block = new Block;
+            $block->type = self::$_blockSettings[$block_name]['type'];
+        } else {
+            $block = Block::preload($block_name);
+        }
+        if (empty($block)) {
+            $block = new Block;
+            $block->type = self::_typeGuess($block_name);
+        }
+        $block_class = $block->get_class();
+
+        // check if repeater view
+        if (!empty($options['view'])) {
+            $repeaterView = $options['view'];
+        } else {
+            $repeaterView = $block_name;
+        }
+
+        if ($block_class == 'repeater' || in_array($repeaterView, self::$_repeaterTemplates)) {
             $currentRepeater = self::$_repeater;
             self::$_repeater = $block_name;
 
             // manually call the repeater view as the normal pagebuilder won't call it if the block_repeaters table is empty
-            if (!empty($options['view'])) {
-                $repeaterView = $options['view'];
-            } else {
-                $repeaterView = $block_name;
-            }
             $output = View::make(
                 'themes.' . self::$_theme->theme . '.blocks.repeaters.' . $repeaterView,
                 ['is_first' => true, 'is_last' => true, 'count' => 1, 'total' => 1, 'id' => 1, 'pagination' => '']
@@ -1235,20 +1250,7 @@ class ThemeBuilder
 
             self::$_repeater = $currentRepeater;
         } else {
-
             // always use blank data for processing blocks
-            if (isset(self::$_blockSettings[$block_name]['type'])) {
-                $block = new Block;
-                $block->type = self::$_blockSettings[$block_name]['type'];
-            } else {
-                $block = Block::preload($block_name);
-            }
-            if (empty($block)) {
-                $block = new Block;
-                $block->type = self::_typeGuess($block_name);
-            }
-
-            $block_class = $block->get_class();
             $output = $block_class::display($block, '', $options);
         }
 
