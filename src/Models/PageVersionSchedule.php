@@ -51,7 +51,6 @@ class PageVersionSchedule extends Eloquent
                 }
             }
 
-            self::checkPageVersionIds();
         }
 
         return $newVersions;

@@ -33,8 +33,7 @@ class PageVersion extends Eloquent
         $page_version->save();
         return $page_version;
     }
-
-
+    
     public function publish($set_live = false, $ignore_auth = false)
     {
         $page_lang = PageLang::where('page_id', '=', $this->page_id)->where('language_id', '=', Language::current())->first();
