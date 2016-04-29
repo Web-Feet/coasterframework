@@ -117,16 +117,16 @@ class PageBuilder
 
         // run page version scheduler thingy
         $newPublishedVersions = PageVersionSchedule::checkPageVersionIds();
-        foreach ($page_level as $k => $page) {
-            if (isset($newPublishedVersions[$page->page_id])) {
-                $page_level[$k]->live_version = $newPublishedVersions[$page->page_id];
-            }
-        }
 
         // if page was not found, 404
         if (empty($page_level[$url_parts])) {
             throw new PageLoadException('page not found');
         } else {
+            foreach ($page_level as $k => $page) {
+                if (isset($newPublishedVersions[$page->page_id])) {
+                    $page_level[$k]->live_version = $newPublishedVersions[$page->page_id];
+                }
+            }
             self::$page_id = $page_level[$url_parts]->page_id;
             self::$page_info = clone $page_level[$url_parts];
             self::$page_levels = $page_level;
