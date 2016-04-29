@@ -421,8 +421,15 @@ class PagesController extends _Base
                 } else {
                     $li_info->blog = '';
                 }
+                $li_info->preview_link = $li_info->url;
                 if (!$child_page->is_live()) {
                     $li_info->type = 'type_hidden';
+                    if ($child_page->link == 0) {
+                        $live_page_version = PageVersion::where('page_id', '=', $child_page->id)->where('version_id', '=', $page_lang->live_version)->first();
+                        if (!empty($live_page_version)) {
+                            $li_info->preview_link .= '?preview=' . $live_page_version->preview_key;
+                        }
+                    }
                 }
                 $pages_li .= View::make('coaster::partials.pages.li', array('page' => $li_info))->render();
             }
