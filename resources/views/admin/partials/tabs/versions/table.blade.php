@@ -18,6 +18,7 @@
             <th>#</th>
             <th>Name</th>
             <th>Author</th>
+            <th>Published</th>
             <th>Actions</th>
         </tr>
         </thead>
@@ -31,6 +32,13 @@
                     {{ ($version->user)?$version->user->email:'Undefined' }}
                 </td>
                 <td>
+                    @if ($version->version_id == $live_version)
+                        Yes
+                    @else
+                        No
+                    @endif
+                </td>
+                <td>
                     <a href="{{ PageBuilder::page_url($version->page_id).'?preview='.$version->preview_key }}"
                        target="_blank"><i class="glyphicon glyphicon-eye-open itemTooltip" title="Preview"></i></a>
                     <a href="{{ URL::to(config('coaster::admin.url').'/pages/edit/'.$version->page_id.'/'.$version->version_id) }}"><i
@@ -40,6 +48,8 @@
                            data-version="{{ $version->version_id }}" title="Rename"></i>
                     @endif
                     @if ($can_publish)
+                        <i class="version_publish_schedule glyphicon glyphicon-time itemTooltip"
+                           data-version="{{ $version->version_id }}" title="Schedule Version Publish"></i>
                         <i class="version_publish glyphicon glyphicon-ok-circle itemTooltip"
                            data-version="{{ $version->version_id }}" title="Publish"></i>
                     @else

@@ -31,6 +31,11 @@ class Page extends Eloquent
         return $this->belongsTo('CoasterCms\Models\PageGroup', 'in_group');
     }
 
+    public function versions()
+    {
+        return $this->hasMany('CoasterCms\Models\PageVersion');
+    }
+
     public function is_live()
     {
         if ($this->attributes['live'] == 1) {

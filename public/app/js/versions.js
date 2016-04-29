@@ -55,12 +55,47 @@ function version_publish() {
     });
 }
 
+function version_publish_schedule_modal() {
+    var modal = $('#versionPublishScheduleModal');
+    version_id = $(this).data('version');
+    var version_name = $(this).parent().parent().find('td:eq(1)').html();
+    modal.find('.version').html(version_name +' (ID #'+version_id+')');
+    modal.modal('show');
+}
+
+function version_publish_schedule() {
+    var schedule_from = $('#version_schedule_from').val();
+    var schedule_to = $('#version_schedule_to').val();
+    var schedule_repeat = $('#version_schedule_repeat').val();
+    $.ajax({
+        url: get_admin_url() + 'pages/version-schedule/' + page_id,
+        type: 'POST',
+        data: {
+            version_id: version_id,
+            schedule_from: schedule_from,
+            schedule_to: schedule_to,
+            schedule_to_version: $('.live_version_id').html(),
+            schedule_repeat: schedule_repeat
+        },
+        success: function (r) {
+            if (r == 1) {
+                cms_alert('success', 'Version scheduled for publishing');
+            } else {
+                cms_alert('danger', 'Error scheduling version for publishing');
+            }
+        },
+        error: function () {
+            cms_alert('danger', 'Error scheduling version for publishing');
+        }
+    });
+}
+
 function request_publish_modal(e) {
     version_id = $(this).data('version');
     var modal = $('#requestPublishModal');
     if (version_id !== undefined) {
         var version_name = $(this).parent().parent().find('td:eq(1)').html();
-        modal.find('.version').html(version_name+' (ID '+version_id+')');
+        modal.find('.version').html(version_name +' (ID #'+version_id+')');
         modal.find('.version_info').show();
     } else {
         modal.find('.version_info').hide();
@@ -88,11 +123,11 @@ function request_publish() {
                     cms_alert('success', 'Publish request sent');
                     update_request_table();
                 } else {
-                    cms_alert('error', 'Error sending publish request');
+                    cms_alert('danger', 'Error sending publish request');
                 }
             },
             error: function () {
-                cms_alert('error', 'Error sending publish request');
+                cms_alert('danger', 'Error sending publish request');
             }
         });
     }
@@ -169,6 +204,10 @@ function update_version_js() {
 $(document).ready(function() {
     $('#version_pagination').find('a').click(version_pagination);
     $('.version_publish').click(version_publish);
+
+    $('.version_publish_schedule').click(version_publish_schedule_modal);
+    $('#versionPublishScheduleModal').find('.schedule').click(version_publish_schedule);
+
     $('.version_rename').click(version_rename_modal);
     $('#renameModal').find('.btn-primary').click(version_rename);
 

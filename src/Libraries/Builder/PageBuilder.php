@@ -14,6 +14,7 @@ use CoasterCms\Models\PageBlockDefault;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\PageSearchData;
 use CoasterCms\Models\PageVersion;
+use CoasterCms\Models\PageVersionSchedule;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -111,6 +112,14 @@ class PageBuilder
                         break;
                     }
                 }
+            }
+        }
+
+        // run page version scheduler thingy
+        $newPublishedVersions = PageVersionSchedule::checkPageVersionIds();
+        foreach ($page_level as $k => $page) {
+            if (isset($newPublishedVersions[$page->page_id])) {
+                $page_level[$k]->live_version = $newPublishedVersions[$page->page_id];
             }
         }
 

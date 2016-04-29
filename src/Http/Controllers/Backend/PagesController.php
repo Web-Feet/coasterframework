@@ -8,7 +8,6 @@ use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockBeacon;
 use CoasterCms\Models\Language;
-use CoasterCms\Models\Menu;
 use CoasterCms\Models\MenuItem;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageBlock;
@@ -17,6 +16,7 @@ use CoasterCms\Models\PageLang;
 use CoasterCms\Models\PagePublishRequests;
 use CoasterCms\Models\PageSearchData;
 use CoasterCms\Models\PageVersion;
+use CoasterCms\Models\PageVersionSchedule;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
 use CoasterCms\Models\UserRole;
@@ -226,6 +226,49 @@ class PagesController extends _Base
     public function post_versions($page_id)
     {
         return BlockManager::version_table($page_id);
+    }
+
+    public function post_version_schedule($pageId)
+    {
+        $scheduleFrom = Datetime::jQueryToMysql(Request::input('schedule_from'));
+        $scheduleTo = Datetime::jQueryToMysql(Request::input('schedule_to'));
+        $scheduleToVersion = Request::input('schedule_to_version');
+        $scheduleRepeat = Request::input('schedule_repeat')?:0;
+        $versionId = Request::input('version_id');
+        $pageVersion = PageVersion::where('page_id', '=', $pageId)->where('version_id', '=', $versionId)->first();
+
+        if (!empty($pageVersion) && !empty($scheduleFrom)) {
+
+            $pageVersionSchedule = new PageVersionSchedule;
+            $pageVersionSchedule->page_version_id = $pageVersion->id;
+            $pageVersionSchedule->live_from = $scheduleFrom;
+            if (is_numeric($scheduleRepeat)) {
+                $pageVersionSchedule->repeat_in = $scheduleRepeat;
+            } else {
+                $pageVersionSchedule->repeat_in_func = $scheduleRepeat;
+            }
+            $pageVersionSchedule->save();
+
+            if (!empty($scheduleTo) && !empty($scheduleToVersion)) {
+
+                $pageVersion = PageVersion::where('page_id', '=', $pageId)->where('version_id', '=', $scheduleToVersion)->first();
+                if (!empty($pageVersion)) {
+                    $pageVersionSchedule = new PageVersionSchedule;
+                    $pageVersionSchedule->page_version_id = $pageVersion->id;
+                    $pageVersionSchedule->live_from = $scheduleTo;
+                    if (is_numeric($scheduleRepeat)) {
+                        $pageVersionSchedule->repeat_in = $scheduleRepeat;
+                    } else {
+                        $pageVersionSchedule->repeat_in_func = $scheduleRepeat;
+                    }
+                    $pageVersionSchedule->save();
+                }
+
+            }
+            return 1;
+        }
+
+        return 0;
     }
 
     public function post_version_rename($page_id)
@@ -669,6 +712,7 @@ class PagesController extends _Base
             $page->live_end = Datetime::mysqlToJQuery($page->live_end);
             $group = PageGroup::find($page->in_group);
             $parent = Page::find($page->parent);
+            PageVersionSchedule::checkPageVersionIds();
 
             // get page lang data
             $page_lang = PageLang::where('page_id', '=', $page_id)->where('language_id', '=', Language::current())->first();
@@ -729,7 +773,12 @@ class PagesController extends _Base
 
             // add required modals
             if ($publishingOn) {
-                $this->layout->modals = View::make('coaster::modals.pages.publish') . View::make('coaster::modals.pages.request_publish') . View::make('coaster::modals.pages.rename_version');
+                $intervals = [ 0 => 'No', 86400 => 'Repeat Daily', 604800 => 'Repeat Weekly', 'm' => 'Same day of Month'];
+                $this->layout->modals =
+                    View::make('coaster::modals.pages.publish') .
+                    View::make('coaster::modals.pages.publish_schedule', ['intervals' => $intervals, 'live_version' => $versionData['live']]) .
+                    View::make('coaster::modals.pages.request_publish') .
+                    View::make('coaster::modals.pages.rename_version');
             }
 
         } else {
