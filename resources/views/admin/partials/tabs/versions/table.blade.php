@@ -48,7 +48,7 @@
                            data-version="{{ $version->version_id }}" title="Rename"></i>
                     @endif
                     @if ($can_publish)
-                        <i class="version_publish_schedule glyphicon glyphicon-time itemTooltip"
+                        <i class="version_publish_schedule glyphicon glyphicon-time itemTooltip hidden"
                            data-version="{{ $version->version_id }}" title="Schedule Version Publish"></i>
                         <i class="version_publish glyphicon glyphicon-ok-circle itemTooltip"
                            data-version="{{ $version->version_id }}" title="Publish"></i>
