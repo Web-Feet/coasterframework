@@ -11,7 +11,6 @@ use CoasterCms\Models\PageSearchData;
 use CoasterCms\Models\Setting;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -172,8 +171,8 @@ class SystemController extends _Base
 
         $upgrade = new \stdClass;
         $upgrade->from = config('coaster::site.version');
-        $upgrade->to = $this->_latestTag();
-        $upgrade->required = version_compare(config('coaster::site.version'), $this->_latestTag(), '<');
+        $upgrade->to = Setting::latestTag();
+        $upgrade->required = version_compare(config('coaster::site.version'), Setting::latestTag(), '<');
 
         $this->layout->content = View::make('coaster::pages.system', array('database_structure' => $database_structure, 'last_indexed_search' => $last_indexed_search, 'site_details' => $settings, 'can_index_search' => Auth::action('system.search'), 'can_validate' => Auth::action('system.validate-db'), 'can_upgrade' => Auth::action('system.upgrade'), 'upgrade' => $upgrade));
     }
@@ -246,7 +245,7 @@ class SystemController extends _Base
             $message = 'Composer is required to run the upgrade and must be executable from the sites root directory.<br />
             The process can take a minute or so to complete.';
 
-        } elseif (version_compare(config('coaster::site.version'), $this->_latestTag(), '<') && $this->_latestTag() != "not-found") {
+        } elseif (version_compare(config('coaster::site.version'), Setting::latestTag(), '<') && Setting::latestTag() != "not-found") {
 
             if (!getenv('HOME') && !getenv('COMPOSER_HOME')) {
                 putenv("COMPOSER_HOME=".exec('pwd')."/.composer");
@@ -256,8 +255,8 @@ class SystemController extends _Base
             $upgradeLog = file_get_contents(storage_path('app').'/upgrade.log');
 
             if (!empty($upgradeLog) && stripos($upgradeLog, 'Generating autoload files') !== false) {
-                Cache::put('coaster::site.version', $this->_latestTag(), 30);
-                $message = 'Successfully upgraded to version '.$this->_latestTag();
+                Cache::put('coaster::site.version', Setting::latestTag(), 30);
+                $message = 'Successfully upgraded to version '. Setting::latestTag();
             } else {
                 $error = 'Upgrade failed, composer might not be installed or there might have been an error: <br /><br />';
                 $error .= '<pre>'.str_replace("\n", "<br />", $upgradeLog).'</pre>';
@@ -278,11 +277,6 @@ class SystemController extends _Base
         } else {
             return 0;
         }
-    }
-
-    private function _latestTag()
-    {
-        return Setting::latestTag();
     }
 
     private function _db_messages($basic_fix = 0)
