@@ -20,5 +20,15 @@ class PageSearchLog extends Eloquent
             $new_term->save();
         }
     }
+    /**
+     * Check for search data
+     *
+     * @param type var array menu_items
+     * @return {11:return array menu_items}
+     */
+    public static function hasSearchData()
+    {
+      return (Pagesearchlog::count('id') > 0);
+    }
 
 }

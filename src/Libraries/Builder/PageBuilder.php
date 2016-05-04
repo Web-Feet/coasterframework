@@ -395,6 +395,7 @@ class PageBuilder
         } else {
             $options['content'] = array_key_exists('content', $options) ? $options['content'] : "No search query entered.";
         }
+
         return self::_cat_view(0, $pages, $options);
     }
 

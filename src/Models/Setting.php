@@ -3,6 +3,7 @@
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Cache;
 
 Class Setting extends Eloquent
 {
@@ -27,6 +28,30 @@ Class Setting extends Eloquent
             }
         }
 
+    }
+
+    /**
+     * Latest tag (version)
+     *
+     * @param type var Description
+     * @return {11:return type}
+     */
+    public static function latestTag()
+    {
+      if (!Cache::has('coaster::site.version')) {
+          try {
+              $gitHub = new \GuzzleHttp\Client(
+                  [
+                      'base_uri' => 'https://api.github.com/repos/'
+                  ]
+              );
+              $latestRelease = json_decode($gitHub->request('GET', 'Web-Feet/coasterframework/releases/latest')->getBody());
+              Cache::put('coaster::site.version', $latestRelease->tag_name, 30);
+          } catch (\Exception $e) {
+              return 'not-found';
+          }
+      }
+      return Cache::get('coaster::site.version');
     }
 
 }

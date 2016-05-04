@@ -67,6 +67,7 @@ class _Base extends Controller
 
     }
 
+
     private static function _menu()
     {
         // load controllers
@@ -77,6 +78,7 @@ class _Base extends Controller
 
         // load menu items
         $menu_items = AdminMenu::orderBy('order', 'asc')->get();
+
         $menu = array();
         foreach ($menu_items as $menu_item) {
             if (empty($menu[$menu_item->parent])) {

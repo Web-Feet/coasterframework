@@ -282,20 +282,7 @@ class SystemController extends _Base
 
     private function _latestTag()
     {
-        if (!Cache::has('coaster::site.version')) {
-            try {
-                $gitHub = new \GuzzleHttp\Client(
-                    [
-                        'base_uri' => 'https://api.github.com/repos/'
-                    ]
-                );
-                $latestRelease = json_decode($gitHub->request('GET', 'Web-Feet/coasterframework/releases/latest')->getBody());
-                Cache::put('coaster::site.version', $latestRelease->tag_name, 30);
-            } catch (\Exception $e) {
-                return 'not-found';
-            }
-        }
-        return Cache::get('coaster::site.version');
+        return Setting::latestTag();
     }
 
     private function _db_messages($basic_fix = 0)

@@ -2,7 +2,9 @@
 
 use CoasterCms\Helpers\View\PaginatorRender;
 use CoasterCms\Models\AdminLog;
+use CoasterCms\Models\PageSearchLog;
 use CoasterCms\Models\PagePublishRequests;
+use CoasterCms\Models\Setting;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
@@ -38,8 +40,34 @@ class HomeController extends _Base
             $welcome_message = '<h2>Welcome to Coaster CMS, click on the pages link to start editing content</h2><p>&nbsp;</p>';
         }
 
-        $this->layout->title = 'Home';
-        $this->layout->content = View::make('coaster::pages.dashboard', array('welcome_message' => $welcome_message, 'logs' => $logs, 'requests' => $requests_table, 'user_requests' => $user_requests_table, 'any_requests' => $any_requests, 'any_user_requests' => $any_user_requests));
+        // Search data
+
+        $any_searches = PageSearchLog::hasSearchData();
+        if ($any_searches)
+        {
+          $searchdata = PageSearchLog::orderBy('count', 'DESC')->orderBy('updated_at', 'DESC')->limit(5)->get();
+          $searchview = View::make('coaster::pages.pagesearchlog', array('searchdata' => $searchdata));
+        }
+        if( ! Auth::action('search.index'))
+        {
+          $any_searches = false;
+          $searchview = '';
+        }
+        $data = array('welcome_message' => $welcome_message, 'logs' => $logs, 'requests' => $requests_table, 'user_requests' => $user_requests_table, 'any_requests' => $any_requests, 'any_user_requests' => $any_user_requests);
+
+        $data['any_searches'] = $any_searches;
+        $data['search_logs'] = $searchview;
+
+        $upgrade = new \stdClass;
+        $upgrade->from = config('coaster::site.version');
+        $upgrade->to = Setting::latestTag();
+        $upgrade->required = version_compare(config('coaster::site.version'), $upgrade->to, '<');
+        $upgrade->allowed = Auth::action('system.upgrade');
+
+        $data['upgrade'] = $upgrade;
+
+        $this->layout->title = 'Admin home';
+        $this->layout->content = View::make('coaster::pages.dashboard', $data);
     }
 
     public function getLogs()
