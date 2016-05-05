@@ -1,15 +1,16 @@
 <?php namespace CoasterCms\Http\Controllers\Frontend;
 
+use Artisan;
 use CoasterCms\Helpers\View\FormMessage;
 use CoasterCms\Models\Theme;
+use DB;
+use Dotenv\Dotenv;
+use Hash;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\View;
+use Request;
+use Storage;
+use Validator;
+use View;
 
 class InstallController extends Controller
 {
@@ -17,7 +18,7 @@ class InstallController extends Controller
     public function getIndex()
     {
         if ($redirect = $this->_checkRedirect('install')) {
-            return redirect($redirect)->send();
+            \redirect($redirect)->send();
         }
 
         $assetsFile = storage_path('app/assets.json');
@@ -37,7 +38,7 @@ class InstallController extends Controller
     public function postIndex()
     {
         if ($redirect = $this->_checkRedirect('install')) {
-            return redirect($redirect)->send();
+            \redirect($redirect)->send();
         }
 
         $details = Request::all();
@@ -49,7 +50,7 @@ class InstallController extends Controller
         }
 
         try {
-            $db = new \PDO('mysql:dbname='.$details['name'].';host='.$details['host'], $details['user'], $details['password']);
+            new \PDO('mysql:dbname='.$details['name'].';host='.$details['host'], $details['user'], $details['password']);
         } catch (\PDOException $e) {
             switch ($e->getCode()) {
                 case 1045: FormMessage::add('user', $e->getMessage()); break;
@@ -75,7 +76,7 @@ class InstallController extends Controller
         ];
 
         $envFile = file_get_contents(base_path('.env'));
-        $dotenv = new \Dotenv\Dotenv(base_path()); // Laravel 5.2
+        $dotenv = new Dotenv(base_path()); // Laravel 5.2
         foreach ($dotenv->load() as $env) {
             $envParts = explode('=', $env);
             if (key_exists($envParts[0], $updateEnv)) {
@@ -85,29 +86,29 @@ class InstallController extends Controller
 
         file_put_contents(base_path('.env'), $envFile);
 
-        Storage::put('install.txt', 'add-tables');
+        Storage::disk('local')->put('install.txt', 'add-tables');
 
-        return redirect('install/database')->send();
+        \redirect('install/database')->send();
 
     }
 
     public function getDatabase()
     {
         if ($redirect = $this->_checkRedirect('install/database')) {
-            return redirect($redirect)->send();
+            \redirect($redirect)->send();
         }
 
         Artisan::call('migrate', ['--path' => '/vendor/web-feet/coasterframework/database/migrations']);
 
-        Storage::put('install.txt', 'add-user');
+        Storage::disk('local')->put('install.txt', 'add-user');
 
-        return redirect('install/admin')->send();
+        \redirect('install/admin')->send();
     }
 
     public function getAdmin()
     {
         if ($redirect = $this->_checkRedirect('install/admin')) {
-            return redirect($redirect)->send();
+            \redirect($redirect)->send();
         }
 
         View::make('coaster::asset_builder.main')->render();
@@ -121,7 +122,7 @@ class InstallController extends Controller
     public function postAdmin()
     {
         if ($redirect = $this->_checkRedirect('install/admin')) {
-            return redirect($redirect)->send();
+            \redirect($redirect)->send();
         }
 
         $details = Request::all();
@@ -147,15 +148,15 @@ class InstallController extends Controller
             )
         );
 
-        Storage::put('install.txt', 'theme');
+        Storage::disk('local')->put('install.txt', 'theme');
 
-        return redirect('install/theme')->send();
+        \redirect('install/theme')->send();
     }
 
     public function getTheme()
     {
         if ($redirect = $this->_checkRedirect('install/theme')) {
-            return redirect($redirect)->send();
+            \redirect($redirect)->send();
         }
 
         View::make('coaster::asset_builder.main')->render();
@@ -184,7 +185,7 @@ class InstallController extends Controller
     public function postTheme()
     {
         if ($redirect = $this->_checkRedirect('install/theme')) {
-            return redirect($redirect)->send();
+            \redirect($redirect)->send();
         }
 
         $details = Request::all();
@@ -200,7 +201,7 @@ class InstallController extends Controller
             }
         }
 
-        Storage::put('install.txt', 'complete-welcome');
+        Storage::disk('local')->put('install.txt', 'complete-welcome');
 
         View::make('coaster::asset_builder.main')->render();
 
@@ -211,12 +212,12 @@ class InstallController extends Controller
 
     public function missingMethod($parameters = [])
     {
-        return redirect($this->_checkRedirect())->send();
+        \redirect($this->_checkRedirect())->send();
     }
 
     private function _checkRedirect($current = null)
     {
-        switch (Storage::get('install.txt')) {
+        switch (Storage::disk('local')->get('install.txt')) {
             case 'set-env':
                 $redirect = 'install';
                 break;

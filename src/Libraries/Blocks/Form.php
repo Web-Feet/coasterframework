@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Helpers\View\FormMessage;
 use CoasterCms\Helpers\BlockManager;
+use CoasterCms\Helpers\View\FormMessage;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockFormRule;
@@ -9,12 +9,12 @@ use CoasterCms\Models\FormSubmission;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\Theme;
 use CoasterCms\Models\ThemeBlock;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\View;
+use Mail;
+use Redirect;
+use Request;
+use Session;
+use Validator;
+use View;
 
 class Form extends _Base
 {

@@ -1,8 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
-class CreateBlockVideoCache
+class CreateBlockVideoCache extends Migration
 {
 
     /**
@@ -12,7 +13,7 @@ class CreateBlockVideoCache
      */
     public function up()
     {
-        Schema::table('block_video_cache', function ($table) {
+        Schema::table('block_video_cache', function (Blueprint $table) {
             $table->create();
             $table->increments('id');
             $table->string('videoId');

@@ -1,8 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
-class CreatePageSearchLog
+class CreatePageSearchLog extends Migration
 {
 
     /**
@@ -12,7 +13,7 @@ class CreatePageSearchLog
      */
     public function up()
     {
-        Schema::table('page_search_log', function ($table) {
+        Schema::table('page_search_log', function (Blueprint $table) {
             $table->create();
             $table->increments('id');
             $table->string('term');

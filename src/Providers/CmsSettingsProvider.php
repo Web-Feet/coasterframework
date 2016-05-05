@@ -1,10 +1,9 @@
 <?php namespace CoasterCms\Providers;
 
 use CoasterCms\Models\Setting;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
+use Schema;
+use Storage;
 
 class CmsSettingsProvider extends ServiceProvider
 {
@@ -25,7 +24,7 @@ class CmsSettingsProvider extends ServiceProvider
     {
         $db = false;
 
-        if (Storage::exists('install.txt') && strpos(Storage::get('install.txt'), 'complete') !== false) {
+        if (Storage::disk('local')->exists('install.txt') && strpos(Storage::disk('local')->get('install.txt'), 'complete') !== false) {
             $this->app['config']['coaster::installed'] = 1;
             try {
                 if (Schema::hasTable('settings')) {
@@ -38,8 +37,8 @@ class CmsSettingsProvider extends ServiceProvider
             }
         } else {
             $this->app['config']['coaster::installed'] = 0;
-            if (!Storage::exists('install.txt')) {
-                Storage::put('install.txt', 'set-env');
+            if (!Storage::disk('local')->exists('install.txt')) {
+                Storage::disk('local')->put('install.txt', 'set-env');
             }
         }
 

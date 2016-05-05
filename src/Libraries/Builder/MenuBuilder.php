@@ -3,7 +3,7 @@
 use CoasterCms\Models\MenuItem;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageLang;
-use Illuminate\Support\Facades\View;
+use View;
 
 class MenuBuilder
 {
@@ -88,9 +88,9 @@ class MenuBuilder
                 $is_last = true;
             }
             if (!empty($sub_menu) && View::exists('themes.' . PageBuilder::$theme . '.menus.' . self::$_view . '.submenu_' . $level)) {
-                $menu_items .= View::make('themes.' . PageBuilder::$theme . '.menus.' . self::$_view . '.submenu_' . $level, array('item' => $item_data, 'items' => $sub_menu, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $total, 'level' => $level, 'further_levels' => $sub_levels));
+                $menu_items .= View::make('themes.' . PageBuilder::$theme . '.menus.' . self::$_view . '.submenu_' . $level, array('item' => $item_data, 'items' => $sub_menu, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $total, 'level' => $level, 'further_levels' => $sub_levels))->render();
             } else {
-                $menu_items .= View::make('themes.' . PageBuilder::$theme . '.menus.' . self::$_view . '.item', array('item' => $item_data, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $total, 'level' => $level));
+                $menu_items .= View::make('themes.' . PageBuilder::$theme . '.menus.' . self::$_view . '.item', array('item' => $item_data, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $total, 'level' => $level))->render();
             }
             $i++;
             $is_first = false;

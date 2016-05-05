@@ -61,7 +61,7 @@
 @if ($can_edit)
     <div class="row textbox">
         <div class="col-sm-12">
-            <button type="button" class="btn add_another" onclick="javascript:add_redirect()"><i class="fa fa-plus"></i>
+            <button type="button" class="btn add_another" onclick="add_redirect()"><i class="fa fa-plus"></i>
                 &nbsp; Add Another
             </button>
             <button class="btn btn-primary" type="submit"><i class="fa fa-floppy-o"></i> &nbsp; Save Redirects</button>

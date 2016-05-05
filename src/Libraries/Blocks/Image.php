@@ -2,9 +2,9 @@
 
 use CoasterCms\Helpers\BlockManager;
 use CoasterCms\Libraries\Builder\PageBuilder;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\View;
+use Request;
+use URL;
+use View;
 
 class Image extends _Base
 {

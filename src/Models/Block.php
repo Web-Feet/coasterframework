@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Models;
 
 use CoasterCms\Helpers\BlockManager;
-use Illuminate\Database\Eloquent\Model as Eloquent;
+use Eloquent;
 
 class Block extends Eloquent
 {
@@ -21,7 +21,8 @@ class Block extends Eloquent
 
     /**
      * @param $block_name
-     * @return \CoasterCms\Models\Block
+     * @param bool $force
+     * @return \CoasterCms\Models\Block|null
      */
     public static function preload($block_name, $force = false)
     {

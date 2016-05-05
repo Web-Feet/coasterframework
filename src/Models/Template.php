@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-use Illuminate\Support\Facades\DB;
+use DB;
+use Eloquent;
 
 class Template extends Eloquent
 {

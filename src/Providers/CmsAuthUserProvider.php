@@ -2,10 +2,10 @@
 
 namespace CoasterCms\Providers;
 
+use Config;
+use Hash;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\UserProvider;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Hash;
 
 class CmsAuthUserProvider implements UserProvider
 {

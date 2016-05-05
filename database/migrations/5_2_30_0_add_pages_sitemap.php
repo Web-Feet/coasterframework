@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Schema\Blueprint;
 
 class AddPagesSitemap extends Migration
 {
@@ -13,7 +13,7 @@ class AddPagesSitemap extends Migration
      */
     public function up()
     {
-        Schema::table('pages', function($table)
+        Schema::table('pages', function(Blueprint $table)
         {
             $table->integer('sitemap')->after('live')->default(1);
         });

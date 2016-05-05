@@ -1,8 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
-class CreatePageRedirects
+class CreatePageRedirects extends Migration
 {
 
     /**
@@ -12,7 +13,7 @@ class CreatePageRedirects
      */
     public function up()
     {
-        Schema::table('page_redirects', function ($table) {
+        Schema::table('page_redirects', function (Blueprint $table) {
             $table->create();
             $table->increments('id');
             $table->string('redirect');

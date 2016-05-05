@@ -1,15 +1,14 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
+use Auth;
 use CoasterCms\Helpers\View\FormMessage;
 use CoasterCms\Models\Language;
 use CoasterCms\Models\User;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\View;
+use Mail;
+use Request;
+use URL;
+use Validator;
+use View;
 
 class AccountController extends _Base
 {
@@ -179,7 +178,7 @@ class AccountController extends _Base
     {
         $input = Request::get('language');
         Language::set($input);
-        return redirect(URL::to(config('coaster::admin.url').'/account/language'));
+        \redirect(URL::to(config('coaster::admin.url').'/account/language'))->send();
     }
 
     public function get_blog()

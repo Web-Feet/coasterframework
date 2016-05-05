@@ -40,6 +40,7 @@ class _Base
      * @param \CoasterCms\Models\Block $block
      * @param string $block_data
      * @param int $page_id
+     * @param \stdClass|null $parent_repeater
      * @return string
      */
     public static function edit($block, $block_data, $page_id = 0, $parent_repeater = null)
@@ -51,7 +52,7 @@ class _Base
     /**
      * @param int $page_id
      * @param string $blocks_key
-     * @param \stdClass $repeater_info
+     * @param \stdClass|null $repeater_info
      */
     public static function submit($page_id, $blocks_key, $repeater_info = null)
     {

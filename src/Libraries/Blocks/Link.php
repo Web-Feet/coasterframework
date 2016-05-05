@@ -3,8 +3,8 @@
 use CoasterCms\Helpers\BlockManager;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageLang;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\URL;
+use Request;
+use URL;
 
 class Link extends _Base
 {

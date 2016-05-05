@@ -1,16 +1,15 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
+use Auth;
 use CoasterCms\Models\AdminAction;
 use CoasterCms\Models\AdminController;
 use CoasterCms\Models\AdminMenu;
 use CoasterCms\Models\Language;
-use CoasterCms\Models\PageLang;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\View;
+use Redirect;
+use Request;
+use URL;
+use View;
 
 class _Base extends Controller
 {

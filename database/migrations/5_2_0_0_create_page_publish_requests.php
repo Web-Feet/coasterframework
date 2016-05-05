@@ -1,8 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
-class CreatePagePublishRequests
+class CreatePagePublishRequests extends Migration
 {
 
     /**
@@ -12,7 +13,7 @@ class CreatePagePublishRequests
      */
     public function up()
     {
-        Schema::table('page_publish_requests', function ($table) {
+        Schema::table('page_publish_requests', function (Blueprint $table) {
             $table->create();
             $table->increments('id');
             $table->integer('page_version_id');

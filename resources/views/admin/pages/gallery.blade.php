@@ -35,7 +35,7 @@
             <!-- The global progress bar -->
             <div class="progress progress-success progress-striped active" role="progressbar" aria-valuemin="0"
                  aria-valuemax="100">
-                <div class="bar" style="width:0%;"></div>
+                <div class="bar" style="width:0;"></div>
             </div>
             <!-- The extended global progress information -->
             <div class="progress-extended">&nbsp;</div>

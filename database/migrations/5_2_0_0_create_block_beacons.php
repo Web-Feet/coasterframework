@@ -1,8 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
-class CreateBlockBeacons
+class CreateBlockBeacons extends Migration
 {
 
     /**
@@ -12,7 +13,7 @@ class CreateBlockBeacons
      */
     public function up()
     {
-        Schema::table('block_beacons', function ($table) {
+        Schema::table('block_beacons', function (Blueprint $table) {
             $table->create();
             $table->increments('id');
             $table->string('unique_id');

@@ -1,8 +1,9 @@
 <?php namespace CoasterCms\Helpers;
 
-use Illuminate\Support\Facades\URL;
+use \Bkwld\Croppa\Helpers;
+use URL;
 
-class Croppa extends \Bkwld\Croppa\Helpers
+class Croppa extends Helpers
 {
 
     public function url($url, $width = null, $height = null, $options = null)

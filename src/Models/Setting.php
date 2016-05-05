@@ -1,9 +1,10 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Cache;
+use Cache;
+use Config;
+use Eloquent;
+use File;
+use \GuzzleHttp\Client;
 
 Class Setting extends Eloquent
 {
@@ -32,15 +33,13 @@ Class Setting extends Eloquent
 
     /**
      * Latest tag (version)
-     *
-     * @param type var Description
-     * @return {11:return type}
+     * @return string
      */
     public static function latestTag()
     {
       if (!Cache::has('coaster::site.version')) {
           try {
-              $gitHub = new \GuzzleHttp\Client(
+              $gitHub = new Client(
                   [
                       'base_uri' => 'https://api.github.com/repos/'
                   ]

@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-use Illuminate\Support\Facades\Session;
+use Eloquent;
+use Session;
 
 class Language extends Eloquent
 {

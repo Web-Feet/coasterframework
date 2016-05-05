@@ -1,8 +1,8 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Helpers\BlockManager;
-use Illuminate\Support\Facades\Request;
+use CoasterCms\Models\BlockSelectOption;
+use Request;
 
 class Select extends _Base
 {

@@ -1,15 +1,14 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
+use Auth;
 use CoasterCms\Helpers\View\PaginatorRender;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\FormSubmission;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Template;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\View;
+use URL;
+use View;
 
 class FormsController extends _Base
 {
@@ -29,7 +28,7 @@ class FormsController extends _Base
         }
         if (isset($form_blocks)) {
             if (count($form_blocks) == 1) {
-                return Redirect::to(URL::to(config('coaster::admin.url') . '/forms/submissions/' . $page->id . '/' . $form_blocks[0]->id));
+                \redirect(URL::to(config('coaster::admin.url') . '/forms/submissions/' . $page->id . '/' . $form_blocks[0]->id))->send();
             }
             $page_lang_data = PageLang::preload($page_id);
             if (!empty($page_lang_data)) {
@@ -51,7 +50,7 @@ class FormsController extends _Base
     {
         $block_data = Block::get_block_on_page($block_id, $page_id);
         if (empty($block_data) || $block_data->type != 'form') {
-            return \abort('404', 'Form not found on page');
+            \abort('404', 'Form not found on page');
         } else {
             $submission_rows = '';
             $submission_data = new \stdClass;
@@ -76,7 +75,7 @@ class FormsController extends _Base
                 $submission_data->sent = $submission->sent;
                 $submission_data->created_at = $submission->created_at;
                 $submission_data->from_page = !empty($submission->from_page_id) ? PageLang::full_name($submission->from_page_id) : '-';
-                $submission_rows .= View::make('coaster::partials.form_submissions.rows', array('submission' => $submission_data));
+                $submission_rows .= View::make('coaster::partials.form_submissions.rows', array('submission' => $submission_data))->render();
             }
             $this->layout->content = View::make(
                 'coaster::pages.forms.submissions',
@@ -94,7 +93,7 @@ class FormsController extends _Base
     {
         $block_data = Block::get_block_on_page($block_id, $page_id);
         if (empty($block_data) || $block_data->type != 'form') {
-            return \abort('404', 'Form not found on page');
+            \abort('404', 'Form not found on page');
         } else {
             $csv = array();
             $columns = array();

@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Helpers;
 
+use Auth;
 use CoasterCms\Helpers\View\CmsBlockInput;
 use CoasterCms\Helpers\View\PaginatorRender;
 use CoasterCms\Libraries\Blocks;
@@ -16,10 +17,9 @@ use CoasterCms\Models\PageSearchData;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\View;
+use DB;
+use Request;
+use View;
 
 class BlockManager
 {

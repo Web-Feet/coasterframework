@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
 
 class UpdateSearchLogAdmin extends Migration
 {
@@ -14,21 +13,21 @@ class UpdateSearchLogAdmin extends Migration
     public function up()
     {
 
-      $date = new \DateTime;
-      DB::table('admin_controllers')->insert(
-        array(
-          array(
-            'controller' => 'pagesearchlog',
-            'role_name' => 'Search log',
-            'role_order' => 5,
-            'role_section' => 1,
-            'created_at' => $date,
-            'updated_at' => $date
-          )
-        )
-      );
-      $controller_id = DB::getPdo()->lastInsertId();
-      DB::table('admin_actions')->insert(
+        $date = new \DateTime;
+        DB::table('admin_controllers')->insert(
+            array(
+                array(
+                    'controller' => 'pagesearchlog',
+                    'role_name' => 'Search log',
+                    'role_order' => 5,
+                    'role_section' => 1,
+                    'created_at' => $date,
+                    'updated_at' => $date
+                )
+            )
+        );
+        $controller_id = DB::getPdo()->lastInsertId();
+        DB::table('admin_actions')->insert(
             array(
                 array(
                     'controller_id' => $controller_id,
@@ -65,13 +64,13 @@ class UpdateSearchLogAdmin extends Migration
      */
     public function down()
     {
-      $controller = DB::table('admin_controllers')->select('id')->where('controller', '=', 'pagesearchlog')->first();
-      $action = DB::table('admin_actions')->select('id')->where('name', '=', 'Search Log')->where('controller_id', '=', $controller->id)->first();
+        $controller = DB::table('admin_controllers')->select('id')->where('controller', '=', 'pagesearchlog')->first();
+        $action = DB::table('admin_actions')->select('id')->where('name', '=', 'Search Log')->where('controller_id', '=', $controller->id)->first();
 
 
-      DB::table('user_roles_actions')->where('action_id', '=', $action->id)->delete();
-      DB::table('admin_actions')->where('id', '=', $action->id)->delete();
-      DB::table('admin_controllers')->where('id', '=', $controller->id)->delete();
+        DB::table('user_roles_actions')->where('action_id', '=', $action->id)->delete();
+        DB::table('admin_actions')->where('id', '=', $action->id)->delete();
+        DB::table('admin_controllers')->where('id', '=', $controller->id)->delete();
     }
 
 }

@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
-class CreateThemes
+class CreateThemes extends Migration
 {
 
     /**
@@ -13,7 +13,7 @@ class CreateThemes
      */
     public function up()
     {
-        Schema::table('themes', function ($table) {
+        Schema::table('themes', function (Blueprint $table) {
             $table->create();
             $table->increments('id');
             $table->string('theme');

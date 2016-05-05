@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
-class CreateBlockRepeaters
+class CreateBlockRepeaters extends Migration
 {
 
     /**
@@ -13,7 +13,7 @@ class CreateBlockRepeaters
      */
     public function up()
     {
-        Schema::table('block_repeaters', function ($table) {
+        Schema::table('block_repeaters', function (Blueprint $table) {
             $table->create();
             $table->increments('id');
             $table->integer('block_id');

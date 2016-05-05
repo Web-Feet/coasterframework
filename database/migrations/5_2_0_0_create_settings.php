@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
-class CreateSettings
+class CreateSettings extends Migration
 {
 
     /**
@@ -13,7 +13,7 @@ class CreateSettings
      */
     public function up()
     {
-        Schema::table('settings', function ($table) {
+        Schema::table('settings', function (Blueprint $table) {
             $table->create();
             $table->increments('id');
             $table->string('label');

@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
-class CreateBlockCategory
+class CreateBlockCategory extends Migration
 {
 
     /**
@@ -13,7 +13,7 @@ class CreateBlockCategory
      */
     public function up()
     {
-        Schema::table('block_category', function ($table) {
+        Schema::table('block_category', function (Blueprint $table) {
             $table->create();
             $table->increments('id');
             $table->string('name');

@@ -1,5 +1,7 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
+use Auth;
+use Cache;
 use CoasterCms\Helpers\File;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;
@@ -11,12 +13,10 @@ use CoasterCms\Models\PageSearchData;
 use CoasterCms\Models\Setting;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\View;
+use DB;
+use Request;
+use URL;
+use View;
 
 class SystemController extends _Base
 {
@@ -92,7 +92,7 @@ class SystemController extends _Base
             $this->layout->alert = $alert;
         }
 
-        return redirect(config('coaster::admin.url').'/system');
+        \redirect(config('coaster::admin.url').'/system')->send();
     }
 
     public function get_index()
@@ -179,8 +179,8 @@ class SystemController extends _Base
 
     public function get_wp_login()
     {
-        $blog_login_url = Url::to('/' . trim(config('coaster::blog.url'), '/') . '/wp-login.php');
-        $blog_admin_url = Url::to('/' . trim(config('coaster::blog.url'), '/') . '/wp-admin/');
+        $blog_login_url = URL::to('/' . trim(config('coaster::blog.url'), '/') . '/wp-login.php');
+        $blog_admin_url = URL::to('/' . trim(config('coaster::blog.url'), '/') . '/wp-admin/');
 
         $data_to_post = array(
             'rememberme' => 'forever',

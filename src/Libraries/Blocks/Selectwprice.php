@@ -2,7 +2,7 @@
 
 use CoasterCms\Helpers\BlockManager;
 use CoasterCms\Models\BlockSelectOption;
-use Illuminate\Support\Facades\Request;
+use Request;
 
 class Selectwprice extends _Base
 {

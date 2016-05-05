@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Schema\Blueprint;
 
 class AddBlockNotes extends Migration
 {
@@ -13,7 +13,7 @@ class AddBlockNotes extends Migration
      */
     public function up()
     {
-        Schema::table('blocks', function($table)
+        Schema::table('blocks', function(Blueprint $table)
         {
             $table->text('note')->after('active');
         });

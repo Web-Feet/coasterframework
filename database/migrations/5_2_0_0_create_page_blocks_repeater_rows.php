@@ -1,8 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
-class CreatePageBlocksRepeaterRows
+class CreatePageBlocksRepeaterRows extends Migration
 {
 
     /**
@@ -12,7 +13,7 @@ class CreatePageBlocksRepeaterRows
      */
     public function up()
     {
-        Schema::table('page_blocks_repeater_rows', function ($table) {
+        Schema::table('page_blocks_repeater_rows', function (Blueprint $table) {
             $table->create();
             $table->increments('id');
             $table->integer('repeater_id');

@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
-class CreatePages
+class CreatePages extends Migration
 {
 
     /**
@@ -13,7 +13,7 @@ class CreatePages
      */
     public function up()
     {
-        Schema::table('pages', function ($table) {
+        Schema::table('pages', function (Blueprint $table) {
             $table->create();
             $table->increments('id');
             $table->integer('template')->default(0);

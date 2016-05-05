@@ -120,54 +120,56 @@
 
     </div>
 
-    @section('scripts')
-        <script type='text/javascript'>
-            $(document).ready(function () {
-                $('#system_tabs a:first').tab('show');
-                $('#search_index').click(function () {
-                    $('#search_index').html("(reindex in progress)");
-                    var aj = $.ajax({
-                        url: get_admin_url() + 'system/search',
-                        type: 'GET',
-                        success: function (r) {
-                            if (r == 1) {
-                                var index_date = new Date();
-                                var month = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-                                $('#last_indexed_search').addClass("text-success");
-                                $('#last_indexed_search').html("Last ran on the " + index_date.getDate() + '' + nth(index_date.getDate()) + ' ' + month[index_date.getMonth()] + ' ' + index_date.getFullYear() + ' ' + index_date.toLocaleTimeString());
-                            }
-                            else {
-                                $('#last_indexed_search').addClass("text-danger");
-                                $('#last_indexed_search').html("failed the reindex");
-                            }
-                            $('#search_index').html("(reindex)");
+</div>
+
+@section('scripts')
+    <script type='text/javascript'>
+        $(document).ready(function () {
+            $('#system_tabs a:first').tab('show');
+            $('#search_index').click(function () {
+                $('#search_index').html("(reindex in progress)");
+                var aj = $.ajax({
+                    url: get_admin_url() + 'system/search',
+                    type: 'GET',
+                    success: function (r) {
+                        if (r == 1) {
+                            var index_date = new Date();
+                            var month = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                            $('#last_indexed_search').addClass("text-success");
+                            $('#last_indexed_search').html("Last ran on the " + index_date.getDate() + '' + nth(index_date.getDate()) + ' ' + month[index_date.getMonth()] + ' ' + index_date.getFullYear() + ' ' + index_date.toLocaleTimeString());
                         }
-                    });
-                });
-                @if ($can_validate)
-                $('#db_tables').click(function () {
-                    $('#db_tables').addClass("btn-warning");
-                    $('#db_tables').html("Validation (In Progress)");
-                    var aj = $.ajax({
-                        url: get_admin_url() + 'system/validate-db',
-                        type: 'GET',
-                        dataType: 'json',
-                        success: function (r) {
-                            $('#db_tables').removeClass("btn-warning");
-                            if (r == 1) {
-                                $('#db_tables').addClass("btn-success");
-                                $('#db_tables').html("Reindex (Complete)");
-                            }
-                            else {
-                                $('#db_tables').addClass("btn-danger");
-                                $('#db_tables').html("Reindex (Error)");
-                            }
+                        else {
+                            $('#last_indexed_search').addClass("text-danger");
+                            $('#last_indexed_search').html("failed the reindex");
                         }
-                    });
+                        $('#search_index').html("(reindex)");
+                    }
                 });
-                @endif
             });
-        </script>
-@stop
+            @if ($can_validate)
+            $('#db_tables').click(function () {
+                $('#db_tables').addClass("btn-warning");
+                $('#db_tables').html("Validation (In Progress)");
+                var aj = $.ajax({
+                    url: get_admin_url() + 'system/validate-db',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function (r) {
+                        $('#db_tables').removeClass("btn-warning");
+                        if (r == 1) {
+                            $('#db_tables').addClass("btn-success");
+                            $('#db_tables').html("Reindex (Complete)");
+                        }
+                        else {
+                            $('#db_tables').addClass("btn-danger");
+                            $('#db_tables').html("Reindex (Error)");
+                        }
+                    }
+                });
+            });
+            @endif
+        });
+    </script>
+@endsection
 
 

@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
 use CoasterCms\Helpers\BlockManager;
-use Illuminate\Support\Facades\Request;
+use Request;
 
 class Stringwprice extends _Base
 {

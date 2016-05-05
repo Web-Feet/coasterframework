@@ -1,8 +1,8 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
+use CoasterCms\Helpers\BlockManager;
 use CoasterCms\Helpers\View\CmsBlockInput;
 use CoasterCms\Helpers\View\PaginatorRender;
-use CoasterCms\Helpers\BlockManager;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockRepeater;
@@ -12,9 +12,8 @@ use CoasterCms\Models\PageBlockRepeaterData;
 use CoasterCms\Models\PageSearchData;
 use CoasterCms\Models\PageVersion;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\View;
+use Request;
+use View;
 
 class Repeater extends _Base
 {

@@ -4,10 +4,10 @@ use CoasterCms\Libraries\Blocks\Gallery;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Template;
-use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\View;
+use Redirect;
+use Request;
+use URL;
+use View;
 
 class GalleryController extends _Base
 {

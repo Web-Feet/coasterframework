@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
-class CreateUserRolesActions
+class CreateUserRolesActions extends Migration
 {
 
     /**
@@ -13,7 +13,7 @@ class CreateUserRolesActions
      */
     public function up()
     {
-        Schema::table('user_roles_actions', function ($table) {
+        Schema::table('user_roles_actions', function (Blueprint $table) {
             $table->create();
             $table->increments('id');
             $table->integer('role_id');

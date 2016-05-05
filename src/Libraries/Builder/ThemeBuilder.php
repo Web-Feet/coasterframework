@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Libraries\Builder;
 
 use CoasterCms\Helpers\BlockManager;
+use CoasterCms\Libraries\Builder\PageBuilder as OriginalPageBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\BlockFormRule;
@@ -10,7 +11,8 @@ use CoasterCms\Models\Template;
 use CoasterCms\Models\TemplateBlock;
 use CoasterCms\Models\Theme;
 use CoasterCms\Models\ThemeBlock;
-use Illuminate\Support\Facades\View;
+use Illuminate\Foundation\AliasLoader;
+use View;
 
 class ThemeBuilder
 {
@@ -160,7 +162,7 @@ class ThemeBuilder
     {
         self::$_theme = Theme::find($themeId);
         if (!empty(self::$_theme)) {
-            $loader = \Illuminate\Foundation\AliasLoader::getInstance();
+            $loader = AliasLoader::getInstance();
             $loader->alias('PageBuilder', 'CoasterCms\Libraries\Builder\ThemeBuilder');
 
             $themePath = base_path('resources/views/themes/' . self::$_theme->theme . '/templates');
@@ -180,8 +182,8 @@ class ThemeBuilder
             self::$page_info->page_id = 0;
             self::$page_info->live_version = 0;
 
-            \CoasterCms\Libraries\Builder\PageBuilder::$theme = self::$theme;
-            \CoasterCms\Libraries\Builder\PageBuilder::$page_info = self::$page_info;
+            OriginalPageBuilder::$theme = self::$theme;
+            OriginalPageBuilder::$page_info = self::$page_info;
 
             if (is_dir($themePath)) {
                 self::$_fileTemplateBlocks = [];

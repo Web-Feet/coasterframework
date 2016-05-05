@@ -1,8 +1,9 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
+use Auth;
+use CoasterCms\Helpers\BlockManager;
 use CoasterCms\Helpers\View\FormMessage;
 use CoasterCms\Helpers\View\PaginatorRender;
-use CoasterCms\Helpers\BlockManager;
 use CoasterCms\Libraries\Blocks\Datetime;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;
@@ -20,11 +21,10 @@ use CoasterCms\Models\PageVersionSchedule;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
 use CoasterCms\Models\UserRole;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\View;
+use Redirect;
+use Request;
+use URL;
+use View;
 
 class PagesController extends _Base
 {

@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Http\MiddleWare;
 
+use Auth;
 use Closure;
-use Illuminate\Support\Facades\Auth;
 
 class AdminAuth
 {
@@ -27,7 +27,7 @@ class AdminAuth
             }
         }
 
-        return redirect()->action('\CoasterCms\Http\Controllers\Backend\AuthController@getLogin')
+        return \redirect()->action('\CoasterCms\Http\Controllers\Backend\AuthController@getLogin')
             ->withCookie(cookie('login_path', $request->getRequestUri()));
     }
 

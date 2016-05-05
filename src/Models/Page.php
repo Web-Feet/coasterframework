@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-use Illuminate\Support\Facades\Auth;
+use Auth;
+use Eloquent;
 
 class Page extends Eloquent
 {

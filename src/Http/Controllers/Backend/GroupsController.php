@@ -1,13 +1,13 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
+use Auth;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\Language;
 use CoasterCms\Models\PageBlock;
 use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageGroupAttribute;
 use CoasterCms\Models\PageLang;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\View;
+use View;
 
 class GroupsController extends _Base
 {

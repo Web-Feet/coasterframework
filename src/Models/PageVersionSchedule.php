@@ -1,9 +1,6 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Request;
+use Eloquent;
 
 class PageVersionSchedule extends Eloquent
 {

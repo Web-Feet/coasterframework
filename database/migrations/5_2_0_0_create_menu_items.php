@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
-class CreateMenuItems
+class CreateMenuItems extends Migration
 {
 
     /**
@@ -13,7 +13,7 @@ class CreateMenuItems
      */
     public function up()
     {
-        Schema::table('menu_items', function ($table) {
+        Schema::table('menu_items', function (Blueprint $table) {
             $table->create();
             $table->increments('id');
             $table->integer('menu_id');

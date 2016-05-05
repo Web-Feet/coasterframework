@@ -1,8 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
-class CreateBlockSelectopts
+class CreateBlockSelectopts extends Migration
 {
 
     /**
@@ -12,7 +13,7 @@ class CreateBlockSelectopts
      */
     public function up()
     {
-        Schema::table('block_selectopts', function ($table) {
+        Schema::table('block_selectopts', function (Blueprint $table) {
             $table->create();
             $table->increments('id');
             $table->integer('block_id');

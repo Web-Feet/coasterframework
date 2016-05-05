@@ -1,8 +1,7 @@
 <?php namespace CoasterCms\Models;
 
 use CoasterCms\Helpers\BlockManager;
-use Illuminate\Database\Eloquent\Model as Eloquent;
-use Illuminate\Support\Facades\DB;
+use Eloquent;
 
 class PageBlock extends Eloquent
 {

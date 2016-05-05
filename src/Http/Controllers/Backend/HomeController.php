@@ -1,13 +1,13 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
+use Auth;
 use CoasterCms\Helpers\View\PaginatorRender;
 use CoasterCms\Models\AdminLog;
-use CoasterCms\Models\PageSearchLog;
 use CoasterCms\Models\PagePublishRequests;
+use CoasterCms\Models\PageSearchLog;
 use CoasterCms\Models\Setting;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\View;
+use Storage;
+use View;
 
 class HomeController extends _Base
 {
@@ -35,8 +35,8 @@ class HomeController extends _Base
         $logs = View::make('coaster::partials.logs.table', array('logs' => $logs_data));
 
         $welcome_message = '';
-        if (Storage::get('install.txt') == 'complete-welcome') {
-            Storage::put('install.txt', 'complete');
+        if (Storage::disk('local')->get('install.txt') == 'complete-welcome') {
+            Storage::disk('local')->put('install.txt', 'complete');
             $welcome_message = '<h2>Welcome to Coaster CMS, click on the pages link to start editing content</h2><p>&nbsp;</p>';
         }
 

@@ -1,11 +1,13 @@
 <?php namespace CoasterCms;
 
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Storage;
+use App;
+use Auth;
+use CoasterCms\Http\MiddleWare\AdminAuth;
+use CoasterCms\Http\MiddleWare\GuestAuth;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Foundation\AliasLoader;
+use Request;
+use Route;
 
 class CmsServiceProvider extends ServiceProvider
 {
@@ -43,8 +45,8 @@ class CmsServiceProvider extends ServiceProvider
         if ($this->app['config']['coaster::installed']) {
             if (!App::runningInConsole()) {
                 $router = $this->app['router'];
-                $router->middleware('admin', \CoasterCms\Http\MiddleWare\AdminAuth::class);
-                $router->middleware('guest', \CoasterCms\Http\MiddleWare\GuestAuth::class);
+                $router->middleware('admin', AdminAuth::class);
+                $router->middleware('guest', GuestAuth::class);
                 try {
                     include app_path() . '/Http/routes.php';
                 } catch (\Exception $e) {
@@ -56,7 +58,7 @@ class CmsServiceProvider extends ServiceProvider
             if (!App::runningInConsole()) {
                 Route::controller('install', 'CoasterCms\Http\Controllers\Frontend\InstallController');
                 if (!Request::is('install') && !Request::is('install/*')) {
-                    return redirect('install')->send();
+                    \redirect('install')->send();
                 }
             } else {
                 echo "Coaster Framework: CMS not installed, go to a web browser to complete installation\r\n";
@@ -80,7 +82,7 @@ class CmsServiceProvider extends ServiceProvider
         $this->app->register('Collective\Html\HtmlServiceProvider');
 
         // register aliases
-        $loader = \Illuminate\Foundation\AliasLoader::getInstance();
+        $loader = AliasLoader::getInstance();
         $loader->alias('Form', 'Collective\Html\FormFacade');
         $loader->alias('HTML', 'Collective\Html\HtmlFacade');
         $loader->alias('Croppa', 'CoasterCms\Helpers\CroppaFacade');

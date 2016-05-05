@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
+use Eloquent;
 
 class Menu extends Eloquent
 {

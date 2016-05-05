@@ -1,13 +1,13 @@
 <?php namespace CoasterCms\Models;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
+use Eloquent;
 
 class PageRedirect extends Eloquent
 {
 
     protected $table = 'page_redirects';
 
-    public static function get($redirect_url_encoded)
+    public static function uriHasRedirect($redirect_url_encoded)
     {
         $redirect_url = urldecode($redirect_url_encoded); // decode foreign chars
         $redirect = self::where('redirect', '=', $redirect_url)

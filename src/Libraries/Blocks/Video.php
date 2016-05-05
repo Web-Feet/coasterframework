@@ -2,7 +2,8 @@
 
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\BlockVideoCache;
-use Illuminate\Support\Facades\View;
+use GuzzleHttp\Client;
+use View;
 
 class Video extends _Base
 {
@@ -56,7 +57,7 @@ class Video extends _Base
     {
         // youtube api address and key
         try {
-            $youTube = new \GuzzleHttp\Client(
+            $youTube = new Client(
                 [
                     'base_uri' => 'https://www.googleapis.com/youtube/v3/'
                 ]

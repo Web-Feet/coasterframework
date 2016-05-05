@@ -1,17 +1,17 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Helpers\GalleryUploadHandler;
+use Auth;
 use CoasterCms\Helpers\BlockManager;
+use CoasterCms\Helpers\GalleryUploadHandler;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageLang;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\View;
+use Request;
+use URL;
+use View;
 
 class Gallery extends _Base
 {

@@ -1,13 +1,7 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
-use CoasterCms\Helpers\View\FormMessage;
 use CoasterCms\Models\PageSearchLog;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\View;
+use View;
 
 class PagesearchlogController extends _Base
 {

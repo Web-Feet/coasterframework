@@ -1,9 +1,11 @@
 <?php namespace CoasterCms\Models;
 
 use CoasterCms\Helpers\View\FormMessage;
-use Illuminate\Database\Eloquent\Model as Eloquent;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\View;
+use Eloquent;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
+use URL;
+use View;
 
 Class BlockBeacon extends Eloquent
 {
@@ -70,7 +72,7 @@ Class BlockBeacon extends Eloquent
                         $beacon->page_id = 0;
                     }
                 }
-            } catch (\GuzzleHttp\Exception\RequestException $e) {
+            } catch (RequestException $e) {
                 self::$_beacons = [];
                 return 0;
             }
@@ -161,7 +163,7 @@ Class BlockBeacon extends Eloquent
                         FormMessage::add('page_info_other[beacons]', 'Error generating bit.ly url (response:  '.$bitlyResponse->status_txt.')');
                         return 0;
                     }
-                } catch (\GuzzleHttp\Exception\RequestException $e) {
+                } catch (RequestException $e) {
                     FormMessage::add('page_info_other[beacons]', 'Error generating bit.ly url (response: '.$e->getCode().')');
                     return 0;
                 }
@@ -195,7 +197,7 @@ Class BlockBeacon extends Eloquent
                 $beacon->save();
                 return 1;
 
-            } catch (\GuzzleHttp\Exception\RequestException $e) {
+            } catch (RequestException $e) {
                 $error = json_decode($e->getResponse()->getBody());
                 FormMessage::add('page_info_other[beacons]', 'Error updating device config with new URL ('.$error->status . ': ' . $error->message.')');
             }
@@ -207,7 +209,7 @@ Class BlockBeacon extends Eloquent
     public static function addId($uniqueId = null)
     {
         if ($uniqueId) {
-
+            return null;
         } else {
             return self::preload(true);
         }
@@ -231,7 +233,7 @@ Class BlockBeacon extends Eloquent
                     'access_token' => config('coaster::key.bitly')
                 ]
             ])->getBody());
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
+        } catch (RequestException $e) {
             return false;
         }
         return $bitlyResponse->status_code == 200;
@@ -240,7 +242,7 @@ Class BlockBeacon extends Eloquent
     private static function _client()
     {
         if (!isset(self::$_client)) {
-            self::$_client = new \GuzzleHttp\Client(
+            self::$_client = new Client(
                 [
                     'base_uri' => 'https://api.kontakt.io/',
                     'headers' => [
@@ -258,7 +260,7 @@ Class BlockBeacon extends Eloquent
     private static function _bitly()
     {
         if (!isset(self::$_bitly)) {
-            self::$_bitly = new \GuzzleHttp\Client(
+            self::$_bitly = new Client(
                 [
                     'base_uri' => 'https://api-ssl.bitly.com/',
                     'headers' => [

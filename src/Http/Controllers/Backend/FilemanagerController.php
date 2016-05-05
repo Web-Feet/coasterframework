@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
-use Illuminate\Support\Facades\View;
+use View;
 
 class FilemanagerController extends _Base
 {

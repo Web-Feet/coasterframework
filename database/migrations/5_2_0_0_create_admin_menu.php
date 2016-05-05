@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
-class CreateAdminMenu
+class CreateAdminMenu extends Migration
 {
 
     /**
@@ -13,7 +13,7 @@ class CreateAdminMenu
      */
     public function up()
     {
-        Schema::table('admin_menu', function ($table) {
+        Schema::table('admin_menu', function (Blueprint $table) {
             $table->create();
             $table->increments('id');
             $table->integer('action_id');

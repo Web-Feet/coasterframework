@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
+use Auth;
 use CoasterCms\Helpers\BlockManager;
 use CoasterCms\Libraries\Builder\ThemeBuilder;
 use CoasterCms\Models\Block;
@@ -8,10 +9,10 @@ use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\BlockFormRule;
 use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\Theme;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\View;
+use GuzzleHttp\Client;
+use Request;
+use URL;
+use View;
 
 class ThemesController extends _Base
 {
@@ -140,7 +141,7 @@ class ThemesController extends _Base
 
         if (!empty($request['newTheme'])) {
             if (!(self::$_error = Theme::upload($request['newTheme']))) {
-                return redirect(config('coaster::admin.url') . '/themes/list')->send();
+                \redirect(config('coaster::admin.url') . '/themes/list')->send();
             } else {
                 $this->getList();
             }
@@ -175,6 +176,7 @@ class ThemesController extends _Base
             BlockBeacon::removeId($id);
             return 1;
         }
+        return 0;
     }
 
     public function getUpdate($themeId)
@@ -287,7 +289,7 @@ class ThemesController extends _Base
             }
         }
 
-        return redirect(config('coaster::admin.url').'/themes/forms');
+        \redirect(config('coaster::admin.url').'/themes/forms')->send();
     }
 
     public function getSelects($block_id = null, $import = 0)
@@ -346,7 +348,7 @@ class ThemesController extends _Base
                 'fa-4.6' => '.(fa-\w+):before{content:"\\\\\w{4}"}'
             ];
 
-            $client = new \GuzzleHttp\Client();
+            $client = new Client;
             $response = $client->get($importUrls[$importOption]);
             $matches = [];
 
@@ -370,7 +372,7 @@ class ThemesController extends _Base
 
         BlockSelectOption::import($block_id, $inputOptions);
 
-        return redirect(config('coaster::admin.url').'/themes/selects');
+        \redirect(config('coaster::admin.url').'/themes/selects')->send();
     }
 
     private function _typeList()

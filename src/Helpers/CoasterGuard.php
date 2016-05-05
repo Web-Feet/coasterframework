@@ -1,10 +1,10 @@
 <?php namespace CoasterCms\Helpers;
 
+use Auth;
 use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\User;
 use Illuminate\Auth\SessionGuard;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Request;
+use Request;
 
 class CoasterGuard extends SessionGuard
 {

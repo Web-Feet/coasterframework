@@ -7,30 +7,28 @@ use CoasterCms\Libraries\Blocks\Form;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\PageRedirect;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\Response;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\View;
+use Redirect;
+use Request;
+use Response;
+use URL;
+use View;
 
 class PageLoaderController extends Controller
 {
 
     public $dom;
-    public $bodyNodes = array('text' => array(), 'input' => array());
+    public $bodyNodes = ['text' => [], 'input' => []];
     public $js;
 
     public function index()
     {
         $response = 200;
-        $output = '';
 
         try {
 
             // check for redirects
             $current_uri = trim(Request::getRequestUri(), '/');
-            $redirect = PageRedirect::get($current_uri);
+            $redirect = PageRedirect::uriHasRedirect($current_uri);
             if (!empty($redirect) && $redirect->force == 1) {
                 return Redirect::to($redirect->to, $redirect->type);
             }
@@ -136,6 +134,7 @@ class PageLoaderController extends Controller
             $finalHtml = $this->reInsertJs($html);
         } else {
             foreach ($this->bodyNodes['input'] as $node) {
+                /** @var $node \DOMElement */
                 if (strpos($node->getAttribute('name'), '[') !== false) {
                     $node->setAttribute('name', URL::to(config('coaster::frontend.external_form')) . '[' . preg_replace('/[/', '][', $node->getAttribute('name'), 1));
                 } else {
@@ -168,7 +167,7 @@ class PageLoaderController extends Controller
         $index = 0;
         return preg_replace_callback(
             '/<div class="coaster_js_replace"><\/div>/is',
-            function ($matches) use (&$index) {
+            function () use (&$index) {
                 return $this->js[$index++];
             },
             $html
@@ -178,6 +177,7 @@ class PageLoaderController extends Controller
     public function loadBodyNodes($node)
     {
         foreach ($node->childNodes as $childNode) {
+            /** @var $childNode \DOMElement */
             if ($childNode->hasChildNodes()) {
                 $this->loadBodyNodes($childNode);
             } elseif (strlen(trim($childNode->nodeValue)) > 0 && $childNode->nodeType != XML_COMMENT_NODE) {

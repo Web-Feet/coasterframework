@@ -1,9 +1,9 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
+use Auth;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Backup;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Request;
+use Request;
 
 class BackupsController extends _Base
 {

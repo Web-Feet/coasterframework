@@ -1,15 +1,14 @@
 <?php namespace CoasterCms\Models;
 
-use Bkwld\Croppa\Exception;
 use CoasterCms\Helpers\BlockManager;
 use CoasterCms\Helpers\File;
 use CoasterCms\Helpers\Zip;
 use CoasterCms\Libraries\Builder\ThemeBuilder;
-use Illuminate\Database\Eloquent\Model as Eloquent;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\Validator;
+use DB;
+use Eloquent;
+use Request;
+use URL;
+use Validator;
 
 Class Theme extends Eloquent
 {

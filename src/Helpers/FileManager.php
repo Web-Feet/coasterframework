@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Helpers;
 
-use Illuminate\Support\Facades\Auth;
+use Auth;
 
 class FileManager
 {

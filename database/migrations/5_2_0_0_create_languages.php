@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
-class CreateLanguages
+class CreateLanguages extends Migration
 {
 
     /**
@@ -13,7 +13,7 @@ class CreateLanguages
      */
     public function up()
     {
-        Schema::table('languages', function ($table) {
+        Schema::table('languages', function (Blueprint $table) {
             $table->create();
             $table->increments('id');
             $table->string('language');

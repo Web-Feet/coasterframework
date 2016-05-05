@@ -1,8 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
-class CreateBackups
+class CreateBackups extends Migration
 {
 
     /**
@@ -12,7 +13,7 @@ class CreateBackups
      */
     public function up()
     {
-        Schema::table('backups', function ($table) {
+        Schema::table('backups', function (Blueprint $table) {
             $table->create();
             $table->increments('id');
             $table->integer('log_id');

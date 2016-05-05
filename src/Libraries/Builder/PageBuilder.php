@@ -18,9 +18,9 @@ use CoasterCms\Models\PageVersionSchedule;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\View;
+use Request;
+use URL;
+use View;
 
 class PageBuilder
 {

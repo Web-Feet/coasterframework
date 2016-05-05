@@ -5,9 +5,9 @@ use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\PageBlockDefault;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\Theme;
-use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\View;
+use Redirect;
+use Request;
+use View;
 
 class BlocksController extends _Base
 {

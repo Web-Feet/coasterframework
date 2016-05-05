@@ -1,15 +1,15 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
+use Auth;
 use CoasterCms\Helpers\View\FormMessage;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\User;
 use CoasterCms\Models\UserRole;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\View;
+use Hash;
+use Mail;
+use Request;
+use Validator;
+use View;
 
 class UsersController extends _Base
 {

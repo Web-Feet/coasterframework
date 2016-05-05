@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
-class CreateThemeBlocks
+class CreateThemeBlocks extends Migration
 {
 
     /**
@@ -13,7 +13,7 @@ class CreateThemeBlocks
      */
     public function up()
     {
-        Schema::table('theme_blocks', function ($table) {
+        Schema::table('theme_blocks', function (Blueprint $table) {
             $table->create();
             $table->increments('id');
             $table->integer('theme_id');

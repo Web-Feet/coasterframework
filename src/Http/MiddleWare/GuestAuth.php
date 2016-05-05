@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Http\MiddleWare;
 
+use Auth;
 use Closure;
-use Illuminate\Support\Facades\Auth;
 
 class GuestAuth
 {
@@ -16,10 +16,10 @@ class GuestAuth
     {
         if (Auth::admin()) {
             if ($login_path = $request->get('login_path') ?: $request->cookie('login_path')) {
-                return redirect($login_path)
+                return \redirect($login_path)
                     ->withCookie(cookie('login_path', null, -2628000));
             } else {
-                return redirect()->action('\CoasterCms\Http\Controllers\Backend\HomeController@getIndex');
+                return \redirect()->action('\CoasterCms\Http\Controllers\Backend\HomeController@getIndex');
             }
         } else {
             return $next($request);

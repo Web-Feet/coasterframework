@@ -1,8 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
-class CreatePageGroup
+class CreatePageGroup extends Migration
 {
 
     /**
@@ -12,7 +13,7 @@ class CreatePageGroup
      */
     public function up()
     {
-        Schema::table('page_group', function ($table) {
+        Schema::table('page_group', function (Blueprint $table) {
             $table->create();
             $table->increments('id');
             $table->string('name');

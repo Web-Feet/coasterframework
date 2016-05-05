@@ -5,7 +5,7 @@ use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageBlock;
 use CoasterCms\Models\PageLang;
-use Illuminate\Support\Facades\View;
+use View;
 
 class Selectpages extends _Base
 {

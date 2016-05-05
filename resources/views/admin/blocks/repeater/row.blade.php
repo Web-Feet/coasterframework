@@ -7,6 +7,6 @@
         {!! $blocks !!}</td>
     <td class="repeater-action">
         <i class="glyphicon glyphicon-remove itemTooltip"
-           onclick="javascript:repeater_delete({!! $repeater_id !!}, {!! $row_id !!})"></i>
+           onclick="repeater_delete({!! $repeater_id !!}, {!! $row_id !!})"></i>
     </td>
 </tr>

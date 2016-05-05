@@ -1,11 +1,11 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
+use Auth;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\PageRedirect;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\View;
+use Request;
+use Schema;
+use View;
 
 class RedirectsController extends _Base
 {
