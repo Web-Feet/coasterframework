@@ -19,8 +19,8 @@ class UpdateSearchLogAdmin extends Migration
                 array(
                     'controller' => 'pagesearchlog',
                     'role_name' => 'Search log',
-                    'role_order' => 5,
-                    'role_section' => 1,
+                    'role_order' => 4,
+                    'role_section' => 3,
                     'created_at' => $date,
                     'updated_at' => $date
                 )
@@ -32,23 +32,10 @@ class UpdateSearchLogAdmin extends Migration
                 array(
                     'controller_id' => $controller_id,
                     'action' => 'index',
-                    'inherit' => 0,
+                    'inherit' => -1,
                     'edit_based' => 0,
-                    'name' => 'Search Log',
+                    'name' => 'View Search Log',
                     'about' => null,
-                    'created_at' => $date,
-                    'updated_at' => $date
-                )
-            )
-        );
-
-        $lastInsertId = DB::getPdo()->lastInsertId();
-
-        DB::table('user_roles_actions')->insert(
-            array(
-                array(
-                    'role_id' => 2,
-                    'action_id' => $lastInsertId,
                     'created_at' => $date,
                     'updated_at' => $date
                 )

@@ -146,11 +146,14 @@ class UserRole extends Eloquent
     {
         $action = AdminAction::preload($action_id);
         $controller = AdminController::preload($action->controller_id);
-        $action_name = $controller->controller . ($action->action != 'index' ? '.' . $action->action : '');
+        $action_name = $controller->controller . '.' . $action->action;
 
         // add action id and controller_action as keys so both can be checked
         $this->_processed_actions[$page_id][$action->id] = $set;
         $this->_processed_actions[$page_id][$action_name] = $set;
+        if ($action->action == 'index') {
+            $this->_processed_actions[$page_id][$controller->controller] = $set;
+        }
     }
 
     public function delete()

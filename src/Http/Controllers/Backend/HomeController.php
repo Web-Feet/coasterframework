@@ -48,7 +48,7 @@ class HomeController extends _Base
           $searchdata = PageSearchLog::orderBy('count', 'DESC')->orderBy('updated_at', 'DESC')->limit(5)->get();
           $searchview = View::make('coaster::pages.pagesearchlog', array('searchdata' => $searchdata));
         }
-        if( ! Auth::action('search.index'))
+        if( ! Auth::action('pagesearchlog.index'))
         {
           $any_searches = false;
           $searchview = '';
