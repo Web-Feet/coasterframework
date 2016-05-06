@@ -9,7 +9,7 @@
         <th>Num. searches</th>
         <th>Last Searched</th>
     </tr>
-    @foreach ($searchdata as $term)
+    @foreach ($search_data as $term)
         <tr id="st_{{ $term->id }}">
             <td>
               {{ $term->term }}

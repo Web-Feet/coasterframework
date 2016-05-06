@@ -43,20 +43,20 @@ class HomeController extends _Base
         // Search data
 
         $any_searches = PageSearchLog::hasSearchData();
-        if ($any_searches)
+        if (Auth::action('search.index') && $any_searches)
         {
-          $searchdata = PageSearchLog::orderBy('count', 'DESC')->orderBy('updated_at', 'DESC')->limit(5)->get();
-          $searchview = View::make('coaster::pages.pagesearchlog', array('searchdata' => $searchdata));
+          $search_data = PageSearchLog::orderBy('count', 'DESC')->orderBy('updated_at', 'DESC')->limit(5)->get();
+          $search_view = View::make('coaster::pages.search', array('search_data' => $search_data));
         }
-        if( ! Auth::action('pagesearchlog.index'))
+        else
         {
           $any_searches = false;
-          $searchview = '';
+            $search_view = '';
         }
         $data = array('welcome_message' => $welcome_message, 'logs' => $logs, 'requests' => $requests_table, 'user_requests' => $user_requests_table, 'any_requests' => $any_requests, 'any_user_requests' => $any_user_requests);
 
         $data['any_searches'] = $any_searches;
-        $data['search_logs'] = $searchview;
+        $data['search_logs'] = $search_view;
 
         $upgrade = new \stdClass;
         $upgrade->from = config('coaster::site.version');

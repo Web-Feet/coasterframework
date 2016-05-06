@@ -17,7 +17,7 @@ class UpdateSearchLogAdmin extends Migration
         DB::table('admin_controllers')->insert(
             array(
                 array(
-                    'controller' => 'pagesearchlog',
+                    'controller' => 'search',
                     'role_name' => 'Search log',
                     'role_order' => 4,
                     'role_section' => 3,
@@ -51,7 +51,7 @@ class UpdateSearchLogAdmin extends Migration
      */
     public function down()
     {
-        $controller = DB::table('admin_controllers')->select('id')->where('controller', '=', 'pagesearchlog')->first();
+        $controller = DB::table('admin_controllers')->select('id')->where('controller', '=', 'search')->first();
         $action = DB::table('admin_actions')->select('id')->where('name', '=', 'Search Log')->where('controller_id', '=', $controller->id)->first();
 
 

@@ -39,7 +39,7 @@
       @if($any_searches)
         <div class="well">
           {!! preg_replace('/<h1.*>(.*)<\/h1>/', '<h4>$1 (top 5)</h4>', $search_logs) !!}
-          <p><a href="{{ URL::to(config('coaster::admin.url').'/pagesearchlog') }}">View all search logs</a></p>
+          <p><a href="{{ URL::to(config('coaster::admin.url').'/search') }}">View all search logs</a></p>
         </div>
       @endif
     </div>
