@@ -2,6 +2,7 @@
 
 use Auth;
 use Cache;
+use CoasterCms\Helpers\Validation\Database;
 use CoasterCms\Helpers\File;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;
@@ -285,98 +286,85 @@ class SystemController extends _Base
         $warnings = [];
         $errors = [];
 
-        $json = file_get_contents(base_path() . '/vendor/web-feet/coasterframework/database/validate.json');
+        $json = Database::generateJson();
 
         if (!empty($json)) {
 
             // get version tables
-            $version_tables = json_decode($json);
+            $migrationTables = json_decode($json);
 
             // get current tables
-            $tables = new \stdClass;
-            $db_tables = DB::select('Show Tables');
+            $dbTables = new \stdClass;
+            $dbTablesSelect = DB::select('Show Tables');
             $prefix = DB::getTablePrefix();
-            foreach ($db_tables as $table) {
+            foreach ($dbTablesSelect as $table) {
                 $table = reset($table);
                 if (empty($prefix) || strrpos($table, $prefix) === 0) {
                     $name = substr($table, strlen($prefix));
-                    $tables->$name = DB::select('SHOW COLUMNS FROM ' . $table);
+                    $dbTables->$name = DB::select('SHOW COLUMNS FROM ' . $table);
                 }
             }
-            unset($tables->migrations);
+            unset($dbTables->migrations);
 
             // compare
-            $types = array(
-                'increments' => 'int(10) unsigned',
-                'integer' => 'int(11)',
-                'string' => 'varchar(255)',
-                'text' => 'text',
-                'mediumText' => 'mediumtext',
-                'date' => 'date',
-                'remember_token' => 'varchar(100)',
-                'timestamp' => 'timestamp',
-                'timestamps' => 'timestamp'
-            );
-            foreach ($tables as $name => $columns) {
-                if (!empty($version_tables->$name)) {
-                    foreach ($columns as $column_data) {
-                        if (!empty($version_tables->$name->{$column_data->Field})) {
+            foreach ($dbTables as $dbTableName => $dbColumns) {
+                if (!empty($migrationTables->$dbTableName)) {
+                    foreach ($dbColumns as $dbColumnData) {
+                        if (!empty($migrationTables->$dbTableName->{$dbColumnData->Field})) {
                             $update = false;
-                            $sql = '';
-                            $version_field_data = $version_tables->$name->{$column_data->Field};
-                            if ((strpos($column_data->Type, 'enum') === 0 && $version_field_data->Type !== $column_data->Type) || (strpos($column_data->Type, 'enum') !== 0 && $types[$version_field_data->Type] !== $column_data->Type)) {
+                            $migrationFieldData = $migrationTables->$dbTableName->{$dbColumnData->Field};
+                            if ($migrationFieldData->Type !== $dbColumnData->Type) {
                                 $update = true;
-                                if (strpos($column_data->Type, 'enum') === 0) {
-                                    $types[$version_field_data->Type] = $version_field_data->Type;
-                                }
-                                $warnings[] = 'Warning: ' . $name . '/' . $column_data->Field . ' type needs changing ' . $column_data->Type . ' => ' . $types[$version_field_data->Type];
+                                $warnings[] = 'Warning: ' . $dbTableName . '/' . $dbColumnData->Field . ' type needs changing ' . $dbColumnData->Type . ' => ' . $migrationFieldData->Type;
                             }
-                            if ($version_field_data->Null !== $column_data->Null) {
+                            if ($migrationFieldData->Null !== $dbColumnData->Null) {
                                 $update = true;
-                                $warnings[] = 'Warning: ' . $name . '/' . $column_data->Field . ' allow null setting needs changing ' . $column_data->Null . ' => ' . $version_field_data->Null;
+                                $warnings[] = 'Warning: ' . $dbTableName . '/' . $dbColumnData->Field . ' allow null setting needs changing ' . $dbColumnData->Null . ' => ' . $migrationFieldData->Null;
                             }
-                            if ($version_field_data->Type == 'increments' && $column_data->Extra != 'auto_increment') {
-                                $sql .= ' AUTO_INCREMENT';
-                                $warnings[] = 'Warning: ' . $name . '/' . $column_data->Field . ' auto_increment needs setting';
+                            if ($migrationFieldData->Extra !== $dbColumnData->Extra) {
+                                $update = true;
+                                $warnings[] = 'Warning: ' . $dbTableName . '/' . $dbColumnData->Field . ' ' . $migrationFieldData->Extra . ' needs setting';
                             }
-                            if ($version_field_data->Default !== $column_data->Default && $version_field_data->Default !== strtoupper($column_data->Default . ' ' . $column_data->Extra)) {
-                                if (empty($version_field_data->Default) && $version_field_data->Default !== '0' && $basic_fix == 1) {
-                                    DB::statement('ALTER TABLE ' . $prefix . $name . ' ALTER COLUMN `' . $column_data->Field . '` DROP DEFAULT;');
+                            if ($migrationFieldData->Default !== $dbColumnData->Default) {
+                                if ($basic_fix == 1 && $migrationFieldData->Default === null) {
+                                    DB::statement('ALTER TABLE ' . $prefix . $dbTableName . ' ALTER COLUMN `' . $dbColumnData->Field . '` DROP DEFAULT;');
                                 } else {
-                                    if (strpos($version_field_data->Default, 'CURRENT_TIMESTAMP') !== false) {
-                                        $sql .= ' DEFAULT ' . $version_field_data->Default;
-                                    } else {
-                                        $sql .= ' DEFAULT \'' . $version_field_data->Default . '\'';
-                                    }
+                                    $update = true;
                                 }
-                                $warnings[] = 'Warning: ' . $name . '/' . $column_data->Field . ' default values needs changing ' . $column_data->Default . ' => ' . $version_field_data->Default;
+                                $warnings[] = 'Warning: ' . $dbTableName . '/' . $dbColumnData->Field . ' default values needs changing ' . $dbColumnData->Default . ' => ' . $migrationFieldData->Default;
                             }
-                            if ($basic_fix == 1 && ($update || !empty($sql))) {
-                                $null = ' NULL';
-                                if ($version_field_data->Null == 'NO') {
-                                    $null = ' NOT' . $null;
+                            if ($basic_fix == 1 && $update) {
+                                if (strpos($migrationFieldData->Default, 'CURRENT_TIMESTAMP') !== false) {
+                                    $default = ' DEFAULT ' . $migrationFieldData->Default;
+                                } else {
+                                    $default = ' DEFAULT \'' . $migrationFieldData->Default . '\'';
                                 }
-                                DB::statement('ALTER TABLE ' . $prefix . $name . ' MODIFY COLUMN `' . $column_data->Field . '` ' . $types[$version_field_data->Type] . $null . $sql . ';');
+                                if ($migrationFieldData->Null == 'NO') {
+                                    $null = ' NOT NULL';
+                                } else {
+                                    $null = ' NULL';
+                                }
+                                DB::statement('ALTER TABLE ' . $prefix . $dbTableName . ' MODIFY COLUMN `' . $dbColumnData->Field . '` ' . $migrationFieldData->Type . $null . $default . ' ' . $migrationFieldData->Extra . ';');
                             }
-                            unset($version_tables->$name->{$column_data->Field});
+                            unset($migrationTables->$dbTableName->{$dbColumnData->Field});
                         } else {
-                            $notices[] = 'Notice: Extra Field ' . $name . '/' . $column_data->Field . ' found';
+                            $notices[] = 'Notice: Extra Field ' . $dbTableName . '/' . $dbColumnData->Field . ' found';
                         }
                     }
-                    $check_empty = (array)$version_tables->$name;
+                    $check_empty = (array) $migrationTables->$dbTableName;
                     if (empty($check_empty)) {
-                        unset($version_tables->$name);
+                        unset($migrationTables->$dbTableName);
                     }
                 } else {
-                    $notices[] = 'Notice: Extra Table ' . $name . ' found';
+                    $notices[] = 'Notice: Extra Table ' . $dbTableName . ' found';
                 }
             }
             // missing tables and notices/warnings
-            $errors = (array)$version_tables;
+            $errors = (array) $migrationTables;
         }
 
         if ($basic_fix == 1) {
-            $warnings = [];
+            redirect(config('coaster::admin.url').'/system/validate-db')->send();
         }
 
         return ['errors' => $errors, 'warnings' => $warnings, 'notices' => $notices];
