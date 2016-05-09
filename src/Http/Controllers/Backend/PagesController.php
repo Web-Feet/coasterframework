@@ -532,11 +532,10 @@ class PagesController extends _Base
             $page_info['template'] = 0;
         }
 
-        if ($page_info['live'] == 2 && empty($page_info['live_start'])) {
-            $page_info['live_start'] = new Carbon;
-        } else {
-            $page_info['live_start'] = Datetime::jQueryToMysql($page_info['live_start']);
+        if ($page_info['live'] == 2 && empty($page_info['live_start']) && empty($page_info['live_end'])) {
+            $page_info['live'] = 0;
         }
+        $page_info['live_start'] = Datetime::jQueryToMysql($page_info['live_start']);
         $page_info['live_end'] = Datetime::jQueryToMysql($page_info['live_end']);
 
         if (!$canPublish) {
@@ -784,10 +783,10 @@ class PagesController extends _Base
             if ($publishingOn) {
                 $intervals = [ 0 => 'No', 86400 => 'Repeat Daily', 604800 => 'Repeat Weekly', 'm' => 'Same day of Month'];
                 $this->layout->modals =
-                    View::make('coaster::modals.pages.publish') .
-                    View::make('coaster::modals.pages.publish_schedule', ['intervals' => $intervals, 'live_version' => $versionData['live']]) .
-                    View::make('coaster::modals.pages.request_publish') .
-                    View::make('coaster::modals.pages.rename_version');
+                    View::make('coaster::modals.pages.publish')->render() .
+                    View::make('coaster::modals.pages.publish_schedule', ['intervals' => $intervals, 'live_version' => $versionData['live']])->render() .
+                    View::make('coaster::modals.pages.request_publish')->render() .
+                    View::make('coaster::modals.pages.rename_version')->render();
             }
 
         } else {
@@ -850,12 +849,12 @@ class PagesController extends _Base
         // load submitted data
         if (!empty($page_info)) {
             foreach ($page_info as $attribute => $value) {
-                $page->$attribute = $page_info[$attribute];
+                //$page->$attribute = $page_info[$attribute];
             }
         }
         if (!empty($page_info_lang)) {
             foreach ($page_info_lang as $attribute => $value) {
-                $page_lang->$attribute = $page_info_lang[$attribute];
+                //$page_lang->$attribute = $page_info_lang[$attribute];
             }
         }
 
