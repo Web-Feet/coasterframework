@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Models;
 
 use Auth;
+use DateTimeHelper;
 use Eloquent;
 
 class PageVersion extends Eloquent
@@ -79,7 +80,7 @@ class PageVersion extends Eloquent
     public function __get($key)
     {
         if ($key == 'label') {
-            return parent::__get($key) ?: date("g:i A d/m/y", strtotime($this->created_at));
+            return parent::__get($key) ?: DateTimeHelper::display($this->created_at);
         } else {
             return parent::__get($key);
         }

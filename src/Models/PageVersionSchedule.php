@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Models;
 
+use Carbon\Carbon;
 use Eloquent;
 
 class PageVersionSchedule extends Eloquent
@@ -10,7 +11,7 @@ class PageVersionSchedule extends Eloquent
 
     public static function checkPageVersionIds()
     {
-        $now = (new \DateTime)->format('Y-m-d H:i:s');
+        $now = (new Carbon)->format('Y-m-d H:i:s');
         $pageVersionSchedules = self::where('live_from', '<=', $now)->orderBy('live_from')->get();
 
         $newVersions = [];
@@ -58,8 +59,8 @@ class PageVersionSchedule extends Eloquent
 
     public function delete()
     {
-        $this->_now = new \DateTime;
-        $newDate = new \DateTime($this->live_from);
+        $this->_now = new Carbon;
+        $newDate = new Carbon($this->live_from);
         $this->repeat($newDate);
 
         if ($this->live_from != $this->getOriginal('live_from')) {

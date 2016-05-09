@@ -45,12 +45,12 @@ class HomeController extends _Base
         $any_searches = PageSearchLog::hasSearchData();
         if (Auth::action('search.index') && $any_searches)
         {
-          $search_data = PageSearchLog::orderBy('count', 'DESC')->orderBy('updated_at', 'DESC')->limit(5)->get();
-          $search_view = View::make('coaster::pages.search', array('search_data' => $search_data));
+            $search_data = PageSearchLog::orderBy('count', 'DESC')->orderBy('updated_at', 'DESC')->limit(5)->get();
+            $search_view = View::make('coaster::pages.search', array('search_data' => $search_data));
         }
         else
         {
-          $any_searches = false;
+            $any_searches = false;
             $search_view = '';
         }
         $data = array('welcome_message' => $welcome_message, 'logs' => $logs, 'requests' => $requests_table, 'user_requests' => $user_requests_table, 'any_requests' => $any_requests, 'any_user_requests' => $any_user_requests);

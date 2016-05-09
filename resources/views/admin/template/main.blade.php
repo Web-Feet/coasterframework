@@ -85,6 +85,8 @@
 <script type="text/javascript">
     var adminUrl = '{{ URL::to(config('coaster::admin.url')).'/' }}';
     var adminPublicUrl = '{{ URL::to(config('coaster::admin.public')).'/' }}';
+    var dateFormat = '{{ config('coaster::date.format.jq_date') }}';
+    var timeFormat = '{{ config('coaster::date.format.jq_time') }}';
 </script>
 {!! AssetBuilder::scripts() !!}
 @yield('scripts')

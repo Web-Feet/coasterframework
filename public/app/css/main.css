@@ -20,7 +20,7 @@ h3{font-size:23px;}
 label{font-family: 'Raleway', sans-serif !important; font-weight:500; font-size:15px;}
 
 .loginpanel{margin-top:100px; margin-bottom:100px;}
-.loginpanel .col-sm-4{ border:1px solid rgba(0,0,0,0.1); box-shadow:3px 3px 30px rgba(0,0,0,0.1); padding:100px 100px 100px 30px; background:url(../img/logo.png) no-repeat 50% 25px;  }
+.loginpanel .col-sm-4{ border:1px solid rgba(0,0,0,0.1); box-shadow:3px 3px 30px rgba(0,0,0,0.1); padding:100px 30px 30px 30px; background:url(../img/logo.png) no-repeat 50% 25px;  }
 .loginpanel .col-sm-12{border-top:1px solid rgba(0,0,0,0.1); padding-top:25px;}
 .loginpanel h1{font-size:26px !important; margin-bottom:20px; }
 

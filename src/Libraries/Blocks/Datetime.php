@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use DateTime as Dt;
+use Carbon\Carbon;
 
 class Datetime extends _Base
 {
@@ -8,7 +8,10 @@ class Datetime extends _Base
     public static function display($block, $block_data, $options = array())
     {
         if (!empty($options['format'])) {
-            $block_data = date($options['format'], strtotime($block_data));
+            if (strpos($options['format'], 'coaster.') === 0) {
+                $options['format'] = config('coaster:date.format'.substr($options['format'], 8));
+            }
+            $block_data = (new Carbon($block_data))->format($options['format']);
         }
         return $block_data;
     }
@@ -27,7 +30,7 @@ class Datetime extends _Base
     public static function jQueryToMysql($jquery_dt)
     {
         if (!empty($jquery_dt)) {
-            $date = Dt::createFromFormat("d/m/Y H:i", $jquery_dt);
+            $date = Carbon::createFromFormat(config('coaster::date.format.jq_php'), $jquery_dt);
             if (!empty($date)) {
                 return $date->format("Y-m-d H:i:s");
             }
@@ -38,7 +41,7 @@ class Datetime extends _Base
     public static function mysqlToJQuery($mysql_dt)
     {
         if (!empty($mysql_dt) && strtotime($mysql_dt)) {
-            return date("d/m/Y H:i", strtotime($mysql_dt));
+            return (new Carbon($mysql_dt))->format(config('coaster::date.format.jq_php'));
         }
         return '';
     }

@@ -1,5 +1,6 @@
 <?php
 
+use Carbon\Carbon;
 use Illuminate\Database\Migrations\Migration;
 
 class UpdateSearchLogAdmin extends Migration
@@ -13,7 +14,7 @@ class UpdateSearchLogAdmin extends Migration
     public function up()
     {
 
-        $date = new \DateTime;
+        $date = new Carbon;
         DB::table('admin_controllers')->insert(
             array(
                 array(

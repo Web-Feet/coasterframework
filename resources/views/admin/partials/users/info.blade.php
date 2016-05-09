@@ -14,7 +14,7 @@
     </tr>
     <tr>
         <td>Date Created</td>
-        <td>{!! date_format(date_create($user->created_at), 'd/m/Y') !!}</td>
+        <td>{!! DateTimeHelper::display($user->created_at, 'short') !!}</td>
     </tr>
     <tr>
         <td>Account Status</td>

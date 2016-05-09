@@ -90,6 +90,7 @@ class CmsServiceProvider extends ServiceProvider
         $loader->alias('FormMessage', 'CoasterCms\Helpers\View\FormMessage');
         $loader->alias('AssetBuilder', 'CoasterCms\Libraries\Builder\AssetBuilder');
         $loader->alias('PageBuilder', 'CoasterCms\Libraries\Builder\PageBuilder');
+        $loader->alias('DateTimeHelper', 'CoasterCms\Helpers\DateTimeHelper');
     }
 
     /**

@@ -99,7 +99,7 @@
                         <td>Search Index</td>
                         <td>
                             @if ($last_indexed_search)
-                                <span id="last_indexed_search">Last ran on the {{ date('dS M Y H:i:s', $last_indexed_search) }}</span>
+                                <span id="last_indexed_search">Last ran - {{ $last_indexed_search }}</span>
                                 @if ($can_index_search)
                                     <a href="javascript:void(0)" id="search_index">(reindex)</a>
                                 @endif
@@ -133,14 +133,12 @@
                     type: 'GET',
                     success: function (r) {
                         if (r == 1) {
-                            var index_date = new Date();
-                            var month = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
                             $('#last_indexed_search').addClass("text-success");
-                            $('#last_indexed_search').html("Last ran on the " + index_date.getDate() + '' + nth(index_date.getDate()) + ' ' + month[index_date.getMonth()] + ' ' + index_date.getFullYear() + ' ' + index_date.toLocaleTimeString());
+                            $('#last_indexed_search').html("successfully re-indexed");
                         }
                         else {
                             $('#last_indexed_search').addClass("text-danger");
-                            $('#last_indexed_search').html("failed the reindex");
+                            $('#last_indexed_search').html("failed to reindex");
                         }
                         $('#search_index').html("(reindex)");
                     }

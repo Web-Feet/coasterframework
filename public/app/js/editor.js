@@ -58,7 +58,7 @@ function load_editor_js(rerun) {
     });
 
     // date time block
-    $('.datetimepicker').datetimepicker({dateFormat: "dd/mm/yy"});
+    $('.datetimepicker').datetimepicker({dateFormat: dateFormat, timeFormat: timeFormat});
 
     // image blocks
     $(".fancybox").fancybox();

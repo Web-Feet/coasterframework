@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
 use Auth;
+use Carbon\Carbon;
 use CoasterCms\Helpers\BlockManager;
 use CoasterCms\Helpers\View\FormMessage;
 use CoasterCms\Helpers\View\PaginatorRender;
@@ -532,9 +533,10 @@ class PagesController extends _Base
         }
 
         if ($page_info['live'] == 2 && empty($page_info['live_start'])) {
-            $page_info['live_start'] = date("Y-m-d H:i:s", time());
+            $page_info['live_start'] = new Carbon;
+        } else {
+            $page_info['live_start'] = Datetime::jQueryToMysql($page_info['live_start']);
         }
-        $page_info['live_start'] = Datetime::jQueryToMysql($page_info['live_start']);
         $page_info['live_end'] = Datetime::jQueryToMysql($page_info['live_end']);
 
         if (!$canPublish) {

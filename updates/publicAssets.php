@@ -318,15 +318,17 @@ if (empty($assetsVersions['jquery-ui']) || version_compare($assetsVersions['jque
     echo ".";
 
     $timePickerZip = public_path('coaster/jquery-ui/jQuery-Timepicker-Addon-1.4.zip');
+    $timePickerFile = public_path('coaster/jquery-ui/jquery-ui-timepicker-addon.js');
     $response = $guzzleClient->request('GET', 'https://github.com/trentrichardson/jQuery-Timepicker-Addon/archive/v1.4.zip', [
         'sink' => $timePickerZip
     ]);
 
     $zip = new \CoasterCms\Helpers\Zip;
     $zip->open($timePickerZip);
-    $zip->extractFile('jQuery-Timepicker-Addon-1.4/dist/jquery-ui-timepicker-addon.js', public_path('coaster/jquery-ui/jquery-ui-timepicker-addon.js'));
+    $zip->extractFile('jQuery-Timepicker-Addon-1.4/dist/jquery-ui-timepicker-addon.js', $timePickerFile);
     $zip->close();
     unlink($timePickerZip);
+    \CoasterCms\Helpers\File::replaceString($timePickerFile, 'formattedDateTime += this._defaults.separator + this.formattedTime + this._defaults.timeSuffix;', 'formattedDateTime = this.formattedTime + this._defaults.timeSuffix + this._defaults.separator + formattedDateTime;');
     echo ".";
 
     $response = $guzzleClient->request('GET', 'https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.2/jquery.ui.touch-punch.min.js', [

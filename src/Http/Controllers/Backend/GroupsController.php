@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
 use Auth;
+use Carbon\Carbon;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\Language;
 use CoasterCms\Models\PageBlock;
@@ -44,7 +45,7 @@ class GroupsController extends _Base
                                     $page_info[$page_id]->col[] = implode(', ', unserialize($page_block->content));
                                 } elseif ($blocks[$k]->type == 'datetime') {
                                     // datetime
-                                    $page_info[$page_id]->col[] = date('d/m/Y H:iA', strtotime($page_block->content));
+                                    $page_info[$page_id]->col[] = (new Carbon($page_block->content))->format('d/m/Y H:iA');
                                 } else {
                                     // text/string/select
                                     $page_info[$page_id]->col[] = $page_block->content;

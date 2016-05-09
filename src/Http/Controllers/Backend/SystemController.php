@@ -14,6 +14,7 @@ use CoasterCms\Models\PageSearchData;
 use CoasterCms\Models\Setting;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
+use DateTimeHelper;
 use DB;
 use Request;
 use URL;
@@ -102,9 +103,9 @@ class SystemController extends _Base
 
         $search_data = PageSearchData::orderBy('updated_at', 'asc')->first();
         if (!empty($search_data)) {
-            $last_indexed_search = strtotime($search_data->updated_at);
+            $last_indexed_search = DateTimeHelper::display($search_data->updated_at);
         } else {
-            $last_indexed_search = 0;
+            $last_indexed_search = false;
         }
 
         $update = Auth::action('system.update');

@@ -11,12 +11,13 @@
     </tr>
     @foreach ($search_data as $term)
         <tr id="st_{{ $term->id }}">
+
             <td>
               {{ $term->term }}
             </td>
             <td>{{ $term->count }}</td>
             <td>
-              {{ $term->updated_at->format('d/m/Y') }}
+              {{ DateTimeHelper::display($term->updated_at, 'short') }}
             </td>
 
         </tr>

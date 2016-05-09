@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Http\Controllers\Frontend;
 
 use Artisan;
+use Carbon\Carbon;
 use CoasterCms\Helpers\View\FormMessage;
 use CoasterCms\Models\Theme;
 use DB;
@@ -133,7 +134,7 @@ class InstallController extends Controller
             return $this->getAdmin();
         }
 
-        $date = new \DateTime;
+        $date = new Carbon;
 
         DB::table('users')->insert(
             array(

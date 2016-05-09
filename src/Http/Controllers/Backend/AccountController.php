@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
 use Auth;
+use Carbon\Carbon;
 use CoasterCms\Helpers\View\FormMessage;
 use CoasterCms\Models\Language;
 use CoasterCms\Models\User;
@@ -22,8 +23,8 @@ class AccountController extends _Base
             if (!($user = User::where('tmp_code', '=', $code)->first())) {
                 $this->layout->content = 'Invalid Code!';
             } else {
-                $code_created = new \DateTime($user->tmp_code_created);
-                $di = $code_created->diff(new \DateTime('now'));
+                $code_created = new Carbon($user->tmp_code_created);
+                $di = $code_created->diff(new Carbon('now'));
                 if ($di->days > 7) {
                     $this->layout->content = 'This code has expired!';
                 } else {
@@ -73,7 +74,7 @@ class AccountController extends _Base
                 } else {
                     $code = urlencode(str_random(32) . microtime());
                     $user->tmp_code = $code;
-                    $user->tmp_code_created = date('Y-m-d H:i:s');
+                    $user->tmp_code_created = new Carbon;
                     $user->save();
 
                     Mail::send('coaster::emails.forgotten_password', array('code' => $code), function ($message) use ($email_addr) {

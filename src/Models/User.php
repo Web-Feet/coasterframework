@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Models;
 
 use Auth;
+use Carbon\Carbon;
 use CoasterCms\Helpers\View\FormMessage;
 use Hash;
 use Illuminate\Auth\Authenticatable;
@@ -60,8 +61,8 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
 
         $tmp_check = false;
         if (!Auth::check()) {
-            $code_created = new \DateTime($this->tmp_code_created);
-            $tmp_check = !empty($this->tmp_code) && $this->tmp_code == $tmp_code && $code_created->diff(new \DateTime('now'))->days <= 7;
+            $code_created = new Carbon($this->tmp_code_created);
+            $tmp_check = !empty($this->tmp_code) && $this->tmp_code == $tmp_code && $code_created->diff(new Carbon)->days <= 7;
             if (!$tmp_check) {
                 FormMessage::add('tmp_code', 'The code was incorrect');
                 return false;

@@ -1,5 +1,6 @@
 <?php
 
+use Carbon\Carbon;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
@@ -21,7 +22,7 @@ class CreateUserRolesActions extends Migration
             $table->timestamps();
         });
 
-        $date = new \DateTime;
+        $date = new Carbon;
 
         DB::table('user_roles_actions')->insert(
             array(

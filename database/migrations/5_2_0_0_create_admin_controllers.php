@@ -1,5 +1,6 @@
 <?php
 
+use Carbon\Carbon;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
@@ -24,7 +25,7 @@ class CreateAdminControllers extends Migration
             $table->timestamps();
         });
 
-        $date = new \DateTime;
+        $date = new Carbon;
 
         DB::table('admin_controllers')->insert(
             array(
