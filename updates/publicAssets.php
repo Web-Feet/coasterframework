@@ -107,6 +107,11 @@ if (empty($assetsVersions['filemanager']) || version_compare($assetsVersions['fi
         ]
     ]);
 
+    // remove conflicting response class
+    unlink($responsiveFileManagerLocation . '/include/Response.php');
+    $clearResponseFile = fopen($responsiveFileManagerLocation . '/include/Response.php', 'w');
+    fclose($clearResponseFile);
+
     // trans func conflict name change
     \CoasterCms\Helpers\File::replaceString($responsiveFileManagerLocation . '/include/utils.php', '\'trans\'', '\'transfm\'');
     $files = [
@@ -120,6 +125,10 @@ if (empty($assetsVersions['filemanager']) || version_compare($assetsVersions['fi
     foreach ($files as $file) {
         \CoasterCms\Helpers\File::replaceString($responsiveFileManagerLocation . $file, 'trans(', 'transfm(');
     }
+
+    // permissions fix
+    \CoasterCms\Helpers\File::replaceString($responsiveFileManagerLocation . '/include/utils.php', 'umask(0)', 'umask()');
+    \CoasterCms\Helpers\File::replaceString($responsiveFileManagerLocation . '/include/utils.php', '0766', 'CoasterCms\Helpers\FileManager::createDirPermissions()');
 
     $assetsVersions['filemanager'] = 'v9.10.1';
     file_put_contents($assetsFile, json_encode($assetsVersions));

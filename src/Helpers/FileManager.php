@@ -114,4 +114,9 @@ class FileManager
         }
     }
 
+    public static function createDirPermissions()
+    {
+        return 0775;
+    }
+
 }
