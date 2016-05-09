@@ -13,6 +13,11 @@ class PageVersion extends Eloquent
         return $this->belongsTo('CoasterCms\Models\User');
     }
 
+    public function scheduled_versions()
+    {
+        return $this->hasMany('CoasterCms\Models\PageVersionSchedule');
+    }
+
     public static function latest_version($page_id, $return_obj = false)
     {
         $version = self::where('page_id', '=', $page_id)->orderBy('version_id', 'desc')->first();

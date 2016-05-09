@@ -30,6 +30,9 @@ class PageVersionSchedule extends Eloquent
 
             $pages = [];
             foreach ($pageVersionSchedulesArr as $pageVersionId => $pageVersionSchedule) {
+                if (!isset($pageVersionIdToPageVersion[$pageVersionId])) {
+                    continue;
+                }
                 if (!isset($pages[$pageVersionIdToPageVersion[$pageVersionId]->page_id])) {
                     $pages[$pageVersionIdToPageVersion[$pageVersionId]->page_id] = [];
                 }

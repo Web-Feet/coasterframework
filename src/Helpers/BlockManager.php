@@ -221,7 +221,7 @@ class BlockManager
 
     public static function version_table($page_id)
     {
-        $versionsQuery = PageVersion::with('user')->where('page_id', '=', $page_id)->orderBy('version_id', 'desc');
+        $versionsQuery = PageVersion::with(['user', 'scheduled_versions'])->where('page_id', '=', $page_id)->orderBy('version_id', 'desc');
         $versions = $versionsQuery->paginate(15);
         $pagination = PaginatorRender::run($versions, config('coaster::admin.bootstrap_version'));
 

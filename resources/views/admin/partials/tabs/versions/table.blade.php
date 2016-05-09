@@ -34,8 +34,13 @@
                 <td>
                     @if ($version->version_id == $live_version)
                         Yes
-                    @else
+                    @elseif ($version->scheduled_versions->isEmpty())
                         No
+                    @endif
+                    @if (!$version->scheduled_versions->isEmpty())
+                        @foreach($version->scheduled_versions as $scheduled_version)
+
+                        @endforeach
                     @endif
                 </td>
                 <td>
@@ -48,7 +53,7 @@
                            data-version="{{ $version->version_id }}" title="Rename"></i>
                     @endif
                     @if ($can_publish)
-                        <i class="version_publish_schedule glyphicon glyphicon-time itemTooltip hidden"
+                        <i class="version_publish_schedule glyphicon glyphicon-time itemTooltip"
                            data-version="{{ $version->version_id }}" title="Schedule Version Publish"></i>
                         <i class="version_publish glyphicon glyphicon-ok-circle itemTooltip"
                            data-version="{{ $version->version_id }}" title="Publish"></i>
