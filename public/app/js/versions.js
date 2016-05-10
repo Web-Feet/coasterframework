@@ -1,12 +1,17 @@
 var page_id, version_id, latest_version;
+var version_table = {'page': 1};
 
 function version_pagination(e) {
     e.preventDefault();
-    var page = getURLParameter('page', $(this).attr('href'));
+    version_table['page'] = getURLParameter('page', $(this).attr('href'));
+    update_version_table();
+}
+
+function update_version_table() {
     $.ajax({
         url: get_admin_url()+'pages/versions/'+page_id,
         data: {
-            page: page
+            page: version_table['page']
         },
         type: 'POST',
         success: function(r) {
@@ -14,6 +19,7 @@ function version_pagination(e) {
             $('#version_pagination').find('a').click(version_pagination);
             $('.version_publish').click(version_publish);
             $('.version_rename').click(version_rename_modal);
+            $('.version_publish_schedule').click(version_publish_schedule_modal);
         }
     });
 }
@@ -79,7 +85,7 @@ function version_publish_schedule() {
         },
         success: function (r) {
             if (r == 1) {
-                cms_alert('success', 'Version scheduled for publishing');
+                update_version_table();
             } else {
                 cms_alert('danger', 'Error scheduling version for publishing');
             }

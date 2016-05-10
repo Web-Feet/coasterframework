@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Models;
 
 use Carbon\Carbon;
+use DateTimeHelper;
 use Eloquent;
 
 class PageVersionSchedule extends Eloquent
@@ -8,6 +9,14 @@ class PageVersionSchedule extends Eloquent
     protected $table = 'page_versions_schedule';
 
     private $_now;
+    private static $_latestPublish;
+
+    private static $_repeatOptions = [
+        0 => 'No',
+        86400 => 'Repeat Daily',
+        604800 => 'Repeat Weekly',
+        'm' => 'Same day of Month'
+    ];
 
     public static function checkPageVersionIds()
     {
@@ -41,14 +50,14 @@ class PageVersionSchedule extends Eloquent
             }
 
             foreach ($pages as $page_id => $pageVersionSchedules) {
-                $pageVersionIdToPublish = end($pageVersionSchedules)->page_version_id;
-                $pageVersionToPublish = $pageVersionIdToPageVersion[$pageVersionIdToPublish];
-                if (!empty($pageVersionToPublish)) {
-                    $pageVersionToPublish->publish(false, true);
-                    $newVersions[$page_id] = $pageVersionToPublish->version_id;
-                }
+                self::$_latestPublish = ['time' => '', 'page_version_id' => ''];
                 foreach ($pageVersionSchedules as $pageVersionSchedule) {
                     $pageVersionSchedule->delete();
+                }
+                if (self::$_latestPublish['page_version_id']) {
+                    $pageVersionToPublish = $pageVersionIdToPageVersion[self::$_latestPublish['page_version_id']];
+                    $pageVersionToPublish->publish(false, true);
+                    $newVersions[$page_id] = $pageVersionToPublish->version_id;
                 }
             }
 
@@ -74,6 +83,11 @@ class PageVersionSchedule extends Eloquent
 
     private function repeat($newDate)
     {
+        if ($this->_now >= $newDate && (empty(self::$_latestPublish['time']) || self::$_latestPublish['time'] < $newDate )) {
+            self::$_latestPublish['time'] = clone $newDate;
+            self::$_latestPublish['page_version_id'] = $this->page_version_id;
+        }
+
         if ($this->repeat_in) {
             $newDate->modify('+'.$this->repeat_in.' seconds');
         } elseif ($this->repeat_in_func) {
@@ -91,12 +105,44 @@ class PageVersionSchedule extends Eloquent
                     }
                     $newDate = clone $newDateClone;
                 break;
+                default:
+                    $this->repeat_in_func = '';
             }
         }
 
-        $this->live_from = $newDate->format('Y-m-d H:i:s');
         if (($this->repeat_in || $this->repeat_in_func) && $this->_now > $newDate) {
             $this->repeat($newDate);
+        } else {
+            $this->live_from = $newDate->format('Y-m-d H:i:s');
+        }
+    }
+
+    public static function selectOptions()
+    {
+        return self::$_repeatOptions;
+    }
+
+    public function repeat_text()
+    {
+        $repeaterText = '';
+        if ($this->repeat_in) {
+            $repeatOption = $this->repeat_in;
+        } elseif($this->repeat_in_func) {
+            $repeatOption = $this->repeat_in_func;
+        }
+        if (isset($repeatOption)) {
+            if (!empty(self::$_repeatOptions[$repeatOption])) {
+                $repeaterText = self::$_repeatOptions[$repeatOption];
+            } elseif ($this->repeat_in) {
+                $repeaterText = 'Repeat every ' . DateTimeHelper::displaySeconds($this->repeat_in);
+            } else {
+                $repeaterText = 'Unknown repeat function';
+            }
+        }
+        if ($repeaterText) {
+            return '(' . $repeaterText . ')';
+        } else {
+            return null;
         }
     }
 

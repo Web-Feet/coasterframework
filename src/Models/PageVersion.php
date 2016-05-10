@@ -16,7 +16,7 @@ class PageVersion extends Eloquent
 
     public function scheduled_versions()
     {
-        return $this->hasMany('CoasterCms\Models\PageVersionSchedule');
+        return $this->hasMany('CoasterCms\Models\PageVersionSchedule')->orderBy('live_from');
     }
 
     public static function latest_version($page_id, $return_obj = false)

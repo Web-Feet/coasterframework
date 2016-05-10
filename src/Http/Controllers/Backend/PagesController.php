@@ -781,7 +781,7 @@ class PagesController extends _Base
 
             // add required modals
             if ($publishingOn) {
-                $intervals = [ 0 => 'No', 86400 => 'Repeat Daily', 604800 => 'Repeat Weekly', 'm' => 'Same day of Month'];
+                $intervals = PageVersionSchedule::selectOptions();
                 $this->layout->modals =
                     View::make('coaster::modals.pages.publish')->render() .
                     View::make('coaster::modals.pages.publish_schedule', ['intervals' => $intervals, 'live_version' => $versionData['live']])->render() .

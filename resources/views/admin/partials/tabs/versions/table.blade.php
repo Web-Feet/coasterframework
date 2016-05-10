@@ -32,15 +32,17 @@
                     {{ ($version->user)?$version->user->email:'Undefined' }}
                 </td>
                 <td>
-                    @if ($version->version_id == $live_version)
-                        Yes
-                    @elseif ($version->scheduled_versions->isEmpty())
-                        No
-                    @endif
                     @if (!$version->scheduled_versions->isEmpty())
+                        @if ($version->version_id == $live_version)
+                            Yes and
+                        @endif
                         @foreach($version->scheduled_versions as $scheduled_version)
-
+                            Scheduled for {{ DateTimeHelper::display($scheduled_version->live_from) }} {{ $scheduled_version->repeat_text() }}<br />
                         @endforeach
+                    @elseif ($version->version_id == $live_version)
+                        Yes
+                    @else
+                        No
                     @endif
                 </td>
                 <td>
