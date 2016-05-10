@@ -15,7 +15,7 @@
             @if (!empty($page->group) && $page->permissions['group'])
                 {!! HTML::link(URL::to(config('coaster::admin.url').'/groups/pages/'.$page->group), '', ['class' => 'glyphicon glyphicon-list-alt itemTooltip', 'title' => 'Manage Items']) !!}
             @endif
-            {!! HTML::link($page->preview_link, '', ['class' => 'glyphicon glyphicon-eye-open itemTooltip', 'title' => 'View Page', 'target' => '_blank']) !!}
+            {!! HTML::link($page->preview_link, '', ['class' => 'glyphicon glyphicon-eye-open itemTooltip', 'title' => ($page->type=='type_hidden')?'Preview':'View Page', 'target' => '_blank']) !!}
             @if ($page->permissions['add'] == true && empty($page->link))
                 {!! HTML::link(URL::current().'/add/'.$page->id, '', ['class' => 'glyphicon glyphicon-plus itemTooltip addPage', 'title' => 'Add '.(empty($page->group)?'Subpage':'Item'), 'data-page' => $page->id]) !!}
             @endif

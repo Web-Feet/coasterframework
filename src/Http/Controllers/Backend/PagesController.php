@@ -30,7 +30,8 @@ use View;
 class PagesController extends _Base
 {
 
-    private $child_pages;
+    private $_child_pages;
+    private $_live_versions;
 
     public function get_index()
     {
@@ -40,15 +41,25 @@ class PagesController extends _Base
         $add_perm = Auth::action('pages.add');
 
         $pages = Page::orderBy('order', 'asc')->get();
-        $this->child_pages = array();
+        $this->_child_pages = array();
 
         foreach ($pages as $page) {
             $page->number_of_galleries = !empty($numb_galleries[$page->template]) ? $numb_galleries[$page->template] : 0;
             $page->number_of_forms = !empty($numb_forms[$page->template]) ? $numb_forms[$page->template] : 0;
-            if (!isset($this->child_pages[$page->parent])) {
-                $this->child_pages[$page->parent] = array();
+            if (!isset($this->_child_pages[$page->parent])) {
+                $this->_child_pages[$page->parent] = array();
             }
-            array_push($this->child_pages[$page->parent], $page);
+            array_push($this->_child_pages[$page->parent], $page);
+        }
+
+        $pageLangTable = (new PageLang)->getTable();
+        $pageVersionsTable = (new PageVersion)->getTable();
+        $pageLangs = PageLang::join($pageVersionsTable, function ($join) use($pageLangTable, $pageVersionsTable) {
+            $join->on($pageLangTable.'.page_id', '=', $pageVersionsTable.'.page_id')->on($pageLangTable.'.live_version', '=', $pageVersionsTable.'.version_id');
+        })->where('language_id', '=', Language::current())->orderBy($pageLangTable.'.page_id')->get();
+
+        foreach ($pageLangs as $pageLang) {
+            $this->_live_versions[$pageLang->page_id] = $pageLang;
         }
 
         $groups_exist = (bool) (PageGroup::count() > 0);
@@ -386,10 +397,10 @@ class PagesController extends _Base
     private function _list_pages($parent, $level, $cat_url = '')
     {
 
-        if (isset($this->child_pages[$parent])) {
+        if (isset($this->_child_pages[$parent])) {
             $pages_li = '';
             $li_info = new \stdClass;
-            foreach ($this->child_pages[$parent] as $child_page) {
+            foreach ($this->_child_pages[$parent] as $child_page) {
 
                 if (config('coaster::admin.advanced_permissions') && !Auth::action('pages', ['page_id' => $child_page->id])) {
                     continue;
@@ -442,9 +453,8 @@ class PagesController extends _Base
                 if (!$child_page->is_live()) {
                     $li_info->type = 'type_hidden';
                     if ($child_page->link == 0) {
-                        $live_page_version = PageVersion::where('page_id', '=', $child_page->id)->where('version_id', '=', $page_lang->live_version)->first();
-                        if (!empty($live_page_version)) {
-                            $li_info->preview_link .= '?preview=' . $live_page_version->preview_key;
+                        if (!empty($this->_live_versions[$child_page->id])) {
+                            $li_info->preview_link .= '?preview=' . $this->_live_versions[$child_page->id]->preview_key;
                         }
                     }
                 }
