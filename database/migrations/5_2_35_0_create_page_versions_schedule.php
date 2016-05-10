@@ -27,7 +27,7 @@ class CreatePageVersionsSchedule extends Migration
         });
 
         $controller = DB::table('admin_controllers')->select('id')->where('controller', '=', 'pages')->first();
-        $action = DB::table('admin_controllers')->select('id')->where('controller', '=', $controller->id)->where('name', '=', 'version-publish')->first();
+        $action = DB::table('admin_actions')->select('id')->where('controller_id', '=', $controller->id)->where('action', '=', 'version-publish')->first();
 
         DB::table('admin_actions')->insert(
             array(
@@ -36,7 +36,7 @@ class CreatePageVersionsSchedule extends Migration
                     'action' => 'version-schedule',
                     'inherit' => $action->id,
                     'edit_based' => 0,
-                    'name' => 'Export Uploaded Themes',
+                    'name' => 'Schedule Versions',
                     'about' => null,
                     'created_at' => $date,
                     'updated_at' => $date

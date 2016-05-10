@@ -17,7 +17,7 @@ class UpdateThemeActions extends Migration
         $date = new Carbon;
 
         $themesController = DB::table('admin_controllers')->select('id')->where('controller', '=', 'themes')->first();
-        $updateAction = DB::table('admin_controllers')->select('id')->where('controller', '=', $themesController->id)->where('name', '=', 'update')->first();
+        $updateAction = DB::table('admin_actions')->select('id')->where('controller_id', '=', $themesController->id)->where('action', '=', 'update')->first();
 
         DB::table('admin_actions')->insert(
             array(

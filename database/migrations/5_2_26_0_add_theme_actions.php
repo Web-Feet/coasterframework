@@ -17,7 +17,7 @@ class AddThemeActions extends Migration
         $date = new Carbon;
 
         $themesController = DB::table('admin_controllers')->select('id')->where('controller', '=', 'themes')->first();
-        $indexAction = DB::table('admin_controllers')->select('id')->where('controller', '=', $themesController->id)->where('name', '=', 'index')->first();
+        $indexAction = DB::table('admin_actions')->select('id')->where('controller_id', '=', $themesController->id)->where('action', '=', 'index')->first();
 
         DB::table('admin_actions')->insert(
             array(
