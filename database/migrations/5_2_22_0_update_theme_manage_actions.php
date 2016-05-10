@@ -16,10 +16,12 @@ class UpdateThemeManageActions extends Migration
 
         $date = new Carbon;
 
+        $themesController = DB::table('admin_controllers')->select('id')->where('controller', '=', 'themes')->first();
+
         DB::table('admin_actions')->insert(
             array(
                 array(
-                    'controller_id' => 16,
+                    'controller_id' => $themesController->id,
                     'action' => 'manage',
                     'inherit' => 0,
                     'edit_based' => 0,

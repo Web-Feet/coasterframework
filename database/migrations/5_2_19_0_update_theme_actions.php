@@ -16,10 +16,13 @@ class UpdateThemeActions extends Migration
 
         $date = new Carbon;
 
+        $themesController = DB::table('admin_controllers')->select('id')->where('controller', '=', 'themes')->first();
+        $updateAction = DB::table('admin_controllers')->select('id')->where('controller', '=', $themesController->id)->where('name', '=', 'update')->first();
+
         DB::table('admin_actions')->insert(
             array(
                 array(
-                    'controller_id' => 16,
+                    'controller_id' => $themesController->id,
                     'action' => 'forms',
                     'inherit' => 0,
                     'edit_based' => 0,
@@ -37,7 +40,7 @@ class UpdateThemeActions extends Migration
             array(
                 array(
                     'role_id' => 2,
-                    'action_id' => 63,
+                    'action_id' => $updateAction->id,
                     'created_at' => $date,
                     'updated_at' => $date
                 ),
@@ -50,8 +53,8 @@ class UpdateThemeActions extends Migration
             )
         );
 
-        DB::table('admin_actions')->where('controller_id', '=', 16)->where('action', '=', 'update')->update(['inherit' => 0]);
-        DB::table('admin_actions')->where('controller_id', '=', 16)->where('action', '=', 'index')->update(['name' => 'Show Theme Management']);
+        DB::table('admin_actions')->where('controller_id', '=', $themesController->id)->where('action', '=', 'update')->update(['inherit' => 0]);
+        DB::table('admin_actions')->where('controller_id', '=', $themesController->id)->where('action', '=', 'index')->update(['name' => 'Show Theme Management']);
 
     }
 

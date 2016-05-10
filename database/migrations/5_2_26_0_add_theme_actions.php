@@ -16,12 +16,15 @@ class AddThemeActions extends Migration
 
         $date = new Carbon;
 
+        $themesController = DB::table('admin_controllers')->select('id')->where('controller', '=', 'themes')->first();
+        $indexAction = DB::table('admin_controllers')->select('id')->where('controller', '=', $themesController->id)->where('name', '=', 'index')->first();
+
         DB::table('admin_actions')->insert(
             array(
                 array(
-                    'controller_id' => 16,
+                    'controller_id' => $themesController->id,
                     'action' => 'list',
-                    'inherit' => 62,
+                    'inherit' => $indexAction->id,
                     'edit_based' => 0,
                     'name' => 'View Uploaded Themes',
                     'about' => null,
@@ -29,7 +32,7 @@ class AddThemeActions extends Migration
                     'updated_at' => $date
                 ),
                 array(
-                    'controller_id' => 16,
+                    'controller_id' => $themesController->id,
                     'action' => 'export',
                     'inherit' => 0,
                     'edit_based' => 0,
