@@ -15,11 +15,13 @@ function update_version_table() {
         },
         type: 'POST',
         success: function(r) {
+            $('.itemTooltip').tooltip('hide');
             $('#version_table').html(r);
             $('#version_pagination').find('a').click(version_pagination);
             $('.version_publish').click(version_publish);
             $('.version_rename').click(version_rename_modal);
             $('.version_publish_schedule').click(version_publish_schedule_modal);
+            $('.version_publish_schedule_remove').click(version_schedule_remove);
         }
     });
 }
@@ -96,6 +98,27 @@ function version_publish_schedule() {
     });
 }
 
+function version_schedule_remove() {
+    var schedule_version_id = $(this).data('scheduled-version-id');
+    $.ajax({
+        url: get_admin_url() + 'pages/version-schedule/' + page_id,
+        type: 'POST',
+        data: {
+            remove: schedule_version_id
+        },
+        success: function (r) {
+            if (r == 1) {
+                update_version_table();
+            } else {
+                cms_alert('danger', 'Error scheduled version not removed');
+            }
+        },
+        error: function () {
+            cms_alert('danger', 'Error scheduled version not removed');
+        }
+    });
+}
+
 function request_publish_modal(e) {
     version_id = $(this).data('version');
     var modal = $('#requestPublishModal');
@@ -152,6 +175,7 @@ function request_publish_action() {
         },
         success: function(r) {
             if (r == 1) {
+                $('.itemTooltip').tooltip('hide');
                 if (request_action == 'approved') {
                     version_id = request.data('version_id');
                     page_name = request.data('name');
@@ -181,6 +205,7 @@ function update_request_table(page) {
         data: data,
         type: 'POST',
         success: function(r) {
+            $('.itemTooltip').tooltip('hide');
             $('#publish_requests_table').html(r);
             $('.request_publish_action').click(request_publish_action);
             $('#publish_requests_table').find('.pagination a').click(request_table_pagination);
@@ -212,6 +237,7 @@ $(document).ready(function() {
     $('.version_publish').click(version_publish);
 
     $('.version_publish_schedule').click(version_publish_schedule_modal);
+    $('.version_publish_schedule_remove').click(version_schedule_remove);
     $('#versionPublishScheduleModal').find('.schedule').click(version_publish_schedule);
 
     $('.version_rename').click(version_rename_modal);

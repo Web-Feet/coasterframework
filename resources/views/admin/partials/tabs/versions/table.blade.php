@@ -37,7 +37,9 @@
                             Yes and
                         @endif
                         @foreach($version->scheduled_versions as $scheduled_version)
-                            Scheduled for {{ DateTimeHelper::display($scheduled_version->live_from) }} {{ $scheduled_version->repeat_text() }}<br />
+                            Scheduled for {{ DateTimeHelper::display($scheduled_version->live_from) }} {{ $scheduled_version->repeat_text() }}
+                                <i class="version_publish_schedule_remove glyphicon glyphicon-remove itemTooltip"
+                                   data-scheduled-version-id="{{ $scheduled_version->id }}" title="Remove"></i><br />
                         @endforeach
                     @elseif ($version->version_id == $live_version)
                         Yes

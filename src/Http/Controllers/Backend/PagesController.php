@@ -231,6 +231,22 @@ class PagesController extends _Base
 
     public function post_version_schedule($pageId)
     {
+        $publishingOn = (config('coaster::admin.publishing') > 0) ? true : false;
+        if (!$publishingOn || !Auth::action('pages.version-publish', ['page_id' => $pageId])) {
+            return 0;
+        }
+
+        $scheduledVersionId = Request::input('remove');
+        if (!empty($scheduledVersionId)) {
+            $scheduledVersion = PageVersionSchedule::find($scheduledVersionId);
+            if (!empty($scheduledVersion)) {
+                $scheduledVersion->delete();
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+
         $scheduleFrom = Datetime::jQueryToMysql(Request::input('schedule_from'));
         $scheduleTo = Datetime::jQueryToMysql(Request::input('schedule_to'));
         $scheduleToVersion = Request::input('schedule_to_version');

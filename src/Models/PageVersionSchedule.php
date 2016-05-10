@@ -52,7 +52,7 @@ class PageVersionSchedule extends Eloquent
             foreach ($pages as $page_id => $pageVersionSchedules) {
                 self::$_latestPublish = ['time' => '', 'page_version_id' => ''];
                 foreach ($pageVersionSchedules as $pageVersionSchedule) {
-                    $pageVersionSchedule->delete();
+                    $pageVersionSchedule->delete(true);
                 }
                 if (self::$_latestPublish['page_version_id']) {
                     $pageVersionToPublish = $pageVersionIdToPageVersion[self::$_latestPublish['page_version_id']];
@@ -66,16 +66,18 @@ class PageVersionSchedule extends Eloquent
         return $newVersions;
     }
 
-    public function delete()
+    public function delete($repeat = false)
     {
-        $this->_now = new Carbon;
-        $newDate = new Carbon($this->live_from);
-        $this->repeat($newDate);
+        if ($repeat) {
+            $this->_now = new Carbon;
+            $newDate = new Carbon($this->live_from);
+            $this->repeat($newDate);
 
-        if ($this->live_from != $this->getOriginal('live_from')) {
-            $newPageVersionSchedule = $this->replicate();
-            $newPageVersionSchedule->live_from = $this->live_from;
-            $newPageVersionSchedule->save();
+            if ($this->live_from != $this->getOriginal('live_from')) {
+                $newPageVersionSchedule = $this->replicate();
+                $newPageVersionSchedule->live_from = $this->live_from;
+                $newPageVersionSchedule->save();
+            }
         }
 
         return parent::delete();
