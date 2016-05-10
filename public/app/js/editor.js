@@ -101,7 +101,6 @@ function load_editor_js(rerun) {
     });
 
     // multi-select / video select
-    var ytapikey;
     $(".chosen-select").select2();
     $(".chosen-select-class").select2({
         escapeMarkup: function (m) {
@@ -114,74 +113,61 @@ function load_editor_js(rerun) {
             return '<span class="'+data.text+'"></span> '+" &nbsp; "+data.text;
         }
     });
-    $.ajax({
-        url: get_admin_url()+'system/keys/yt_browser',
-        type: 'POST',
-        success: function(r) {
-            ytapikey = r;
-            videoSearch();
-        }
-    });
-
-    function videoSearch() {
-        var videoTokens = {};
-        $(".video-search").select2({
-            placeholder: 'Insert youtube link link or search for video ...',
-            minimumInputLength: 3,
-            ajax: {
-                url: 'https://www.googleapis.com/youtube/v3/search',
-                dataType: 'json',
-                quietMillis: 100,
-                data: function (params) { // page is the one-based page number tracked by Select2
-                    if (videoTokens[params.term] == undefined) {
-                        videoTokens[params.term] = '';
-                    }
-                    return {
-                        q: params.term, //search term
-                        part: 'id,snippet',
-                        maxResults: 10,
-                        type: 'video',
-                        pageToken: videoTokens[params.term]['next'],
-                        key: ytapikey
-                    };
-                },
-                processResults: function (data, params) {
-                    params.page = params.page || 1;
-                    $.each(data.items, function (k, v) {
-                        v.id = v.id.videoId;
-                        data.items[k] = v;
-                    });
-                    videoTokens[params.term] = {'next': data.nextPageToken};
-                    return {
-                        results: data.items,
-                        pagination: {
-                            more: (params.page * data.pageInfo.resultsPerPage) < data.pageInfo.totalResults
-                        }
-                    };
-                },
-                error: function () {
-                    throw new Error("Invalid API key");
+    var videoTokens = {};
+    $(".video-search").select2({
+        placeholder: 'Insert youtube link link or search for video ...',
+        minimumInputLength: 3,
+        ajax: {
+            url: 'https://www.googleapis.com/youtube/v3/search',
+            dataType: 'json',
+            quietMillis: 100,
+            data: function (params) { // page is the one-based page number tracked by Select2
+                if (videoTokens[params.term] == undefined) {
+                    videoTokens[params.term] = '';
                 }
+                return {
+                    q: params.term, //search term
+                    part: 'id,snippet',
+                    maxResults: 10,
+                    type: 'video',
+                    pageToken: videoTokens[params.term]['next'],
+                    key: ytBrowserKey
+                };
             },
-            templateResult: function (video) {
-                if (!video.id || !video.snippet) return video.text;
-                var t = new Date(video.snippet.publishedAt);
-                return '<b>' + video.snippet.title + '</b> (' + video.snippet.channelTitle + ' ' + t.getDate() + '/' + (t.getMonth() + 1) + '/' + t.getFullYear() + ')<br /><i>https://www.youtube.com/watch?v=' + video.id + '</i>';
+            processResults: function (data, params) {
+                params.page = params.page || 1;
+                $.each(data.items, function (k, v) {
+                    v.id = v.id.videoId;
+                    data.items[k] = v;
+                });
+                videoTokens[params.term] = {'next': data.nextPageToken};
+                return {
+                    results: data.items,
+                    pagination: {
+                        more: (params.page * data.pageInfo.resultsPerPage) < data.pageInfo.totalResults
+                    }
+                };
             },
-            templateSelection: function (video) {
-                if (!video.id || !video.snippet) return video.text;
-                var t = new Date(video.snippet.publishedAt);
-                return '<b>' + video.snippet.title + '</b> (' + video.snippet.channelTitle + ' ' + t.getDate() + '/' + (t.getMonth() + 1) + '/' + t.getFullYear() + ')';
-            },
-            escapeMarkup: function (m) {
-                return m;
-            } // we do not want to escape markup since we are displaying html in results
-        }).on("change", function () {
-            $('#' + this.id + '_preview').attr('src', 'http://www.youtube.com/embed/' + $(this).val()).css('display', 'block');
-        });
-
-    }
-
+            error: function () {
+                throw new Error("Invalid API key");
+            }
+        },
+        templateResult: function (video) {
+            if (!video.id || !video.snippet) return video.text;
+            var t = new Date(video.snippet.publishedAt);
+            return '<b>' + video.snippet.title + '</b> (' + video.snippet.channelTitle + ' ' + t.getDate() + '/' + (t.getMonth() + 1) + '/' + t.getFullYear() + ')<br /><i>https://www.youtube.com/watch?v=' + video.id + '</i>';
+        },
+        templateSelection: function (video) {
+            if (!video.id || !video.snippet) return video.text;
+            var t = new Date(video.snippet.publishedAt);
+            return '<b>' + video.snippet.title + '</b> (' + video.snippet.channelTitle + ' ' + t.getDate() + '/' + (t.getMonth() + 1) + '/' + t.getFullYear() + ')';
+        },
+        escapeMarkup: function (m) {
+            return m;
+        } // we do not want to escape markup since we are displaying html in results
+    }).on("change", function () {
+        $('#' + this.id + '_preview').attr('src', 'http://www.youtube.com/embed/' + $(this).val()).css('display', 'block');
+    });
 
     // select colour options
     var select_colour_els = $('.select_colour');
