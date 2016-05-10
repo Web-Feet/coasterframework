@@ -15,7 +15,9 @@ class PageVersionSchedule extends Eloquent
         0 => 'No',
         86400 => 'Repeat Daily',
         604800 => 'Repeat Weekly',
-        'm' => 'Same day of Month'
+        'M' => 'Repeat on the last day of each Month',
+        'm' => 'Repeat Monthly - Exact Day Match',
+        'y' => 'Repeat Yearly - Exact Day Match'
     ];
 
     public static function checkPageVersionIds()
@@ -94,10 +96,23 @@ class PageVersionSchedule extends Eloquent
             $newDate->modify('+'.$this->repeat_in.' seconds');
         } elseif ($this->repeat_in_func) {
             switch ($this->repeat_in_func) {
+                case 'M':
+                    $currentMonth = $newDate->format('n');
+                    $currentYear = $newDate->format('Y');
+                    if ($newDate->format('j') == $newDate->format('t')) {
+                        $currentMonth++;
+                        if ($currentMonth == 13) {
+                            $currentYear++;
+                            $currentMonth = 1;
+                        }
+                    }
+                    $newDate->setDate($currentYear, $currentMonth, 1);
+                    $lastDay = $newDate->format('t');
+                    $newDate->setDate($currentYear, $currentMonth, $lastDay);
+                    break;
                 case 'm':
-                    $currentDay = '0';
+                    $currentDay = 0;
                     $newDay = (int) $newDate->format('d');
-                    $newDateClone = clone $newDate;
                     $i = 1;
                     while ($currentDay != $newDay) {
                         $newDateClone = clone $newDate;
@@ -105,8 +120,20 @@ class PageVersionSchedule extends Eloquent
                         $newDateClone->modify('+'.$i++.' month');
                         $newDay = (int) $newDateClone->format('d');
                     }
-                    $newDate = clone $newDateClone;
+                    $newDate = $newDateClone;
                 break;
+                case 'y':
+                    $currentDay = 0;
+                    $newDay = (int) $newDate->format('d');
+                    $i = 1;
+                    while ($currentDay != $newDay) {
+                        $newDateClone = clone $newDate;
+                        $currentDay = (int) $newDateClone->format('d');
+                        $newDateClone->modify('+'.$i++.' year');
+                        $newDay = (int) $newDateClone->format('d');
+                    }
+                    $newDate = $newDateClone;
+                    break;
                 default:
                     $this->repeat_in_func = '';
             }
