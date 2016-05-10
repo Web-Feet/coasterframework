@@ -682,7 +682,7 @@ class PagesController extends _Base
             $existingBeacons = [];
             $setBeacons = BlockBeacon::where('page_id', '=', $page->id)->get();
             foreach ($setBeacons as $setBeacon) {
-                $existingBeacons[$setBeacon->uniqueId] = $setBeacon->uniqueId;
+                $existingBeacons[$setBeacon->unique_id] = $setBeacon->unique_id;
             }
             if (!empty($existingBeacons)) {
                 BlockBeacon::preload(); // check page relations (remove page id off beacons if url changed)
