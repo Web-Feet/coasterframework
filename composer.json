@@ -15,7 +15,7 @@
     "require": {
         "php": ">=5.5.9",
         "laravelcollective/html": "5.2.*",
-        "bkwld/croppa": "4.2.*",
+        "bkwld/croppa": "~4.0",
         "guzzlehttp/guzzle": "6.*",
         "blueimp/jQuery-File-Upload": "9.11.2"
     },
