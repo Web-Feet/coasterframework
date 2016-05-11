@@ -14,4 +14,9 @@ class DB {
 		return new self;
 	}
 
+	public function __get($name)
+	{
+		return null;
+	}
+
 }
