@@ -81,7 +81,7 @@ class InstallController extends Controller
         file_put_contents(base_path('.env'), $envFile);
 
         $storagePath = storage_path(config('coaster::site.storage_path')) . '/';
-        File::put($storagePath.'index.txt', 'add-tables');
+        File::put($storagePath.'install.txt', 'add-tables');
 
         \redirect('install/database')->send();
 
@@ -96,7 +96,7 @@ class InstallController extends Controller
         Artisan::call('migrate', ['--path' => '/vendor/web-feet/coasterframework/database/migrations']);
 
         $storagePath = storage_path(config('coaster::site.storage_path')) . '/';
-        File::put($storagePath.'index.txt', 'add-user');
+        File::put($storagePath.'install.txt', 'add-user');
 
         \redirect('install/admin')->send();
     }
@@ -145,7 +145,7 @@ class InstallController extends Controller
         );
 
         $storagePath = storage_path(config('coaster::site.storage_path')) . '/';
-        File::put($storagePath.'index.txt', 'theme');
+        File::put($storagePath.'install.txt', 'theme');
 
         \redirect('install/theme')->send();
     }
@@ -199,7 +199,7 @@ class InstallController extends Controller
         }
 
         $storagePath = storage_path(config('coaster::site.storage_path')) . '/';
-        File::put($storagePath.'index.txt', 'complete-welcome');
+        File::put($storagePath.'install.txt', 'complete-welcome');
 
         View::make('coaster::asset_builder.main')->render();
 
@@ -216,6 +216,14 @@ class InstallController extends Controller
     private function _checkRedirect($current = null)
     {
         $storagePath = storage_path(config('coaster::site.storage_path')) . '/';
+        if (!is_dir($storagePath)) {
+            print "Run: php -f ". base_path('vendor/web-feet/coasterframework/updateAssets')."<br />";
+            print "Then refresh the page to enter the install";
+            exit;
+        }
+        if (!File::exists($storagePath.'install.txt')) {
+            File::put($storagePath.'install.txt', 'set-env');
+        }
         switch (File::get($storagePath.'install.txt')) {
             case 'set-env':
                 $redirect = 'install';
@@ -230,7 +238,7 @@ class InstallController extends Controller
                 $redirect = 'install/theme';
                 break;
             default:
-                $redirect = '';
+                $redirect = 'install';
         }
         if ($current == $redirect) {
             $redirect = '';

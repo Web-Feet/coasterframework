@@ -44,9 +44,6 @@ class CmsSettingsProvider extends ServiceProvider
             }
         } else {
             $this->app['config']['coaster::installed'] = 0;
-            if (!File::exists($storagePath.'install.txt')) {
-                File::put($storagePath.'install.txt', 'set-env');
-            }
         }
 
     }
