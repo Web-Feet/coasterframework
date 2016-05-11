@@ -91,7 +91,7 @@ class FileManager
     {
         global $current_path;
 
-        $secureStorage = '../../../storage/uploads/';
+        $secureStorage = storage_path('uploads').'/';
         if (strpos($checkPath,$secureStorage) === 0) {
             $subdir = substr($checkPath,strlen($secureStorage));
         } else {

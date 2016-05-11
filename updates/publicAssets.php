@@ -1,7 +1,7 @@
 <?php
 
 $coasterPublicFolder = public_path() . config('coaster::admin.public');
-$assetsFile = storage_path('app/assets.json');
+$assetsFile = storage_path(config('coaster::site.storage_path')).'/assets.json';
 if (file_exists($assetsFile)) {
     $assetsVersions = file_get_contents($assetsFile);
     $assetsVersions = json_decode($assetsVersions, true);
@@ -112,7 +112,8 @@ if (empty($assetsVersions['filemanager']) || version_compare($assetsVersions['fi
     $clearResponseFile = fopen($responsiveFileManagerLocation . '/include/Response.php', 'w');
     fclose($clearResponseFile);
 
-    // trans func conflict name change
+    // trans/endsWith func conflict name change
+    \CoasterCms\Helpers\File::replaceString($responsiveFileManagerLocation . '/include/utils.php', 'endsWith(', 'endsWithfm(');
     \CoasterCms\Helpers\File::replaceString($responsiveFileManagerLocation . '/include/utils.php', '\'trans\'', '\'transfm\'');
     $files = [
         '/ajax_calls.php',

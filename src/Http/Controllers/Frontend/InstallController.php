@@ -6,10 +6,10 @@ use CoasterCms\Helpers\View\FormMessage;
 use CoasterCms\Models\Theme;
 use DB;
 use Dotenv\Dotenv;
+use File;
 use Hash;
 use Illuminate\Routing\Controller;
 use Request;
-use Storage;
 use Validator;
 use View;
 
@@ -20,13 +20,6 @@ class InstallController extends Controller
     {
         if ($redirect = $this->_checkRedirect('install')) {
             \redirect($redirect)->send();
-        }
-
-        $assetsFile = storage_path('app/assets.json');
-        if (!file_exists($assetsFile)) {
-            echo "Coaster Framework: updateAssets script not run after composer create-project ?<br />";
-            echo "Coaster Framework: manually run the cmd - php ".base_path('vendor/web-feet/coasterframework/updateAssets');
-            exit;
         }
 
         View::make('coaster::asset_builder.main')->render();
@@ -87,7 +80,8 @@ class InstallController extends Controller
 
         file_put_contents(base_path('.env'), $envFile);
 
-        Storage::disk('local')->put('install.txt', 'add-tables');
+        $storagePath = storage_path(config('coaster::site.storage_path')) . '/';
+        File::put($storagePath.'index.txt', 'add-tables');
 
         \redirect('install/database')->send();
 
@@ -101,7 +95,8 @@ class InstallController extends Controller
 
         Artisan::call('migrate', ['--path' => '/vendor/web-feet/coasterframework/database/migrations']);
 
-        Storage::disk('local')->put('install.txt', 'add-user');
+        $storagePath = storage_path(config('coaster::site.storage_path')) . '/';
+        File::put($storagePath.'index.txt', 'add-user');
 
         \redirect('install/admin')->send();
     }
@@ -149,7 +144,8 @@ class InstallController extends Controller
             )
         );
 
-        Storage::disk('local')->put('install.txt', 'theme');
+        $storagePath = storage_path(config('coaster::site.storage_path')) . '/';
+        File::put($storagePath.'index.txt', 'theme');
 
         \redirect('install/theme')->send();
     }
@@ -202,7 +198,8 @@ class InstallController extends Controller
             }
         }
 
-        Storage::disk('local')->put('install.txt', 'complete-welcome');
+        $storagePath = storage_path(config('coaster::site.storage_path')) . '/';
+        File::put($storagePath.'index.txt', 'complete-welcome');
 
         View::make('coaster::asset_builder.main')->render();
 
@@ -218,7 +215,8 @@ class InstallController extends Controller
 
     private function _checkRedirect($current = null)
     {
-        switch (Storage::disk('local')->get('install.txt')) {
+        $storagePath = storage_path(config('coaster::site.storage_path')) . '/';
+        switch (File::get($storagePath.'install.txt')) {
             case 'set-env':
                 $redirect = 'install';
                 break;

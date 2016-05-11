@@ -6,7 +6,7 @@ use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\PagePublishRequests;
 use CoasterCms\Models\PageSearchLog;
 use CoasterCms\Models\Setting;
-use Storage;
+use File;
 use View;
 
 class HomeController extends _Base
@@ -35,8 +35,9 @@ class HomeController extends _Base
         $logs = View::make('coaster::partials.logs.table', array('logs' => $logs_data));
 
         $welcome_message = '';
-        if (Storage::disk('local')->get('install.txt') == 'complete-welcome') {
-            Storage::disk('local')->put('install.txt', 'complete');
+        $storagePath = storage_path(config('coaster::site.storage_path')) . '/';
+        if (File::get($storagePath.'install.txt')  == 'complete-welcome') {
+            File::put($storagePath.'install.txt', 'complete');
             $welcome_message = '<h2>Welcome to Coaster CMS, click on the pages link to start editing content</h2><p>&nbsp;</p>';
         }
 

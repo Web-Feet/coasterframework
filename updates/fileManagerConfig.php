@@ -1,5 +1,4 @@
 <?php
-// v5.2.30 => v5.2.31
 
 $updatedFileManagerConf = false;
 $uploadsDir = public_path('uploads');

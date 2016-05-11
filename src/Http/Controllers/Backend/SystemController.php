@@ -253,8 +253,9 @@ class SystemController extends _Base
                 putenv("COMPOSER_HOME=".exec('pwd')."/.composer");
             }
 
-            shell_exec('cd '.base_path().'; composer -n update 2>'.storage_path('app').'/upgrade.log;');
-            $upgradeLog = file_get_contents(storage_path('app').'/upgrade.log');
+            $logFile = storage_path(config('coaster::site.storage_path')).'/upgrade.log';
+            shell_exec('cd '.base_path().'; composer -n update 2>'.$logFile.';');
+            $upgradeLog = file_get_contents($logFile);
 
             if (!empty($upgradeLog) && stripos($upgradeLog, 'Generating autoload files') !== false) {
                 Cache::put('coaster::site.version', Setting::latestTag(), 30);

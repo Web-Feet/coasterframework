@@ -53,6 +53,8 @@ class CmsServiceProvider extends ServiceProvider
 
                 }
                 include __DIR__ . '/Http/routes.php';
+            } else {
+                include __DIR__ . '/../updates/_run.php';
             }
         } else {
             if (!App::runningInConsole()) {
@@ -61,7 +63,8 @@ class CmsServiceProvider extends ServiceProvider
                     \redirect('install')->send();
                 }
             } else {
-                echo "Coaster Framework: CMS not installed, go to a web browser to complete installation\r\n";
+                include __DIR__ . '/../updates/_run.php';
+                echo "Coaster Framework: CMS awaiting install, go to a web browser to complete installation\r\n";
             }
         }
 
