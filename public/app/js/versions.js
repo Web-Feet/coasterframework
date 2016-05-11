@@ -58,7 +58,7 @@ function version_publish() {
         },
         success: function() {
             $('.live_page_name').html('');
-            update_version_js();
+            update_version();
         }
     });
 }
@@ -180,7 +180,7 @@ function request_publish_action() {
                     version_id = request.data('version_id');
                     page_name = request.data('name');
                     $('.live_page_name').html(' for page '+page_name);
-                    update_version_js();
+                    update_version();
                 }
                 if (page_id !== undefined) {
                     update_request_table();
@@ -219,9 +219,8 @@ function request_table_pagination(e) {
     update_request_table(page);
 }
 
-function update_version_js() {
+function update_version() {
     $('.live_version_id').html(version_id);
-    console.log('v'+version_id);
     if (version_id == latest_version) {
         $('#version-well .version-p').removeClass('hidden');
         $('#version-well .version-up').addClass('hidden');
@@ -230,6 +229,7 @@ function update_version_js() {
         $('#version-well .version-up').removeClass('hidden');
     }
     $('#publishModal').modal('show');
+    update_version_table();
 }
 
 $(document).ready(function() {
