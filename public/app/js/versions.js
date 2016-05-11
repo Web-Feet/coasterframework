@@ -42,7 +42,7 @@ function version_rename() {
         },
         success: function (r) {
             if (r == 1) {
-                $('#v_' + version_id + ' td:nth-of-type(2)').html($('#version_name').val());
+                update_version_table();
             }
         }
     });
