@@ -764,6 +764,9 @@ class ThemeBuilder
 
     private static function _printTemplates($block)  {
         $templates = [];
+        if (empty(self::$_fileBlockTemplates[$block] )) {
+            return '';
+        }
         if (!empty(self::$_blockSettings[$block]['templates'])) {
             if (self::$_blockSettings[$block]['templates'] == '*') {
                 foreach (self::$_fileBlockTemplates[$block] as $template) {
