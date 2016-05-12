@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Providers;
 
+use App;
 use CoasterCms\Models\Setting;
 use File;
 use Illuminate\Support\ServiceProvider;
@@ -46,6 +47,9 @@ class CmsSettingsProvider extends ServiceProvider
             $this->app['config']['coaster::installed'] = 0;
         }
 
+        if (App::runningInConsole()) {
+            include __DIR__ . '/../../updates/_run.php';
+        }
     }
 
     /**
