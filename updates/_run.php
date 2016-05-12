@@ -1,11 +1,6 @@
 <?php
 
-if (version_compare(phpversion(), '5.5.9', '<')) {
-
-    echo "Coaster Framework: Can't run updateAsset script with PHP Version ".phpversion()." (5.5.9+ required)\n";
-    echo "Coaster Framework: manually run - php -f ".__DIR__."/updateAssets\n";
-
-} elseif (!defined('LARAVEL_START')) {
+if (!defined('LARAVEL_START')) {
 
     require __DIR__.'/../hooks/laravel_basic.php';
 

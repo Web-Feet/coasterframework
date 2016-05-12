@@ -1,5 +1,15 @@
 #!/usr/bin/env php
 <?php
 
-// moved
-include __DIR__ . '/updates/_run.php';
+if (version_compare(phpversion(), '5.5.9', '<')) {
+
+    echo "Coaster Framework: Can't run updateAsset script with PHP Version ".phpversion()." (5.5.9+ required)\n";
+    echo "Coaster Framework: manually run - php -f ".__DIR__."/updateAssets\n";
+
+} else {
+
+    // moved
+    include __DIR__ . '/updates/_run.php';
+    
+}
+
