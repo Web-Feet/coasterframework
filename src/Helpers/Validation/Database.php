@@ -50,6 +50,14 @@ class Database {
 
 		}
 
+        foreach (Database\Column::$instances as $table => $tableDetails) {
+            foreach ($tableDetails as $column => $columnDetails) {
+                if ($columnDetails['Type'] == 'timestamp' && !$columnDetails['Default'] && $columnDetails['Null'] == 'NO') {
+                    Database\Column::$instances[$table][$column]['Null'] = 'YES';
+                }
+            }
+        }
+
         ksort(Database\Column::$instances);
         return json_encode(Database\Column::$instances);
 	}

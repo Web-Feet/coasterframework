@@ -317,15 +317,19 @@ class SystemController extends _Base
                             $migrationFieldData = $migrationTables->$dbTableName->{$dbColumnData->Field};
                             if ($migrationFieldData->Type !== $dbColumnData->Type) {
                                 $update = true;
-                                $warnings[] = 'Warning: ' . $dbTableName . '/' . $dbColumnData->Field . ' type needs changing ' . $dbColumnData->Type . ' => ' . $migrationFieldData->Type;
+                                $warnings[] = 'Warning: ' . $dbTableName . '/' . $dbColumnData->Field . ' type needs changing, \'' . $dbColumnData->Type . '\' => \'' . $migrationFieldData->Type . '\'';
                             }
                             if ($migrationFieldData->Null !== $dbColumnData->Null) {
                                 $update = true;
-                                $warnings[] = 'Warning: ' . $dbTableName . '/' . $dbColumnData->Field . ' allow null setting needs changing ' . $dbColumnData->Null . ' => ' . $migrationFieldData->Null;
+                                $warnings[] = 'Warning: ' . $dbTableName . '/' . $dbColumnData->Field . ' allow null setting needs changing, \'' . $dbColumnData->Null . '\' => \'' . $migrationFieldData->Null . '\'';
                             }
                             if ($migrationFieldData->Extra !== $dbColumnData->Extra) {
                                 $update = true;
-                                $warnings[] = 'Warning: ' . $dbTableName . '/' . $dbColumnData->Field . ' ' . $migrationFieldData->Extra . ' needs setting';
+                                if (empty($migrationFieldData->Extra)) {
+                                    $warnings[] = 'Warning: ' . $dbTableName . '/' . $dbColumnData->Field . ' \'' . $dbColumnData->Extra . '\' setting needs removing';
+                                } else {
+                                    $warnings[] = 'Warning: ' . $dbTableName . '/' . $dbColumnData->Field . ' \'' . $migrationFieldData->Extra . '\' needs setting';
+                                }
                             }
                             if ($migrationFieldData->Default !== $dbColumnData->Default) {
                                 if ($basic_fix == 1 && $migrationFieldData->Default === null) {
@@ -333,13 +337,15 @@ class SystemController extends _Base
                                 } else {
                                     $update = true;
                                 }
-                                $warnings[] = 'Warning: ' . $dbTableName . '/' . $dbColumnData->Field . ' default values needs changing ' . $dbColumnData->Default . ' => ' . $migrationFieldData->Default;
+                                $warnings[] = 'Warning: ' . $dbTableName . '/' . $dbColumnData->Field . ' default values needs changing, ' . (((string) $dbColumnData->Default)?'\''.$dbColumnData->Default.'\'':'No default') . ' => ' .  (((string) $migrationFieldData->Default)?'\''.$migrationFieldData->Default.'\'':'No default');
                             }
                             if ($basic_fix == 1 && $update) {
                                 if (strpos($migrationFieldData->Default, 'CURRENT_TIMESTAMP') !== false) {
                                     $default = ' DEFAULT ' . $migrationFieldData->Default;
-                                } else {
+                                } elseif ($migrationFieldData->Default !== null) {
                                     $default = ' DEFAULT \'' . $migrationFieldData->Default . '\'';
+                                } else {
+                                    $default = '';
                                 }
                                 if ($migrationFieldData->Null == 'NO') {
                                     $null = ' NOT NULL';
