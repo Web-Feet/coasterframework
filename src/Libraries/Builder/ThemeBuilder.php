@@ -7,6 +7,7 @@ use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\BlockFormRule;
 use CoasterCms\Models\BlockRepeater;
 use CoasterCms\Models\BlockSelectOption;
+use CoasterCms\Models\Menu;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\TemplateBlock;
 use CoasterCms\Models\Theme;
@@ -66,6 +67,9 @@ class ThemeBuilder
     private static $_blockCategories;
     private static $_guessedCategoryIds;
     private static $_csvCategoryData;
+
+    // menu data
+    private static $_menus;
 
     // return error message if error found in a template
     private static $_error;
@@ -1295,6 +1299,31 @@ class ThemeBuilder
         }
 
         return $output;
+    }
+
+    public static function menu($menu_name, $options = array())
+    {
+        if (!isset($_menus)) {
+            $menus = Menu::all();
+            self::$_menus = [];
+            foreach ($menus as $menu) {
+                self::$_menus[$menu->name] = $menu;
+            }
+        }
+        if (empty(self::$_menus[$menu_name])) {
+            $menuView = 'themes.' . self::$_theme->theme . '.menus.' . (!empty($options['view'])?$options['view']:'default');
+            $subLevel = 1;
+            while (View::exists($menuView.'.submenu_'.$subLevel)) {
+                $subLevel++;
+            }
+            $subLevel--;
+            $newMenu = new Menu;
+            $newMenu->label = ucwords(str_replace('_', ' ', $menu_name));
+            $newMenu->name = $menu_name;
+            $newMenu->max_sublevel = $subLevel;
+            $newMenu->save();
+            self::$_menus[$newMenu->name] = $newMenu;
+        }
     }
 
     public static function __callStatic($name, $arguments)
