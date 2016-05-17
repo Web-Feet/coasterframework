@@ -79,8 +79,8 @@ class PageVersion extends Eloquent
 
     public function __get($key)
     {
-        if ($key == 'label') {
-            return parent::__get($key) ?: DateTimeHelper::display($this->created_at);
+        if ($key == 'name') {
+            return parent::__get('label') ?: 'version '.DateTimeHelper::display($this->created_at, 'short');
         } else {
             return parent::__get($key);
         }

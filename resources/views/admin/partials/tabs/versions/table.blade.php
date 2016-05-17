@@ -6,7 +6,7 @@
     </div>
 
     <div class="pull-right">
-        <p>Published Version: #<span class="live_version_id">{{ $live_version }}</span></p>
+        <p>Published Version: #<span class="live_version_id">{{ $live_version->version_id }}</span> {{ $live_version->name }}</p>
     </div>
 </div>
 
@@ -27,13 +27,13 @@
         @foreach ($versions as $version)
             <tr id="v_{{ $version->version_id }}">
                 <td>{{ $version->version_id }}</td>
-                <td>{{ $version->label }}</td>
+                <td>{{ $version->name }}</td>
                 <td>
                     {{ ($version->user)?$version->user->email:'Undefined' }}
                 </td>
                 <td>
                     @if (!$version->scheduled_versions->isEmpty())
-                        @if ($version->version_id == $live_version)
+                        @if ($version->version_id == $live_version->version_id)
                             Yes and
                         @endif
                         @foreach($version->scheduled_versions as $scheduled_version)
@@ -41,7 +41,7 @@
                                 <i class="version_publish_schedule_remove glyphicon glyphicon-remove itemTooltip"
                                    data-scheduled-version-id="{{ $scheduled_version->id }}" title="Remove"></i><br />
                         @endforeach
-                    @elseif ($version->version_id == $live_version)
+                    @elseif ($version->version_id == $live_version->version_id)
                         Yes
                     @else
                         No

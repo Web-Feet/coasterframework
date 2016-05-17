@@ -226,7 +226,8 @@ class BlockManager
         $pagination = PaginatorRender::run($versions, config('coaster::admin.bootstrap_version'));
 
         $page_lang = PageLang::where('page_id', '=', $page_id)->where('language_id', '=', Language::current())->first();
-        $live_version = $page_lang ? $page_lang->live_version : 0;
+        $live_version = PageVersion::where('page_id', '=', $page_id)->where('version_id', '=', $page_lang ? $page_lang->live_version : 0)->first();
+        $live_version = $live_version ?: new PageVersion;
 
         $can_publish = Auth::action('pages.version-publish', ['page_id' => $page_id]);
 

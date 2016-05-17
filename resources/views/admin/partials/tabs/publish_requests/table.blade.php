@@ -37,7 +37,7 @@
             @foreach($requests as $request)
                 <tr>
                     <td>{!! $request->page_version->version_id !!}</td>
-                    <td>{!! $request->page_version->label !!}</td>
+                    <td>{!! $request->page_version->name !!}</td>
                     <?php $page_name = PageBuilder::page_full_name($request->page_version->page_id); ?>
                     @if ($show['page'])
                         <td>{!! $page_name !!}</td>
