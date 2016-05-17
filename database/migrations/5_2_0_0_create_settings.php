@@ -75,7 +75,7 @@ class CreateSettings extends Migration
                     'updated_at' => $date
                 ),
                 array(
-                    'label' => 'Admin Permissions',
+                    'label' => 'Admin Per Page Permissions',
                     'name' => 'admin.advanced_permissions',
                     'value' => '0',
                     'editable' => 1,
