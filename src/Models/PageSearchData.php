@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Models;
 
 use CoasterCms\Helpers\BlockManager;
+use DB;
 use Eloquent;
 
 class PageSearchData extends Eloquent
@@ -86,8 +87,12 @@ class PageSearchData extends Eloquent
 
             // load pages and blog connection
             $blog_pages = [];
-            if (config('coaster::blog.connection') && config('coaster::blog.url')) {
-                $blog_db = new \PDO(config('coaster::blog.connection'), config('coaster::blog.username'), config('coaster::blog.password'));
+            if (config('coaster::blog.url')) {
+                if (config('coaster::blog.connection')) {
+                    $blog_db = new \PDO(config('coaster::blog.connection'), config('coaster::blog.username'), config('coaster::blog.password'));
+                } else {
+                    $blog_db = DB::connection()->getPdo();
+                }
             }
             if ($live) {
                 $cms_pages_tmp = Page::where('live', '>', 0)->get();
@@ -119,12 +124,13 @@ class PageSearchData extends Eloquent
 
                 // blog search
                 if (!empty($blog_db)) {
+                    $prefix = config('coaster::blog.prefix');
                     $blog_posts = $blog_db->query("
                     SELECT ID, post_title, post_name, post_content, sum(search_weight) as search_weight
                     FROM (
-                        SELECT ID, post_title, post_name, post_content, 4 AS search_weight FROM wp_posts WHERE post_type = 'post' AND post_status = 'publish' AND post_title like '%" . $keyword . "%'
+                        SELECT ID, post_title, post_name, post_content, 4 AS search_weight FROM '.$prefix.'posts WHERE post_type = 'post' AND post_status = 'publish' AND post_title like '%" . $keyword . "%'
                         UNION
-                        SELECT ID, post_title, post_name, post_content, 2 AS search_weight FROM wp_posts WHERE post_type = 'post' AND post_status = 'publish' AND post_content like '%" . $keyword . "%'
+                        SELECT ID, post_title, post_name, post_content, 2 AS search_weight FROM '.$prefix.'posts WHERE post_type = 'post' AND post_status = 'publish' AND post_content like '%" . $keyword . "%'
                     ) results
                     GROUP BY ID, post_title, post_name, post_content
                     ORDER BY search_weight;
