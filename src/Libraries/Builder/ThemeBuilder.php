@@ -1303,7 +1303,7 @@ class ThemeBuilder
 
     public static function menu($menu_name, $options = array())
     {
-        if (!isset($_menus)) {
+        if (!isset(self::$_menus)) {
             $menus = Menu::all();
             self::$_menus = [];
             foreach ($menus as $menu) {
