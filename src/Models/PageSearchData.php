@@ -128,9 +128,9 @@ class PageSearchData extends Eloquent
                     $blog_posts = $blog_db->query("
                     SELECT ID, post_title, post_name, post_content, sum(search_weight) as search_weight
                     FROM (
-                        SELECT ID, post_title, post_name, post_content, 4 AS search_weight FROM '.$prefix.'posts WHERE post_type = 'post' AND post_status = 'publish' AND post_title like '%" . $keyword . "%'
+                        SELECT ID, post_title, post_name, post_content, 4 AS search_weight FROM {$prefix}posts WHERE post_type = 'post' AND post_status = 'publish' AND post_title like '%" . $keyword . "%'
                         UNION
-                        SELECT ID, post_title, post_name, post_content, 2 AS search_weight FROM '.$prefix.'posts WHERE post_type = 'post' AND post_status = 'publish' AND post_content like '%" . $keyword . "%'
+                        SELECT ID, post_title, post_name, post_content, 2 AS search_weight FROM {$prefix}posts WHERE post_type = 'post' AND post_status = 'publish' AND post_content like '%" . $keyword . "%'
                     ) results
                     GROUP BY ID, post_title, post_name, post_content
                     ORDER BY search_weight;
