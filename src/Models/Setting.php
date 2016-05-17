@@ -2,6 +2,7 @@
 
 use Cache;
 use Config;
+use DB;
 use Eloquent;
 use File;
 use \GuzzleHttp\Client;
@@ -10,6 +11,8 @@ Class Setting extends Eloquent
 {
     protected $table = 'settings';
     public static $settings = array();
+
+    private static $_blogConn;
 
     public static function loadAll($configFolder, $namespace, $db = true)
     {
@@ -51,6 +54,18 @@ Class Setting extends Eloquent
           }
       }
       return Cache::get('coaster::site.version');
+    }
+
+    public static function blogConnection()
+    {
+        if (!isset(self::$_blogConn)) {
+            if (config('coaster::blog.connection')) {
+                self::$_blogConn = new \PDO(config('coaster::blog.connection'), config('coaster::blog.username'), config('coaster::blog.password'));
+            } else {
+                self::$_blogConn = DB::connection()->getPdo();
+            }
+        }
+        return self::$_blogConn;
     }
 
 }

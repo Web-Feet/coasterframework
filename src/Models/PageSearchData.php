@@ -88,11 +88,7 @@ class PageSearchData extends Eloquent
             // load pages and blog connection
             $blog_pages = [];
             if (config('coaster::blog.url')) {
-                if (config('coaster::blog.connection')) {
-                    $blog_db = new \PDO(config('coaster::blog.connection'), config('coaster::blog.username'), config('coaster::blog.password'));
-                } else {
-                    $blog_db = DB::connection()->getPdo();
-                }
+                $blog_db = Setting::blogConnection();
             }
             if ($live) {
                 $cms_pages_tmp = Page::where('live', '>', 0)->get();

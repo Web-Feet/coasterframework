@@ -15,6 +15,7 @@ use CoasterCms\Models\PageLang;
 use CoasterCms\Models\PageSearchData;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\PageVersionSchedule;
+use CoasterCms\Models\Setting;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -548,6 +549,15 @@ class PageBuilder
     public static function js($file_name)
     {
         return URL::to('/themes/' . self::$theme . '/js/' . $file_name . '.js');
+    }
+
+    public static function blog($getPosts = 3, $query = null)
+    {
+        if (!$query) {
+            $prefix = config('coaster::blog.prefix');
+            $query = "SELECT * FROM {$prefix}posts WHERE post_type = 'post' AND post_status = 'publish' ORDER BY post_date DESC LIMIT {$getPosts}";
+        }
+        return Setting::blogConnection()->query($query);
     }
 
     public static function set_custom_block_data($block_name, $content)
