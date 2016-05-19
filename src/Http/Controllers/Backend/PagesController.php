@@ -591,7 +591,7 @@ class PagesController extends _Base
         }
 
         if ($page->link == 0) {
-            $page_info_lang['url'] = strtolower(str_replace('/', '-', $page_info_lang['url']));
+            $page_info_lang['url'] = strtolower(str_replace(['/', ' '], '-', $page_info_lang['url']));
         }
         if (preg_match('#^[-]+$#', $page_info_lang['url'])) {
             $page_info_lang['url'] = '';
