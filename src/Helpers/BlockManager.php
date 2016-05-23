@@ -312,7 +312,7 @@ class BlockManager
         if (!isset(self::$_blockClasses) || $reload) {
             $paths = [
                 'CoasterCms\\Libraries\\Blocks\\' => base_path('vendor/web-feet/coasterframework/src/Libraries/Blocks'),
-                'App\\' => base_path('app/Blocks')
+                'App\\Blocks\\' => base_path('app/Blocks')
             ];
 
             self::$_blockClasses = [];
