@@ -590,6 +590,7 @@ class PagesController extends _Base
             return false;
         }
 
+        $page_info_lang['url'] = trim($page_info_lang['url']);
         if ($page->link == 0) {
             $page_info_lang['url'] = strtolower(str_replace(['/', ' '], '-', $page_info_lang['url']));
         }
