@@ -125,7 +125,7 @@ class Repeater extends _Base
                     $row_data = '';
                     $repeater->row_id = $row_id;
                     foreach ($repeater_blocks as $repeater_block_id => $repeater_block_data) {
-                        $block_content = !empty($row[$repeater_block_id]) ? $row[$repeater_block_id] : null;
+                        $block_content = isset($row[$repeater_block_id]) ? $row[$repeater_block_id] : null;
                         $row_data .= BlockManager::get_field($repeater_block_data, $block_content, $page_id, $repeater);
                     }
                     $content .= CmsBlockInput::make('repeater.row', array('repeater_id' => $repeater->repeater_id, 'row_id' => $repeater->row_id, 'blocks' => $row_data));

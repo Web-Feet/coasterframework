@@ -19,7 +19,7 @@ class PageBlockDefault extends Eloquent
             $new_version = PageVersion::add_new($page_id);
             $to_version = $new_version->version_id;
         }
-        if (empty($updated_block) || (!empty($updated_block) && $updated_block->content != $content)) {
+        if (empty($updated_block) || (!empty($updated_block) && $updated_block->content !== $content)) {
             $block = new self;
             $block->block_id = $block_id;
             $block->language_id = Language::current();
