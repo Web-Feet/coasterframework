@@ -159,14 +159,14 @@ if (empty($assetsVersions['jquery']) || version_compare($assetsVersions['jquery'
     ]);
     echo ".";
 
-    $nestedSortableZip = public_path('coaster/jquery/nestedSortable-2.0.0.zip');
-    $response = $guzzleClient->request('GET', 'https://github.com/ilikenwf/nestedSortable/archive/v2.0.0.zip', [
+    $nestedSortableZip = public_path('coaster/jquery/nestedSortable-master.zip');
+    $response = $guzzleClient->request('GET', 'https://github.com/ilikenwf/nestedSortable/archive/master.zip', [
         'sink' => $nestedSortableZip
     ]);
 
     $zip = new \CoasterCms\Helpers\Zip;
     $zip->open($nestedSortableZip);
-    $zip->extractFile('nestedSortable-2.0.0/jquery.mjs.nestedSortable.js', public_path('coaster/jquery/jquery.mjs.nestedSortable.js'));
+    $zip->extractFile('nestedSortable-master/jquery.mjs.nestedSortable.js', public_path('coaster/jquery/jquery.mjs.nestedSortable.js'));
     $zip->close();
     unlink($nestedSortableZip);
     echo ".";

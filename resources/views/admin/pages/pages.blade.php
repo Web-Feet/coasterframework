@@ -57,12 +57,6 @@
                 startCollapsed: true
             });
 
-            $.each(expanded, function(index, value) {
-                var li = $('#list_'+value);
-                li.addClass('mjs-nestedSortable-expanded').removeClass('mjs-nestedSortable-collapsed');
-                li.children('div').children('.disclose').addClass('glyphicon-minus-sign').removeClass('glyphicon-plus-sign');
-            });
-
             $('.disclose').on('click', function () {
                 $(this).toggleClass('glyphicon-plus-sign').toggleClass('glyphicon-minus-sign');
                 var li = $(this).closest('li');
@@ -75,6 +69,11 @@
                         expanded: li.hasClass('mjs-nestedSortable-expanded')
                     }
                 });
+            });
+
+            $.each(expanded, function(index, value) {
+                var li = $('#list_'+value);
+                $(li.find('> div > .disclose').get(0)).trigger('click');
             });
 
             initialize_sort('nestedSortable');

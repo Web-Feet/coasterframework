@@ -188,7 +188,7 @@ class PagesController extends _Base
         $homePage = Page::join('page_lang', 'page_lang.page_id', '=', 'pages.id')->where(function ($query) {
             $query->where('page_lang.url', '=', '/')->orWhere('page_lang.url', '=', '');
         })->where('page_lang.language_id', '=', Language::current())->where('parent', '=', 0)->first();
-        $homePageId = $homePage->page_id;
+        $homePageId = $homePage?$homePage->page_id:-1;
         if (!empty($pages)) {
             foreach ($pages as $pageId => $parent) {
                 $currentPage = Page::preload($pageId);
