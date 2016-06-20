@@ -57,18 +57,20 @@
                 startCollapsed: true
             });
 
-            $('.disclose').on('click', function () {
+            $('.disclose').on('click', function (e) {
                 $(this).toggleClass('glyphicon-plus-sign').toggleClass('glyphicon-minus-sign');
                 var li = $(this).closest('li');
                 li.toggleClass('mjs-nestedSortable-collapsed').toggleClass('mjs-nestedSortable-expanded');
-                $.ajax({
-                    url: get_admin_url() + 'account/page-state',
-                    type: 'POST',
-                    data: {
-                        page_id: li.attr('id').replace('list_', ''),
-                        expanded: li.hasClass('mjs-nestedSortable-expanded')
-                    }
-                });
+                if (!e.isTrigger) {
+                    $.ajax({
+                        url: get_admin_url() + 'account/page-state',
+                        type: 'POST',
+                        data: {
+                            page_id: li.attr('id').replace('list_', ''),
+                            expanded: li.hasClass('mjs-nestedSortable-expanded')
+                        }
+                    });
+                }
             });
 
             $.each(expanded, function(index, value) {
