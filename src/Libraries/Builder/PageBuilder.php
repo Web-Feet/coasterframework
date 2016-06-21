@@ -1,8 +1,8 @@
 <?php namespace CoasterCms\Libraries\Builder;
 
 use CoasterCms\Exceptions\PageLoadException;
-use CoasterCms\Helpers\Feed;
-use CoasterCms\Helpers\View\PaginatorRender;
+use CoasterCms\Helpers\Core\Feed;
+use CoasterCms\Helpers\Core\View\PaginatorRender;
 use CoasterCms\Libraries\Blocks\Image;
 use CoasterCms\Libraries\Blocks\Repeater;
 use CoasterCms\Models\Block;

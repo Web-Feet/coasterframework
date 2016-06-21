@@ -2,7 +2,8 @@
 
 use Auth;
 use Carbon\Carbon;
-use CoasterCms\Helpers\View\FormMessage;
+use CoasterCms\Helpers\Core\View\FormMessage;
+use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\Language;
 use CoasterCms\Models\User;
 use Mail;
@@ -11,22 +12,22 @@ use URL;
 use Validator;
 use View;
 
-class AccountController extends _Base
+class AccountController extends Controller
 {
 
     private function _change_password_checks($code)
     {
-        $this->layout->title = 'Forgotten Password';
+        $this->layoutData['title'] = 'Forgotten Password';
         if (empty($code)) {
-            $this->layout->content = 'Invalid Code!';
+            $this->layoutData['content'] = 'Invalid Code!';
         } else {
             if (!($user = User::where('tmp_code', '=', $code)->first())) {
-                $this->layout->content = 'Invalid Code!';
+                $this->layoutData['content'] = 'Invalid Code!';
             } else {
                 $code_created = new Carbon($user->tmp_code_created);
                 $di = $code_created->diff(new Carbon('now'));
                 if ($di->days > 7) {
-                    $this->layout->content = 'This code has expired!';
+                    $this->layoutData['content'] = 'This code has expired!';
                 } else {
                     return $user;
                 }
@@ -49,7 +50,7 @@ class AccountController extends _Base
                     $view_data['success'] = true;
                 }
             }
-            $this->layout->content = View::make('coaster::pages.account.password', $view_data);
+            $this->layoutData['content'] = View::make('coaster::pages.account.password', $view_data);
         }
     }
 
@@ -94,8 +95,8 @@ class AccountController extends _Base
                 FormMessage::add('email', 'We couldn\'t find your records.');
             }
         }
-        $this->layout->title = 'Forgotten Password';
-        $this->layout->content = View::make('coaster::pages.forgotten_password', $view_data);
+        $this->layoutData['title'] = 'Forgotten Password';
+        $this->layoutData['content'] = View::make('coaster::pages.forgotten_password', $view_data);
     }
 
     public function post_password()
@@ -107,7 +108,7 @@ class AccountController extends _Base
             $data['user'] = Auth::user();
             $data['level'] = 'user';
             $data['success'] = true;
-            $this->layout->content = View::make('coaster::pages.account.password', $data);
+            $this->layoutData['content'] = View::make('coaster::pages.account.password', $data);
         }
     }
 
@@ -117,7 +118,7 @@ class AccountController extends _Base
         $data['user'] = Auth::user();
         $data['level'] = 'user';
         $data['form'] = View::make('coaster::partials.forms.user.password', array('current_password' => true));
-        $this->layout->content = View::make('coaster::pages.account.password', $data);
+        $this->layoutData['content'] = View::make('coaster::pages.account.password', $data);
     }
 
     private function _existing_blog_login()
@@ -143,12 +144,12 @@ class AccountController extends _Base
         $data = [];
         $data['form'] = View::make('coaster::partials.forms.user.blog', array('blog_login' => $this->_existing_blog_login()));
         if ($validation->fails()) {
-            $this->layout->content = View::make('coaster::pages.account.blog', $data);
+            $this->layoutData['content'] = View::make('coaster::pages.account.blog', $data);
         } else {
             $this->user->blog_login = serialize(['login' => Request::input('blog_login'), 'password' => Request::input('blog_password')]);
             $this->user->save();
             $data['success'] = true;
-            $this->layout->content = View::make('coaster::pages.account.blog', $data);
+            $this->layoutData['content'] = View::make('coaster::pages.account.blog', $data);
         }
     }
 
@@ -172,7 +173,7 @@ class AccountController extends _Base
 
     public function getLanguage()
     {
-        $this->layout->content = View::make('coaster::pages.account.language', ['language' => Language::current(), 'languages' => Language::selectArray(), 'saved' => false]);
+        $this->layoutData['content'] = View::make('coaster::pages.account.language', ['language' => Language::current(), 'languages' => Language::selectArray(), 'saved' => false]);
     }
 
     public function postLanguage()
@@ -185,13 +186,13 @@ class AccountController extends _Base
     public function get_blog()
     {
         $form = View::make('coaster::partials.forms.user.blog', array('blog_login' => $this->_existing_blog_login()));
-        $this->layout->content = View::make('coaster::pages.account.blog', array('form' => $form));
+        $this->layoutData['content'] = View::make('coaster::pages.account.blog', array('form' => $form));
     }
 
     public function get_index()
     {
         $account = View::make('coaster::partials.users.info', array('user' => $this->user));
-        $this->layout->content = View::make('coaster::pages.account', array('account' => $account, 'auto_blog_login' => (!empty(config('coaster::blog.url') && Auth::action('account.blog'))), 'change_password' => Auth::action('account.password')));
+        $this->layoutData['content'] = View::make('coaster::pages.account', array('account' => $account, 'auto_blog_login' => (!empty(config('coaster::blog.url') && Auth::action('account.blog'))), 'change_password' => Auth::action('account.password')));
     }
 
 }

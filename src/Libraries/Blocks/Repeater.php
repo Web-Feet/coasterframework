@@ -1,8 +1,8 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Helpers\BlockManager;
-use CoasterCms\Helpers\View\CmsBlockInput;
-use CoasterCms\Helpers\View\PaginatorRender;
+use CoasterCms\Helpers\Core\BlockManager;
+use CoasterCms\Helpers\Core\View\CmsBlockInput;
+use CoasterCms\Helpers\Core\View\PaginatorRender;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockRepeater;

@@ -1,8 +1,9 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
+use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Libraries\Blocks\Repeater;
 
-class RepeatersController extends _Base
+class RepeatersController extends Controller
 {
 
     public function post_index()

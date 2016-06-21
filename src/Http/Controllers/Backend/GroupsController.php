@@ -2,6 +2,7 @@
 
 use Auth;
 use Carbon\Carbon;
+use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\Language;
 use CoasterCms\Models\PageBlock;
@@ -10,7 +11,7 @@ use CoasterCms\Models\PageGroupAttribute;
 use CoasterCms\Models\PageLang;
 use View;
 
-class GroupsController extends _Base
+class GroupsController extends Controller
 {
 
     public function get_pages($group_id)
@@ -59,8 +60,8 @@ class GroupsController extends _Base
                     }
                 }
                 $pages = View::make('coaster::partials.groups.page_list', array('pages' => $page_info, 'item_name' => $group->item_name, 'blocks' => $blocks, 'can_edit' => $can_edit, 'can_delete' => $can_delete))->render();
-                $this->layout->modals = View::make('coaster::modals.general.delete_item');
-                $this->layout->content = View::make('coaster::pages.groups', array('group' => $group, 'pages' => $pages, 'can_add' => Auth::action('pages.add', ['page_id' => $group->default_parent])));
+                $this->layoutData['modals'] = View::make('coaster::modals.general.delete_item');
+                $this->layoutData['content'] = View::make('coaster::pages.groups', array('group' => $group, 'pages' => $pages, 'can_add' => Auth::action('pages.add', ['page_id' => $group->default_parent])));
             }
         }
     }

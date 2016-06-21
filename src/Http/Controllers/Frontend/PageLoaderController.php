@@ -1,8 +1,8 @@
 <?php namespace CoasterCms\Http\Controllers\Frontend;
 
 use CoasterCms\Exceptions\PageLoadException;
-use CoasterCms\Helpers\Feed;
-use CoasterCms\Helpers\View\FormMessage;
+use CoasterCms\Helpers\Core\Feed;
+use CoasterCms\Helpers\Core\View\FormMessage;
 use CoasterCms\Libraries\Blocks\Form;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\PageRedirect;

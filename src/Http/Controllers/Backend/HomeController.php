@@ -1,7 +1,8 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
 use Auth;
-use CoasterCms\Helpers\View\PaginatorRender;
+use CoasterCms\Helpers\Core\View\PaginatorRender;
+use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\PagePublishRequests;
 use CoasterCms\Models\PageSearchLog;
@@ -9,7 +10,7 @@ use CoasterCms\Models\Setting;
 use File;
 use View;
 
-class HomeController extends _Base
+class HomeController extends Controller
 {
 
     public function getIndex()
@@ -67,8 +68,8 @@ class HomeController extends _Base
 
         $data['upgrade'] = $upgrade;
 
-        $this->layout->title = 'Admin home';
-        $this->layout->content = View::make('coaster::pages.dashboard', $data);
+        $this->layoutData['title'] = 'Admin home';
+        $this->layoutData['content'] = View::make('coaster::pages.dashboard', $data);
     }
 
     public function getLogs()
@@ -77,8 +78,8 @@ class HomeController extends _Base
 
         $logs = View::make('coaster::partials.logs.table', array('logs' => $logs_data));
 
-        $this->layout->title = 'Logs';
-        $this->layout->content = View::make('coaster::pages.home.logs', array('logs' => $logs, 'pagination' => PaginatorRender::run($logs_data, config('coaster::admin.bootstrap_version'))));
+        $this->layoutData['title'] = 'Logs';
+        $this->layoutData['content'] = View::make('coaster::pages.home.logs', array('logs' => $logs, 'pagination' => PaginatorRender::run($logs_data, config('coaster::admin.bootstrap_version'))));
     }
 
     public function getRequests()
@@ -89,8 +90,8 @@ class HomeController extends _Base
         }
         $requests_table = View::make('coaster::partials.tabs.publish_requests.table', array('show' => ['page' => true, 'status' => true, 'requested_by' => true], 'requests' => $requests))->render();
 
-        $this->layout->title = 'Publish Requests';
-        $this->layout->content = View::make('coaster::pages.home.requests', array('title' => $this->layout->title, 'requests' => $requests_table, 'pagination' => !is_string($requests) ? PaginatorRender::run($requests, 2) : ''));
+        $this->layoutData['title'] = 'Publish Requests';
+        $this->layoutData['content'] = View::make('coaster::pages.home.requests', array('title' => $this->layoutData['title'], 'requests' => $requests_table, 'pagination' => !is_string($requests) ? PaginatorRender::run($requests, 2) : ''));
     }
 
     public function getYourRequests()
@@ -102,8 +103,8 @@ class HomeController extends _Base
         }
         $user_requests_table = View::make('coaster::partials.tabs.publish_requests.table', array('show' => ['page' => true, 'status' => true, 'requested_by' => false], 'requests' => $user_requests))->render();
 
-        $this->layout->title = 'Your Publish Requests';
-        $this->layout->content = View::make('coaster::pages.home.requests', array('title' => $this->layout->title, 'requests' => $user_requests_table, 'pagination' => !is_string($user_requests) ? PaginatorRender::run($user_requests, 2) : ''));
+        $this->layoutData['title'] = 'Your Publish Requests';
+        $this->layoutData['content'] = View::make('coaster::pages.home.requests', array('title' => $this->layoutData['title'], 'requests' => $user_requests_table, 'pagination' => !is_string($user_requests) ? PaginatorRender::run($user_requests, 2) : ''));
 
     }
 

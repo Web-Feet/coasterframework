@@ -1,20 +1,21 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
 use Auth;
-use CoasterCms\Helpers\View\FormMessage;
+use CoasterCms\Helpers\Core\View\FormMessage;
+use CoasterCms\Http\Controllers\AdminController as Controller;
 use Cookie;
 use Redirect;
 use Request;
 use URL;
 use View;
 
-class AuthController extends _Base
+class AuthController extends Controller
 {
 
     public function getLogin()
     {
-        $this->layout->content = View::make('coaster::pages.login');
-        $this->layout->title = 'Login';
+        $this->layoutData['content'] = View::make('coaster::pages.login');
+        $this->layoutData['title'] = 'Login';
     }
 
     public function postLogin()

@@ -1,13 +1,14 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
+use CoasterCms\Http\Controllers\AdminController as Controller;
 use View;
 
-class FilemanagerController extends _Base
+class FilemanagerController extends Controller
 {
 
     public function get_index()
     {
-        $this->layout->content = View::make('coaster::pages.filemanager');
+        $this->layoutData['content'] = View::make('coaster::pages.filemanager');
     }
 
 }

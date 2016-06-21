@@ -1,11 +1,12 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
 use Auth;
+use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Backup;
 use Request;
 
-class BackupsController extends _Base
+class BackupsController extends Controller
 {
 
     public function post_undo()

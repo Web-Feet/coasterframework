@@ -1,7 +1,8 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
 use Auth;
-use CoasterCms\Helpers\View\PaginatorRender;
+use CoasterCms\Helpers\Core\View\PaginatorRender;
+use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\FormSubmission;
 use CoasterCms\Models\Page;
@@ -10,7 +11,7 @@ use CoasterCms\Models\Template;
 use URL;
 use View;
 
-class FormsController extends _Base
+class FormsController extends Controller
 {
 
     public function get_list($page_id = 0)
@@ -40,9 +41,9 @@ class FormsController extends _Base
             } else {
                 $name = '';
             }
-            $this->layout->content = View::make('coaster::pages.forms.list', array('page_name' => $name, 'page_id' => $page_id, 'forms' => $form_blocks));
+            $this->layoutData['content'] = View::make('coaster::pages.forms.list', array('page_name' => $name, 'page_id' => $page_id, 'forms' => $form_blocks));
         } else {
-            $this->layout->content = 'No Forms Found';
+            $this->layoutData['content'] = 'No Forms Found';
         }
     }
 
@@ -77,7 +78,7 @@ class FormsController extends _Base
                 $submission_data->from_page = !empty($submission->from_page_id) ? PageLang::full_name($submission->from_page_id) : '-';
                 $submission_rows .= View::make('coaster::partials.form_submissions.rows', array('submission' => $submission_data))->render();
             }
-            $this->layout->content = View::make(
+            $this->layoutData['content'] = View::make(
                 'coaster::pages.forms.submissions',
                 array('links' => PaginatorRender::run($submissions, config('coaster::admin.bootstrap_version')),
                     'submissions' => $submission_rows,

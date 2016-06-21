@@ -1,7 +1,8 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
 use Auth;
-use CoasterCms\Helpers\View\FormMessage;
+use CoasterCms\Helpers\Core\View\FormMessage;
+use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\User;
 use CoasterCms\Models\UserRole;
@@ -11,14 +12,14 @@ use Request;
 use Validator;
 use View;
 
-class UsersController extends _Base
+class UsersController extends Controller
 {
 
     public function get_index()
     {
         $users = User::join('user_roles', 'user_roles.id', '=', 'users.role_id')->select(array('users.id', 'users.email', 'user_roles.name', 'users.active'))->get();
-        $this->layout->modals = View::make('coaster::modals.general.delete_item');
-        $this->layout->content = View::make('coaster::pages.users', array('users' => $users, 'can_add' => Auth::action('users.add'), 'can_delete' => Auth::action('users.delete'), 'can_edit' => Auth::action('users.edit')));
+        $this->layoutData['modals'] = View::make('coaster::modals.general.delete_item');
+        $this->layoutData['content'] = View::make('coaster::pages.users', array('users' => $users, 'can_add' => Auth::action('users.add'), 'can_delete' => Auth::action('users.delete'), 'can_edit' => Auth::action('users.edit')));
     }
 
     public function post_edit($user_id = 0, $action = null)
@@ -33,7 +34,7 @@ class UsersController extends _Base
                     $data['form'] = View::make('coaster::partials.forms.user.password', array('current_password' => (Auth::user()->id == $user_id)));
                     $data['success'] = $user->change_password();
                     AdminLog::new_log('User \'' . $user->email . '\' updated, password changed');
-                    $this->layout->content = View::make('coaster::pages.account.password', $data);
+                    $this->layoutData['content'] = View::make('coaster::pages.account.password', $data);
                     break;
                 case 'role':
                     $user_role = UserRole::find(Request::input('role'));
@@ -41,7 +42,7 @@ class UsersController extends _Base
                         $user->role_id = Request::input('role');
                         AdminLog::new_log('User \'' . $user->email . '\' updated, role change');
                         $user->save();
-                        $this->layout->content = View::make('coaster::pages.users.role', array('user' => $user, 'success' => true));
+                        $this->layoutData['content'] = View::make('coaster::pages.users.role', array('user' => $user, 'success' => true));
                     } else {
                         $this->get_edit($user_id, $action);
                     }
@@ -78,7 +79,7 @@ class UsersController extends _Base
                     $data['user'] = $user;
                     $data['level'] = 'admin';
                     $data['form'] = View::make('coaster::partials.forms.user.password', array('current_password' => (Auth::user()->id == $user_id)));
-                    $this->layout->content = View::make('coaster::pages.account.password', $data);
+                    $this->layoutData['content'] = View::make('coaster::pages.account.password', $data);
                     break;
                 case 'role':
                     $all_roles = UserRole::where('admin', '<=', $this->user->role->admin)->get();
@@ -86,7 +87,7 @@ class UsersController extends _Base
                     foreach ($all_roles as $role) {
                         $roles[$role->id] = $role->name;
                     }
-                    $this->layout->content = View::make('coaster::pages.users.role', array('user' => $user, 'roles' => $roles));
+                    $this->layoutData['content'] = View::make('coaster::pages.users.role', array('user' => $user, 'roles' => $roles));
                     break;
                 default:
                     $details = View::make('coaster::partials.users.info', array('user' => $user));
@@ -95,10 +96,10 @@ class UsersController extends _Base
                     } else {
                         $can_edit = false;
                     }
-                    $this->layout->content = View::make('coaster::pages.users.edit', array('email' => $user->email, 'account' => $details, 'can_edit' => $can_edit));
+                    $this->layoutData['content'] = View::make('coaster::pages.users.edit', array('email' => $user->email, 'account' => $details, 'can_edit' => $can_edit));
             }
         } else {
-            $this->layout->content = 'User not found';
+            $this->layoutData['content'] = 'User not found';
         }
     }
 
@@ -109,7 +110,7 @@ class UsersController extends _Base
         foreach ($all_roles as $role) {
             $roles[$role->id] = $role->name;
         }
-        $this->layout->content = View::make('coaster::pages.users.add', array('roles' => $roles));
+        $this->layoutData['content'] = View::make('coaster::pages.users.add', array('roles' => $roles));
     }
 
     public function post_add()
@@ -152,7 +153,7 @@ class UsersController extends _Base
                 $email_message = 'There was an error sending the login details to the new user.';
                 $email_status = 'warning';
             }
-            $this->layout->content = View::make('coaster::pages.users.add', array('success' => true, 'password' => $password, 'email_message' => $email_message, 'email_status' => $email_status));
+            $this->layoutData['content'] = View::make('coaster::pages.users.add', array('success' => true, 'password' => $password, 'email_message' => $email_message, 'email_status' => $email_status));
         } else {
             FormMessage::set($v->messages());
             if ($perm_issue) {

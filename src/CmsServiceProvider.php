@@ -32,7 +32,7 @@ class CmsServiceProvider extends ServiceProvider
         $this->app['config']['auth.providers.users.model'] = Models\User::class;
 
         Auth::extend('coaster', function ($app, $name, array $config) {
-            return new Helpers\CoasterGuard(
+            return new Helpers\Core\CoasterGuard(
                 'coasterguard',
                 new Providers\CmsAuthUserProvider(),
                 $app['session.store'],
@@ -44,15 +44,8 @@ class CmsServiceProvider extends ServiceProvider
 
         if ($this->app['config']['coaster::installed']) {
             if (!App::runningInConsole()) {
-                $router = $this->app['router'];
-                $router->middleware('admin', AdminAuth::class);
-                $router->middleware('guest', GuestAuth::class);
-                try {
-                    include app_path() . '/Http/routes.php';
-                } catch (\Exception $e) {
-
-                }
-                include __DIR__ . '/Http/routes.php';
+                include __DIR__ . '/Http/adminRoutes.php';
+                include __DIR__ . '/Http/cmsRoutes.php';
             }
         } else {
             if (!App::runningInConsole()) {
@@ -77,6 +70,10 @@ class CmsServiceProvider extends ServiceProvider
         // load cms settings first
         $this->app->register('CoasterCms\Providers\CmsSettingsProvider');
 
+        $router = $this->app['router'];
+        $router->middleware('admin', AdminAuth::class);
+        $router->middleware('guest', GuestAuth::class);
+
         // register other providers
         $this->app->register('Bkwld\Croppa\ServiceProvider');
         $this->app->register('Collective\Html\HtmlServiceProvider');
@@ -85,12 +82,12 @@ class CmsServiceProvider extends ServiceProvider
         $loader = AliasLoader::getInstance();
         $loader->alias('Form', 'Collective\Html\FormFacade');
         $loader->alias('HTML', 'Collective\Html\HtmlFacade');
-        $loader->alias('Croppa', 'CoasterCms\Helpers\CroppaFacade');
-        $loader->alias('CmsBlockInput', 'CoasterCms\Helpers\View\CmsBlockInput');
-        $loader->alias('FormMessage', 'CoasterCms\Helpers\View\FormMessage');
+        $loader->alias('Croppa', 'CoasterCms\Helpers\Core\Croppa\CroppaFacade');
+        $loader->alias('CmsBlockInput', 'CoasterCms\Helpers\Core\View\CmsBlockInput');
+        $loader->alias('FormMessage', 'CoasterCms\Helpers\Core\View\FormMessage');
         $loader->alias('AssetBuilder', 'CoasterCms\Libraries\Builder\AssetBuilder');
         $loader->alias('PageBuilder', 'CoasterCms\Libraries\Builder\PageBuilder');
-        $loader->alias('DateTimeHelper', 'CoasterCms\Helpers\DateTimeHelper');
+        $loader->alias('DateTimeHelper', 'CoasterCms\Helpers\Core\DateTimeHelper');
     }
 
     /**

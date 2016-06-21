@@ -1,13 +1,14 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
 use Auth;
+use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\PageRedirect;
 use Request;
 use Schema;
 use View;
 
-class RedirectsController extends _Base
+class RedirectsController extends Controller
 {
 
     public function get_index()
@@ -19,7 +20,7 @@ class RedirectsController extends _Base
         } else {
             $redirects = PageRedirect::all();
         }
-        $this->layout->content = View::make('coaster::pages.redirects', array('redirects' => $redirects, 'can_edit' => Auth::action('redirects.edit')));
+        $this->layoutData['content'] = View::make('coaster::pages.redirects', array('redirects' => $redirects, 'can_edit' => Auth::action('redirects.edit')));
     }
 
     public function post_index()
@@ -59,7 +60,7 @@ class RedirectsController extends _Base
             $alert->type = 'success';
             $alert->header = 'Redirects Updated';
             $alert->content = '';
-            $this->layout->alert = $alert;
+            $this->layoutData['alert'] = $alert;
         }
         $this->get_index();
     }
@@ -71,7 +72,7 @@ class RedirectsController extends _Base
             $redirect->redirect = urldecode($redirect->redirect);
             $redirect->save();
         }
-        $this->layout->content = 'Redirect to URL\'s decoded';
+        $this->layoutData['content'] = 'Redirect to URL\'s decoded';
     }
 
     public function postEdit()

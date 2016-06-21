@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
 use Auth;
+use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Menu;
 use CoasterCms\Models\MenuItem;
@@ -8,7 +9,7 @@ use CoasterCms\Models\Page;
 use Request;
 use View;
 
-class MenusController extends _Base
+class MenusController extends Controller
 {
 
     private $page_names = '';
@@ -42,8 +43,8 @@ class MenusController extends _Base
             }
             $menus .= View::make('coaster::partials.menus.ol', array('menus_li' => $menus_li, 'menu' => $menu, 'can_add_item' => Auth::action('menus.add')));
         }
-        $this->layout->content = View::make('coaster::pages.menus', array('menus' => $menus));
-        $this->layout->modals = View::make('coaster::modals.menus.add_item', array('options' => Page::get_page_list())) .
+        $this->layoutData['content'] = View::make('coaster::pages.menus', array('menus' => $menus));
+        $this->layoutData['modals'] = View::make('coaster::modals.menus.add_item', array('options' => Page::get_page_list())) .
             View::make('coaster::modals.general.delete_item') .
             View::make('coaster::modals.menus.edit_item') .
             View::make('coaster::modals.menus.rename_item');

@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
+use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Libraries\Blocks\Gallery;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageLang;
@@ -9,7 +10,7 @@ use Request;
 use URL;
 use View;
 
-class GalleryController extends _Base
+class GalleryController extends Controller
 {
 
     public function get_list($page_id = 0)
@@ -39,9 +40,9 @@ class GalleryController extends _Base
             } else {
                 $name = '';
             }
-            $this->layout->content = View::make('coaster::pages.gallery.list', array('page_name' => $name, 'page_id' => $page_id, 'galleries' => $gallery_blocks));
+            $this->layoutData['content'] = View::make('coaster::pages.gallery.list', array('page_name' => $name, 'page_id' => $page_id, 'galleries' => $gallery_blocks));
         } else {
-            $this->layout->content = 'No Galleries Found';
+            $this->layoutData['content'] = 'No Galleries Found';
         }
     }
 
@@ -49,7 +50,7 @@ class GalleryController extends _Base
 
     public function getEdit($page_id = 0, $block_id = 0)
     {
-        $this->layout->content = Gallery::page($block_id, $page_id);
+        $this->layoutData['content'] = Gallery::page($block_id, $page_id);
     }
 
     public function get_update($page_id = 0, $block_id = 0)

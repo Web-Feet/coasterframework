@@ -30,17 +30,11 @@
             <a class="logo" href="#"><img src="{{ URL::to(config('coaster::admin.public')) }}/app/img/logo.png" alt="Coaster CMS"/></a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
-            <?php $system_menu_icons += ['Logout' => 'fa fa-sign-out', 'Login' => 'fa fa-lock', 'Help' => 'fa fa-life-ring', 'My Account' => 'fa fa-lock', 'System Settings' => 'fa fa-cog', 'Open Frontend' => 'fa fa-tv'] ?>
-            @if (!empty($system_menu))
-                <ul class="nav navbar-nav navbar-right">
-                    @foreach($system_menu as $system_item_name => $system_item_link)
-                        <li><a href="{!! $system_item_link !!}"><i
-                                        class="{{ $system_menu_icons[$system_item_name] }}"></i> {{ $system_item_name }}
-                            </a></li>
-                    @endforeach
-                </ul>
-            @endif
-
+            <ul class="nav navbar-nav navbar-right">
+                @if (isset($system_menu))
+                    {!! $system_menu !!}
+                @endif
+            </ul>
         </div><!--/.nav-collapse -->
     </div><!--/.container-fluid -->
 </nav>

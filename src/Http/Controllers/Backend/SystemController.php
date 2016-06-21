@@ -2,8 +2,9 @@
 
 use Auth;
 use Cache;
-use CoasterCms\Helpers\Validation\Database;
-use CoasterCms\Helpers\File;
+use CoasterCms\Helpers\Admin\Validation\Database;
+use CoasterCms\Helpers\Core\File\File;
+use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\Language;
@@ -20,7 +21,7 @@ use Request;
 use URL;
 use View;
 
-class SystemController extends _Base
+class SystemController extends Controller
 {
     protected $dot_replace = ':@dot:';
 
@@ -91,7 +92,7 @@ class SystemController extends _Base
             $alert->type = 'success';
             $alert->header = 'System Settings Updated';
             $alert->content = '';
-            $this->layout->alert = $alert;
+            $this->layoutData['alert'] = $alert;
         }
 
         \redirect(config('coaster::admin.url').'/system')->send();
@@ -176,7 +177,7 @@ class SystemController extends _Base
         $upgrade->to = Setting::latestTag();
         $upgrade->required = version_compare(config('coaster::site.version'), Setting::latestTag(), '<');
 
-        $this->layout->content = View::make('coaster::pages.system', array('database_structure' => $database_structure, 'last_indexed_search' => $last_indexed_search, 'site_details' => $settings, 'can_index_search' => Auth::action('system.search'), 'can_validate' => Auth::action('system.validate-db'), 'can_upgrade' => Auth::action('system.upgrade'), 'upgrade' => $upgrade));
+        $this->layoutData['content'] = View::make('coaster::pages.system', array('database_structure' => $database_structure, 'last_indexed_search' => $last_indexed_search, 'site_details' => $settings, 'can_index_search' => Auth::action('system.search'), 'can_validate' => Auth::action('system.validate-db'), 'can_upgrade' => Auth::action('system.upgrade'), 'upgrade' => $upgrade));
     }
 
     public function get_wp_login()
@@ -232,7 +233,7 @@ class SystemController extends _Base
     public function get_validate_db($fix = null)
     {
         $messages = $this->_db_messages($fix);
-        $this->layout->content = View::make('coaster::pages.system.validate-db', $messages);
+        $this->layoutData['content'] = View::make('coaster::pages.system.validate-db', $messages);
     }
 
     public function getUpgrade($update = null)
@@ -269,7 +270,7 @@ class SystemController extends _Base
             $message = 'Already at the latest version '.config('coaster::site.version');
         }
 
-        $this->layout->content = View::make('coaster::pages.system.upgrade', ['message' => $message, 'error' => $error, 'run' => $run]);
+        $this->layoutData['content'] = View::make('coaster::pages.system.upgrade', ['message' => $message, 'error' => $error, 'run' => $run]);
 
     }
 

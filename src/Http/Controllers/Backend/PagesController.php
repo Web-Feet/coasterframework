@@ -1,10 +1,10 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
 use Auth;
-use Carbon\Carbon;
-use CoasterCms\Helpers\BlockManager;
-use CoasterCms\Helpers\View\FormMessage;
-use CoasterCms\Helpers\View\PaginatorRender;
+use CoasterCms\Helpers\Core\BlockManager;
+use CoasterCms\Helpers\Core\View\FormMessage;
+use CoasterCms\Helpers\Core\View\PaginatorRender;
+use CoasterCms\Http\Controllers\AdminController;
 use CoasterCms\Libraries\Blocks\Datetime;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;
@@ -27,7 +27,7 @@ use Request;
 use URL;
 use View;
 
-class PagesController extends _Base
+class PagesController extends AdminController
 {
 
     private $_child_pages;
@@ -64,13 +64,13 @@ class PagesController extends _Base
 
         $groups_exist = (bool) (PageGroup::count() > 0);
 
-        $this->layout->content = View::make('coaster::pages.pages', array('pages' => $this->_list_pages(0, 1), 'add_page' => $add_perm, 'page_states' => Auth::user()->getPageStates(), 'max' => Page::at_limit(), 'groups_exist' => $groups_exist));
-        $this->layout->modals = View::make('coaster::modals.general.delete_item');
+        $this->layoutData['content'] = View::make('coaster::pages.pages', array('pages' => $this->_list_pages(0, 1), 'add_page' => $add_perm, 'page_states' => Auth::user()->getPageStates(), 'max' => Page::at_limit(), 'groups_exist' => $groups_exist));
+        $this->layoutData['modals'] = View::make('coaster::modals.general.delete_item');
     }
 
     public function get_add($page_id = 0)
     {
-        $this->layout->content = $this->_load_page_data(0, array('parent' => $page_id));
+        $this->layoutData['content'] = $this->_load_page_data(0, array('parent' => $page_id));
     }
 
     public function post_add($page_id = 0)
@@ -80,7 +80,7 @@ class PagesController extends _Base
         $page = Page::find($page_id);
         $in_group = !empty($page) ? $page->in_group : 0; // ignore page limit for group pages
         if (Page::at_limit() && $page_info['link'] != 1 && $in_group) {
-            $this->layout->content = 'Page Limit Reached';
+            $this->layoutData['content'] = 'Page Limit Reached';
         } else {
             $new_page_id = $this->_save_page_info();
             if ($new_page_id === false) {
@@ -93,7 +93,7 @@ class PagesController extends _Base
 
     public function get_edit($page_id, $version = 0)
     {
-        $this->layout->content = $this->_load_page_data($page_id, array('version' => $version));
+        $this->layoutData['content'] = $this->_load_page_data($page_id, array('version' => $version));
     }
 
     public function post_edit($page_id)
@@ -174,7 +174,7 @@ class PagesController extends _Base
         }
 
         //send alert
-        $this->layout->alert = $alert;
+        $this->layoutData['alert'] = $alert;
 
         // display page edit form
         $this->get_edit($page_id, BlockManager::$to_version);
@@ -809,7 +809,7 @@ class PagesController extends _Base
             // add required modals
             if ($publishingOn) {
                 $intervals = PageVersionSchedule::selectOptions();
-                $this->layout->modals =
+                $this->layoutData['modals'] =
                     View::make('coaster::modals.pages.publish')->render() .
                     View::make('coaster::modals.pages.publish_schedule', ['intervals' => $intervals, 'live_version' => $versionData['live']])->render() .
                     View::make('coaster::modals.pages.request_publish')->render() .

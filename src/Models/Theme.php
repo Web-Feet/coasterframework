@@ -1,8 +1,8 @@
 <?php namespace CoasterCms\Models;
 
-use CoasterCms\Helpers\BlockManager;
-use CoasterCms\Helpers\File;
-use CoasterCms\Helpers\Zip;
+use CoasterCms\Helpers\Core\BlockManager;
+use CoasterCms\Helpers\Core\File\File;
+use CoasterCms\Helpers\General\File\Zip;
 use CoasterCms\Libraries\Builder\ThemeBuilder;
 use DB;
 use Eloquent;

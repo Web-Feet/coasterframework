@@ -21,7 +21,7 @@ if (empty($assetsVersions['app']) || version_compare($assetsVersions['app'], con
     if (!file_exists($coasterPublicFolder . '/app/')) {
         mkdir($coasterPublicFolder . '/app/', 0777, true);
     }
-    \CoasterCms\Helpers\File::copyDirectory(realpath(__DIR__.'/../public/app') , $coasterPublicFolder . '/app/');
+    \CoasterCms\Helpers\Core\File\Directory::copy(realpath(__DIR__.'/../public/app') , $coasterPublicFolder . '/app/');
     echo ".";
 
     $assetsVersions['app'] = config('coaster::site.version');
@@ -44,7 +44,7 @@ if (empty($assetsVersions['bootstrap']) || version_compare($assetsVersions['boot
     ]);
     echo ".";
 
-    $zip = new \CoasterCms\Helpers\Zip;
+    $zip = new \CoasterCms\Helpers\Core\File\Zip;
     $zip->open($bootstrapZip);
     $zip->extractDir('bootstrap-3.3.6-dist', public_path('coaster/bootstrap'));
     $zip->close();
@@ -72,7 +72,7 @@ if (empty($assetsVersions['filemanager']) || version_compare($assetsVersions['fi
     ]);
     echo ".";
 
-    $zip = new \CoasterCms\Helpers\Zip;
+    $zip = new \CoasterCms\Helpers\Core\File\Zip;
     $zip->open($responsiveFileManagerZip);
     $zip->extractDir('filemanager', $responsiveFileManagerLocation);
     $zip->extractDir('tinymce/plugins/responsivefilemanager', public_path('coaster/jquery/tinymce/plugins/responsivefilemanager'));
@@ -80,30 +80,30 @@ if (empty($assetsVersions['filemanager']) || version_compare($assetsVersions['fi
     unlink($responsiveFileManagerZip);
     echo ".";
 
-    \CoasterCms\Helpers\File::insertAtLine($responsiveFileManagerLocation . '/config/config.php', [
+    \CoasterCms\Helpers\Core\File\File::insertAtLine($responsiveFileManagerLocation . '/config/config.php', [
         362 => [
             'require __DIR__ .\'/../../../../vendor/web-feet/coasterframework/hooks/laravel.php\';',
-            '\CoasterCms\Helpers\FileManager::accessCheck();',
-            '\CoasterCms\Helpers\FileManager::setConfig($config, []);',
+            '\CoasterCms\Helpers\Admin\FileManager::accessCheck();',
+            '\CoasterCms\Helpers\Admin\FileManager::setConfig($config, []);',
             ''
         ]
     ]);
-    \CoasterCms\Helpers\File::insertAtLine($responsiveFileManagerLocation . '/dialog.php', [
+    \CoasterCms\Helpers\Core\File\File::insertAtLine($responsiveFileManagerLocation . '/dialog.php', [
         84 => [
-            '\CoasterCms\Helpers\FileManager::setSecureUpload($subdir);'
+            '\CoasterCms\Helpers\Admin\FileManager::setSecureUpload($subdir);'
         ]
     ]);
-    \CoasterCms\Helpers\File::insertAtLine($responsiveFileManagerLocation . '/execute.php', [
+    \CoasterCms\Helpers\Core\File\File::insertAtLine($responsiveFileManagerLocation . '/execute.php', [
         33 => [
-            '\CoasterCms\Helpers\FileManager::setSecureUpload($_POST[\'path\']);'
+            '\CoasterCms\Helpers\Admin\FileManager::setSecureUpload($_POST[\'path\']);'
         ]
     ]);
-    \CoasterCms\Helpers\File::insertAtLine($responsiveFileManagerLocation . '/upload.php', [
+    \CoasterCms\Helpers\Core\File\File::insertAtLine($responsiveFileManagerLocation . '/upload.php', [
         19 => [
-            '   \CoasterCms\Helpers\FileManager::setSecureUpload($_POST[\'path\']);'
+            '   \CoasterCms\Helpers\Admin\FileManager::setSecureUpload($_POST[\'path\']);'
         ],
         24 => [
-            '   \CoasterCms\Helpers\FileManager::setSecureUpload($_POST[\'fldr\']);'
+            '   \CoasterCms\Helpers\Admin\FileManager::setSecureUpload($_POST[\'fldr\']);'
         ]
     ]);
 
@@ -113,8 +113,8 @@ if (empty($assetsVersions['filemanager']) || version_compare($assetsVersions['fi
     fclose($clearResponseFile);
 
     // trans/endsWith func conflict name change
-    \CoasterCms\Helpers\File::replaceString($responsiveFileManagerLocation . '/include/utils.php', 'endsWith(', 'endsWithfm(');
-    \CoasterCms\Helpers\File::replaceString($responsiveFileManagerLocation . '/include/utils.php', '\'trans\'', '\'transfm\'');
+    \CoasterCms\Helpers\Core\File\File::replaceString($responsiveFileManagerLocation . '/include/utils.php', 'endsWith(', 'endsWithfm(');
+    \CoasterCms\Helpers\Core\File\File::replaceString($responsiveFileManagerLocation . '/include/utils.php', '\'trans\'', '\'transfm\'');
     $files = [
         '/ajax_calls.php',
         '/dialog.php',
@@ -124,12 +124,12 @@ if (empty($assetsVersions['filemanager']) || version_compare($assetsVersions['fi
         '/include/utils.php'
     ];
     foreach ($files as $file) {
-        \CoasterCms\Helpers\File::replaceString($responsiveFileManagerLocation . $file, 'trans(', 'transfm(');
+        \CoasterCms\Helpers\Core\File\File::replaceString($responsiveFileManagerLocation . $file, 'trans(', 'transfm(');
     }
 
     // permissions fix
-    \CoasterCms\Helpers\File::replaceString($responsiveFileManagerLocation . '/include/utils.php', 'umask(0)', 'umask()');
-    \CoasterCms\Helpers\File::replaceString($responsiveFileManagerLocation . '/include/utils.php', '0766', 'CoasterCms\Helpers\FileManager::createDirPermissions()');
+    \CoasterCms\Helpers\Core\File\File::replaceString($responsiveFileManagerLocation . '/include/utils.php', 'umask(0)', 'umask()');
+    \CoasterCms\Helpers\Core\File\File::replaceString($responsiveFileManagerLocation . '/include/utils.php', '0766', 'CoasterCms\Helpers\Admin\FileManager::createDirPermissions()');
 
     $assetsVersions['filemanager'] = 'v9.10.1';
     file_put_contents($assetsFile, json_encode($assetsVersions));
@@ -164,7 +164,7 @@ if (empty($assetsVersions['jquery']) || version_compare($assetsVersions['jquery'
         'sink' => $nestedSortableZip
     ]);
 
-    $zip = new \CoasterCms\Helpers\Zip;
+    $zip = new \CoasterCms\Helpers\Core\File\Zip;
     $zip->open($nestedSortableZip);
     $zip->extractFile('nestedSortable-master/jquery.mjs.nestedSortable.js', public_path('coaster/jquery/jquery.mjs.nestedSortable.js'));
     $zip->close();
@@ -176,7 +176,7 @@ if (empty($assetsVersions['jquery']) || version_compare($assetsVersions['jquery'
         'sink' => $fancyBoxZip
     ]);
 
-    $zip = new \CoasterCms\Helpers\Zip;
+    $zip = new \CoasterCms\Helpers\Core\File\Zip;
     $zip->open($fancyBoxZip);
     $zip->extractDir('fancyBox-2.1.5/source', public_path('coaster/jquery/fancybox'));
     $zip->close();
@@ -185,18 +185,18 @@ if (empty($assetsVersions['jquery']) || version_compare($assetsVersions['jquery'
 
     $jQueryFileUploadDir = base_path('vendor/blueimp/jquery-file-upload');
     $jQueryFileUploadPublicDir = public_path('coaster/jquery/gallery-upload');
-    \CoasterCms\Helpers\File::copyDirectory($jQueryFileUploadDir . '/cors', $jQueryFileUploadPublicDir . '/cors');
-    \CoasterCms\Helpers\File::copyDirectory($jQueryFileUploadDir . '/css', $jQueryFileUploadPublicDir . '/css');
-    \CoasterCms\Helpers\File::copyDirectory($jQueryFileUploadDir . '/img', $jQueryFileUploadPublicDir . '/img');
-    \CoasterCms\Helpers\File::copyDirectory($jQueryFileUploadDir . '/js', $jQueryFileUploadPublicDir . '/js');
-    \CoasterCms\Helpers\File::replaceString($jQueryFileUploadDir . '/js/main.js', '        url: \'server/php/\'', '        url: window.location.href.replace(\'/edit/\', \'/update/\')');
+    \CoasterCms\Helpers\Core\File\Directory::copy($jQueryFileUploadDir . '/cors', $jQueryFileUploadPublicDir . '/cors');
+    \CoasterCms\Helpers\Core\File\Directory::copy($jQueryFileUploadDir . '/css', $jQueryFileUploadPublicDir . '/css');
+    \CoasterCms\Helpers\Core\File\Directory::copy($jQueryFileUploadDir . '/img', $jQueryFileUploadPublicDir . '/img');
+    \CoasterCms\Helpers\Core\File\Directory::copy($jQueryFileUploadDir . '/js', $jQueryFileUploadPublicDir . '/js');
+    \CoasterCms\Helpers\Core\File\File::replaceString($jQueryFileUploadDir . '/js/main.js', '        url: \'server/php/\'', '        url: window.location.href.replace(\'/edit/\', \'/update/\')');
     echo ".";
 
     $jQueryFileUploadExternal = $jQueryFileUploadPublicDir . '/Gallery-2.16.0.zip';
     $response = $guzzleClient->request('GET', 'https://github.com/blueimp/Gallery/archive/2.16.0.zip', [
         'sink' => $jQueryFileUploadExternal
     ]);
-    $zip = new \CoasterCms\Helpers\Zip;
+    $zip = new \CoasterCms\Helpers\Core\File\Zip;
     $zip->open($jQueryFileUploadExternal);
     $zip->extractFile('Gallery-2.16.0/js/jquery.blueimp-gallery.min.js', $jQueryFileUploadPublicDir . '/js/external/jquery.blueimp-gallery.min.js');
     $zip->close();
@@ -207,7 +207,7 @@ if (empty($assetsVersions['jquery']) || version_compare($assetsVersions['jquery'
     $response = $guzzleClient->request('GET', 'https://github.com/blueimp/JavaScript-Canvas-to-Blob/archive/2.2.0.zip', [
         'sink' => $jQueryFileUploadExternal
     ]);
-    $zip = new \CoasterCms\Helpers\Zip;
+    $zip = new \CoasterCms\Helpers\Core\File\Zip;
     $zip->open($jQueryFileUploadExternal);
     $zip->extractFile('JavaScript-Canvas-to-Blob-2.2.0/js/canvas-to-blob.min.js', $jQueryFileUploadPublicDir . '/js/external/canvas-to-blob.min.js');
     $zip->close();
@@ -218,7 +218,7 @@ if (empty($assetsVersions['jquery']) || version_compare($assetsVersions['jquery'
     $response = $guzzleClient->request('GET', 'https://github.com/blueimp/JavaScript-Load-Image/archive/1.14.0.zip', [
         'sink' => $jQueryFileUploadExternal
     ]);
-    $zip = new \CoasterCms\Helpers\Zip;
+    $zip = new \CoasterCms\Helpers\Core\File\Zip;
     $zip->open($jQueryFileUploadExternal);
     $zip->extractFile('JavaScript-Load-Image-1.14.0/js/load-image.all.min.js', $jQueryFileUploadPublicDir . '/js/external/load-image.all.min.js');
     $zip->close();
@@ -229,7 +229,7 @@ if (empty($assetsVersions['jquery']) || version_compare($assetsVersions['jquery'
     $response = $guzzleClient->request('GET', 'https://github.com/blueimp/JavaScript-Templates/archive/2.5.5.zip', [
         'sink' => $jQueryFileUploadExternal
     ]);
-    $zip = new \CoasterCms\Helpers\Zip;
+    $zip = new \CoasterCms\Helpers\Core\File\Zip;
     $zip->open($jQueryFileUploadExternal);
     $zip->extractFile('JavaScript-Templates-2.5.5/js/tmpl.min.js', $jQueryFileUploadPublicDir . '/js/external/tmpl.min.js');
     $zip->close();
@@ -241,7 +241,7 @@ if (empty($assetsVersions['jquery']) || version_compare($assetsVersions['jquery'
         'sink' => $select2Zip
     ]);
 
-    $zip = new \CoasterCms\Helpers\Zip;
+    $zip = new \CoasterCms\Helpers\Core\File\Zip;
     $zip->open($select2Zip);
     $zip->extractFile('select2-4.0.2/dist/css/select2.min.css', public_path('coaster/jquery/select2/select2.min.css'));
     $zip->extractFile('select2-4.0.2/dist/js/select2.min.js', public_path('coaster/jquery/select2/select2.min.js'));
@@ -253,7 +253,7 @@ if (empty($assetsVersions['jquery']) || version_compare($assetsVersions['jquery'
         'sink' => $tinyMceZip
     ]);
 
-    $zip = new \CoasterCms\Helpers\Zip;
+    $zip = new \CoasterCms\Helpers\Core\File\Zip;
     $zip->open($tinyMceZip);
     $zip->extractDir('tinymce-dist-4.3.3', public_path('coaster/jquery/tinymce'));
     $zip->close();
@@ -320,7 +320,7 @@ if (empty($assetsVersions['jquery-ui']) || version_compare($assetsVersions['jque
         'sink' => $jQueryUIZip
     ]);
 
-    $zip = new \CoasterCms\Helpers\Zip;
+    $zip = new \CoasterCms\Helpers\Core\File\Zip;
     $zip->open($jQueryUIZip);
     $zip->extractDir('jquery-ui-1.11.4.custom', public_path('coaster/jquery-ui'));
     $zip->close();
@@ -333,12 +333,12 @@ if (empty($assetsVersions['jquery-ui']) || version_compare($assetsVersions['jque
         'sink' => $timePickerZip
     ]);
 
-    $zip = new \CoasterCms\Helpers\Zip;
+    $zip = new \CoasterCms\Helpers\Core\File\Zip;
     $zip->open($timePickerZip);
     $zip->extractFile('jQuery-Timepicker-Addon-1.4/dist/jquery-ui-timepicker-addon.js', $timePickerFile);
     $zip->close();
     unlink($timePickerZip);
-    \CoasterCms\Helpers\File::replaceString($timePickerFile, 'formattedDateTime += this._defaults.separator + this.formattedTime + this._defaults.timeSuffix;', 'formattedDateTime = this.formattedTime + this._defaults.timeSuffix + this._defaults.separator + formattedDateTime;');
+    \CoasterCms\Helpers\Core\File\File::replaceString($timePickerFile, 'formattedDateTime += this._defaults.separator + this.formattedTime + this._defaults.timeSuffix;', 'formattedDateTime = this.formattedTime + this._defaults.timeSuffix + this._defaults.separator + formattedDateTime;');
     echo ".";
 
     $response = $guzzleClient->request('GET', 'https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.2/jquery.ui.touch-punch.min.js', [
@@ -366,7 +366,7 @@ if (empty($assetsVersions['securimage']) || version_compare($assetsVersions['sec
     ]);
     echo ".";
 
-    $zip = new \CoasterCms\Helpers\Zip;
+    $zip = new \CoasterCms\Helpers\Core\File\Zip;
     $zip->open($secureImageZip);
     $zip->extractDir('securimage-3.6.3', public_path('coaster/securimage'));
     $zip->close();

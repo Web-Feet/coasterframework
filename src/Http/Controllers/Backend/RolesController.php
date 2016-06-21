@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
 use Auth;
+use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminAction;
 use CoasterCms\Models\AdminController;
 use CoasterCms\Models\Page;
@@ -11,7 +12,7 @@ use Request;
 use Validator;
 use View;
 
-class RolesController extends _Base
+class RolesController extends Controller
 {
 
     private $_child_pages;
@@ -72,11 +73,11 @@ class RolesController extends _Base
             $content .= View::make('coaster::partials.roles.group', array('group' => $name, 'sections' => $sections[$id]));
         }
 
-        $this->layout->content = View::make('coaster::pages.roles', array('actions' => $content, 'roles' => $roles));
+        $this->layoutData['content'] = View::make('coaster::pages.roles', array('actions' => $content, 'roles' => $roles));
         $copy_roles = $roles;
         $copy_roles[0] = '-- None --';
         ksort($copy_roles);
-        $this->layout->modals = View::make('coaster::modals.roles.add', array('roles' => $copy_roles)) . View::make('coaster::modals.roles.delete', array('roles' => $roles));
+        $this->layoutData['modals'] = View::make('coaster::modals.roles.add', array('roles' => $copy_roles)) . View::make('coaster::modals.roles.delete', array('roles' => $roles));
     }
 
     public function post_actions($role_id = 0)
@@ -180,7 +181,7 @@ class RolesController extends _Base
                 array_push($this->_child_pages[$page->parent], $page);
             }
 
-            $this->layout->content = View::make('coaster::pages.roles.pages', array('pages' => $this->_print_pages(0), 'role' => $this->_role_permissions->name));
+            $this->layoutData['content'] = View::make('coaster::pages.roles.pages', array('pages' => $this->_print_pages(0), 'role' => $this->_role_permissions->name));
         }
     }
 
@@ -272,7 +273,7 @@ class RolesController extends _Base
             $alert->type = 'success';
             $alert->header = 'Page Permissions Updated';
             $alert->content = '';
-            $this->layout->alert = $alert;
+            $this->layoutData['alert'] = $alert;
         }
 
         $this->get_pages($role_id);

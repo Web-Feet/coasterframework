@@ -1,7 +1,6 @@
 <?php namespace CoasterCms\Models;
 
-use CoasterCms\Helpers\BlockManager;
-use DB;
+use CoasterCms\Helpers\Core\BlockManager;
 use Eloquent;
 
 class PageSearchData extends Eloquent

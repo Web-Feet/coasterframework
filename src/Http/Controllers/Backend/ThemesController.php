@@ -1,7 +1,8 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
 use Auth;
-use CoasterCms\Helpers\BlockManager;
+use CoasterCms\Helpers\Core\BlockManager;
+use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Libraries\Builder\ThemeBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockBeacon;
@@ -14,7 +15,7 @@ use Request;
 use URL;
 use View;
 
-class ThemesController extends _Base
+class ThemesController extends Controller
 {
 
     private static $_error;
@@ -46,7 +47,7 @@ class ThemesController extends _Base
             }
         }
 
-        $this->layout->content = View::make('coaster::pages.themes', ['themes' => $themes, 'themes_count' => Theme::count(), 'blockSettings' => $blockSettings]);
+        $this->layoutData['content'] = View::make('coaster::pages.themes', ['themes' => $themes, 'themes_count' => Theme::count(), 'blockSettings' => $blockSettings]);
     }
 
     public function getList()
@@ -113,14 +114,14 @@ class ThemesController extends _Base
         $themes_installed = View::make('coaster::partials.themes.thumbs', ['thumbs' => $thumbs, 'auth' => $theme_auth]);
 
         if (!empty(self::$_error)) {
-            $this->layout->alert = new \stdClass;
-            $this->layout->alert->type = 'danger';
-            $this->layout->alert->header = self::$_error;
-            $this->layout->alert->content = '';
+            $this->layoutData['alert'] = new \stdClass;
+            $this->layoutData['alert']->type = 'danger';
+            $this->layoutData['alert']->header = self::$_error;
+            $this->layoutData['alert']->content = '';
         }
 
-        $this->layout->content = View::make('coaster::pages.themes.list', ['themes_installed' => $themes_installed, 'can_upload' => $theme_auth['manage']]);
-        $this->layout->modals = View::make('coaster::modals.themes.delete').
+        $this->layoutData['content'] = View::make('coaster::pages.themes.list', ['themes_installed' => $themes_installed, 'can_upload' => $theme_auth['manage']]);
+        $this->layoutData['modals'] = View::make('coaster::modals.themes.delete').
             View::make('coaster::modals.themes.export').
             View::make('coaster::modals.themes.install').
             View::make('coaster::modals.themes.install_confirm').
@@ -163,7 +164,7 @@ class ThemesController extends _Base
 
     public function getBeacons()
     {
-        $this->layout->content = View::make('coaster::pages.themes.beacons', ['rows' => BlockBeacon::getTableRows(), 'bitly' => BlockBeacon::bitlyCheck()]);
+        $this->layoutData['content'] = View::make('coaster::pages.themes.beacons', ['rows' => BlockBeacon::getTableRows(), 'bitly' => BlockBeacon::bitlyCheck()]);
     }
 
     public function postBeacons()
@@ -183,7 +184,7 @@ class ThemesController extends _Base
     {
         ThemeBuilder::processFiles($themeId);
 
-        $this->layout->content = View::make('coaster::pages.themes.update',
+        $this->layoutData['content'] = View::make('coaster::pages.themes.update',
             [
                 'theme' => ThemeBuilder::getThemeName(),
                 'blocksData' => ThemeBuilder::getMainTableData(),
@@ -202,7 +203,7 @@ class ThemesController extends _Base
             ThemeBuilder::updateTheme($themeId, $blocks);
         }
 
-        $this->layout->content = View::make('coaster::pages.themes.update',
+        $this->layoutData['content'] = View::make('coaster::pages.themes.update',
             [
                 'theme' => ThemeBuilder::getThemeName(),
                 'saved' => true
@@ -215,7 +216,7 @@ class ThemesController extends _Base
         if ($template) {
             $rules = BlockFormRule::where('form_template', '=', $template)->get();
             $rules = $rules->isEmpty()?[]:$rules;
-            $this->layout->content = View::make('coaster::pages.themes.forms', ['template' => $template, 'rules' => $rules]);
+            $this->layoutData['content'] = View::make('coaster::pages.themes.forms', ['template' => $template, 'rules' => $rules]);
         }
         else {
             $formTemplates = [];
@@ -239,7 +240,7 @@ class ThemesController extends _Base
                     }
                 }
             }
-            $this->layout->content = View::make('coaster::pages.themes.forms', ['templates' => array_unique($formTemplates)]);
+            $this->layoutData['content'] = View::make('coaster::pages.themes.forms', ['templates' => array_unique($formTemplates)]);
         }
     }
 
@@ -306,13 +307,13 @@ class ThemesController extends _Base
                     'fa-4.6' => 'Font Awesome Class List 4.6.1'
                 ];
 
-                $this->layout->content = View::make('coaster::pages.themes.selects', ['block' => $block, 'import' => $import]);
+                $this->layoutData['content'] = View::make('coaster::pages.themes.selects', ['block' => $block, 'import' => $import]);
 
             } else {
 
                 $options = BlockSelectOption::where('block_id', '=', $block_id)->get();
                 $options = $options->isEmpty()?[]:$options;
-                $this->layout->content = View::make('coaster::pages.themes.selects', ['block' => $block, 'options' => $options]);
+                $this->layoutData['content'] = View::make('coaster::pages.themes.selects', ['block' => $block, 'options' => $options]);
 
             }
 
@@ -327,7 +328,7 @@ class ThemesController extends _Base
                 }
             }
 
-            $this->layout->content = View::make('coaster::pages.themes.selects', ['blocks' => $selectBlocks]);
+            $this->layoutData['content'] = View::make('coaster::pages.themes.selects', ['blocks' => $selectBlocks]);
         }
     }
 

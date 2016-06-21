@@ -25,7 +25,7 @@ if (!defined('LARAVEL_START')) {
         file_put_contents($updatesFile, json_encode($updateStatus));
     }
 
-    if (empty($updateStatus['fileManager']) || version_compare($updateStatus['fileManager'], 'v.5.2.31', '<')) {
+    if (empty($updateStatus['fileManager']) || version_compare($updateStatus['fileManager'], 'v.5.3.1', '<')) {
         include __DIR__ . '/fileManagerConfig.php';
         $updateStatus['fileManager'] = config('coaster::site.version');
         file_put_contents($updatesFile, json_encode($updateStatus));

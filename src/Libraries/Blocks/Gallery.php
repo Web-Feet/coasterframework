@@ -1,8 +1,8 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
 use Auth;
-use CoasterCms\Helpers\BlockManager;
-use CoasterCms\Helpers\GalleryUploadHandler;
+use CoasterCms\Helpers\Core\BlockManager;
+use CoasterCms\Helpers\Admin\GAlleryUploadHandler;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;
@@ -21,7 +21,7 @@ class Gallery extends _Base
         $images = array();
         $gallery_data = @unserialize($block_data);
         if (!empty($gallery_data)) {
-            uasort($gallery_data, array('\CoasterCms\Helpers\GalleryUploadHandler', 'order_items'));
+            uasort($gallery_data, array('\CoasterCms\Helpers\Admin\GAlleryUploadHandler', 'order_items'));
             foreach ($gallery_data as $image => $image_data) {
                 $data = new \stdClass;
                 $data->caption = $image_data->caption;

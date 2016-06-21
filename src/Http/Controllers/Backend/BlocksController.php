@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Http\Controllers\Backend;
 
-use CoasterCms\Helpers\BlockManager;
+use CoasterCms\Helpers\Core\BlockManager;
+use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\PageBlockDefault;
 use CoasterCms\Models\PageVersion;
@@ -9,7 +10,7 @@ use Redirect;
 use Request;
 use View;
 
-class BlocksController extends _Base
+class BlocksController extends Controller
 {
 
     public function get_index()
@@ -25,8 +26,8 @@ class BlocksController extends _Base
         $default_blocks = PageBlockDefault::preload();
         $tab_data = BlockManager::tab_contents($blocks, $default_blocks, 'Site-wide Content');
 
-        $this->layout->title = 'Site-wide Content';
-        $this->layout->content = View::make('coaster::pages.blocks', array('tab' => $tab_data));
+        $this->layoutData['title'] = 'Site-wide Content';
+        $this->layoutData['content'] = View::make('coaster::pages.blocks', array('tab' => $tab_data));
     }
 
     public function post_index()
@@ -41,7 +42,7 @@ class BlocksController extends _Base
         $alert->type = 'success';
         $alert->header = 'Site-wide Content Updated';
         $alert->content = '';
-        $this->layout->alert = $alert;
+        $this->layoutData['alert'] = $alert;
 
         return Redirect::to(Request::url());
     }

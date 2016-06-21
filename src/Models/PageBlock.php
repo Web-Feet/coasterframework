@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Models;
 
-use CoasterCms\Helpers\BlockManager;
+use CoasterCms\Helpers\Core\BlockManager;
 use Eloquent;
 
 class PageBlock extends Eloquent

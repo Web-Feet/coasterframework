@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Libraries\Builder;
 
-use CoasterCms\Helpers\BlockManager;
+use CoasterCms\Helpers\Core\BlockManager;
 use CoasterCms\Libraries\Builder\PageBuilder as OriginalPageBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockCategory;
