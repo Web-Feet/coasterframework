@@ -39,7 +39,7 @@
     </div><!--/.container-fluid -->
 </nav>
 
-@if (isset($menu))
+@if (!empty($sections_menu))
     <nav class="navbar navbar-inverse subnav navbar-fixedg-top">
         <div class="container">
             <div class="navbar-header">
@@ -53,16 +53,16 @@
             </div>
             <div id="navbar2" class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
-                    {!! $menu !!}
+                    {!! $sections_menu !!}
                 </ul>
             </div><!--/.nav-collapse -->
         </div><!--/.container-fluid -->
     </nav>
 @endif
 
-<div class="container{{ !isset($menu)?' loginpanel':'' }}" id="content-wrap">
+<div class="container{{ empty($sections_menu)?' loginpanel':'' }}" id="content-wrap">
     <div class="row">
-        <div class="{{ isset($menu)?'col-sm-12':'col-sm-4 col-sm-offset-4' }}">
+        <div class="{{ empty($sections_menu)?'col-sm-4 col-sm-offset-4':'col-sm-12' }}">
             <div class="alert alert-success" id="cms_notification" style="display: none;">
                 <button type="button" class="close" data-dismiss="alert">&times;</button>
                 <h4 class="note_header"></h4>

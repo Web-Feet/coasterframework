@@ -1,26 +1,26 @@
 <?php
 
-Route::group(['middleware' => ['web', 'guest']], function () {
+Route::group(['middleware' => ['web', 'coaster.guest']], function () {
     // auth routes
-    Route::get(config('coaster::admin.url') . '/login', 'CoasterCms\Http\Controllers\Backend\AuthController@getLogin');
-    Route::post(config('coaster::admin.url') . '/login', 'CoasterCms\Http\Controllers\Backend\AuthController@postLogin');
+    Route::get(config('coaster::admin.url') . '/login', 'CoasterCms\Http\Controllers\AdminControllers\AuthController@getLogin');
+    Route::post(config('coaster::admin.url') . '/login', 'CoasterCms\Http\Controllers\AdminControllers\AuthController@postLogin');
 
     // user account routes
-    Route::any(config('coaster::admin.url') . '/forgotten_password', 'CoasterCms\Http\Controllers\Backend\AccountController@forgotten_password');
-    Route::any(config('coaster::admin.url') . '/change_password/{all}', 'CoasterCms\Http\Controllers\Backend\AccountController@change_password')->where('all', '.*');
+    Route::any(config('coaster::admin.url') . '/forgotten_password', 'CoasterCms\Http\Controllers\AdminControllers\AccountController@forgotten_password');
+    Route::any(config('coaster::admin.url') . '/change_password/{all}', 'CoasterCms\Http\Controllers\AdminControllers\AccountController@change_password')->where('all', '.*');
 });
 
-Route::group(['middleware' => ['web', 'admin']], function () {
+Route::group(['middleware' => ['web', 'coaster.admin']], function () {
     // admin root
-    Route::get(config('coaster::admin.url'), 'CoasterCms\Http\Controllers\Backend\HomeController@getIndex');
+    Route::get(config('coaster::admin.url'), 'CoasterCms\Http\Controllers\AdminControllers\HomeController@getIndex');
 
     // auth logout
-    Route::get(config('coaster::admin.url') . '/logout', 'CoasterCms\Http\Controllers\Backend\AuthController@getLogout');
+    Route::get(config('coaster::admin.url') . '/logout', 'CoasterCms\Http\Controllers\AdminControllers\AuthController@getLogout');
 
     // admin controllers
     foreach (CoasterCms\Models\AdminController::preload_all() as $controller) {
         if (!empty($controller->controller)) {
-            $adminController = 'CoasterCms\Http\Controllers\Backend\\' . ucwords($controller->controller) . 'Controller';
+            $adminController = 'CoasterCms\Http\Controllers\AdminControllers\\' . ucwords($controller->controller) . 'Controller';
             $adminControllerMethods = get_class_methods($adminController);
             foreach ($adminControllerMethods as $adminControllerMethod) {
                 $methodParts = explode('_', snake_case($adminControllerMethod));
@@ -50,4 +50,4 @@ Route::group(['middleware' => ['web', 'admin']], function () {
 });
 
 // catch invalid admin routes
-Route::any(config('coaster::admin.url').'/{all}', 'CoasterCms\Http\Controllers\AdminController@catchAll')->where('all', '.*');
+Route::any(config('coaster::admin.url').'{other}', 'CoasterCms\Http\Controllers\AdminController@catchAll')->where('other', '.*');

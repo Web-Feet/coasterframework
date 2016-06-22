@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Providers;
 
 use App;
+use CoasterCms\Helpers\Core\Install;
 use CoasterCms\Models\Setting;
 use File;
 use Illuminate\Support\ServiceProvider;
@@ -32,24 +33,13 @@ class CmsSettingsProvider extends ServiceProvider
         }
 
         Setting::loadAll(__DIR__ . '/../../config', 'coaster', $db);
-        // override croppa settings
-        $this->app['config']['croppa.src_dir'] = public_path();
-        $this->app['config']['croppa.crops_dir'] = public_path() . '/cache';
-        $this->app['config']['croppa.path'] = 'cache/(' . config('coaster::frontend.croppa_handle') . ')$';
 
-        $storagePath = storage_path(config('coaster::site.storage_path')) . '/';
-        if (File::exists($storagePath.'install.txt') && strpos(File::get($storagePath.'install.txt'), 'complete') !== false) {
-            $this->app['config']['coaster::installed'] = 1;
+        if (Install::isComplete()) {
             if (!$db) {
-                die('Database error, settings table could not be found');
+                abort(503, 'Database error, settings table could not be found');
             }
-        } else {
-            $this->app['config']['coaster::installed'] = 0;
         }
 
-        if (App::runningInConsole()) {
-            include __DIR__ . '/../../updates/_run.php';
-        }
     }
 
     /**

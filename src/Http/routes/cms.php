@@ -15,4 +15,4 @@ Route::get('uploads/{file_path}', ['middleware' => ['auth'], function($file_path
 }])->where('file_path', '.*');
 
 // catch all (rest must be cms pages)
-Route::any('{all}', 'CoasterCms\Http\Controllers\Frontend\PageLoaderController@index')->where('all', '.*');
+Route::any('{other}', 'CoasterCms\Http\Controllers\CmsController@generatePage')->where('other', '.*');

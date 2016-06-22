@@ -2,6 +2,7 @@
 
 use App;
 use Auth;
+use CoasterCms\Helpers\Core\Install;
 use CoasterCms\Http\MiddleWare\AdminAuth;
 use CoasterCms\Http\MiddleWare\GuestAuth;
 use Illuminate\Support\ServiceProvider;
@@ -26,11 +27,24 @@ class CmsServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->loadViewsFrom(base_path(trim(config('coaster::admin.view'), '/')), 'coaster');
-
+        // override auth settings
         $this->app['config']['auth.guards.web.driver'] = 'coaster';
         $this->app['config']['auth.providers.users.model'] = Models\User::class;
 
+        // override croppa settings
+        $this->app['config']['croppa.src_dir'] = public_path();
+        $this->app['config']['croppa.crops_dir'] = public_path() . '/cache';
+        $this->app['config']['croppa.path'] = 'cache/(' . config('coaster::frontend.croppa_handle') . ')$';
+
+        // add router middleware
+        $router = $this->app['router'];
+        $router->middleware('coaster.admin', AdminAuth::class);
+        $router->middleware('coaster.guest', GuestAuth::class);
+
+        // load coaster views
+        $this->loadViewsFrom(base_path(trim(config('coaster::admin.view'), '/')), 'coaster');
+
+        // use coater guard and user provider
         Auth::extend('coaster', function ($app, $name, array $config) {
             return new Helpers\Core\CoasterGuard(
                 'coasterguard',
@@ -40,24 +54,18 @@ class CmsServiceProvider extends ServiceProvider
             );
         });
 
+        // set cookie jar for cookies
         Auth::setCookieJar($this->app['cookie']);
 
-        if ($this->app['config']['coaster::installed']) {
-            if (!App::runningInConsole()) {
-                include __DIR__ . '/Http/adminRoutes.php';
-                include __DIR__ . '/Http/cmsRoutes.php';
-            }
-        } else {
-            if (!App::runningInConsole()) {
-                Route::controller('install', 'CoasterCms\Http\Controllers\Frontend\InstallController');
-                if (!Request::is('install') && !Request::is('install/*')) {
-                    \redirect('install')->send();
-                }
-            } else {
-                echo "Coaster Framework: CMS awaiting install, go to a web browser to complete installation\r\n";
-            }
+        // run routes if not in console
+        if (!App::runningInConsole()) {
+            include __DIR__ . '/Http/routes.php';
         }
 
+        // if in console and not installed, display notice
+        if (App::runningInConsole() && !Install::isComplete()) {
+            echo "Coaster Framework: CMS awaiting install, go to a web browser to complete installation\r\n";
+        }
     }
 
     /**
@@ -69,10 +77,6 @@ class CmsServiceProvider extends ServiceProvider
     {
         // load cms settings first
         $this->app->register('CoasterCms\Providers\CmsSettingsProvider');
-
-        $router = $this->app['router'];
-        $router->middleware('admin', AdminAuth::class);
-        $router->middleware('guest', GuestAuth::class);
 
         // register other providers
         $this->app->register('Bkwld\Croppa\ServiceProvider');

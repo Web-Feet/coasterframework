@@ -10,8 +10,6 @@ use View;
 class AdminController extends Controller
 {
 
-    protected $modelName;
-    
     protected $layout;
     protected $layoutData;
     
@@ -19,24 +17,22 @@ class AdminController extends Controller
     
     public function __construct()
     {
-        $modelPlural = ucwords(Request::segment(2));
-        $this->modelName = str_singular($modelPlural);
-        
+
         View::make('coaster::asset_builder.main')->render();
         
         $this->layout = 'coaster::template.main';
         $this->layoutData = [
             'site_name' => config('coaster::site.name'),
-            'title' => $modelPlural,
+            'title' => ucwords(Request::segment(2)),
             'system_menu' => AdminMenu::getSystemMenu(),
-            'menu' => '',
+            'sections_menu' => '',
             'modals' => '',
             'content' => '',
         ];
 
         if (Auth::admin()) {
             $this->user = Auth::user();
-            $this->layoutData['menu'] = AdminMenu::getSectionsMenu();
+            $this->layoutData['sections_menu'] = AdminMenu::getSectionsMenu();
         }
 
     }

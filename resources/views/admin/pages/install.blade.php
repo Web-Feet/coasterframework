@@ -10,7 +10,7 @@
 
 @elseif ($stage == 'theme')
 
-    {!! Form::open(['url' => Request::url()]) !!}
+    {!! Form::open(['url' => route('coaster.install.themeInstall')]) !!}
 
     <p>Select a theme to use</p>
     <p>&nbsp;</p>
@@ -33,7 +33,7 @@
 
 @elseif ($stage == 'adduser')
 
-    {!! Form::open(['url' => Request::url()]) !!}
+    {!! Form::open(['url' => route('coaster.install.adminSave')]) !!}
 
     <p>Set up the admin user</p>
     <p>&nbsp;</p>
@@ -60,7 +60,7 @@
 
 @elseif ($stage == 'database')
 
-    {!! Form::open(['url' => Request::url()]) !!}
+    {!! Form::open(['url' => route('coaster.install.databaseSave')]) !!}
 
     <p>Set up the database connection</p>
     <p>&nbsp;</p>

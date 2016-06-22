@@ -1,4 +1,4 @@
-<?php namespace CoasterCms\Http\Controllers\Backend;
+<?php namespace CoasterCms\Http\Controllers\AdminControllers;
 
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\PageSearchLog;

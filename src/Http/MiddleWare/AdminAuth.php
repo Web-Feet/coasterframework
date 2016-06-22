@@ -27,7 +27,7 @@ class AdminAuth
             }
         }
 
-        return \redirect()->action('\CoasterCms\Http\Controllers\Backend\AuthController@getLogin')
+        return \redirect()->action('\CoasterCms\Http\Controllers\AdminControllers\AuthController@getLogin')
             ->withCookie(cookie('login_path', $request->getRequestUri()));
     }
 

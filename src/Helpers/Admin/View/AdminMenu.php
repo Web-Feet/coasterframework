@@ -62,7 +62,8 @@ class AdminMenu
 
         $systemMenu = '';
         foreach ($systemMenuItems as $systemMenuItem => $details) {
-            $systemMenu .= View::make('coaster::menus.system.item', ['item' => $systemMenuItem] + $details)->render();
+            $details = ['item' => $systemMenuItem] + $details;
+            $systemMenu .= View::make('coaster::menus.system.item', $details)->render();
         }
 
         return $systemMenu;
@@ -73,7 +74,6 @@ class AdminMenu
     {
         // load menu items
         $menuItems = \CoasterCms\Models\AdminMenu::orderBy('order', 'asc')->get();
-
         $menu = [];
         foreach ($menuItems as $menuItem) {
             if (!isset($menu[$menuItem->parent])) {
@@ -83,30 +83,31 @@ class AdminMenu
         }
 
         // admin menu generation
-        $admin_menu = '';
+        $adminMenu = '';
         foreach ($menu[0] as $topLevelItem) {
             if (Auth::action($topLevelItem->action_id)) {
 
-                $topLevelItem->url = self::_itemUrl($topLevelItem->action_id);
-                $sub_menu_items = '';
-
+                // check if top level item has sub menu
+                $subMenuItems = '';
                 if (!empty($menu[$topLevelItem->id])) {
                     $items = '';
-                    foreach ($menu[$topLevelItem->id] as $key => &$sub_menu_item) {
-                        if (Auth::action($sub_menu_item->action_id)) {
-                            $sub_menu_item->url = self::_itemUrl($sub_menu_item->action_id);
-                            $items .= View::make('coaster::menus.sections.subitem', array('item' => $sub_menu_item))->render();
+                    foreach ($menu[$topLevelItem->id] as $key => $subMenuItem) {
+                        if (Auth::action($subMenuItem->action_id)) {
+                            $items .= View::make('coaster::menus.sections.subitem', ['item' => $subMenuItem, 'url' => self::_itemUrl($subMenuItem->action_id)])->render();
                         }
                     }
                     if ($items) {
-                        $sub_menu_items = View::make('coaster::menus.sections.submenu', array('items' => $items))->render();
+                        $subMenuItems = View::make('coaster::menus.sections.submenu', ['items' => $items])->render();
                     }
                 }
-                $admin_menu .= View::make('coaster::menus.sections.item', array('sub_menu' => $sub_menu_items, 'item' => $topLevelItem))->render();
+
+                // get top level item view
+                $adminMenu .= View::make('coaster::menus.sections.item', ['sub_menu' => $subMenuItems, 'item' => $topLevelItem, 'url' => self::_itemUrl($topLevelItem->action_id)])->render();
+
             }
         }
         
-        return $admin_menu;
+        return $adminMenu;
     }
 
     /**
@@ -119,7 +120,6 @@ class AdminMenu
 
             /** @var AdminAction $adminAction */
             $adminAction = AdminAction::preload($actionId);
-
 
             if (!empty($adminAction)) {
 
