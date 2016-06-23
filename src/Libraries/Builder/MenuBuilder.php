@@ -7,19 +7,35 @@ use View;
 
 class MenuBuilder
 {
+    /**
+     * @var string
+     */
     private static $_view;
 
-    public static function set_view($view)
+    /**
+     * @param string $view
+     */
+    public static function setView($view)
     {
-        if (View::exists('themes.' . PageBuilder::$theme . '.menus.' . $view . '.menu') && View::exists('themes.' . PageBuilder::$theme . '.menus.' . $view . '.item')) {
-            self::$_view = $view;
-            return true;
+        self::$_view = $view;
+    }
+
+    /**
+     * @param string $viewPath
+     * @param array $data
+     * @return string
+     */
+    protected static function _getRenderedView($viewPath, $data = [])
+    {
+        $viewPath = 'themes.' . PageBuilder::$theme . '.menus.' . self::$_view . '.' . $viewPath;
+        if (View::exists($viewPath)) {
+            return View::make($viewPath, $data)->render();
         } else {
-            return false;
+            return 'View not found (' . $viewPath . ')';
         }
     }
 
-    public static function build_menu($items, $level = 1, $sub_levels = 0)
+    public static function buildMenu($items, $level = 1, $sub_levels = 0)
     {
         // remove pages that aren't live and convert page models to menu items
         foreach ($items as $k => $item) {
@@ -39,20 +55,21 @@ class MenuBuilder
         }
 
         $page_parents = array();
-        if (!empty(PageBuilder::$page_levels)) {
-            foreach (PageBuilder::$page_levels as $k => $parent_page) {
-                if ($k > 0) $page_parents[] = $parent_page->page_id;
-            }
+        $pageLevels = PageBuilder::$pageLevels?:[];
+        foreach ($pageLevels as $k => $parent_page) {
+            if ($k > 0) $page_parents[] = $parent_page->page_id;
         }
+        $currentPage = PageBuilder::$page?:new Page;
 
-        $i = 1;
-        $is_last = false;
-        $is_first = true;
         $total = count($items);
         $menu_items = '';
         $item_data = new \stdClass;
         $default_sub_levels = $sub_levels;
-        foreach ($items as $item) {
+        $items = array_values($items->all());
+        foreach ($items as $count => $item) {
+            $is_first = ($count == 1);
+            $is_last = ($count == $total);
+
             $custom_name = trim($item->custom_name);
             if (!empty($custom_name)) {
                 $item_data->name = $custom_name;
@@ -64,7 +81,7 @@ class MenuBuilder
             } else {
                 $item_data->url = PageLang::full_url($item->page_id);
             }
-            if ((!empty(PageBuilder::$page_info) && PageBuilder::$page_info->page_id == $item->page_id) || in_array($item->page_id, $page_parents)) {
+            if ($currentPage->id == $item->page_id || in_array($item->page_id, $page_parents)) {
                 $item_data->active = true;
             } else {
                 $item_data->active = false;
@@ -80,24 +97,19 @@ class MenuBuilder
                 $child_page_ids = Page::child_page_ids($item->page->id);
                 if (!empty($child_page_ids)) {
                     $sub_pages = Page::get_ordered_pages($child_page_ids);
-                    $sub_menu = self::build_menu($sub_pages, $level + 1, $sub_levels - 1);
+                    $sub_menu = self::buildMenu($sub_pages, $level + 1, $sub_levels - 1);
                 }
             }
 
-            if ($i == $total) {
-                $is_last = true;
-            }
-            if (!empty($sub_menu) && View::exists('themes.' . PageBuilder::$theme . '.menus.' . self::$_view . '.submenu_' . $level)) {
-                $menu_items .= View::make('themes.' . PageBuilder::$theme . '.menus.' . self::$_view . '.submenu_' . $level, array('item' => $item_data, 'items' => $sub_menu, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $total, 'level' => $level, 'further_levels' => $sub_levels))->render();
+            if (!empty($sub_menu)) {
+                $menu_items .= self::_getRenderedView('submenu_' . $level, array('item' => $item_data, 'items' => $sub_menu, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $count, 'total' => $total, 'level' => $level, 'further_levels' => $sub_levels));
             } else {
-                $menu_items .= View::make('themes.' . PageBuilder::$theme . '.menus.' . self::$_view . '.item', array('item' => $item_data, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $total, 'level' => $level))->render();
+                $menu_items .= self::_getRenderedView('item', array('item' => $item_data, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $count, 'total' => $total, 'level' => $level));
             }
-            $i++;
-            $is_first = false;
         }
 
         if ($level == 1) {
-            return View::make('themes.' . PageBuilder::$theme . '.menus.' . self::$_view . '.menu', array('items' => $menu_items));
+            return self::_getRenderedView('menu', array('items' => $menu_items));
         } else {
             return $menu_items;
         }

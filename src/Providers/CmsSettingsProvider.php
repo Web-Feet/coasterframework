@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Providers;
 
 use App;
-use CoasterCms\Helpers\Core\Install;
+use CoasterCms\Helpers\Core\Page\Install;
 use CoasterCms\Models\Setting;
 use File;
 use Illuminate\Support\ServiceProvider;

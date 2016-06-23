@@ -8,6 +8,8 @@ use CoasterCms\Models\BlockFormRule;
 use CoasterCms\Models\BlockRepeater;
 use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\Menu;
+use CoasterCms\Models\Page;
+use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\TemplateBlock;
 use CoasterCms\Models\Theme;
@@ -20,9 +22,10 @@ class ThemeBuilder
 
     // default properties from PageBuilder class
     public static $theme;
-    public static $page_info;
+    public static $template;
+    public static $page;
     public static $preview = false;
-    public static $page_levels = [];
+    public static $pageLevels = [];
 
     // current settings
     private static $_theme;
@@ -180,14 +183,15 @@ class ThemeBuilder
             }
 
             self::$theme = self::$_theme->theme;
-            self::$page_info = new \stdClass;
-            self::$page_info->name = '';
-            self::$page_info->url = '';
-            self::$page_info->page_id = 0;
-            self::$page_info->live_version = 0;
+            self::$page = new Page;
+            self::$page->id = 0;
+            self::$page->page_lang = new PageLang;
+            self::$page->page_lang->name = '';
+            self::$page->page_lang->url = '';
+            self::$page->page_lang->live_version = 0;
 
             OriginalPageBuilder::$theme = self::$theme;
-            OriginalPageBuilder::$page_info = self::$page_info;
+            OriginalPageBuilder::$page = self::$page;
 
             if (is_dir($themePath)) {
                 self::$_fileTemplateBlocks = [];
@@ -197,7 +201,7 @@ class ThemeBuilder
                 }
                 foreach (scandir($themePath) as $templateFile) {
                     if (self::$_template = explode('.', $templateFile)[0]) {
-                        self::$page_info->template_name = self::$_template;
+                        self::$template = self::$_template;
                         self::$_fileTemplateBlocks[self::$_template] = [];
                         View::make('themes.' . self::$_theme->theme . '.templates.' . self::$_template)->render();
                         if (self::$_error) {

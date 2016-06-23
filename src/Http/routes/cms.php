@@ -1,7 +1,7 @@
 <?php
 
 // Files override to enable hosting secure docs
-Route::get('uploads/{file_path}', ['middleware' => ['auth'], function($file_path)
+Route::get('uploads/{file_path}', ['middleware' => ['web', 'auth'], function($file_path)
 {
     $file_full_path = storage_path().'/uploads/'.$file_path;
 

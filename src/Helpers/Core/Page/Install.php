@@ -1,4 +1,4 @@
-<?php namespace CoasterCms\Helpers\Core;
+<?php namespace CoasterCms\Helpers\Core\Page;
 
 use File;
 use Route;

@@ -58,7 +58,7 @@ class PageLang extends Eloquent
         if (!empty(self::$preloaded_page_lang[$page_id])) {
             return self::$preloaded_page_lang[$page_id]->url;
         } else {
-            return null;
+            return '';
         }
     }
 
@@ -71,7 +71,7 @@ class PageLang extends Eloquent
         if (!empty(self::$preloaded_page_lang[$page_id])) {
             return self::$preloaded_page_lang[$page_id]->name;
         } else {
-            return null;
+            return '';
         }
     }
 
@@ -87,7 +87,7 @@ class PageLang extends Eloquent
         if (!empty(self::$preloaded_full_paths[$page_id])) {
             return self::$preloaded_full_paths[$page_id]->full_url;
         } else {
-            return null;
+            return '';
         }
     }
 
@@ -97,7 +97,7 @@ class PageLang extends Eloquent
         if (!empty(self::$preloaded_full_paths[$page_id])) {
             return str_replace('{sep}', $sep, self::$preloaded_full_paths[$page_id]->full_name);
         } else {
-            return null;
+            return '';
         }
     }
 

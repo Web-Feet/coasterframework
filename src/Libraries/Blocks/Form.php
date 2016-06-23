@@ -36,8 +36,7 @@ class Form extends _Base
                 $options['files'] = !empty($options['files'])?$options['files']:true;
                 $options['id'] = !empty($options['id'])?$options['id']:'form' . $block->id;
                 $form_fields = View::make($template, array('form_data' => $form_data))->render();
-                $page_id = !empty(PageBuilder::$page_info) ? PageBuilder::$page_info->page_id : 0;
-                return View::make('coaster::frontend.form_wrap', array('block_id' => $block->id, 'page_id' => $page_id, 'form_attrs' => $options, 'form_fields' => $form_fields));
+                return View::make('coaster::frontend.form_wrap', array('block_id' => $block->id, 'page_id' => PageBuilder::pageId(), 'form_attrs' => $options, 'form_fields' => $form_fields));
             } else {
                 return 'Form template not found';
             }
@@ -110,7 +109,7 @@ class Form extends _Base
     public static function submission($form_data)
     {
         if (PageBuilder::$external_template) {
-            $form_data = $form_data[config('coaster::frontend.external_form')];
+            $form_data = $form_data[config('coaster::frontend.external_form_input')];
         }
 
         $default_rules = array(
@@ -122,7 +121,7 @@ class Form extends _Base
         $v = Validator::make($form_data, $default_rules);
         if ($v->passes() && empty($form_data['email_check'])) {
             // load form settings
-            $live_version = !empty(PageBuilder::$page_info) ? PageBuilder::$page_info->live_version : 0;
+            $live_version = PageBuilder::pageLiveVersionId();
             $form_settings = BlockManager::get_block($form_data['block_id'], $form_data['page_id'], null, $live_version);
             if (empty($form_settings)) {
                 // check if forms a global block
@@ -186,7 +185,7 @@ class Form extends _Base
                         }
                     }
 
-                    $form_submission->from_page_id = PageBuilder::page_id();
+                    $form_submission->from_page_id = PageBuilder::pageId();
                     $form_submission->content = serialize($form_data);
                     $form_submission->save();
 
@@ -225,14 +224,16 @@ class Form extends _Base
                             }
                         }
 
-                        $mail_template_folder = is_dir(base_path('/resources/views/themes/' . PageBuilder::$theme . '/emails/' . $form_settings->template)) ? $form_settings->template . '.' : '';
-                        if (!View::exists('themes.' . PageBuilder::$theme . '.emails.' . $mail_template_folder . 'default')) {
+                        $emailsViews = 'themes.' . PageBuilder::$theme . '.emails';
+                        $emailsViews = $emailsViews . (View::exists($emailsViews . '.' . $form_settings->template . '.default') ?  $form_settings->template : '');
+
+                        if (!View::exists($emailsViews)) {
                             return 'No default email template';
                         }
-                        $send_template = $mail_template_folder . 'default';
-                        $reply_template = View::exists('themes.' . PageBuilder::$theme . '.emails.' . $mail_template_folder . 'reply') ? $mail_template_folder . 'reply' : $send_template;
+                        $sendTemplate = $emailsViews . '.default';
+                        $replyTemplate = View::exists($emailsViews . 'reply') ? $emailsViews . 'reply' : $sendTemplate;
 
-                        Mail::send('themes.' . PageBuilder::$theme . '.emails.' . $send_template, array('body' => $body, 'form_data' => $form_data), function ($message) use ($email_details) {
+                        Mail::send($sendTemplate, array('body' => $body, 'form_data' => $form_data), function ($message) use ($email_details) {
                             if ($email_details['reply']) {
                                 $message->from($email_details['reply']);
                             } else {
@@ -243,7 +244,7 @@ class Form extends _Base
                         });
 
                         if ($email_details['reply']) {
-                            Mail::send('themes.' . PageBuilder::$theme . '.emails.' . $reply_template, array('body' => $body, 'form_data' => $form_data), function ($message) use ($email_details) {
+                            Mail::send($replyTemplate, array('body' => $body, 'form_data' => $form_data), function ($message) use ($email_details) {
                                 $message->to($email_details['reply']);
                                 $message->from($email_details['reply']);
                                 $message->subject($email_details['subject']);
@@ -258,7 +259,7 @@ class Form extends _Base
                         }
                     }
                     Session::set('form_data', $form_submission);
-                    return Redirect::to(PageBuilder::page_url($form_settings->page_to));
+                    return Redirect::to(PageBuilder::pageUrl($form_settings->page_to));
                 } else {
                     FormMessage::set($v->messages());
                     if (!$captcha) {

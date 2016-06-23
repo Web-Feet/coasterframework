@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Http\Controllers\AdminControllers;
 
 use Auth;
-use CoasterCms\Helpers\Core\Install;
+use CoasterCms\Helpers\Core\Page\Install;
 use CoasterCms\Helpers\Core\View\PaginatorRender;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminLog;

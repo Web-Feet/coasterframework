@@ -1,7 +1,8 @@
 <?php namespace CoasterCms\Libraries\Builder;
 
-use CoasterCms\Exceptions\PageLoadException;
-use CoasterCms\Helpers\Core\Feed;
+use CoasterCms\Helpers\Core\Page\PageLoader;
+use CoasterCms\Helpers\Core\View\Classes\BreadCrumb;
+use CoasterCms\Helpers\Core\View\Classes\FullPage;
 use CoasterCms\Helpers\Core\View\PaginatorRender;
 use CoasterCms\Libraries\Blocks\Image;
 use CoasterCms\Libraries\Blocks\Repeater;
@@ -13,8 +14,6 @@ use CoasterCms\Models\PageBlock;
 use CoasterCms\Models\PageBlockDefault;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\PageSearchData;
-use CoasterCms\Models\PageVersion;
-use CoasterCms\Models\PageVersionSchedule;
 use CoasterCms\Models\Setting;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
@@ -26,222 +25,367 @@ use View;
 class PageBuilder
 {
 
-    public static $theme = 'default';
-    public static $page_info;
-    public static $page_levels;
-    public static $page_id;
+    /**
+     * @var Page
+     */
+    public static $pageOverride;
 
-    public static $external_template = false;
-    public static $search_not_found = false;
-    public static $preview = false;
+    /**
+     * @var Page
+     */
+    public static $page;
 
-    private static $_cat_links = array();
+    /**
+     * @var Page[]
+     */
+    public static $pageLevels;
 
-    private static $_custom_block_data = array();
-    private static $_custom_block_data_current_key = 0;
+    /**
+     * @var string
+     */
+    public static $template;
 
-    public static function set_page($theme_id)
+    /**
+     * @var string
+     */
+    public static $theme;
+
+    /**
+     * @var bool
+     */
+    public static $is404;
+
+    /**
+     * @var bool
+     */
+    public static $isPreview;
+
+    /**
+     * @var bool
+     */
+    public static $isLive;
+
+    /**
+     * @var bool
+     */
+    public static $hasSearch;
+
+    /**
+     * @var string|false
+     */
+    public static $externalTemplate;
+
+    /**
+     * @var string|false
+     */
+    public static $feedExtension;
+
+    /**
+     * @var string|false
+     */
+    public static $searchQuery;
+
+    /**
+     * @var array
+     */
+    protected static $_pageCategoryLinks;
+
+    /**
+     * @var array
+     */
+    protected static $_customBlockData;
+
+    /**
+     * @var int
+     */
+    protected static $_customBlockDataKey;
+
+    /**
+     * @param int $themeId
+     */
+    public static function setTheme($themeId)
     {
-
-        // load theme/template
-        $theme = Theme::find($theme_id);
+        $theme = Theme::find($themeId);
         if (!empty($theme) && is_dir(base_path('/resources/views/themes/' . $theme->theme))) {
             self::$theme = $theme->theme;
-        }
-
-        // load language
-        $check_in_language = array(Language::current());
-        if (config('coaster::frontend.language_fallback') == 1) {
-            $check_in_language[] = config('coaster::frontend.language');
-        }
-
-        // load page info
-        $url_parts = count(Request::segments());
-        $page_level = array();
-
-        // check root
-        if ($url_parts == 1 && substr(Request::segment(1), 0, 5) == 'root.') {
-            if (Feed::$extension = Feed::check_exists(self::$theme, Request::segment(1))) {
-                $url_parts = 0;
-            }
-        }
-
-        foreach ($check_in_language as $language) {
-            // check for home page
-            if (empty($url_parts)) {
-                $page_level[1] = Page::join('page_lang', 'page_lang.page_id', '=', 'pages.id')->where(function ($query) {
-                    $query->where('page_lang.url', '=', '/')->orWhere('page_lang.url', '=', '');
-                })->where('page_lang.language_id', '=', $language)->where('parent', '=', 0)->first();
-                if (!empty($page_level[1])) {
-                    $url_parts = 1;
-                    break;
-                }
-            } // check internals
-            else {
-                $page_level[0] = Page::join('page_lang', 'page_lang.page_id', '=', 'pages.id')->where(function ($query) {
-                    $query->where('page_lang.url', '=', '/')->orWhere('page_lang.url', '=', '');
-                })->where('page_lang.language_id', '=', $language)->where('parent', '=', 0)->first();
-                if (!empty($page_level[0])) {
-                    $parent = 0;
-                    for ($i = 1; $i <= $url_parts; $i++) {
-                        $current_segment = Request::segment($i);
-                        // check for feed templates
-                        if ($url_parts == $i) {
-                            if (Feed::$extension = Feed::check_exists(self::$theme, $current_segment)) {
-                                $current_segment = substr($current_segment, 0, -(1 + strlen(Feed::$extension)));
-                            }
-                        }
-                        if ($i > 1) {
-                            $parent = $page_level[$i - 1]->page_id;
-                        }
-                        $page_level[$i] = Page::join('page_lang', 'page_lang.page_id', '=', 'pages.id')->where('page_lang.url', '=', $current_segment)->where('page_lang.language_id', '=', $language)->where('parent', '=', $parent)->first();
-                        if (empty($page_level[$i])) {
-                            // group page check
-                            if ($i == $url_parts && $page_level[$i - 1]->group_container > 0) {
-                                $page_level[$i] = Page::join('page_lang', 'page_lang.page_id', '=', 'pages.id')->where('page_lang.url', '=', $current_segment)->where('page_lang.language_id', '=', $language)->where('in_group', '=', $page_level[$i - 1]->group_container)->first();
-                            }
-                            // check for search query
-                            if (empty($page_level[$i]) && in_array('search', array($current_segment, Request::segment($i - 1)))) {
-                                unset($page_level[$i]);
-                                $url_parts = $i - 1;
-                                self::$search_not_found = true;
-                            }
-                            break;
-                        }
-                    }
-                    if (!empty($page_level[$i])) {
-                        break;
-                    }
-                }
-            }
-        }
-
-        // run page version scheduler thingy
-        $newPublishedVersions = PageVersionSchedule::checkPageVersionIds();
-
-        // if page was not found, 404
-        if (empty($page_level[$url_parts])) {
-            throw new PageLoadException('page not found');
         } else {
-            foreach ($page_level as $k => $page) {
-                if (isset($newPublishedVersions[$page->page_id])) {
-                    $page_level[$k]->live_version = $newPublishedVersions[$page->page_id];
-                }
-            }
-            self::$page_id = $page_level[$url_parts]->page_id;
-            self::$page_info = clone $page_level[$url_parts];
-            self::$page_levels = $page_level;
-        }
-
-        $preview_key = Request::input('preview');
-        if (!empty($preview_key)) {
-            $page_version = PageVersion::where('page_id', '=', self::$page_info->page_id)->where('preview_key', '=', $preview_key)->first();
-            if (!empty($page_version)) {
-                self::$page_info->live_version = $page_version->version_id;
-                self::$page_info->template = $page_version->template;
-                self::$preview = true;
-            }
-        }
-
-        // check if live when not previewing
-        if (!self::$preview) {
-            $page = Page::preload(self::$page_info->page_id);
-            if (!$page->is_live()) {
-                throw new PageLoadException('page not live');
-            }
-        }
-
-        // if template not found 404
-        self::$page_info->template_name = Template::name(self::$page_info->template);
-        if (!View::exists('themes.' . self::$theme . '.' . (Feed::$extension ? 'feed.' . Feed::$extension : 'templates') . '.' . self::$page_info->template_name)) {
-            throw new PageLoadException('template not found');
-        }
-
-    }
-
-    public static function page_id()
-    {
-        if (!empty(self::$page_info)) {
-            return self::$page_info->page_id;
+            self::$theme = 'default';
         }
     }
 
-    public static function parent_id()
+    /**
+     * @param PageLoader $pageLoader
+     */
+    public static function setPageFromLoader(PageLoader $pageLoader)
     {
-        $levels = count(self::$page_levels);
-        if ($levels >= 2) {
-            return self::$page_levels[$levels - 2]->page_id;
+        $currentPageIndex = count($pageLoader->pageLevels)-1;
+
+        self::$page = $currentPageIndex >= 0 ? $pageLoader->pageLevels[$currentPageIndex] : null;
+        self::$pageLevels = $pageLoader->pageLevels;
+
+        self::$template = Template::name(self::$page->template);
+
+        self::$is404 = $pageLoader->is404;
+        self::$isPreview = $pageLoader->isPreview;
+        self::$isLive = $pageLoader->isLive;
+        self::$externalTemplate = $pageLoader->externalTemplate;
+        self::$feedExtension = $pageLoader->feedExtension;
+        self::$searchQuery = $pageLoader->searchQuery;
+        self::$hasSearch = false;
+    }
+    
+    /**
+     * @param bool $noOverride
+     * @return int
+     */
+    public static function pageId($noOverride = false)
+    {
+        $page = (self::$pageOverride && !$noOverride) ? self::$pageOverride : self::$page;
+        return !empty($page) ? $page->id : 0;
+    }
+
+    /**
+     * @return int
+     */
+    public static function parentPageId()
+    {
+        $levels = count(self::$pageLevels);
+        return $levels > 1 ? self::$pageLevels[$levels - 2]->id : 0;
+    }
+
+    /**
+     * @param bool $noOverride
+     * @return int
+     */
+    public static function pageTemplateId($noOverride = false)
+    {
+        $page = (self::$pageOverride && !$noOverride) ? self::$pageOverride : self::$page;
+        return !empty($page) ? $page->template : 0;
+    }
+
+    /**
+     * @param bool $noOverride
+     * @return int
+     */
+    public static function pageLiveVersionId($noOverride = false)
+    {
+        $page = (self::$pageOverride && !$noOverride) ? self::$pageOverride : self::$page;
+        return !empty($page) && !empty($page->page_lang) ? $page->page_lang->live_version : 0;
+    }
+
+    /**
+     * @param int $pageId
+     * @param bool $noOverride
+     * @return string
+     */
+    public static function pageUrl($pageId = 0, $noOverride = false)
+    {
+        if (!$pageId) {
+            $page = (self::$pageOverride && !$noOverride) ? self::$pageOverride : self::$page;
+            $pageId = !empty($page) && !empty($page->id) ? $page->id : 0;
+        }
+        return $pageId ? PageLang::full_url($pageId): '';
+    }
+
+    /**
+     * @param int $pageId
+     * @param bool $noOverride
+     * @return string
+     */
+    public static function pageName($pageId = 0, $noOverride = false)
+    {
+        if (!$pageId) {
+            $page = (self::$pageOverride && !$noOverride) ? self::$pageOverride : self::$page;
+            $pageId = !empty($page) && !empty($page->id) ? $page->id : 0;
+        }
+        return $pageId ? PageLang::name($pageId): '';
+    }
+
+    /**
+     * @param int $pageId
+     * @param bool $noOverride
+     * @param string $sep
+     * @return string
+     */
+    public static function pageFullName($pageId = 0, $noOverride = false, $sep = ' &raquo; ')
+    {
+        if (!$pageId) {
+            $page = (self::$pageOverride && !$noOverride) ? self::$pageOverride : self::$page;
+            $pageId = !empty($page) && !empty($page->id) ? $page->id : 0;
+        }
+        return $pageId ? PageLang::full_name($pageId, $sep): '';
+    }
+
+    /**
+     * @param string $fileName
+     * @param array $options
+     * @return string
+     */
+    public static function img($fileName, $options = [])
+    {
+        $image_data = new \stdClass;
+        $image_data->file = '/themes/' . self::$theme . '/img/' . $fileName;
+        return Image::display(null, $image_data, $options);
+    }
+
+    /**
+     * @param string $fileName
+     * @return string
+     */
+    public static function css($fileName)
+    {
+        return URL::to('/themes/' . self::$theme . '/css/' . $fileName . '.css');
+    }
+
+    /**
+     * @param string $fileName
+     * @return string
+     */
+    public static function js($fileName)
+    {
+        return URL::to('/themes/' . self::$theme . '/js/' . $fileName . '.js');
+    }
+
+    /**
+     * @param string $viewPath
+     * @return bool
+     */
+    protected static function _viewExists($viewPath)
+    {
+        $viewPath = 'themes.' . self::$theme . '.' . $viewPath;
+        return View::exists($viewPath);
+    }
+
+    /**
+     * @param string $viewPath
+     * @param array $data
+     * @return string
+     */
+    protected static function _getRenderedView($viewPath, $data = [])
+    {
+        $viewPath = 'themes.' . self::$theme . '.' . $viewPath;
+        if (View::exists($viewPath)) {
+            return View::make($viewPath, $data)->render();
         } else {
-            return null;
+            return 'View not found (' . $viewPath . ')';
         }
     }
 
-    public static function page_template()
+    /**
+     * @param string $blockName
+     * @param mixed $content
+     * @param int $key
+     */
+    public static function setCustomBlockData($blockName, $content, $key = 0)
     {
-        if (!empty(self::$page_info->template)) {
-            return self::$page_info->template;
-        } else {
-            return 0;
+        if (!isset(self::$_customBlockData)) {
+            self::$_customBlockData = [];
+            self::$_customBlockDataKey = 0;
         }
+        if (!isset(self::$_customBlockData[$key])) {
+            self::$_customBlockData[$key] = [];
+        }
+        self::$_customBlockData[$key][$blockName] = $content;
     }
 
+    /**
+     * @param string $blockName
+     * @return string|false
+     */
+    protected static function _getCustomBlockData($blockName)
+    {
+        if (isset(self::$_customBlockDataKey) && isset(self::$_customBlockData[self::$_customBlockDataKey][$blockName])) {
+            return self::$_customBlockData[self::$_customBlockDataKey][$blockName];
+        }
+        return Repeater::load_repeater_data($blockName);
+    }
+
+    /**
+     * @param string|int $key
+     */
+    public static function setCustomBlockDataKey($key)
+    {
+        self::$_customBlockDataKey = $key;
+    }
+
+    /**
+     * @param string $section
+     * @return string
+     */
     public static function external($section)
     {
-        if (View::exists('themes.' . self::$theme . '.externals.' . $section))
-            return View::make('themes.' . self::$theme . '.externals.' . $section);
-        else
-            return 'View not found';
+        return self::_getRenderedView('externals.' . $section);
     }
 
-    public static function get_template_path()
-    {
-        return 'themes.' . self::$theme . '.' . (Feed::$extension ? 'feed.' . Feed::$extension : 'templates') . '.' . self::$page_info->template_name;
-    }
-
-    public static function page_url($page_id = 0, $real_url = false)
-    {
-        if ($real_url && isset(self::$page_info->true_page_id)) {
-            $page_id = self::$page_info->true_page_id;
-        }
-        if (empty($page_id)) {
-            if (empty(self::$page_info)) {
-                return null;
-            }
-            $page_id = self::$page_info->page_id;
-        }
-        return PageLang::full_url($page_id);
-    }
-
-    public static function page_name($page_id = 0)
-    {
-        if (empty($page_id)) {
-            if (empty(self::$page_info)) {
-                return '404';
-            }
-            return self::$page_info->name;
-        } else {
-            return PageLang::name($page_id);
-        }
-    }
-
-    public static function page_full_name($page_id = 0, $sep = ' &raquo; ')
-    {
-        if (empty($page_id)) {
-            if (empty(self::$page_info)) {
-                return '404';
-            }
-            $page_id = self::$page_info->page_id;
-        }
-        return PageLang::full_name($page_id, $sep);
-
-    }
-
+    /**
+     * @param string $section
+     * @return string
+     */
     public static function section($section)
     {
-        return View::make('themes.' . self::$theme . '.sections.' . $section)->render();
+        return self::_getRenderedView('sections.' . $section);
     }
 
-    public static function sitemap($options = array())
+    /**
+     * @param array $options
+     * @return string
+     */
+    public static function breadcrumb($options = [])
+    {
+        $defaultOptions = [
+            'view' => 'default'
+        ];
+        $options = array_merge($defaultOptions, $options);
+
+        $crumbs = '';
+        if (!empty(self::$pageLevels)) {
+            $url = '';
+            $lowestLevel = count(self::$pageLevels)-1;
+            foreach (self::$pageLevels as $level => $page) {
+
+                if ($page->page_lang->url != '/') {
+                    $url .= '/' . $page->page_lang->url;
+                }
+                $active = ($lowestLevel == $level);
+
+                $crumb = new BreadCrumb($page->page_lang, $url, $active);
+
+                if (self::_viewExists('.breadcrumbs.' . $options['view'] . '.active_element') && $active) {
+                    $crumbs .= self::_getRenderedView('breadcrumbs.' . $options['view'] . '.active_element', ['crumb' => $crumb]);
+                } else {
+                    $crumbs .= self::_getRenderedView('breadcrumbs.' . $options['view'] . '.link_element', ['crumb' => $crumb]);
+                    $crumbs .= ($active ? self::_getRenderedView('breadcrumbs.' . $options['view'] . '.separator') : '');
+                }
+            }
+        }
+        return self::_getRenderedView('breadcrumbs.' . $options['view'] . '.wrap', ['crumbs' => $crumbs]);
+    }
+
+    /**
+     * @param $menuName
+     * @param array $options
+     * @return string
+     */
+    public static function menu($menuName, $options = [])
+    {
+        $menu = Menu::get_menu($menuName);
+        if (!empty($menu)) {
+            $defaultOptions = [
+                'view' => 'default'
+            ];
+            $options = array_merge($defaultOptions, $options);
+            MenuBuilder::setView($options['view']);
+            return MenuBuilder::buildMenu($menu->items()->get(), 1);
+        } else {
+            return '';
+        }
+    }
+
+    /**
+     * @param array $options
+     * @return string
+     */
+    public static function sitemap($options = [])
     {
         $topLevelPages = Page::where('parent', '=', 0)->where('in_group', '=', 0)->get();
         $topLevelPages = $topLevelPages->isEmpty() ? [] : $topLevelPages;
@@ -253,15 +397,15 @@ class PageBuilder
         return self::_cat_view(0, $topLevelPages, $options);
     }
 
-    public static function category($options = array())
+    /**
+     * @param array $options
+     * @return string
+     */
+    public static function category($options = [])
     {
-        if (empty($options['page_id']) && !empty(self::$page_info)) {
-            $page_id = self::$page_info->page_id;
-        } else {
-            $page_id = (int)$options['page_id'];
-        }
-        if ($page_id > 0) {
-            $pages = Page::category_pages($page_id, true);
+        $pageId = !empty($options['page_id']) ? $options['page_id'] : self::pageId();
+        if ($pageId) {
+            $pages = Page::category_pages($pageId, true);
             if (!empty($pages)) {
                 if (!empty($options['sitemap'])) {
                     foreach ($pages as $key => $page) {
@@ -270,96 +414,113 @@ class PageBuilder
                         }
                     }
                 }
-                return self::_cat_view($page_id, $pages, $options);
+                return self::_cat_view($pageId, $pages, $options);
             }
         }
-        return null;
+        return '';
     }
 
-    public static function filter($block_name, $search, $options = array())
+    /**
+     * @param string $blockName
+     * @param string $search
+     * @param array $options
+     * @return string
+     */
+    public static function filter($blockName, $search, $options = [])
     {
-        if (empty($options['page_id']) && !empty(self::$page_info)) {
-            $page_id = self::$page_info->page_id;
-        } else {
-            $page_id = (int)$options['page_id'];
-        }
-        $default_options = array(
+        $defaultOptions = [
             'match' => '='
-        );
-        $options = array_merge($default_options, $options);
-        $block = Block::preload($block_name);
-        $block_type = $block->get_class();
+        ];
+        $options = array_merge($defaultOptions, $options);
 
-        $page_ids = $block_type::filter($block->id, $search, $options['match']);
-        $pages = [];
-        foreach ($page_ids as $page_id) {
-            $pages[] = Page::preload($page_id);
+        $block = Block::preload($blockName);
+        $blockType = $block->get_class();
+
+        $filteredPages = [];
+        $filterPageIds = $blockType::filter($block->id, $search, $options['match']);
+        foreach ($filterPageIds as $filterPageId) {
+            $filteredPages[] = Page::preload($filterPageId);
         }
-        return self::_cat_view($page_id, $pages, $options);
+
+        $pageId = !empty($options['page_id']) ? $options['page_id'] : self::pageId();
+        return self::_cat_view($pageId, $filteredPages, $options);
     }
 
-    public static function category_filter($block_name, $search, $options = array())
+    /**
+     * @param string $blockName
+     * @param string $search
+     * @param array $options
+     * @return string
+     */
+    public static function categoryFilter($blockName, $search, $options = [])
     {
-        if (empty($options['page_id']) && !empty(self::$page_info)) {
-            $page_id = self::$page_info->page_id;
-        } else {
-            $page_id = (int)$options['page_id'];
-        }
-        if ($page_id > 0) {
-            $default_options = array(
+        $pageId = !empty($options['page_id']) ? $options['page_id'] : self::pageId();
+        if ($pageId) {
+
+            $defaultOptions = array(
                 'match' => '='
             );
-            $pages = Page::category_pages($page_id, true);
-            $options = array_merge($default_options, $options);
-            $block = Block::preload($block_name);
-            $block_type = $block->get_class();
-            $page_ids = $block_type::filter($block->id, $search, $options['match']);
-            $filtered_pages = [];
-            foreach ($pages as $page) {
-                if (in_array($page->id, $page_ids)) {
-                    $filtered_pages[] = $page;
+            $options = array_merge($defaultOptions, $options);
+
+
+            $block = Block::preload($blockName);
+            $blockType = $block->get_class();
+
+            $filteredPages = [];
+            $filterPageIds = $blockType::filter($block->id, $search, $options['match']);
+            $categoryPages = Page::category_pages($pageId, true);
+            foreach ($categoryPages as $categoryPage) {
+                if (in_array($categoryPage->id, $filterPageIds)) {
+                    $filteredPages[] = $categoryPage;
                 }
             }
-            return self::_cat_view($page_id, $filtered_pages, $options);
+            return self::_cat_view($pageId, $filteredPages, $options);
         }
-        return null;
+        return '';
     }
 
-    public static function category_link($direction = 'next')
+    /**
+     * @param string $direction
+     * @return string
+     */
+    public static function categoryLink($direction = 'next')
     {
-        if (!isset(self::$_cat_links[$direction])) {
-            self::$_cat_links['next'] = '';
-            self::$_cat_links['prev'] = '';
-            $levels = count(self::$page_levels);
-            if (!empty(self::$page_levels[$levels - 2])) {
-                $parent_id = self::$page_levels[$levels - 2]->page_id;
-            }
-            if (!empty($parent_id)) {
-                $pages = Page::category_pages($parent_id, true);
+        if (!isset(self::$_pageCategoryLinks)) {
+            self::$_pageCategoryLinks = [
+                'next' => '',
+                'prev' => ''
+            ];
+            $parentPageId = self::parentPageId();
+            if ($parentPageId) {
+                $pages = Page::category_pages($parentPageId, true);
                 if (count($pages) > 1) {
                     foreach ($pages as $k => $page) {
-                        if ($page->id == self::$page_info->page_id) {
+                        if ($page->id == self::$page->id) {
                             $key = $k;
                             break;
                         }
                     }
                     if (isset($key)) {
                         if (!empty($pages[$key + 1])) {
-                            self::$_cat_links['next'] = PageLang::full_url($pages[$key + 1]->id);//change url function to ../
+                            self::$_pageCategoryLinks['next'] = PageLang::full_url($pages[$key + 1]->id);
                         }
                         if (!empty($pages[$key - 1])) {
-                            self::$_cat_links['prev'] = PageLang::full_url($pages[$key - 1]->id);
+                            self::$_pageCategoryLinks['prev'] = PageLang::full_url($pages[$key - 1]->id);
                         }
                     }
                 }
             }
         }
-        return self::$_cat_links[$direction];
+        return self::$_pageCategoryLinks[$direction];
     }
 
+    /**
+     * @param array $options
+     * @return string
+     */
     public static function search($options = array())
     {
-        self::$search_not_found = false;
+        self::$hasSearch = false;
         // get query (should be after last 'search' segment in url)
         $search_pos = array_search('search', array_reverse(Request::segments(), true));
         if ($search_pos !== false && Request::segment($search_pos + 2)) {
@@ -405,7 +566,7 @@ class PageBuilder
         $is_global = false;
         $block = Block::preload($block_name, isset($options['force_query']));
         // load block content for current repeater (if preloaded)
-        if (($custom_data = self::_load_custom_block_data($block_name)) !== false) {
+        if (($custom_data = self::_getCustomBlockData($block_name)) !== false) {
             $block_content = $custom_data;
         } // load block content
         elseif (!empty($block)) {
@@ -416,8 +577,8 @@ class PageBuilder
                 $selected_page = PageLang::preload($string[0]);
                 $custom_page_block = PageBlock::preload_page_block($string[0], $block->id, $selected_page->live_version);
                 unset($options['page_id']);
-            } elseif (!empty(self::$page_info)) {
-                $custom_page_block = PageBlock::preload_page_block(self::$page_info->page_id, $block->id, self::$page_info->live_version);
+            } elseif (!empty(self::$page)) {
+                $custom_page_block = PageBlock::preload_page_block(self::$page->id, $block->id, self::$page->page_lang->live_version);
             }
             // if custom page block for selected language exists
             if (!empty($custom_page_block[Language::current()])) {
@@ -467,88 +628,11 @@ class PageBuilder
             if (!empty($selected_page)) {
                 $options['version'] = $selected_page->live_version;
             } else {
-                $options['version'] = !empty(self::$page_info->live_version) ? self::$page_info->live_version : 0;
+                $options['version'] = !empty(self::$page) ? self::$page->page_lang->live_version : 0;
             }
         }
 
         return $block_type::display($block, $block_content, $options);
-    }
-
-    public static function breadcrumb($options = array())
-    {
-        $default_options = array(
-            'view' => 'default'
-        );
-        $options = array_merge($default_options, $options);
-        if (!View::exists('themes.' . self::$theme . '.breadcrumbs.' . $options['view'] . '.wrap')) {
-            return null;
-        }
-        if (View::exists('themes.' . self::$theme . '.breadcrumbs.' . $options['view'] . '.active_element')) {
-            $use_active_view = true;
-        } else {
-            $use_active_view = false;
-        }
-        $crumbs = '';
-        if (!empty(self::$page_levels)) {
-            $url = '';
-            end(self::$page_levels);
-            $active_key = key(self::$page_levels);
-            foreach (self::$page_levels as $key => $crumb) {
-                if ($crumb->url != '/') {
-                    // if not homepage, build up uri
-                    $url .= '/' . $crumb->url;
-                    $crumb->url = $url;
-                }
-                if ($active_key == $key) {
-                    $crumb->active = true;
-                } else {
-                    $crumb->active = false;
-                }
-                if ($use_active_view && $crumb->active) {
-                    $crumbs .= View::make('themes.' . self::$theme . '.breadcrumbs.' . $options['view'] . '.active_element', array('crumb' => $crumb));
-                } else {
-                    $crumbs .= View::make('themes.' . self::$theme . '.breadcrumbs.' . $options['view'] . '.link_element', array('crumb' => $crumb));
-                    if (!$crumb->active) {
-                        $crumbs .= View::make('themes.' . self::$theme . '.breadcrumbs.' . $options['view'] . '.separator');
-                    }
-                }
-            }
-        }
-        return View::make('themes.' . self::$theme . '.breadcrumbs.' . $options['view'] . '.wrap', array('crumbs' => $crumbs));
-    }
-
-    public static function menu($menu_name, $options = array())
-    {
-        $menu = Menu::get_menu($menu_name);
-        if (!empty($menu)) {
-            $default_options = array(
-                'view' => 'default'
-            );
-            $options = array_merge($default_options, $options);
-            if (!MenuBuilder::set_view($options['view'])) {
-                return null;
-            }
-            return MenuBuilder::build_menu($menu->items()->get(), 1);
-        } else {
-            return null;
-        }
-    }
-
-    public static function img($file_name, $options = array())
-    {
-        $image_data = new \stdClass;
-        $image_data->file = '/themes/' . self::$theme . '/img/' . $file_name;
-        return Image::display(null, $image_data, $options);
-    }
-
-    public static function css($file_name)
-    {
-        return URL::to('/themes/' . self::$theme . '/css/' . $file_name . '.css');
-    }
-
-    public static function js($file_name)
-    {
-        return URL::to('/themes/' . self::$theme . '/js/' . $file_name . '.js');
     }
 
     public static function blog($getPosts = 3, $query = null)
@@ -560,29 +644,16 @@ class PageBuilder
         return Setting::blogConnection()->query($query);
     }
 
-    public static function set_custom_block_data($block_name, $content)
+    protected static function _cat_view($cat_id, $pages, $options)
     {
-        if (!isset(self::$_custom_block_data[self::$_custom_block_data_current_key])) {
-            self::$_custom_block_data[self::$_custom_block_data_current_key] = array();
-        }
-        self::$_custom_block_data[self::$_custom_block_data_current_key][$block_name] = $content;
-    }
-
-    public static function set_custom_block_data_key($key = 0)
-    {
-        self::$_custom_block_data = $key;
-    }
-
-    private static function _cat_view($cat_id, $pages, $options)
-    {
-        $default_options = array(
+        $default_options = [
             'view' => 'default',
             'type' => 'all',
             'per_page' => 20,
             'limit' => 0,
             'content' => '',
             'search_query' => ''
-        );
+        ];
         $options = array_merge($default_options, $options);
         $options['view'] = $options['view']?:'default';
         // select page of selected type
@@ -613,10 +684,7 @@ class PageBuilder
             $links = null;
         }
         $list = '';
-        $is_first = true;
-        $is_last = false;
         $total_pages = count($pages);
-        $count = 1;
         $cat_path = '';
         if ($cat_id > 0) {
             $cat_page = Page::preload($cat_id);
@@ -624,54 +692,35 @@ class PageBuilder
                 $cat_path = ',' . $cat_page->id;
             }
         }
-        foreach ($pages as $page) {
-            if ($total_pages == $count) {
-                $is_last = true;
-            }
+        $pages = array_values($pages);
+        foreach ($pages as $count => $page) {
+            $is_first = ($count == 1);
+            $is_last = ($count == $total_pages);
+
             if ($page->id > 0) {
-                $paths = PageLang::get_full_path($page->id . $cat_path);
-                $page_info = new \stdClass;
-                $page_info->id = $page->id;
-                $page_info->name = $paths->name;
-                $page_info->full_name = $paths->full_name;
-                $page_info->url = $paths->full_url;
+                // cms page
+                $page->page_lang = !empty($page->page_lang)?$page->page_lang:PageLang::preload($page->id);
+                $fullPageInfo = new FullPage($page, $page->page_lang, $cat_path);
             } else {
-                $page_info = $page;
+                // non cms page
+                $fullPageInfo = new FullPage($page, $page->page_lang);
             }
-            // temp overwrite current page variables so basic PageBuilder functions work relative to category page
-            $page_info->true_page_id = self::$page_id;
-            if (!empty(self::$page_info)) {
-                $original_page_info = clone self::$page_info;
-            } else {
-                self::$page_info = new \stdClass;
-            }
-            self::$page_info->true_page_id = $page_info->true_page_id;
-            self::$page_info->page_id = $page_info->id;
-            self::$page_info->name = $page_info->name;
-            self::$page_info->live_version = PageLang::preload($page->id)->live_version;
-            self::$page_info->template = $page->template;
-            $list .= View::make('themes.' . self::$theme . '.categories.' . $options['view'] . '.page', array('page' => $page_info, 'category_id' => $cat_id, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $count, 'total' => $total_pages))->render();
-            if (!empty($original_page_info)) {
-                self::$page_info = $original_page_info;
-                unset($original_page_info);
-            } else {
-                self::$page_info = null;
-            }
-            $count++;
-            $is_first = false;
+
+            self::$pageOverride = $page;
+
+            $list .= View::make('themes.' . self::$theme . '.categories.' . $options['view'] . '.page', array('page' => $fullPageInfo, 'category_id' => $cat_id, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $count, 'total' => $total_pages))->render();
+
+            self::$pageOverride = null;
         }
-        $html_content = (!empty($options['html']) && $options['html']) ? true : false;
+        $html_content = (!empty($options['html']) && $options['html']);
         return View::make('themes.' . self::$theme . '.categories.' . $options['view'] . '.pages_wrap', array('pages' => $list, 'pagination' => $links, 'links' => $links, 'content' => $options['content'], 'category_id' => $cat_id, 'total' => $total_pages, 'html_content' => $html_content, 'search_query' => $options['search_query']))->render();
     }
 
-    private static function _load_custom_block_data($block_name)
-    {
-        if (isset(self::$_custom_block_data[self::$_custom_block_data_current_key][$block_name])) {
-            return self::$_custom_block_data[self::$_custom_block_data_current_key][$block_name];
-        }
-        return Repeater::load_repeater_data($block_name);
-    }
-
+    /**
+     * @param string $name
+     * @param array $arguments
+     * @return string
+     */
     public static function __callStatic($name, $arguments)
     {
         if (strpos($name, 'block_') === 0) {

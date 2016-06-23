@@ -18,7 +18,7 @@ class String_ extends _Base
             $block_data = trim(str_replace(PHP_EOL, ' ', $block_data));
             $block_data = htmlspecialchars(strip_tags(html_entity_decode($block_data, ENT_QUOTES, 'UTF-8')));
             $block_data = preg_replace('/\s+/', ' ', $block_data);
-            $block_data = str_replace('%page_name%', PageBuilder::page_name(), $block_data);
+            $block_data = str_replace('%page_name%', PageBuilder::pageName(), $block_data);
             $block_data = str_replace('%site_name%', config('coaster::site.name'), $block_data);
             $block_data = htmlentities(strip_tags(html_entity_decode($block_data, ENT_QUOTES, 'UTF-8')));
             if (strlen($block_data) > 200) {

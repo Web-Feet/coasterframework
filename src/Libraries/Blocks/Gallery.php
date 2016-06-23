@@ -16,7 +16,7 @@ use View;
 class Gallery extends _Base
 {
 
-    public static function display($block, $block_data, $options = array())
+    public static function display($block, $block_data, $options = [])
     {
         $images = array();
         $gallery_data = @unserialize($block_data);
@@ -29,11 +29,14 @@ class Gallery extends _Base
                 array_push($images, $data);
             }
         }
-        $template = !empty($options['view']) ? $options['view'] : 'default';
-        if (empty($options['view']) && View::exists('themes.' . PageBuilder::$theme . '.blocks.gallery.' . $block->name)) {
-            return View::make('themes.' . PageBuilder::$theme . '.blocks.gallery.id_' . $block->id, array('images' => $images))->render();
-        } elseif (View::exists('themes.' . PageBuilder::$theme . '.blocks.gallery.' . $template)) {
-            return View::make('themes.' . PageBuilder::$theme . '.blocks.gallery.' . $template, array('images' => $images))->render();
+        $options['view'] = !empty($options['view']) ? $options['view'] : 'default';
+
+        $galleryViews = 'themes.' . PageBuilder::$theme . '.blocks.gallery.';
+
+        if (empty($options['view']) && View::exists($galleryViews . $block->name)) {
+            return View::make($galleryViews . $block->name, ['images' => $images])->render();
+        } elseif (View::exists($galleryViews . $options['view'])) {
+            return View::make($galleryViews . $options['view'], ['images' => $images])->render();
         } else {
             return 'Gallery template not found';
         }

@@ -2,7 +2,7 @@
 
 use App;
 use Auth;
-use CoasterCms\Helpers\Core\Install;
+use CoasterCms\Helpers\Core\Page\Install;
 use CoasterCms\Http\MiddleWare\AdminAuth;
 use CoasterCms\Http\MiddleWare\GuestAuth;
 use Illuminate\Support\ServiceProvider;

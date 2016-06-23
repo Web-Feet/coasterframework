@@ -31,7 +31,7 @@ if (!defined('LARAVEL_START')) {
         file_put_contents($updatesFile, json_encode($updateStatus));
     }
 
-    if (\CoasterCms\Helpers\Core\Install::isComplete()) {
+    if (\CoasterCms\Helpers\Core\Page\Install::isComplete()) {
 
         if (empty($updateStatus['gallery']) || version_compare($updateStatus['gallery'], 'v.5.2.27', '<')) {
             include __DIR__ . '/galleryMoveFiles.php';

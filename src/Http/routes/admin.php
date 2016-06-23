@@ -50,4 +50,4 @@ Route::group(['middleware' => ['web', 'coaster.admin']], function () {
 });
 
 // catch invalid admin routes
-Route::any(config('coaster::admin.url').'{other}', 'CoasterCms\Http\Controllers\AdminController@catchAll')->where('other', '.*');
+Route::any(config('coaster::admin.url').'/{other}', 'CoasterCms\Http\Controllers\AdminController@catchAll')->where('other', '.*');

@@ -16,7 +16,8 @@ class Selectpages extends _Base
         $page_ids = [];
         if (isset($options['reverse'])) {
             // get page_ids on which current page is selected in this block
-            if (!empty(PageBuilder::$page_info->page_id)) {
+            $currentPageId = !empty(PageBuilder::$page)?PageBuilder::$page->id:0;
+            if ($currentPageId) {
                 $same_blocks = PageBlock::where('block_id', '=', $block->id)->get();
                 foreach ($same_blocks as $same_block) {
                     $block_page_ids = @unserialize($same_block->content);
@@ -24,7 +25,7 @@ class Selectpages extends _Base
                         foreach ($block_page_ids as $k => $block_page_id) {
                             // if comma remove it (used for group page url, not used in getting content)
                             $string = explode(',', $block_page_id);
-                            if ($string[0] == PageBuilder::$page_info->page_id) {
+                            if ($string[0] == $currentPageId) {
                                 $page_ids[] = $same_block->page_id;
                                 break;
                             }
@@ -47,8 +48,9 @@ class Selectpages extends _Base
             }
         }
         $template = !empty($options['view']) ? $options['view'] : $block->name;
-        if (View::exists('themes.' . PageBuilder::$theme . '.blocks.selectpages.' . $template)) {
-            return View::make('themes.' . PageBuilder::$theme . '.blocks.selectpages.' . $template, array('pages' => $pages))->render();
+        $selectPageViews = 'themes.' . PageBuilder::$theme . '.blocks.selectpages.';
+        if (View::exists($selectPageViews . $template)) {
+            return View::make($selectPageViews . $template, array('pages' => $pages))->render();
         } else {
             return 'Select pages template not found';
         }

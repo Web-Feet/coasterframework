@@ -58,10 +58,11 @@ class Image extends _Base
             $image_data->file = $image_data->original;
         }
         $template = !empty($options['view']) ? $options['view'] : 'default';
-        if (!View::exists('themes.' . PageBuilder::$theme . '.blocks.images.' . $template)) {
-            return 'Image template not found';
+        $imageViews = 'themes.' . PageBuilder::$theme . '.blocks.images.';
+        if (!View::exists($imageViews . $template)) {
+            return View::make($imageViews . $template, array('image' => $image_data))->render();
         } else {
-            return View::make('themes.' . PageBuilder::$theme . '.blocks.images.' . $template, array('image' => $image_data))->render();
+            return 'Image template not found';
         }
     }
 

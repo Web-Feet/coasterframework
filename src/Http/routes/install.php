@@ -1,7 +1,7 @@
 <?php
 
 $routeNamePrefix = 'coaster.install.'; 
-$installController = 'CoasterCms\Http\Controllers\InstallController';
+$installController = 'CoasterCms\Http\ControllersPage\InstallController';
 
 Route::any('install/database', ['uses' => $installController . '@setupDatabase', 'as' => $routeNamePrefix . 'database']);
 Route::any('install/database-save', ['uses' => $installController . '@saveDatabaseSettings', 'as' => $routeNamePrefix . 'databaseSave']);
@@ -12,6 +12,6 @@ Route::any('install/theme', ['uses' => $installController . '@setupTheme', 'as' 
 Route::any('install/theme-install', ['uses' => $installController . '@installTheme', 'as' => $routeNamePrefix . 'themeInstall']);
 
 Route::any('{other}', function() {
-    $installRoute = \CoasterCms\Helpers\Core\Install::getRedirectRoute();
+    $installRoute = \CoasterCms\Helpers\Core\Page\Install::getRedirectRoute();
     return redirect()->route($installRoute);
 })->where('other', '.*');

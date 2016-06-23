@@ -38,7 +38,7 @@
                 <tr>
                     <td>{!! $request->page_version->version_id !!}</td>
                     <td>{!! $request->page_version->name !!}</td>
-                    <?php $page_name = PageBuilder::page_full_name($request->page_version->page_id); ?>
+                    <?php $page_name = PageBuilder::pageFullName($request->page_version->page_id); ?>
                     @if ($show['page'])
                         <td>{!! $page_name !!}</td>
                     @endif
@@ -50,7 +50,7 @@
                         <td>{!! $request->status !!}</td>
                     @endif
                     <td>
-                        <a href="{{ PageBuilder::page_url($request->page_version->page_id).'?preview='.$request->page_version->preview_key }}"
+                        <a href="{{ PageBuilder::pageUrl($request->page_version->page_id).'?preview='.$request->page_version->preview_key }}"
                            target="_blank"><i class="glyphicon glyphicon-eye-open itemTooltip" title="Preview"></i></a>
                         <a href="{{ URL::to(config('coaster::admin.url').'/pages/edit/'.$request->page_version->page_id.'/'.$request->page_version->version_id) }}"><i
                                     class="delete glyphicon glyphicon-pencil itemTooltip" title="Edit"></i></a>

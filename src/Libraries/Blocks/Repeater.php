@@ -25,7 +25,8 @@ class Repeater extends _Base
     public static function display($block, $block_data, $options = array())
     {
         $template = !empty($options['view']) ? $options['view'] : $block->name;
-        if (View::exists('themes.' . PageBuilder::$theme . '.blocks.repeaters.' . $template)) {
+        $repeatersViews = 'themes.' . PageBuilder::$theme . '.blocks.repeaters.';
+        if (View::exists($repeatersViews . $template)) {
             $rep_blocks = BlockRepeater::where('block_id', '=', $block->id)->first();
             if (!empty($rep_blocks)) {
                 $rep_blocks = explode(',', $rep_blocks->blocks);
@@ -71,7 +72,7 @@ class Repeater extends _Base
                             }
                             if ($i + $cols - 1 >= $rows)
                                 $is_last = true;
-                            $content .= View::make('themes.' . PageBuilder::$theme . '.blocks.repeaters.' . $template, array('is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $rows, 'id' => $block_data, 'pagination' => $links, 'links' => $links))->render();
+                            $content .= View::make($repeatersViews . $template, array('is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $rows, 'id' => $block_data, 'pagination' => $links, 'links' => $links))->render();
                             $is_first = false;
                         }
                         $i++;

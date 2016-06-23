@@ -132,12 +132,13 @@ class PageSearchData extends Eloquent
                     ");
                     foreach ($blog_posts as $blog_post) {
                         self::_page_weights('b' . $blog_post['ID'], ((int)$blog_post['search_weight']) + $first_word_priority);
-                        $post_data = new \stdClass;
+                        $post_data = new Page;
                         $post_data->id = -1;
-                        $post_data->name = $blog_post['post_title'];
-                        $post_data->url = config('coaster::blog.url') . $blog_post['post_name'];
-                        $post_data->blog_content = $blog_post['post_content'];
                         $post_data->template = 0;
+                        $post_data->page_lang = new PageLang;
+                        $post_data->page_lang->name = $blog_post['post_title'];
+                        $post_data->page_lang->url = config('coaster::blog.url') . $blog_post['post_name'];
+                        $post_data->blog_content = $blog_post['post_content'];
                         $blog_pages['b' . $blog_post['ID']] = $post_data;
                     }
                 }
