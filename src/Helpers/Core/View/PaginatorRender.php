@@ -1,25 +1,22 @@
 <?php namespace CoasterCms\Helpers\Core\View;
 
-use Illuminate\Pagination\BootstrapThreePresenter;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class PaginatorRender
 {
 
-    public static function run($paginator, $bootstrap_version = null)
+    public static function run(LengthAwarePaginator $paginator, $bootStrapVersion = null)
     {
-        if (is_null($bootstrap_version)) {
-            $bootstrap_version = config('coaster::frontend.bootstrap_version');
+        if (is_null($bootStrapVersion)) {
+            $bootStrapVersion = config('coaster::frontend.bootstrap_version');
         }
 
-        if ($bootstrap_version == 3 || empty($bootstrap_version)) {
-            $default_presenter = new BootstrapThreePresenter($paginator);
-        } elseif ($bootstrap_version == 2) {
-            $default_presenter = new PaginatorRenderer\BootstrapTwoPresenter($paginator);
-        } else {
-            $default_presenter = new $bootstrap_version($paginator);
+        switch ($bootStrapVersion) {
+            default:
+                $defaultPresenter = 'pagination::bootstrap-3';
         }
 
-        return $paginator->render($default_presenter);
+        return $paginator->render($defaultPresenter);
     }
 
 }

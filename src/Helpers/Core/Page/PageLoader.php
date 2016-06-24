@@ -186,7 +186,7 @@ class PageLoader
     protected function _loadSubPage($path, $languageId, Page $parentPage)
     {
         $paths = [$path];
-        $page = self::_pageQuery($paths, $languageId, 0);
+        $page = self::_pageQuery($paths, $languageId, $parentPage->id);
 
         if (!$page && $parentPage->group_container > 0) {
             $page = self::_pageQuery($paths, $languageId, false, $parentPage->group_container);

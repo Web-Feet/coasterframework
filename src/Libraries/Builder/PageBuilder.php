@@ -19,6 +19,7 @@ use CoasterCms\Models\Setting;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Request;
 use URL;
 use View;
@@ -647,12 +648,12 @@ class PageBuilder
             'content' => '',
             'search_query' => ''
         ];
-        $options = array_merge($defaultOptions, $options);
+        $options = array_merge($defaultOptions, array_filter($options));
 
         // select page of selected type
         $pagesOfSelectedType = [];
         if ($options['type'] == 'all') {
-            $pagesOfSelectedType = $pages;
+            $pagesOfSelectedType = is_a($pages, Collection::class) ? $pages->all() : $pages;
         } else {
             foreach ($pages as $page) {
                 $children = count(Page::child_page_ids($page->id));
@@ -669,13 +670,13 @@ class PageBuilder
 
         // pagination
         if (!empty($options['per_page']) && (int)$options['per_page'] > 0) {
-            $pages_paginator = new LengthAwarePaginator($pagesOfSelectedType, count($pagesOfSelectedType), $options['per_page'], Request::input('page', 1));
-            $pages_paginator->setPath(Request::getPathInfo());
-            $links = PaginatorRender::run($pages_paginator);
-            $pages = array_slice($pagesOfSelectedType, (($pages_paginator->currentPage() - 1) * $options['per_page']), $options['per_page']);
+            $paginator = new LengthAwarePaginator($pagesOfSelectedType, count($pagesOfSelectedType), $options['per_page'], Request::input('page', 1));
+            $paginator->setPath(Request::getPathInfo());
+            $paginationLinks = PaginatorRender::run($paginator);
+            $pages = array_slice($pagesOfSelectedType, (($paginator->currentPage() - 1) * $options['per_page']), $options['per_page']);
         } else {
             $pages = $pagesOfSelectedType;
-            $links = null;
+            $paginationLinks = null;
         }
 
         $list = '';
@@ -707,7 +708,7 @@ class PageBuilder
 
         return self::_getRenderedView(
             'categories.' . $options['view'] . '.pages_wrap',
-            ['pages' => $list, 'category_id' => $categoryPageId, 'pagination' => $links, 'links' => $links, 'total' => $total, 'content' => $options['content'], 'search_query' => $options['search_query']]
+            ['pages' => $list, 'category_id' => $categoryPageId, 'pagination' => $paginationLinks, 'links' => $paginationLinks, 'total' => $total, 'content' => $options['content'], 'search_query' => $options['search_query']]
         );
     }
 
