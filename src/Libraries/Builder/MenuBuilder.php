@@ -3,6 +3,7 @@
 use CoasterCms\Models\MenuItem;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageLang;
+use Illuminate\Support\Collection;
 use View;
 
 class MenuBuilder
@@ -65,7 +66,10 @@ class MenuBuilder
         $menu_items = '';
         $item_data = new \stdClass;
         $default_sub_levels = $sub_levels;
-        $items = array_values($items->all());
+        if (is_a($items, Collection::class)) {
+            $items = $items->all();
+        }
+        $items = array_values($items);
         foreach ($items as $count => $item) {
             $is_first = ($count == 1);
             $is_last = ($count == $total);

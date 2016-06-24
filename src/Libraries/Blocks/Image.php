@@ -59,7 +59,7 @@ class Image extends _Base
         }
         $template = !empty($options['view']) ? $options['view'] : 'default';
         $imageViews = 'themes.' . PageBuilder::$theme . '.blocks.images.';
-        if (!View::exists($imageViews . $template)) {
+        if (View::exists($imageViews . $template)) {
             return View::make($imageViews . $template, array('image' => $image_data))->render();
         } else {
             return 'Image template not found';

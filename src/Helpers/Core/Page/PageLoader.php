@@ -132,6 +132,8 @@ class PageLoader
 
         }
 
+        $this->pageLevels = array_filter($this->pageLevels);
+
     }
 
     /**
@@ -139,24 +141,28 @@ class PageLoader
      */
     protected function _loadPageStatus()
     {
-        $lowestLevelPage = $this->pageLevels[count($this->pageLevels) - 1];
-        $this->isLive = $lowestLevelPage->is_live();
+        $lowestLevelPage = count($this->pageLevels) > 0 ? $this->pageLevels[count($this->pageLevels) - 1] : null;
 
-        if($externalTemplate = Request::input('external')) {
-            $this->externalTemplate = $externalTemplate;
-        }
+        if ($lowestLevelPage) {
 
-        if (!$this->is404) {
-            $lowestLevelPage = $this->pageLevels[count($this->pageLevels) - 1];
-            $previewKey = Request::input('preview');
-            if (!empty($previewKey)) {
-                $pageVersion = PageVersion::where('page_id', '=', $lowestLevelPage->id)->where('preview_key', '=', $previewKey)->first();
-                if (!empty($pageVersion)) {
-                    $lowestLevelPage->page_lang->live_version = $pageVersion->version_id;
-                    $lowestLevelPage->template = $pageVersion->template;
-                    $this->isPreview = true;
+            $this->isLive = $lowestLevelPage->is_live();
+
+            if (!$this->is404) {
+                $previewKey = Request::input('preview');
+                if (!empty($previewKey)) {
+                    $pageVersion = PageVersion::where('page_id', '=', $lowestLevelPage->id)->where('preview_key', '=', $previewKey)->first();
+                    if (!empty($pageVersion)) {
+                        $lowestLevelPage->page_lang[0]->live_version = $pageVersion->version_id;
+                        $lowestLevelPage->template = $pageVersion->template;
+                        $this->isPreview = true;
+                    }
                 }
             }
+
+        }
+
+        if($externalTemplate = Request::get('external')) {
+            $this->externalTemplate = $externalTemplate;
         }
 
     }
@@ -216,7 +222,6 @@ class PageLoader
         $page = self::_pageLangQuery($pageQuery, $path, $languageId)->first(['pages.*']);
 
         if (!empty($page) && !$page->page_lang->isEmpty()) {
-            $page->page_lang = $page->page_lang[0];
             return $page;
         } else {
             return null;

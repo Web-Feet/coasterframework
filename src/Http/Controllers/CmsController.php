@@ -1,15 +1,15 @@
 <?php namespace CoasterCms\Http\Controllers;
 
-use CoasterCms\Exceptions\PageLoadException;
-use CoasterCms\Helpers\Core\Page\Feed;
+use CoasterCms\Exceptions\CmsPageException;
 use CoasterCms\Helpers\Core\Html\DOMDocument;
+use CoasterCms\Helpers\Core\Page\Feed;
 use CoasterCms\Helpers\Core\Page\PageLoader;
+use CoasterCms\Helpers\Core\Page\Search;
 use CoasterCms\Helpers\Core\View\FormMessage;
 use CoasterCms\Libraries\Blocks\Form;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\PageRedirect;
 use Illuminate\Routing\Controller;
-use Redirect;
 use Request;
 use Response;
 use View;
@@ -17,93 +17,121 @@ use View;
 class CmsController extends Controller
 {
 
-    public $headers;
-    public $responseCode;
+    /**
+     * @var array
+     */
+    protected $headers;
 
-    public $pageContent;
-    public $isHtmlPage;
+    /**
+     * @var int
+     */
+    protected $responseCode;
 
+    /**
+     * @var string|\Symfony\Component\HttpFoundation\Response
+     */
+    protected $responseContent;
+
+    /**
+     * CmsController constructor.
+     */
     public function __construct()
     {
         $this->headers = [];
         $this->responseCode = 200;
-        $this->isHtmlPage = true;
+        $this->responseContent = '';
     }
 
+    /**
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
     public function generatePage()
     {
-        $current_uri = trim(Request::getRequestUri(), '/');
-        $redirect = PageRedirect::uriHasRedirect($current_uri);
+        FormMessage::set_class('error', config('coaster::frontend.form_error_class'));
+
+        PageBuilder::setTheme(config('coaster::frontend.theme'));
+        $templatePathRoot = 'themes.' . PageBuilder::$theme . '.';
+
+        $currentUri = trim(Request::getRequestUri(), '/');
 
         try {
 
-            // check for redirects
+            // check for forced redirects
+            $redirect = PageRedirect::uriHasRedirect($currentUri);
             if (!empty($redirect) && $redirect->force == 1) {
-                return redirect($redirect->to, $redirect->type);
+                throw new CmsPageException('forced redirect', 0, null, redirect($redirect->to, $redirect->type));
             }
 
-            FormMessage::set_class('error', config('coaster::frontend.form_error_class'));
-
-            PageBuilder::setTheme(config('coaster::frontend.theme'));
-
+            // try to load cms page for current request
             PageBuilder::setPageFromLoader(new PageLoader);
 
-            // check if live when not previewing
+            // check for unforced redirects
+            if (PageBuilder::$is404 && !empty($redirect)) {
+                throw new CmsPageException('redirect', 0, null, redirect($redirect->to, $redirect->type));
+            }
+
+            // 404, no cms page for current request
+            if (PageBuilder::$is404) {
+                throw new CmsPageException('cms page not found', 404);
+            }
+
+            // 404, hidden page
             if (!PageBuilder::$isPreview && !PageBuilder::$isLive) {
-                throw new PageLoadException('page not live');
-            }
-
-            $templatePath = 'themes.' . PageBuilder::$theme . '.';
-            if (PageBuilder::$externalTemplate) {
-                $templatePath .= 'externals.' . PageBuilder::$externalTemplate;
-            } elseif (PageBuilder::$feedExtension) {
-                $templatePath .= 'feed.' . PageBuilder::$feedExtension . '.' . PageBuilder::$template;
-                $this->headers['Content-Type'] = Feed::content_type();
-                $this->isHtmlPage = false;
-            } else {
-                $templatePath .= 'templates.' . PageBuilder::$template;
-            }
-
-            // if template not found 404
-            if (!View::exists($templatePath)) {
-                throw new PageLoadException('template not found');
+                throw new CmsPageException('cms page not live', 404);
             }
 
             // check for form submissions
-            if (!empty($_POST)) {
-                $form_submit = Request::all();
-                $success = Form::submission($form_submit);
-                if (!empty($success)) {
-                    return $success;
-                }
+            if (!empty($_POST) && ($formSubmitResponse = Form::submission(Request::all())) !== false) {
+                throw new CmsPageException('form submission response', 0, null, $formSubmitResponse);
             }
 
-            $this->pageContent = View::make($templatePath)->render();
-
-            // check if search block loaded (if search page)
-            if (PageBuilder::$searchQuery !== false && !PageBuilder::$hasSearch) {
-                throw new PageLoadException('no search function found');
-            }
-
-        } catch (PageLoadException $e) {
-
-            if (!empty($redirect)) {
-                return Redirect::to($redirect->to, $redirect->type);
-            }
-
-            $this->responseCode = 404;
-            if (!View::exists('themes.' . PageBuilder::$theme . '.errors.404')) {
-                $this->pageContent = $e->getMessage();
+            // set template
+            if (PageBuilder::$externalTemplate) {
+                $this->_setHtmlContentType();
+                $templatePath = $templatePathRoot . 'externals.' . PageBuilder::$externalTemplate;
+            } elseif (PageBuilder::$feedExtension) {
+                $this->_setHeader('Content-Type', Feed::content_type());
+                $templatePath = $templatePathRoot . 'feed.' . PageBuilder::$feedExtension . '.' . PageBuilder::$template;
             } else {
-                $this->pageContent = View::make('themes.' . PageBuilder::$theme . '.errors.404', array('error' => $e->getMessage()));
+                $this->_setHtmlContentType();
+                $templatePath = $templatePathRoot . 'templates.' . PageBuilder::$template;
+            }
+
+            // load page with template
+            if (View::exists($templatePath)) {
+                $this->responseContent = View::make($templatePath)->render();
+            } else {
+                throw new CmsPageException('cms page found with non existent template', 500);
+            }
+
+            // if declared as a search page, must have search block
+            if (PageBuilder::$searchQuery !== false && !Search::searchBlockExists()) {
+                throw new CmsPageException('cms page found without search function', 404);
+            }
+
+        } catch (CmsPageException $e) {
+
+            if (!($this->responseContent = $e->getAlternateResponse())) {
+
+                $this->responseCode = $e->getCode();
+                $templatePath = $templatePathRoot . 'errors.' . $this->responseCode;
+
+                // display error loading page
+                if (View::exists($templatePath)) {
+                    $this->_setHtmlContentType();
+                    $this->responseContent = View::make($templatePath, ['error' => $e->getMessage()])->render();
+                } else {
+                    $this->responseContent = $e->getMessage();
+                }
+
             }
 
         }
 
-        // load output into PHP DOMDocument
-        if ($this->isHtmlPage) {
+        // if response is html, run modifications
+        if (!empty($this->headers['Content-Type']) && stripos($this->headers['Content-Type'], 'html') !== false) {
             $domDocument = new DOMDocument;
-            $domDocument->loadHTML($this->pageContent);
+            $domDocument->loadHTML($this->responseContent);
 
             $domDocument->addMetaTag('generator', 'Coaster CMS ' . config('coaster::site.version'));
 
@@ -115,18 +143,42 @@ class CmsController extends Controller
             // save page content
             if (PageBuilder::$externalTemplate) {
                 $domDocument->appendInputFieldNames(config('coaster::frontend.external_form_input'));
-                $this->pageContent = $domDocument->saveBodyHMTL();
+                $this->responseContent = $domDocument->saveBodyHMTL();
             } else {
-                $this->pageContent = $domDocument->saveHTML($domDocument);
+                $this->responseContent = $domDocument->saveHTML($domDocument);
             }
         }
 
         return $this->_createResponse();
     }
 
+    /**
+     * @param string $name
+     * @param string $value
+     */
+    protected function _setHeader($name, $value)
+    {
+        $this->headers[$name] = $value;
+    }
+
+    /**
+     * Set response content type to html
+     */
+    protected function _setHtmlContentType()
+    {
+        $this->headers['Content-Type'] = 'text/html; charset=UTF-8';
+    }
+
+    /**
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
     protected function _createResponse()
     {
-        $response = Response::make($this->pageContent, $this->responseCode);
+        if (is_a($this->responseContent, \Symfony\Component\HttpFoundation\Response::class)) {
+            $response = $this->responseContent;
+        } else {
+            $response = Response::make($this->responseContent, $this->responseCode);
+        }
 
         foreach ($this->headers as $header => $headerValue) {
             $response->header($header, $headerValue);

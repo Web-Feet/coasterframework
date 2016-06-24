@@ -3,6 +3,7 @@
 use Auth;
 use Cache;
 use CoasterCms\Helpers\Admin\Validation\Database;
+use CoasterCms\Helpers\Core\File\Directory;
 use CoasterCms\Helpers\Core\File\File;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminLog;
@@ -64,16 +65,16 @@ class SystemController extends Controller
                         $toUnSecure = array_diff($oldValues, $newValues);
                         foreach ($toSecure as $newSecureFolder) {
                             if (is_dir(public_path().'/uploads'.$newSecureFolder)) {
-                                File::copyDirectory(public_path() . '/uploads' . $newSecureFolder, storage_path() . '/uploads' . $newSecureFolder);
-                                File::removeDirectory(public_path() . '/uploads' . $newSecureFolder, true);
+                                Directory::copy(public_path() . '/uploads' . $newSecureFolder, storage_path() . '/uploads' . $newSecureFolder);
+                                Directory::remove(public_path() . '/uploads' . $newSecureFolder, true);
                             } else {
                                 @mkdir(storage_path() . '/uploads' . $newSecureFolder, 0777, true);
                             }
                         }
                         foreach ($toUnSecure as $newUnSecureFolder) {
                             if (is_dir(storage_path() . '/uploads' . $newUnSecureFolder)) {
-                                File::copyDirectory(storage_path().'/uploads'.$newUnSecureFolder, public_path().'/uploads'.$newUnSecureFolder);
-                                File::removeDirectory(storage_path().'/uploads'.$newUnSecureFolder);
+                                Directory::copy(storage_path().'/uploads'.$newUnSecureFolder, public_path().'/uploads'.$newUnSecureFolder);
+                                Directory::remove(storage_path().'/uploads'.$newUnSecureFolder);
                             } else {
                                 @mkdir(public_path().'/uploads'.$newUnSecureFolder, 0777, true);
                             }

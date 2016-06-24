@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
+use CoasterCms\Exceptions\CmsPageException;
 use CoasterCms\Helpers\Core\BlockManager;
 use CoasterCms\Helpers\Core\View\FormMessage;
 use CoasterCms\Libraries\Builder\PageBuilder;
@@ -9,6 +10,7 @@ use CoasterCms\Models\FormSubmission;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\Theme;
 use CoasterCms\Models\ThemeBlock;
+use Illuminate\Http\Response;
 use Mail;
 use Redirect;
 use Request;
@@ -106,9 +108,14 @@ class Form extends _Base
 
     // form specific functions below
 
+    /**
+     * @param array $form_data
+     * @return false|Response
+     * @throws CmsPageException
+     */
     public static function submission($form_data)
     {
-        if (PageBuilder::$external_template) {
+        if (PageBuilder::$externalTemplate) {
             $form_data = $form_data[config('coaster::frontend.external_form_input')];
         }
 
@@ -228,7 +235,7 @@ class Form extends _Base
                         $emailsViews = $emailsViews . (View::exists($emailsViews . '.' . $form_settings->template . '.default') ?  $form_settings->template : '');
 
                         if (!View::exists($emailsViews)) {
-                            return 'No default email template';
+                            throw new CmsPageException('No default email template', 500);
                         }
                         $sendTemplate = $emailsViews . '.default';
                         $replyTemplate = View::exists($emailsViews . 'reply') ? $emailsViews . 'reply' : $sendTemplate;
@@ -265,16 +272,16 @@ class Form extends _Base
                     if (!$captcha) {
                         FormMessage::add('captcha_code', 'Invalid Captcha Code!');
                     }
-                    return null;
+                    return false;
                 }
 
             }
-        } elseif (!PageBuilder::$external_template) {
+        } elseif (!PageBuilder::$externalTemplate) {
             // error if called from within CMS
-            return 'Form Not Found';
+            throw new CmsPageException('Form Not Found', 500);
         }
 
-        return null;
+        return false;
     }
 
     public static function block_settings_action()

@@ -1,8 +1,8 @@
 <?php namespace CoasterCms\Models;
 
 use CoasterCms\Helpers\Core\BlockManager;
-use CoasterCms\Helpers\Core\File\File;
-use CoasterCms\Helpers\General\File\Zip;
+use CoasterCms\Helpers\Core\File\Directory;
+use CoasterCms\Helpers\Core\File\Zip;
 use CoasterCms\Libraries\Builder\ThemeBuilder;
 use DB;
 use Eloquent;
@@ -192,8 +192,8 @@ Class Theme extends Eloquent
                 if (!empty($extractItems)) {
                     $zip->extractTo($uploadTo, $extractItems);
                     if (($uploadTo . $filePathInfo['filename']) != $themeDir) {
-                        File::copyDirectory($uploadTo . $filePathInfo['filename'], $themeDir);
-                        File::removeDirectory($uploadTo . $filePathInfo['filename']);
+                        Directory::copy($uploadTo . $filePathInfo['filename'], $themeDir);
+                        Directory::remove($uploadTo . $filePathInfo['filename']);
                     }
                 } else {
                     $zip->extractTo($themeDir);
@@ -230,8 +230,8 @@ Class Theme extends Eloquent
             if ($packed) {
 
                 // extract public folder, extract uploads folder, and move views to themes root
-                File::copyDirectory($themePath . '/public', public_path() . '/themes/' . $themeName);
-                File::removeDirectory($themePath . '/public');
+                Directory::copy($themePath . '/public', public_path() . '/themes/' . $themeName);
+                Directory::remove($themePath . '/public');
 
                 if (is_dir($themePath . '/uploads')) {
                     $securePaths = [];
@@ -240,7 +240,7 @@ Class Theme extends Eloquent
                         $securePaths[] = '/uploads/' . trim($secureUploadPath, '/');
                     }
 
-                    File::copyDirectory($themePath . '/uploads', public_path() . '/uploads', function ($addFrom, $addTo) use ($securePaths, $themePath) {
+                    Directory::copy($themePath . '/uploads', public_path() . '/uploads', function ($addFrom, $addTo) use ($securePaths, $themePath) {
                         $uploadPath = str_replace(public_path(), '', $addTo);
                         foreach ($securePaths as $securePath) {
                             if (strpos($uploadPath, $securePath) === 0) {
@@ -251,10 +251,10 @@ Class Theme extends Eloquent
                         return [$addFrom, $addTo];
                     });
                 }
-                File::removeDirectory($themePath . '/uploads');
+                Directory::remove($themePath . '/uploads');
 
-                File::copyDirectory($themePath . '/views', $themePath);
-                File::removeDirectory($themePath . '/views');
+                Directory::copy($themePath . '/views', $themePath);
+                Directory::remove($themePath . '/views');
 
             }
 
@@ -278,8 +278,8 @@ Class Theme extends Eloquent
 
             ThemeBuilder::cleanOverwriteFile($newTheme->id);
 
-            File::removeDirectory($themePath.'/import/blocks');
-            File::removeDirectory($themePath.'/import/pages');
+            Directory::remove($themePath.'/import/blocks');
+            Directory::remove($themePath.'/import/pages');
             if (file_exists($themePath.'/import/pages.csv')) {
                 unlink($themePath . '/import/pages.csv');
             }
@@ -321,10 +321,10 @@ Class Theme extends Eloquent
             $theme->delete();
         }
         if (is_dir(base_path() . '/resources/views/themes/' . $themeName)) {
-            File::removeDirectory(base_path() . '/resources/views/themes/' . $themeName);
+            Directory::remove(base_path() . '/resources/views/themes/' . $themeName);
         }
         if (is_dir(base_path() . '/public/themes/' . $themeName)) {
-            File::removeDirectory(base_path() . '/public/themes/' . $themeName);
+            Directory::remove(base_path() . '/public/themes/' . $themeName);
         }
         return 1;
     }
@@ -380,7 +380,7 @@ Class Theme extends Eloquent
             header("Expires: 0");
             readfile($themesDir . $zipFileName);
             unlink($themesDir . $zipFileName);
-            File::removeDirectory($themesDir.$theme->theme.'/export');
+            Directory::remove($themesDir.$theme->theme.'/export');
             exit;
         }
         return 'error';
