@@ -174,6 +174,20 @@ class PageBuilder
      * @param bool $noOverride
      * @return string
      */
+    public static function pageUrlSegment($pageId = 0, $noOverride = false)
+    {
+        if (!$pageId) {
+            $page = (self::$pageOverride && !$noOverride) ? self::$pageOverride : self::$page;
+            $pageId = !empty($page) && !empty($page->id) ? $page->id : 0;
+        }
+        return $pageId ? PageLang::url($pageId): '';
+    }
+
+    /**
+     * @param int $pageId
+     * @param bool $noOverride
+     * @return string
+     */
     public static function pageUrl($pageId = 0, $noOverride = false)
     {
         if (!$pageId) {
