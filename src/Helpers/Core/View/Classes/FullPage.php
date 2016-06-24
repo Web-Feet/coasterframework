@@ -20,7 +20,7 @@ class FullPage
     /**
      * @var string
      */
-    public $fullUrl;
+    public $urlSegment;
 
     /**
      * @var string
@@ -61,15 +61,15 @@ class FullPage
     public function __construct(Page $page, PageLang $pageLang, $groupContainerPath = '')
     {
         $fullPaths = PageLang::get_full_path($page->id . $groupContainerPath);
+        
+        $this->urlSegment = $pageLang->url;
+        $this->url = $fullPaths->full_url;
 
-        $this->url = $pageLang->url;
         $this->name = $pageLang->name;
-
         $this->fullName = $fullPaths->full_name;
-        $this->fullUrl = $fullPaths->full_url;
 
         $this->full_name = $this->fullName;
-        $this->full_url = $this->fullUrl;
+        $this->full_url = $this->url;
 
         $this->page = $page;
         $this->pageLang = $pageLang;
