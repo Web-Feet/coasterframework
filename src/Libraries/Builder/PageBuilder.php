@@ -177,10 +177,7 @@ class PageBuilder
      */
     public static function pageUrlSegment($pageId = 0, $noOverride = false)
     {
-        if (!$pageId) {
-            $page = self::_getPage($noOverride);
-            $pageId = !empty($page) && !empty($page->id) ? $page->id : 0;
-        }
+        $pageId = $pageId ?: self::pageId($noOverride);
         return $pageId ? PageLang::url($pageId): '';
     }
 
@@ -191,10 +188,7 @@ class PageBuilder
      */
     public static function pageUrl($pageId = 0, $noOverride = false)
     {
-        if (!$pageId) {
-            $page = self::_getPage($noOverride);
-            $pageId = !empty($page) && !empty($page->id) ? $page->id : 0;
-        }
+        $pageId = $pageId ?: self::pageId($noOverride);
         return $pageId ? PageLang::full_url($pageId): '';
     }
 
@@ -205,10 +199,7 @@ class PageBuilder
      */
     public static function pageName($pageId = 0, $noOverride = false)
     {
-        if (!$pageId) {
-            $page = self::_getPage($noOverride);
-            $pageId = !empty($page) && !empty($page->id) ? $page->id : 0;
-        }
+        $pageId = $pageId ?: self::pageId($noOverride);
         return $pageId ? PageLang::name($pageId): '';
     }
 
@@ -220,10 +211,7 @@ class PageBuilder
      */
     public static function pageFullName($pageId = 0, $noOverride = false, $sep = ' &raquo; ')
     {
-        if (!$pageId) {
-            $page = self::_getPage($noOverride);
-            $pageId = !empty($page) && !empty($page->id) ? $page->id : 0;
-        }
+        $pageId = $pageId ?: self::pageId($noOverride);
         return $pageId ? PageLang::full_name($pageId, $sep): '';
     }
 
@@ -544,7 +532,7 @@ class PageBuilder
             $selectedPage = PageLang::preload($string[0]);
             $pageVersionId = !empty($selectedPage) ? $selectedPage->live_version : 0;
         } else {
-            $pageId = !empty(self::$page) ? self::$page->id : 0;
+            $pageId = self::pageId();
             $pageVersionId = $pageId ? self::$page->page_lang[0]->live_version : 0;
         }
 
@@ -568,8 +556,7 @@ class PageBuilder
                 if (!empty($pageBlockData[$language])) {
                     // if custom page block for selected language exists
                     $blockData = $pageBlockData[$language]->content;
-                    break;
-                } elseif (!empty($globalBlockContent[$language])) {
+                } elseif (!empty($globalBlockData[$language])) {
                     // if default block for selected language exists
                     $blockData = $globalBlockData[$language]->content;
                     $usingGlobalContent = true;
