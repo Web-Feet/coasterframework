@@ -31,11 +31,6 @@ class CmsServiceProvider extends ServiceProvider
         $this->app['config']['auth.guards.web.driver'] = 'coaster';
         $this->app['config']['auth.providers.users.model'] = Models\User::class;
 
-        // override croppa settings
-        $this->app['config']['croppa.src_dir'] = public_path();
-        $this->app['config']['croppa.crops_dir'] = public_path() . '/cache';
-        $this->app['config']['croppa.path'] = 'cache/(' . config('coaster::frontend.croppa_handle') . ')$';
-
         // add router middleware
         $router = $this->app['router'];
         $router->middleware('coaster.admin', AdminAuth::class);
@@ -101,7 +96,11 @@ class CmsServiceProvider extends ServiceProvider
      */
     public function provides()
     {
-        return array();
+        return [
+            'CoasterCms\Providers\CmsSettingsProvider',
+            'Bkwld\Croppa\ServiceProvider',
+            'Collective\Html\HtmlServiceProvider'
+        ];
     }
 
 }

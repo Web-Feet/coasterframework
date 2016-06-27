@@ -1,7 +1,7 @@
 <?php
 
 $routeNamePrefix = 'coaster.install.'; 
-$installController = 'CoasterCms\Http\ControllersPage\InstallController';
+$installController = 'CoasterCms\Http\Controllers\InstallController';
 
 Route::any('install/database', ['uses' => $installController . '@setupDatabase', 'as' => $routeNamePrefix . 'database']);
 Route::any('install/database-save', ['uses' => $installController . '@saveDatabaseSettings', 'as' => $routeNamePrefix . 'databaseSave']);
