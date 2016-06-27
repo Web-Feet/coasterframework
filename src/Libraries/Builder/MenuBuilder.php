@@ -71,8 +71,8 @@ class MenuBuilder
         }
         $items = array_values($items);
         foreach ($items as $count => $item) {
-            $is_first = ($count == 1);
-            $is_last = ($count == $total);
+            $is_first = ($count == 0);
+            $is_last = ($count == $total - 1);
 
             $custom_name = trim($item->custom_name);
             if (!empty($custom_name)) {
@@ -106,7 +106,7 @@ class MenuBuilder
             }
 
             if (!empty($sub_menu)) {
-                $menu_items .= self::_getRenderedView('submenu_' . $level, array('item' => $item_data, 'items' => $sub_menu, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $count, 'total' => $total, 'level' => $level, 'further_levels' => $sub_levels));
+                $menu_items .= self::_getRenderedView('submenu_' . $level, array('item' => $item_data, 'items' => $sub_menu, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $count + 1, 'total' => $total, 'level' => $level, 'further_levels' => $sub_levels));
             } else {
                 $menu_items .= self::_getRenderedView('item', array('item' => $item_data, 'is_first' => $is_first, 'is_last' => $is_last, 'count' => $count, 'total' => $total, 'level' => $level));
             }

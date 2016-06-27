@@ -699,8 +699,8 @@ class PageBuilder
 
         $pages = array_values($pages);
         foreach ($pages as $count => $page) {
-            $isFirst = ($count == 1);
-            $isLast = ($count == $total);
+            $isFirst = ($count == 0);
+            $isLast = ($count == $total -1);
 
             $page->page_lang = (!$page->page_lang->isEmpty())?$page->page_lang[0]:PageLang::preload($page->id);
             $fullPageInfo = new FullPage($page, $page->page_lang, $categoryPath);
@@ -709,7 +709,7 @@ class PageBuilder
 
             $list .= self::_getRenderedView(
                 'categories.' . $options['view'] . '.page',
-                ['page' => $fullPageInfo, 'category_id' => $categoryPageId, 'is_first' => $isFirst, 'is_last' => $isLast, 'count' => $count, 'total' => $total]
+                ['page' => $fullPageInfo, 'category_id' => $categoryPageId, 'is_first' => $isFirst, 'is_last' => $isLast, 'count' => $count + 1, 'total' => $total]
             );
 
             self::$pageOverride = null;
