@@ -66,6 +66,7 @@ class PageLoader
 
     /**
      * Load all page levels for current request.
+     * Also check if search page or feed page.
      */
     protected function _loadPageLevels()
     {
@@ -114,6 +115,7 @@ class PageLoader
 
                         if (empty($this->pageLevels[$i])) {
                             if (self::_isSearchPage($currentSegment, $parentPage)) {
+                                Search::setSearchBlockRequired();
                                 $this->searchQuery = implode('/', array_slice(Request::segments(), $i));
                                 unset($this->pageLevels[$i]);
                                 $urlSegments = $i - 1;
@@ -132,12 +134,17 @@ class PageLoader
 
         }
 
+        if ($this->searchQuery === false & $query = Request::get('q')) {
+            $this->searchQuery = $query;
+        }
+
         $this->pageLevels = array_filter($this->pageLevels);
 
     }
 
     /**
      * Load current page status.
+     * Is live, Is preview, External Template
      */
     protected function _loadPageStatus()
     {

@@ -136,17 +136,18 @@ class PageBuilder
      */
     public static function pageId($noOverride = false)
     {
-        $page = (self::$pageOverride && !$noOverride) ? self::$pageOverride : self::$page;
+        $page = self::_getPage($noOverride);
         return !empty($page) ? $page->id : 0;
     }
 
     /**
+     * @param bool $noOverride
      * @return int
      */
-    public static function parentPageId()
+    public static function parentPageId($noOverride = false)
     {
-        $levels = count(self::$pageLevels);
-        return $levels > 1 ? self::$pageLevels[$levels - 2]->id : 0;
+        $page = self::_getPage($noOverride);
+        return !empty($page) ? $page->parent : 0;
     }
 
     /**
@@ -155,7 +156,7 @@ class PageBuilder
      */
     public static function pageTemplateId($noOverride = false)
     {
-        $page = (self::$pageOverride && !$noOverride) ? self::$pageOverride : self::$page;
+        $page = self::_getPage($noOverride);
         return !empty($page) ? $page->template : 0;
     }
 
@@ -165,7 +166,7 @@ class PageBuilder
      */
     public static function pageLiveVersionId($noOverride = false)
     {
-        $page = (self::$pageOverride && !$noOverride) ? self::$pageOverride : self::$page;
+        $page = self::_getPage($noOverride);
         return (!empty($page) && !$page->page_lang->isEmpty()) ? $page->page_lang[0]->live_version : 0;
     }
 
@@ -177,7 +178,7 @@ class PageBuilder
     public static function pageUrlSegment($pageId = 0, $noOverride = false)
     {
         if (!$pageId) {
-            $page = (self::$pageOverride && !$noOverride) ? self::$pageOverride : self::$page;
+            $page = self::_getPage($noOverride);
             $pageId = !empty($page) && !empty($page->id) ? $page->id : 0;
         }
         return $pageId ? PageLang::url($pageId): '';
@@ -191,7 +192,7 @@ class PageBuilder
     public static function pageUrl($pageId = 0, $noOverride = false)
     {
         if (!$pageId) {
-            $page = (self::$pageOverride && !$noOverride) ? self::$pageOverride : self::$page;
+            $page = self::_getPage($noOverride);
             $pageId = !empty($page) && !empty($page->id) ? $page->id : 0;
         }
         return $pageId ? PageLang::full_url($pageId): '';
@@ -205,7 +206,7 @@ class PageBuilder
     public static function pageName($pageId = 0, $noOverride = false)
     {
         if (!$pageId) {
-            $page = (self::$pageOverride && !$noOverride) ? self::$pageOverride : self::$page;
+            $page = self::_getPage($noOverride);
             $pageId = !empty($page) && !empty($page->id) ? $page->id : 0;
         }
         return $pageId ? PageLang::name($pageId): '';
@@ -220,7 +221,7 @@ class PageBuilder
     public static function pageFullName($pageId = 0, $noOverride = false, $sep = ' &raquo; ')
     {
         if (!$pageId) {
-            $page = (self::$pageOverride && !$noOverride) ? self::$pageOverride : self::$page;
+            $page = self::_getPage($noOverride);
             $pageId = !empty($page) && !empty($page->id) ? $page->id : 0;
         }
         return $pageId ? PageLang::full_name($pageId, $sep): '';
@@ -493,18 +494,10 @@ class PageBuilder
      */
     public static function search($options = [])
     {
-        Search::$searchBlock = true;
-        // get query (should be after last 'search' segment in url)
-        $search_pos = array_search('search', array_reverse(Request::segments(), true));
-        if ($search_pos !== false && Request::segment($search_pos + 2)) {
-            $query = urldecode(Request::segment($search_pos + 2)); // + 2 due to segments starting at 1
-        } else {
-            $query = Request::get('q');
-        }
-        $options['search_query'] = $query;
+        Search::searchBlockFound();
         $pages = [];
-        if ($query != '') {
-            $pages = PageSearchData::lookup($query);
+        if (self::$searchQuery !== false) {
+            $pages = PageSearchData::lookup(self::$searchQuery);
             if (!empty($pages)) {
                 if (!empty($options['templates'])) {
                     foreach ($pages as $k => $page) {
@@ -516,16 +509,14 @@ class PageBuilder
                 $results = count($pages);
                 $showing = "";
                 if ($results > 20) {
-                    $page = (int)Request::input('page');
-                    if ($page == 0) {
-                        $page = 1;
-                    }
+                    $page = (int) Request::input('page');
+                    $page = $page < 1 ? 1 : $page;
                     $max = (($page * 20) > $results) ? $results : ($page * 20);
                     $showing = " [showing " . (($page - 1) * 20 + 1) . " - " . $max . "]";
                 }
-                $options['content'] = "Search results for '" . $query . "' (" . $results . " match" . ((count($pages) > 1) ? 'es' : null) . " found)" . $showing . ":";
+                $options['content'] = "Search results for '" . self::$searchQuery . "' (" . $results . " match" . ((count($pages) > 1) ? 'es' : null) . " found)" . $showing . ":";
             } else {
-                $options['content'] = "No results found for '" . $query . "'.";
+                $options['content'] = "No results found for '" . self::$searchQuery . "'.";
             }
         } else {
             $options['content'] = array_key_exists('content', $options) ? $options['content'] : "No search query entered.";
@@ -620,6 +611,11 @@ class PageBuilder
             return new \PDOStatement;
         }
     }
+    
+    protected static function _getPage($noOverride = false)
+    {
+        return (self::$pageOverride && !$noOverride) ? self::$pageOverride : self::$page;
+    }
 
     /**
      * @param string $viewPath
@@ -659,8 +655,7 @@ class PageBuilder
             'type' => 'all',
             'per_page' => 20,
             'limit' => 0,
-            'content' => '',
-            'search_query' => ''
+            'content' => ''
         ];
         $options = array_merge($defaultOptions, array_filter($options));
 
@@ -722,7 +717,7 @@ class PageBuilder
 
         return self::_getRenderedView(
             'categories.' . $options['view'] . '.pages_wrap',
-            ['pages' => $list, 'category_id' => $categoryPageId, 'pagination' => $paginationLinks, 'links' => $paginationLinks, 'total' => $total, 'content' => $options['content'], 'search_query' => $options['search_query']]
+            ['pages' => $list, 'category_id' => $categoryPageId, 'pagination' => $paginationLinks, 'links' => $paginationLinks, 'total' => $total, 'content' => $options['content'], 'search_query' => self::$searchQuery]
         );
     }
 

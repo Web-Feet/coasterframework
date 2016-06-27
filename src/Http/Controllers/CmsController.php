@@ -105,7 +105,7 @@ class CmsController extends Controller
             }
 
             // if declared as a search page, must have search block
-            if (PageBuilder::$searchQuery !== false && !Search::searchBlockExists()) {
+            if (Search::searchBlockRequired() && !Search::searchBlockExists()) {
                 throw new CmsPageException('cms page found without search function', 404);
             }
 
