@@ -19,7 +19,7 @@ class Feed
     public static function getFeedExtension($file)
     {
         $path_info = pathinfo($file);
-        if (!empty($path_info['extension']) && is_dir(base_path('/resources/views/themes/' . PageBuilder::$theme . '/feed/' . $path_info['extension']))) {
+        if (!empty($path_info['extension']) && is_dir(base_path('/resources/views/themes/' . PageBuilder::getData('theme') . '/feed/' . $path_info['extension']))) {
             return $path_info['extension'];
         }
         return false;

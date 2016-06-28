@@ -28,7 +28,7 @@ class MenuBuilder
      */
     protected static function _getRenderedView($viewPath, $data = [])
     {
-        $viewPath = 'themes.' . PageBuilder::$theme . '.menus.' . self::$_view . '.' . $viewPath;
+        $viewPath = 'themes.' . PageBuilder::getData('theme') . '.menus.' . self::$_view . '.' . $viewPath;
         if (View::exists($viewPath)) {
             return View::make($viewPath, $data)->render();
         } else {
@@ -56,11 +56,11 @@ class MenuBuilder
         }
 
         $page_parents = array();
-        $pageLevels = PageBuilder::$pageLevels?:[];
+        $pageLevels = PageBuilder::getData('pageLevels')?:[];
         foreach ($pageLevels as $k => $parent_page) {
             if ($k > 0) $page_parents[] = $parent_page->page_id;
         }
-        $currentPage = PageBuilder::$page?:new Page;
+        $currentPage = PageBuilder::getData('page')?:new Page;
 
         $total = count($items);
         $menu_items = '';

@@ -48,7 +48,7 @@ class Selectpages extends _Base
             }
         }
         $template = !empty($options['view']) ? $options['view'] : $block->name;
-        $selectPageViews = 'themes.' . PageBuilder::$theme . '.blocks.selectpages.';
+        $selectPageViews = 'themes.' . PageBuilder::getData('theme') . '.blocks.selectpages.';
         if (View::exists($selectPageViews . $template)) {
             return View::make($selectPageViews . $template, array('pages' => $pages))->render();
         } else {

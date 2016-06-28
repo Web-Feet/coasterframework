@@ -1,52 +1,31 @@
-<?php namespace CoasterCms\Libraries\Builder;
+<?php namespace CoasterCms\Helpers\Admin\Theme;
 
-use CoasterCms\Helpers\Core\BlockManager;
-use CoasterCms\Libraries\Builder\PageBuilder as OriginalPageBuilder;
+use CoasterCms\Helpers\Core\Page\PageLoaderDummy;
+use CoasterCms\Libraries\Builder\Instances\ThemeBuilderInstance;
+use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\BlockFormRule;
 use CoasterCms\Models\BlockRepeater;
 use CoasterCms\Models\BlockSelectOption;
-use CoasterCms\Models\Menu;
 use CoasterCms\Models\Page;
-use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\TemplateBlock;
 use CoasterCms\Models\Theme;
 use CoasterCms\Models\ThemeBlock;
-use Illuminate\Foundation\AliasLoader;
 use View;
 
-class ThemeBuilder
+class BlockUpdater
 {
-
-    // default properties from PageBuilder class
-    public static $theme;
-    public static $template;
-    public static $page;
-    public static $preview = false;
-    public static $pageLevels = [];
-
-    // current settings
-    private static $_theme;
-    private static $_template;
-    private static $_repeater;
-
-    // all blocks in blocks table
-    private static $_allBlocks;
-
-    // used repeater blocks in theme files
-    private static $_repeaterBlocks;
-    private static $_repeaterTemplates;
-
-    // block options
+    // theme files block options/types
     private static $_selectBlocks;
     private static $_formRules;
+    private static $_repeaterBlocks;
 
-    // block overwrite details
+    // file overwrite details for blocks
     private static $_blockSettings;
 
-    // core templates (used if actual template can't be determined)
+    // system file templates
     private static $_coreTemplates;
 
     // all blocks in theme files
@@ -65,25 +44,17 @@ class ThemeBuilder
     private static $_databaseTemplateIds;
     private static $_databaseBlockTemplates;
 
+    // all blocks in blocks table
+    private static $_allBlocks;
+
     // load block category ids for use in category guess
-    private static $_categoryIds;
     private static $_blockCategories;
     private static $_guessedCategoryIds;
-    private static $_csvCategoryData;
 
-    // menu data
-    private static $_menus;
-
-    // return error message if error found in a template
-    private static $_error;
-
-    // keep track of view to stop infinite loops
-    private static $_currentView;
-
-    public static function updateTheme($themeId, $blocks = [])
+    public static function updateTheme(Theme $theme, $blocks = [])
     {
         // process theme templates
-        self::processFiles($themeId);
+        self::processFiles($theme);
 
         if (empty($blocks)) {
             // by default get all unmodified file blocks data
@@ -103,7 +74,7 @@ class ThemeBuilder
 
             // update ThemeBlocks/TemplateBlocks
             if (!empty($details['run_template_update'])) {
-                self::updateBlockTemplates($block, $details);
+                self::updateBlockTemplates($theme->id, $block, $details);
             }
         }
 
@@ -114,18 +85,17 @@ class ThemeBuilder
         self::updateBlockRepeaters();
     }
 
-    public static function cleanOverwriteFile($themeId)
+    public static function cleanOverwriteFile(Theme $theme)
     {
-        // remove all details except for templates for which ThemeBuilder can't work out
+        // remove all details except for templates for which the BlockUpdater can't work out or guess
 
         // re process theme files without the overwrite file
         self::$_blockSettings = [];
-        self::processFiles($themeId, false);
+        self::processFiles($theme, false);
         $blocksFound = self::$_fileBlockTemplates;
 
-        // check extra for extra templates in overwrite file that ThemeBuilder did not pick up
+        // check for extra templates in overwrite file that BlockUpdater did not pick up
         $extraTemplates = [];
-        self::_getBlockOverwriteFile();
         foreach (self::$_blockSettings as $block => $setting) {
             if (!empty($setting['templates'])) {
                 $blocksFound[$block] = empty($blocksFound[$block])?[]:$blocksFound[$block];
@@ -136,7 +106,7 @@ class ThemeBuilder
         }
 
         if (!empty($extraTemplates)) {
-            $blocksCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/import/blocks.csv', 'w');
+            $blocksCsv = fopen(base_path().'/resources/views/themes/'.$theme->theme.'/import/blocks.csv', 'w');
             fputcsv($blocksCsv, [
                 'Block Name',
                 'Block Label',
@@ -165,56 +135,37 @@ class ThemeBuilder
         }
     }
 
-    public static function processFiles($themeId, $overwriteFile = true)
+    public static function processFiles(Theme $theme, $overwriteFile = true)
     {
-        self::$_theme = Theme::find($themeId);
-        if (!empty(self::$_theme)) {
-            $loader = AliasLoader::getInstance();
-            $loader->alias('PageBuilder', 'CoasterCms\Libraries\Builder\ThemeBuilder');
+        if (!empty($theme)) {
 
-            $themePath = base_path('resources/views/themes/' . self::$_theme->theme . '/templates');
+            $themePath = base_path('resources/views/themes/' . $theme->theme . '/templates');
 
-            self::_checkRepeaterTemplates();
-            self::_checkSelectBlocks();
-            self::_checkFormRules();
-
-            if ($overwriteFile) {
-                self::_getBlockOverwriteFile();
-            }
-
-            self::$theme = self::$_theme->theme;
-            self::$page = new Page;
-            self::$page->id = 0;
-            self::$page->page_lang = new PageLang;
-            self::$page->page_lang->name = '';
-            self::$page->page_lang->url = '';
-            self::$page->page_lang->live_version = 0;
-
-            OriginalPageBuilder::$theme = self::$theme;
-            OriginalPageBuilder::$page = self::$page;
-
+            PageBuilder::setClass(ThemeBuilderInstance::class, PageLoaderDummy::class, $overwriteFile);
+            PageBuilder::setTheme($theme->id);
+            
             if (is_dir($themePath)) {
-                self::$_fileTemplateBlocks = [];
-                self::$_coreTemplates = ['__core_category', '__core_otherPage', '__core_repeater'];
-                foreach (self::$_coreTemplates as $coreTemplate) {
-                    self::$_fileTemplateBlocks[$coreTemplate] = [];
-                }
+
                 foreach (scandir($themePath) as $templateFile) {
-                    if (self::$_template = explode('.', $templateFile)[0]) {
-                        self::$template = self::$_template;
-                        self::$_fileTemplateBlocks[self::$_template] = [];
-                        View::make('themes.' . self::$_theme->theme . '.templates.' . self::$_template)->render();
-                        if (self::$_error) {
-                            $error = 'Error processing "'.'themes.' . self::$_theme->theme . '.templates.' . self::$_template . '"';
-                            throw new \Exception($error . "\r\n" . self::$_error);
+                    if ($templateName = explode('.', $templateFile)[0]) {
+                        PageBuilder::setTemplate($templateName);
+                        View::make('themes.' . $theme->theme . '.templates.' . $templateName)->render();
+                        if ($error = PageBuilder::getData('error')) {
+                            throw new \Exception($error . ' (template:' . 'themes.' . $theme->theme . '.templates.' . $templateName . ')');
                         }
                     }
                 }
-                self::_processDatabaseBlocks();
+
+                self::$_selectBlocks = PageBuilder::getData('selectBlocks');
+                self::$_formRules = PageBuilder::getData('formRules');
+                self::$_repeaterBlocks = PageBuilder::getData('repeaterBlocks');
+                self::$_blockSettings = PageBuilder::getData('blockSettings');
+                self::$_fileTemplateBlocks = PageBuilder::getData('templateBlocks');
+                self::$_coreTemplates = PageBuilder::getData('coreTemplates');
+
+                self::_processDatabaseBlocks($theme->id);
                 self::_processFileBlocks();
             }
-
-            $loader->alias('PageBuilder', 'CoasterCms\Libraries\Builder\PageBuilder');
         }
 
         if (empty(self::$_fileBlocks)) {
@@ -228,15 +179,14 @@ class ThemeBuilder
 
         if (!empty($theme)) {
 
-            self::$_theme = $theme;
-            self::_processDatabaseBlocks();
+            self::_processDatabaseBlocks($theme->id);
 
-            @mkdir(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export');
-            @mkdir(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/blocks');
-            $blocksCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/blocks.csv', 'w');
-            $blockCategoriesCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/blocks/categories.csv', 'w');
-            $selectOptionsCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/blocks/select_options.csv', 'w');
-            $formRulesCsv = fopen(base_path().'/resources/views/themes/'.self::$_theme->theme.'/export/blocks/form_rules.csv', 'w');
+            @mkdir(base_path().'/resources/views/themes/'.$theme->theme.'/export');
+            @mkdir(base_path().'/resources/views/themes/'.$theme->theme.'/export/blocks');
+            $blocksCsv = fopen(base_path().'/resources/views/themes/'.$theme->theme.'/export/blocks.csv', 'w');
+            $blockCategoriesCsv = fopen(base_path().'/resources/views/themes/'.$theme->theme.'/export/blocks/categories.csv', 'w');
+            $selectOptionsCsv = fopen(base_path().'/resources/views/themes/'.$theme->theme.'/export/blocks/select_options.csv', 'w');
+            $formRulesCsv = fopen(base_path().'/resources/views/themes/'.$theme->theme.'/export/blocks/form_rules.csv', 'w');
 
             fputcsv($selectOptionsCsv, [
                 'Block Name',
@@ -266,7 +216,7 @@ class ThemeBuilder
 
             $formRules = BlockFormRule::all();
             if (!$formRules->isEmpty()) {
-                $formsDir = base_path().'/resources/views/themes/'.self::$_theme->theme.'/blocks/forms';
+                $formsDir = base_path().'/resources/views/themes/'.$theme->theme.'/blocks/forms';
                 if (is_dir($formsDir)) {
                     $themeForms = [];
                     foreach (scandir($formsDir) as $formTemplate) {
@@ -346,147 +296,11 @@ class ThemeBuilder
         }
     }
 
-    private static function _checkRepeaterTemplates()
-    {
-        self::$_repeater = null;
-        self::$_repeaterBlocks = [];
-        self::$_repeaterTemplates = [];
-
-        $repeaterPath = base_path('resources/views/themes/' . self::$_theme->theme . '/blocks/repeaters');
-        if (is_dir($repeaterPath)) {
-            foreach (scandir($repeaterPath) as $repeaterFile) {
-                if ($repeaterTemplate = explode('.', $repeaterFile)[0]) {
-                    self::$_repeaterTemplates[] = $repeaterTemplate;
-                }
-            }
-        }
-    }
-
-    private static function _checkSelectBlocks()
-    {
-        self::$_selectBlocks = [];
-
-        $selectOptions = base_path('resources/views/themes/' . self::$_theme->theme . '/import/blocks/select_options.csv');
-        if (file_exists($selectOptions) && ($fileHandle = fopen($selectOptions, 'r')) !== false) {
-            $row = 0;
-            while (($data = fgetcsv($fileHandle)) !== false) {
-                if ($row++ == 0 && $data[0] == 'Block Name') {
-                    continue;
-                }
-                if (!isset(self::$_selectBlocks[$data[0]])) {
-                    self::$_selectBlocks[$data[0]] = [];
-                }
-                self::$_selectBlocks[$data[0]][$data[2]] = $data[1];
-            }
-            fclose($fileHandle);
-        }
-    }
-
-    private static function _checkFormRules()
-    {
-        self::$_formRules = [];
-
-        $formRules = base_path('resources/views/themes/' . self::$_theme->theme . '/import/blocks/form_rules.csv');
-        if (file_exists($formRules) && ($fileHandle = fopen($formRules, 'r')) !== false) {
-            $row = 0;
-            while (($data = fgetcsv($fileHandle)) !== false) {
-                if ($row++ == 0 && $data[0] == 'Form Template') {
-                    continue;
-                }
-                if (!isset(self::$_formRules[$data[0]])) {
-                    self::$_formRules[$data[0]] = [];
-                }
-                self::$_formRules[$data[0]][$data[1]] = $data[2];
-            }
-            fclose($fileHandle);
-        }
-    }
-
     public static function updateFormRules()
     {
         if (!empty(self::$_formRules)) {
             BlockFormRule::import(self::$_formRules);
         }
-    }
-
-    private static function _getBlockOverwriteFile()
-    {
-        self::$_blockSettings = [];
-
-        $selectOptions = base_path('resources/views/themes/' . self::$_theme->theme . '/import/blocks.csv');
-        if (file_exists($selectOptions) && ($fileHandle = fopen($selectOptions, 'r')) !== false) {
-            $row = 0;
-            while (($data = fgetcsv($fileHandle)) !== false) {
-                if ($row++ == 0 && $data[0] == 'Block Name') continue;
-                if (!empty($data[0])) {
-                    $fields = ['name', 'label', 'note', 'category_id', 'type', 'global_site', 'global_pages', 'templates', 'order'];
-                    foreach ($fields as $fieldId => $field) {
-                        if (isset($data[$fieldId])) {
-                            $setting = trim($data[$fieldId]);
-                            if ($setting != '') {
-                                if (in_array($field, ['global_site', 'global_pages'])) {
-                                    if (empty($setting) || strtolower($setting) == 'false' || strtolower($setting) == 'no' || strtolower($setting) == 'n') {
-                                        $setting = false;
-                                    } else {
-                                        $setting = true;
-                                    }
-                                }
-                                if ($field == 'category_id') {
-                                    $setting = self::_getBlockCategoryId($setting);
-                                }
-                                if ($field == 'name') {
-                                    $setting = strtolower($setting);
-                                }
-                                self::$_blockSettings[$data[0]][$field] = $setting;
-                            }
-                        }
-                    }
-                }
-            }
-            fclose($fileHandle);
-        }
-    }
-
-    private static function _getBlockCategoryId($categoryName)
-    {
-        if (!isset(self::$_categoryIds)) {
-            foreach (BlockCategory::all() as $category) {
-                self::$_categoryIds[trim(strtolower($category->name))] = $category;
-            }
-            $categoryCsv = base_path('resources/views/themes/' . self::$_theme->theme . '/import/blocks/categories.csv');
-            if (file_exists($categoryCsv) && ($fileHandle = fopen($categoryCsv, 'r')) !== false) {
-                $row = 0;
-                while (($data = fgetcsv($fileHandle)) !== false) {
-                    if ($row++ == 0 && $data[0] == 'Block Category') continue;
-                    if (!empty($data[0])) {
-                        list($name, $order) = $data;
-                        self::$_csvCategoryData[trim(strtolower($name))] = $order;
-
-                        if (empty(self::$_categoryIds[trim(strtolower($name))])) {
-                            $newBlockCategory = new BlockCategory;
-                            $newBlockCategory->name = trim($name);
-                            $newBlockCategory->order = $order;
-                            $newBlockCategory->save();
-                            self::$_categoryIds[trim(strtolower($name))] = $newBlockCategory;
-                        } else {
-                            self::$_categoryIds[trim(strtolower($name))]->order = $order;
-                            self::$_categoryIds[trim(strtolower($name))]->save();
-                        }
-                    }
-                }
-                fclose($fileHandle);
-            }
-        }
-
-        if (empty(self::$_categoryIds[trim(strtolower($categoryName))])) {
-            $newBlockCategory = new BlockCategory;
-            $newBlockCategory->name = trim($categoryName);
-            $newBlockCategory->order = 0;
-            $newBlockCategory->save();
-            self::$_categoryIds[trim(strtolower($categoryName))] = $newBlockCategory;
-        }
-
-        return self::$_categoryIds[trim(strtolower($categoryName))]->id;
     }
 
     private static function _getBlockCategory($categoryId, $field = null)
@@ -539,8 +353,8 @@ class ThemeBuilder
                         foreach (self::$_fileTemplateBlocks as $template => $blocks) {
                             if (!in_array($block, self::$_fileTemplateBlocks[$template]) && strpos($template, '__core_') !== 0) {
                                 self::$_fileTemplateBlocks[$template][] = $block;
-                                self::$_template = $template;
-                                self::block($block, []);
+                                PageBuilder::setTemplate($template);
+                                PageBuilder::block($block);
                             }
                         }
                     } else {
@@ -550,8 +364,8 @@ class ThemeBuilder
                                 if (isset(self::$_fileTemplateBlocks[$template])) {
                                     if (!in_array($block, self::$_fileTemplateBlocks[$template])) {
                                         self::$_fileTemplateBlocks[$template][] = $block;
-                                        self::$_template = $template;
-                                        self::block($block, []);
+                                        PageBuilder::setTemplate($template);
+                                        PageBuilder::block($block);
                                     }
                                 }
                             }
@@ -598,7 +412,8 @@ class ThemeBuilder
                     }
                     $blockCounter[$block] = 0;
                     self::$_fileBlocks[$block] = ['order' => $blockOrders[$block]];
-                    if (in_array($block, self::$_repeaterTemplates)) {
+                    self::$_fileBlocks[$block] = ['order' => $blockOrders[$block]];
+                    if (in_array($block, self::$_repeaterBlocks)) {
                         self::$_fileBlocks[$block]['type'] = 'repeater';
                     }
                 }
@@ -616,7 +431,7 @@ class ThemeBuilder
 
     }
 
-    private static function _processDatabaseBlocks()
+    private static function _processDatabaseBlocks($themeId)
     {
         self::$_allBlocks = [];
         self::$_databaseBlocks = [];
@@ -633,14 +448,14 @@ class ThemeBuilder
             self::$_allBlocks[$block->name] = $block;
         }
 
-        $templates = Template::where('theme_id', '=', self::$_theme->id)->get();
+        $templates = Template::where('theme_id', '=', $themeId)->get();
         if (!$templates->isEmpty()) {
             foreach ($templates as $template) {
                 self::$_databaseTemplates[$template->template] = $template;
                 self::$_databaseTemplateIds[$template->id] = $template;
             }
         }
-        self::saveTemplates(); // save any new templates
+        self::saveTemplates($themeId); // save any new templates
         if (!empty(self::$_databaseTemplates)) {
             foreach (self::$_databaseTemplates as $template) {
                 self::$_databaseTemplateBlocks[$template->template] = [];
@@ -664,7 +479,7 @@ class ThemeBuilder
             }
         }
 
-        $globalBlocks = ThemeBlock::where('theme_id', '=', self::$_theme->id)->get();
+        $globalBlocks = ThemeBlock::where('theme_id', '=', $themeId)->get();
         foreach ($globalBlocks as $globalBlock) {
             if (!isset($blocksById[$globalBlock->block_id])) {
                 $globalBlock->delete();
@@ -717,11 +532,6 @@ class ThemeBuilder
      * Get Data Functions
      */
 
-    public static function getThemeName()
-    {
-        return !empty(self::$_theme) ? self::$_theme->theme : '';
-    }
-
     public static function getNewBlocks()
     {
         // array of empty details array
@@ -753,8 +563,7 @@ class ThemeBuilder
     public static function getDatabaseBlocks($themeId)
     {
         if (empty(self::$_databaseBlocks)) {
-            self::$theme = Theme::find($themeId);
-            self::_processDatabaseBlocks();
+            self::_processDatabaseBlocks($themeId);
         }
         return self::$_databaseBlocks;
     }
@@ -963,7 +772,7 @@ class ThemeBuilder
             $processedData['category_id'] = self::_categoryGuess($block);
             $processedData['label'] = ucwords(str_replace('_', ' ', $block));
             $processedData['name'] = $block;
-            $processedData['type'] = !empty($details['type']) ? $details['type'] : self::_typeGuess($block);
+            $processedData['type'] = !empty($details['type']) ? $details['type'] : self::typeGuess($block);
             $processedData['note'] = !empty($details['note']) ? $details['note'] : '';
         }
         if (!empty(self::$_databaseBlocks[$block])) {
@@ -1019,7 +828,6 @@ class ThemeBuilder
                     $newBlockCategory->order = ($key=='seo')?100:$order;
                     $newBlockCategory->save();
                     self::$_guessedCategoryIds[$key] = $newBlockCategory->id;
-                    self::$_categoryIds[$newBlockCategory->name] = $newBlockCategory->id;
                 }
             }
         }
@@ -1042,7 +850,7 @@ class ThemeBuilder
         return $categoryFound;
     }
 
-    private static function _typeGuess($block)
+    public static function typeGuess($block)
     {
         $typesArr = [
             'video' => ['vid'],
@@ -1076,13 +884,13 @@ class ThemeBuilder
      * Update Functions
      */
 
-    public static function saveTemplates()
+    public static function saveTemplates($themeId)
     {
         if (!empty(self::$_fileTemplateBlocks)) {
             foreach (self::$_fileTemplateBlocks as $template => $blocks) {
                 if (empty(self::$_databaseTemplates[$template]) && strpos($template, '__core_') !== 0) {
                     $newTemplate = new Template;
-                    $newTemplate->theme_id = self::$_theme->id;
+                    $newTemplate->theme_id = $themeId;
                     $newTemplate->template = $template;
                     $newTemplate->label = ucwords(str_replace('_', ' ', $template)) . ' Template';
                     $newTemplate->save();
@@ -1123,7 +931,7 @@ class ThemeBuilder
         }
     }
 
-    public static function updateBlockTemplates($block, $blockData)
+    public static function updateBlockTemplates($themeId, $block, $blockData)
     {
         if (!isset(self::$_fileBlocks[$block])) {
             $blockData['global_pages'] = 0;
@@ -1153,7 +961,7 @@ class ThemeBuilder
             // Insert or Update ThemeBlock
             if (empty(self::$_databaseGlobalBlocks[$block])) {
                 $newThemeBlock = new ThemeBlock;
-                $newThemeBlock->theme_id = self::$_theme->id;
+                $newThemeBlock->theme_id = $themeId;
                 $newThemeBlock->block_id = self::$_allBlocks[$block]->id;
                 $newThemeBlock->show_in_pages = $blockData['global_pages'];
                 $newThemeBlock->show_in_global = $blockData['global_site'];
@@ -1173,7 +981,7 @@ class ThemeBuilder
         } else {
             // Delete from theme blocks if no longer a theme block
             if (!empty(self::$_databaseGlobalBlocks[$block])) {
-                ThemeBlock::where('block_id', '=', self::$_allBlocks[$block]->id)->where('theme_id', '=', self::$_theme->id)->delete();
+                ThemeBlock::where('block_id', '=', self::$_allBlocks[$block]->id)->where('theme_id', '=', $themeId)->delete();
                 $databaseBlockTemplates = [];
             }
 
@@ -1216,174 +1024,6 @@ class ThemeBuilder
                 self::$_databaseRepeaterBlocks[self::$_allBlocks[$repeater]->id]->blocks = $implodedList;
                 self::$_databaseRepeaterBlocks[self::$_allBlocks[$repeater]->id]->save();
             }
-        }
-    }
-
-    /*
-     * Deal with standard PageBuilder Methods
-     */
-
-    public static function block($block_name, $options = array())
-    {
-        if (!empty($options['import_ignore'])) {
-            return;
-        }
-
-        $block_name = strtolower($block_name);
-
-        // get block type
-        if (isset(self::$_blockSettings[$block_name]['type'])) {
-            $block = new Block;
-            $block->type = self::$_blockSettings[$block_name]['type'];
-        } else {
-            $block = Block::preload($block_name);
-        }
-        if (empty($block)) {
-            $block = new Block;
-            $block->type = self::_typeGuess($block_name);
-        }
-        $block_class = $block->get_class();
-
-        // check if repeater view
-        if (!empty($options['view'])) {
-            $repeaterView = $options['view'];
-        } else {
-            $repeaterView = $block_name;
-        }
-
-        if ($block_class == 'repeater' || in_array($repeaterView, self::$_repeaterTemplates)) {
-            $currentRepeater = self::$_repeater;
-            self::$_repeater = $block_name;
-
-            // manually call the repeater view as the normal pagebuilder won't call it if the block_repeaters table is empty
-            $output = View::make(
-                'themes.' . self::$_theme->theme . '.blocks.repeaters.' . $repeaterView,
-                ['is_first' => true, 'is_last' => true, 'count' => 1, 'total' => 1, 'id' => 1, 'pagination' => '']
-            )->render();
-
-            self::$_repeater = $currentRepeater;
-        } else {
-            // always use blank data for processing blocks
-            $output = $block_class::display($block, '', $options);
-        }
-
-        if (self::$_repeater) {
-            // if in a repeater template
-            if (!isset(self::$_repeaterBlocks[self::$_repeater])) {
-                self::$_repeaterBlocks[self::$_repeater] = [];
-            }
-            if (!in_array($block_name, self::$_repeaterBlocks[self::$_repeater])) {
-                self::$_repeaterBlocks[self::$_repeater][] = $block_name;
-            }
-            $template = '__core_repeater';
-        } else {
-            // if in a normal template
-            if (!array_key_exists('page_id', $options)) {
-                $template = self::$_template;
-            } else {
-                $template = '__core_otherPage';
-            }
-        }
-
-        if (!in_array($block_name, self::$_fileTemplateBlocks[$template])) {
-            self::$_fileTemplateBlocks[$template][] = $block_name;
-        }
-
-        if (!empty($options['import_note'])) {
-            if (!isset(self::$_blockSettings[$block_name])) {
-                self::$_blockSettings[$block_name] = [];
-            }
-            if (!isset(self::$_blockSettings[$block_name]['note'])) {
-                self::$_blockSettings[$block_name]['note'] = $options['import_note'];
-            }
-        }
-
-        if (!empty($options['import_return_value'])) {
-            $output = $options['import_return_value'];
-        }
-
-        return $output;
-    }
-
-    public static function menu($menu_name, $options = array())
-    {
-        if (!isset(self::$_menus)) {
-            $menus = Menu::all();
-            self::$_menus = [];
-            foreach ($menus as $menu) {
-                self::$_menus[$menu->name] = $menu;
-            }
-        }
-        if (empty(self::$_menus[$menu_name])) {
-            $menuView = 'themes.' . self::$_theme->theme . '.menus.' . (!empty($options['view'])?$options['view']:'default');
-            $subLevel = 1;
-            while (View::exists($menuView.'.submenu_'.$subLevel)) {
-                $subLevel++;
-            }
-            $subLevel--;
-            $newMenu = new Menu;
-            $newMenu->label = ucwords(str_replace('_', ' ', $menu_name));
-            $newMenu->name = $menu_name;
-            $newMenu->max_sublevel = $subLevel;
-            $newMenu->save();
-            self::$_menus[$newMenu->name] = $newMenu;
-        }
-    }
-
-    public static function __callStatic($name, $arguments)
-    {
-        if (strpos($name, 'block_') === 0) {
-            $validTypes = BlockManager::getBlockClasses();
-            $blockType = strtolower(substr($name, 6));
-            if (!empty($validTypes[$blockType])) {
-                $blockName = $arguments[0];
-                if (!isset(self::$_blockSettings[$blockName])) {
-                    self::$_blockSettings[$blockName] = [];
-                }
-                if (!isset(self::$_blockSettings[$blockName]['type'])) {
-                    self::$_blockSettings[$blockName]['type'] = $blockType;
-                }
-                return forward_static_call_array(['self', 'block'], $arguments);
-            }
-        }
-        if (in_array($name, ['category', 'category_filter', 'filter', 'search', 'sitemap'])) {
-            $tmp = self::$_template;
-            self::$_template = '__core_category';
-
-            $page_info = new \stdClass;
-            $page_info->id = 1;
-            $page_info->name = '';
-            $page_info->full_name = '';
-            $page_info->url = '';
-
-            $options = !empty($arguments[count($arguments)-1])?$arguments[count($arguments)-1]:[];
-            $view = !empty($options['view'])?$options['view']:'default';
-
-            if (!isset(self::$_currentView) || self::$_currentView != self::$_template . '_' . $view) {
-
-                self::$_currentView = self::$_template . '_' . $view;
-
-                $list = View::make(
-                    'themes.' . self::$_theme->theme . '.categories.' . $view . '.page',
-                    ['page' => $page_info, 'category_id' => 1, 'is_first' => true, 'is_last' => true, 'count' => 1, 'total' => 1]
-                )->render();
-
-                $output = View::make('themes.' . self::$_theme->theme . '.categories.' . $view . '.pages_wrap',
-                    ['pages' => $list, 'pagination' => '', 'links' => '', 'content' => '', 'category_id' => 1, 'total' => 1, 'html_content' => '', 'search_query' => '']
-                )->render();
-
-            } else {
-                $output = '';
-            }
-
-            self::$_template = $tmp;
-            return $output;
-        }
-        try {
-            return forward_static_call_array(['\CoasterCms\Libraries\Builder\PageBuilder', $name], $arguments);
-        } catch (\Exception $e) {
-            self::$_error = $e->getMessage();
-            return '';
         }
     }
 

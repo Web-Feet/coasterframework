@@ -56,11 +56,16 @@ class PageLoader
         $this->externalTemplate = false;
         $this->feedExtension = false;
         $this->searchQuery = false;
-        
-        PageVersionSchedule::checkPageVersionIds();
-        
-        $this->_loadPageLevels();
+        $this->_load();
+    }
 
+    /**
+     *
+     */
+    protected function _load()
+    {
+        PageVersionSchedule::checkPageVersionIds();
+        $this->_loadPageLevels();
         $this->_loadPageStatus();
     }
 

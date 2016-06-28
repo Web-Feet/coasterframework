@@ -1,9 +1,9 @@
 <?php namespace CoasterCms\Models;
 
+use CoasterCms\Helpers\Admin\Theme\BlockUpdater;
 use CoasterCms\Helpers\Core\BlockManager;
 use CoasterCms\Helpers\Core\File\Directory;
 use CoasterCms\Helpers\Core\File\Zip;
-use CoasterCms\Libraries\Builder\ThemeBuilder;
 use DB;
 use Eloquent;
 use Request;
@@ -265,7 +265,7 @@ Class Theme extends Eloquent
 
             // install theme blocks and templates
             try {
-                ThemeBuilder::updateTheme($newTheme->id);
+                BlockUpdater::updateTheme($newTheme);
             } catch (\Exception $e) {
                 $newTheme->delete();
                 return $e->getMessage();
@@ -276,7 +276,7 @@ Class Theme extends Eloquent
                 self::_pageImportData($newTheme);
             }
 
-            ThemeBuilder::cleanOverwriteFile($newTheme->id);
+            BlockUpdater::cleanOverwriteFile($newTheme);
 
             Directory::remove($themePath.'/import/blocks');
             Directory::remove($themePath.'/import/pages');
@@ -336,7 +336,7 @@ Class Theme extends Eloquent
             $themesDir = base_path() . '/resources/views/themes/';
             $zipFileName = $theme->theme.'.zip';
             // export blocks
-            ThemeBuilder::exportBlocks($theme);
+            BlockUpdater::exportBlocks($theme);
             if ($withPageData) {
                 // export page data
                 self::_pageExportData($theme);
@@ -590,7 +590,7 @@ Class Theme extends Eloquent
 
         $blocksById = [];
         $blocksByName = [];
-        foreach (ThemeBuilder::getDatabaseBlocks($theme->id) as $block) {
+        foreach (BlockUpdater::getDatabaseBlocks($theme->id) as $block) {
             $blocksById[$block->id] = $block;
             $blocksByName[$block->name] = $block;
         }

@@ -26,7 +26,7 @@ class Form extends _Base
     {
         if (!empty($block_data)) {
             $form_data = unserialize($block_data);
-            $template = 'themes.' . PageBuilder::$theme . '.blocks.forms.' . $form_data->template;
+            $template = 'themes.' . PageBuilder::getData('theme') . '.blocks.forms.' . $form_data->template;
             if (View::exists($template)) {
                 $forwarded_url = Request::input('forwarded_url');
                 if (empty($forwarded_url)) {
@@ -231,7 +231,7 @@ class Form extends _Base
                             }
                         }
 
-                        $emailsViews = 'themes.' . PageBuilder::$theme . '.emails';
+                        $emailsViews = 'themes.' . PageBuilder::getData('theme') . '.emails';
                         $emailsViews = $emailsViews . (View::exists($emailsViews . '.' . $form_settings->template . '.default') ?  $form_settings->template : '');
 
                         if (!View::exists($emailsViews)) {

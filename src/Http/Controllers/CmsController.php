@@ -7,6 +7,7 @@ use CoasterCms\Helpers\Core\Page\PageLoader;
 use CoasterCms\Helpers\Core\Page\Search;
 use CoasterCms\Helpers\Core\View\FormMessage;
 use CoasterCms\Libraries\Blocks\Form;
+use CoasterCms\Libraries\Builder\Instances\PageBuilderInstance;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\PageRedirect;
 use Illuminate\Routing\Controller;
@@ -49,8 +50,10 @@ class CmsController extends Controller
     {
         FormMessage::set_class('error', config('coaster::frontend.form_error_class'));
 
+        // try to load cms page for current request
+        PageBuilder::setClass(PageBuilderInstance::class, PageLoader::class);
         PageBuilder::setTheme(config('coaster::frontend.theme'));
-        $templatePathRoot = 'themes.' . PageBuilder::$theme . '.';
+        $templatePathRoot = 'themes.' . PageBuilder::getData('theme') . '.';
 
         $currentUri = trim(Request::getRequestUri(), '/');
 
@@ -62,21 +65,18 @@ class CmsController extends Controller
                 throw new CmsPageException('forced redirect', 0, null, redirect($redirect->to, $redirect->type));
             }
 
-            // try to load cms page for current request
-            PageBuilder::setPageFromLoader(new PageLoader);
-
             // check for unforced redirects
-            if (PageBuilder::$is404 && !empty($redirect)) {
+            if (PageBuilder::getData('is404') && !empty($redirect)) {
                 throw new CmsPageException('redirect', 0, null, redirect($redirect->to, $redirect->type));
             }
 
             // 404, no cms page for current request
-            if (PageBuilder::$is404) {
+            if (PageBuilder::getData('is404')) {
                 throw new CmsPageException('cms page not found', 404);
             }
 
             // 404, hidden page
-            if (!PageBuilder::$isPreview && !PageBuilder::$isLive) {
+            if (!PageBuilder::getData('isPreview') && !PageBuilder::getData('isLive')) {
                 throw new CmsPageException('cms page not live', 404);
             }
 
@@ -86,15 +86,15 @@ class CmsController extends Controller
             }
 
             // set template
-            if (PageBuilder::$externalTemplate) {
+            if (PageBuilder::getData('externalTemplate')) {
                 $this->_setHtmlContentType();
-                $templatePath = $templatePathRoot . 'externals.' . PageBuilder::$externalTemplate;
-            } elseif (PageBuilder::$feedExtension) {
+                $templatePath = $templatePathRoot . 'externals.' . PageBuilder::getData('externalTemplate');
+            } elseif (PageBuilder::getData('feedExtension')) {
                 $this->_setHeader('Content-Type', Feed::content_type());
-                $templatePath = $templatePathRoot . 'feed.' . PageBuilder::$feedExtension . '.' . PageBuilder::$template;
+                $templatePath = $templatePathRoot . 'feed.' . PageBuilder::getData('feedExtension') . '.' . PageBuilder::getData('template');
             } else {
                 $this->_setHtmlContentType();
-                $templatePath = $templatePathRoot . 'templates.' . PageBuilder::$template;
+                $templatePath = $templatePathRoot . 'templates.' . PageBuilder::getData('template');
             }
 
             // load page with template
@@ -141,7 +141,7 @@ class CmsController extends Controller
             }
 
             // save page content
-            if (PageBuilder::$externalTemplate) {
+            if (PageBuilder::getData('externalTemplate')) {
                 $domDocument->appendInputFieldNames(config('coaster::frontend.external_form_input'));
                 $this->responseContent = $domDocument->saveBodyHMTL();
             } else {

@@ -58,7 +58,7 @@ class Image extends _Base
             $image_data->file = $image_data->original;
         }
         $template = !empty($options['view']) ? $options['view'] : 'default';
-        $imageViews = 'themes.' . PageBuilder::$theme . '.blocks.images.';
+        $imageViews = 'themes.' . PageBuilder::getData('theme') . '.blocks.images.';
         if (View::exists($imageViews . $template)) {
             return View::make($imageViews . $template, array('image' => $image_data))->render();
         } else {

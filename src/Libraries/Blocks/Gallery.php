@@ -31,7 +31,7 @@ class Gallery extends _Base
         }
         $options['view'] = !empty($options['view']) ? $options['view'] : 'default';
 
-        $galleryViews = 'themes.' . PageBuilder::$theme . '.blocks.gallery.';
+        $galleryViews = 'themes.' . PageBuilder::getData('theme') . '.blocks.gallery.';
 
         if (empty($options['view']) && View::exists($galleryViews . $block->name)) {
             return View::make($galleryViews . $block->name, ['images' => $images])->render();

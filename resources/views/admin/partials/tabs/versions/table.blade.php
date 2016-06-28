@@ -48,7 +48,7 @@
                     @endif
                 </td>
                 <td>
-                    <a href="{{ PageBuilder::pageUrl($version->page_id).'?preview='.$version->preview_key }}"
+                    <a href="{{ \CoasterCms\Models\PageLang::full_url($version->page_id).'?preview='.$version->preview_key }}"
                        target="_blank"><i class="glyphicon glyphicon-eye-open itemTooltip" title="Preview"></i></a>
                     <a href="{{ URL::to(config('coaster::admin.url').'/pages/edit/'.$version->page_id.'/'.$version->version_id) }}"><i
                                 class="delete glyphicon glyphicon-pencil itemTooltip" title="Edit"></i></a>

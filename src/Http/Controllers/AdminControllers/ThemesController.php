@@ -1,9 +1,9 @@
 <?php namespace CoasterCms\Http\Controllers\AdminControllers;
 
 use Auth;
+use CoasterCms\Helpers\Admin\Theme\BlockUpdater;
 use CoasterCms\Helpers\Core\BlockManager;
 use CoasterCms\Http\Controllers\AdminController as Controller;
-use CoasterCms\Libraries\Builder\ThemeBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockBeacon;
 use CoasterCms\Models\BlockCategory;
@@ -182,15 +182,16 @@ class ThemesController extends Controller
 
     public function getUpdate($themeId)
     {
-        ThemeBuilder::processFiles($themeId);
+        $theme = Theme::find($themeId);
+        BlockUpdater::processFiles($theme);
 
         $this->layoutData['content'] = View::make('coaster::pages.themes.update',
             [
-                'theme' => ThemeBuilder::getThemeName(),
-                'blocksData' => ThemeBuilder::getMainTableData(),
+                'theme' => $theme->theme,
+                'blocksData' => BlockUpdater::getMainTableData(),
                 'typeList' => $this->_typeList(),
                 'categoryList' => $this->_categoryList(),
-                'templateList' => ThemeBuilder::getTemplateList()
+                'templateList' => BlockUpdater::getTemplateList()
             ]
         );
     }
@@ -198,14 +199,15 @@ class ThemesController extends Controller
     public function postUpdate($themeId)
     {
         $blocks = Request::input('block');
+        $theme = Theme::find($themeId);
 
         if (!empty($blocks)) {
-            ThemeBuilder::updateTheme($themeId, $blocks);
+            BlockUpdater::updateTheme($theme, $blocks);
         }
 
         $this->layoutData['content'] = View::make('coaster::pages.themes.update',
             [
-                'theme' => ThemeBuilder::getThemeName(),
+                'theme' => $theme->theme,
                 'saved' => true
             ]
         );

@@ -23,7 +23,7 @@ class Video extends _Base
             }
             $video = self::$_db_cache[$block_data];
             $template = !empty($options['view']) ? $options['view'] : 'default';
-            $videoViews = 'themes.' . PageBuilder::$theme . '.blocks.videos.';
+            $videoViews = 'themes.' . PageBuilder::getData('theme') . '.blocks.videos.';
             if (View::exists($videoViews . $template)) {
                 return View::make($videoViews . $template, array('video' => $video))->render();
             } else {

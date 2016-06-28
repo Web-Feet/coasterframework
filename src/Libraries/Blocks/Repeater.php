@@ -25,7 +25,7 @@ class Repeater extends _Base
     public static function display($block, $block_data, $options = array())
     {
         $template = !empty($options['view']) ? $options['view'] : $block->name;
-        $repeatersViews = 'themes.' . PageBuilder::$theme . '.blocks.repeaters.';
+        $repeatersViews = 'themes.' . PageBuilder::getData('theme') . '.blocks.repeaters.';
         if (View::exists($repeatersViews . $template)) {
             $rep_blocks = BlockRepeater::where('block_id', '=', $block->id)->first();
             if (!empty($rep_blocks)) {
