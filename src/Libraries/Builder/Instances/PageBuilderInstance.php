@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Libraries\Builder\Instances;
 
+use CoasterCms\Exceptions\PageBuilderException;
 use CoasterCms\Helpers\Core\Page\PageLoader;
 use CoasterCms\Helpers\Core\Page\Search;
 use CoasterCms\Helpers\Core\View\Classes\BreadCrumb;
@@ -21,6 +22,7 @@ use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Request;
 use URL;
 use View;
@@ -733,13 +735,18 @@ class PageBuilderInstance //implements PageBuilderInterface
      * @param string $name
      * @param array $arguments
      * @return string
+     * @throws PageBuilderException
      */
     public function __call($name, $arguments)
     {
         if (strpos($name, 'block_') === 0) {
             return forward_static_call_array([$this, 'block'], $arguments);
         }
-        return 'invalid function';
+        $camelName = Str::camel($name);
+        if (method_exists($this, $camelName)) {
+            return forward_static_call_array([$this, $camelName], $arguments);
+        }
+        throw new PageBuilderException('function ' . $name . '() not found');
     }
 
 }

@@ -83,23 +83,25 @@ class BlockUpdater
 
         // update block repeaters table
         self::updateBlockRepeaters();
+
+        self::_cleanUpOverwriteBlocks($theme);
     }
 
-    public static function cleanOverwriteFile(Theme $theme)
+    private static function _cleanUpOverwriteBlocks(Theme $theme)
     {
         // remove all details except for templates for which the BlockUpdater can't work out or guess
 
         // re process theme files without the overwrite file
-        self::$_blockSettings = [];
+        $blockSettings = self::$_blockSettings;
         self::processFiles($theme, false);
         $blocksFound = self::$_fileBlockTemplates;
 
         // check for extra templates in overwrite file that BlockUpdater did not pick up
         $extraTemplates = [];
-        foreach (self::$_blockSettings as $block => $setting) {
+        foreach ($blockSettings as $block => $setting) {
             if (!empty($setting['templates'])) {
-                $blocksFound[$block] = empty($blocksFound[$block])?[]:$blocksFound[$block];
-                if ($extraBlockTemplates = array_diff(explode(',', $setting['templates']), $blocksFound[$block])) {
+                $blockFoundInTemplates = empty(self::$_fileBlockTemplates[$block])?[]:self::$_fileBlockTemplates[$block];
+                if ($extraBlockTemplates = array_diff(explode(',', $setting['templates']), $blockFoundInTemplates)) {
                     $extraTemplates[$block] = $extraBlockTemplates;
                 }
             }
@@ -143,17 +145,18 @@ class BlockUpdater
 
             PageBuilder::setClass(ThemeBuilderInstance::class, PageLoaderDummy::class, $overwriteFile);
             PageBuilder::setTheme($theme->id);
-            
+
             if (is_dir($themePath)) {
 
                 foreach (scandir($themePath) as $templateFile) {
                     if ($templateName = explode('.', $templateFile)[0]) {
                         PageBuilder::setTemplate($templateName);
                         View::make('themes.' . $theme->theme . '.templates.' . $templateName)->render();
-                        if ($error = PageBuilder::getData('error')) {
-                            throw new \Exception($error . ' (template:' . 'themes.' . $theme->theme . '.templates.' . $templateName . ')');
-                        }
                     }
+                }
+
+                if ($errors = PageBuilder::getData('errors')) {
+                    echo 'Could not complete, errors found in theme:'; dd($errors);
                 }
 
                 self::$_selectBlocks = PageBuilder::getData('selectBlocks');
@@ -609,7 +612,6 @@ class BlockUpdater
 
     public static function getMainTableData()
     {
-
         $themeBlocks = [];
         // if new blocks
         foreach (self::getNewBlocks() as $newBlock => $details) {

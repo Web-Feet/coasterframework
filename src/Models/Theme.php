@@ -276,8 +276,6 @@ Class Theme extends Eloquent
                 self::_pageImportData($newTheme);
             }
 
-            BlockUpdater::cleanOverwriteFile($newTheme);
-
             Directory::remove($themePath.'/import/blocks');
             Directory::remove($themePath.'/import/pages');
             if (file_exists($themePath.'/import/pages.csv')) {

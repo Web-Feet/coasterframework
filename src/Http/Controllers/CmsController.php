@@ -49,6 +49,7 @@ class CmsController extends Controller
     public function generatePage()
     {
         FormMessage::set_class('error', config('coaster::frontend.form_error_class'));
+        Feed::enableFeedExtensions(['xml', 'rss', 'json']);
 
         // try to load cms page for current request
         PageBuilder::setClass(PageBuilderInstance::class, PageLoader::class);
@@ -89,8 +90,8 @@ class CmsController extends Controller
             if (PageBuilder::getData('externalTemplate')) {
                 $this->_setHtmlContentType();
                 $templatePath = $templatePathRoot . 'externals.' . PageBuilder::getData('externalTemplate');
-            } elseif (PageBuilder::getData('feedExtension')) {
-                $this->_setHeader('Content-Type', Feed::content_type());
+            } elseif ($extension = PageBuilder::getData('feedExtension')) {
+                $this->_setHeader('Content-Type', Feed::content_type($extension));
                 $templatePath = $templatePathRoot . 'feed.' . PageBuilder::getData('feedExtension') . '.' . PageBuilder::getData('template');
             } else {
                 $this->_setHtmlContentType();

@@ -104,7 +104,7 @@ class PageLoader
 
                         $currentSegment = Request::segment($i);
                         
-                        if ($this->feedExtension = Feed::getFeedExtension($currentSegment)) {
+                        if ($urlSegments == $i && $this->feedExtension = Feed::getFeedExtension($currentSegment)) {
                             $currentSegment = Feed::removeFeedExtension($currentSegment);
                         }
 

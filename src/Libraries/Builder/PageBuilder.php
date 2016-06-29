@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Libraries\Builder;
 
+use CoasterCms\Exceptions\PageBuilderException;
 use CoasterCms\Libraries\Builder\Instances\PageBuilderInstance;
 use CoasterCms\Models\Page;
 
@@ -78,6 +79,7 @@ class PageBuilder
         static::$_instanceClass = $instanceClass;
         static::$_loaderClass = $loaderClass;
         static::$_extraArgs = $extraArgs;
+        static::$_instance = null;
     }
 
     /**
@@ -100,9 +102,11 @@ class PageBuilder
      */
     public static function __callStatic($method_name, $args)
     {
-        $pageBuilderResult = call_user_func_array([static::getInstance(), $method_name], $args);
-
-        return $pageBuilderResult;
+        try {
+            return call_user_func_array([static::getInstance(), $method_name], $args);
+        } catch (PageBuilderException $e) {
+            return 'PageBuilder error: ' . $e->getMessage();
+        }
     }
 
 }

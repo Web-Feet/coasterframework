@@ -1,11 +1,13 @@
 <?php namespace CoasterCms\Helpers\Core\Page;
 
-use CoasterCms\Libraries\Builder\PageBuilder;
-
 class Feed
 {
-
-    public static $extension = false;
+    protected static $_enabledExtensions;
+    
+    public static function enableFeedExtensions($extensions)
+    {
+        self::$_enabledExtensions = $extensions;
+    }
 
     public static function removeFeedExtension($path)
     {
@@ -19,7 +21,7 @@ class Feed
     public static function getFeedExtension($file)
     {
         $path_info = pathinfo($file);
-        if (!empty($path_info['extension']) && is_dir(base_path('/resources/views/themes/' . PageBuilder::getData('theme') . '/feed/' . $path_info['extension']))) {
+        if (!empty(self::$_enabledExtensions) && !empty($path_info['extension']) && in_array($path_info['extension'], self::$_enabledExtensions)) {
             return $path_info['extension'];
         }
         return false;
@@ -27,9 +29,6 @@ class Feed
 
     public static function content_type($extension = null)
     {
-        if (!$extension) {
-            $extension = self::$extension;
-        }
         switch ($extension) {
             case 'xml':
             case 'rss':

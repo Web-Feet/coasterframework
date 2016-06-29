@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Libraries\Builder\Instances;
 
+use CoasterCms\Exceptions\PageBuilderException;
 use CoasterCms\Helpers\Admin\Theme\BlockUpdater;
 use CoasterCms\Helpers\Core\BlockManager;
 use CoasterCms\Helpers\Core\Page\PageLoader;
@@ -8,7 +9,6 @@ use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\Menu;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\Template;
-use Illuminate\Support\Str;
 use View;
 
 class ThemeBuilderInstance extends PageBuilderInstance
@@ -71,12 +71,15 @@ class ThemeBuilderInstance extends PageBuilderInstance
     /**
      * @var array
      */
-    public $error;
+    public $errors;
 
     public function __construct(PageLoader $pageLoader, $loadOverrideFile = false)
     {
         parent::__construct($pageLoader);
         $this->loadOverrideFile = $loadOverrideFile;
+        $this->categoryView = '';
+        $this->repeaterView = '';
+        $this->errors = [];
     }
 
     public function setTheme($themeId)
@@ -214,6 +217,8 @@ class ThemeBuilderInstance extends PageBuilderInstance
                 $this->repeaterBlocks[$this->repeaterView][] = $block_name;
             }
             $template = '__core_repeater';
+        } elseif ($this->categoryView) {
+            $template = '__core_category';
         } else {
             // if in a normal template
             if (!array_key_exists('page_id', $options)) {
@@ -270,9 +275,6 @@ class ThemeBuilderInstance extends PageBuilderInstance
 
     protected function _renderCategoryWithoutPageData($options)
     {
-        $tmp = $this->template;
-        $this->template = '__core_category';
-
         $page_info = new \stdClass;
         $page_info->id = 1;
         $page_info->name = '';
@@ -281,9 +283,12 @@ class ThemeBuilderInstance extends PageBuilderInstance
 
         $view = !empty($options['view'])?$options['view']:'default';
 
-        if (!isset($this->categoryView) || $this->categoryView != $this->template . '_' . $view) {
+        $catView = 'currentCategory=';
+        
+        if (!isset($this->categoryView) || $this->categoryView != $catView . $view) {
 
-            $this->categoryView = $this->template . '_' . $view;
+            $tmp = $this->categoryView;
+            $this->categoryView = $catView . $view;
 
             $list = View::make(
                 'themes.' . $this->theme . '.categories.' . $view . '.page',
@@ -294,11 +299,12 @@ class ThemeBuilderInstance extends PageBuilderInstance
                 ['pages' => $list, 'pagination' => '', 'links' => '', 'content' => '', 'category_id' => 1, 'total' => 1, 'html_content' => '', 'search_query' => '']
             )->render();
 
+            $this->categoryView = $tmp;
+
         } else {
             $output = '';
         }
 
-        $this->template = $tmp;
         return $output;
     }
 
@@ -450,19 +456,18 @@ class ThemeBuilderInstance extends PageBuilderInstance
                 if (!isset($this->blockSettings[$blockName]['type'])) {
                     $this->blockSettings[$blockName]['type'] = $blockType;
                 }
-                return forward_static_call_array([$this, 'block'], $arguments);
-            }
-        } else {
-            $camelName = Str::camel($name);
-            if (method_exists($this, $camelName)) {
-                return forward_static_call_array([$this, $camelName], $arguments);
             }
         }
-        // parent::__call($name, $arguments);
-        $this->error = 'Function PageBuilder::'.$name.'() not found';
-        $this->error .= $this->categoryView ? ' categoryView='. $this->categoryView : $this->categoryView;
-        $this->error .= $this->repeaterView ? ' repeaterView='. $this->repeaterView : $this->repeaterView;
-        return '';
+        try {
+            return parent::__call($name, $arguments);
+        } catch (PageBuilderException $e) {
+            $error = $e->getMessage() . ' (themes.' . $this->theme . '.templates.' . $this->template;
+            $error .= $this->categoryView ? ' ' . $this->categoryView : $this->categoryView;
+            $error .= $this->repeaterView ? ' ' . $this->repeaterView : $this->repeaterView;
+            $error .= ')';
+            $this->errors[] = $error;
+            throw new PageBuilderException($error);
+        }
     }
 
 }
