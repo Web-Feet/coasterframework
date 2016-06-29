@@ -73,6 +73,11 @@ class ThemeBuilderInstance extends PageBuilderInstance
      */
     public $errors;
 
+    /**
+     * ThemeBuilderInstance constructor.
+     * @param PageLoader $pageLoader
+     * @param bool $loadOverrideFile
+     */
     public function __construct(PageLoader $pageLoader, $loadOverrideFile = false)
     {
         parent::__construct($pageLoader);
@@ -82,6 +87,9 @@ class ThemeBuilderInstance extends PageBuilderInstance
         $this->errors = [];
     }
 
+    /**
+     * @param int $themeId
+     */
     public function setTheme($themeId)
     {
         parent::setTheme($themeId);
@@ -161,6 +169,11 @@ class ThemeBuilderInstance extends PageBuilderInstance
         return $this->_renderCategoryWithoutPageData($options);
     }
 
+    /**
+     * @param string $block_name
+     * @param array $options
+     * @return mixed|string
+     */
     public function block($block_name, $options = array())
     {
         if (!empty($options['import_ignore'])) {
@@ -248,7 +261,12 @@ class ThemeBuilderInstance extends PageBuilderInstance
         return $output;
     }
 
-    public function menu($menu_name, $options = array())
+    /**
+     * @param $menu_name
+     * @param array $options
+     * @return string
+     */
+    public function menu($menu_name, $options = [])
     {
         if (!isset($this->loadMenus)) {
             $menus = Menu::all();
@@ -271,8 +289,13 @@ class ThemeBuilderInstance extends PageBuilderInstance
             $newMenu->save();
             $this->loadMenus[$newMenu->name] = $newMenu;
         }
+        return parent::menu($menu_name, $options);
     }
 
+    /**
+     * @param $options
+     * @return string
+     */
     protected function _renderCategoryWithoutPageData($options)
     {
         $page_info = new \stdClass;
@@ -308,6 +331,9 @@ class ThemeBuilderInstance extends PageBuilderInstance
         return $output;
     }
 
+    /**
+     *
+     */
     protected function _checkRepeaterTemplates()
     {
         $this->repeaterView = '';
@@ -323,6 +349,9 @@ class ThemeBuilderInstance extends PageBuilderInstance
         }
     }
 
+    /**
+     *
+     */
     protected function _checkSelectBlocks()
     {
         $this->selectBlocks = [];
@@ -343,6 +372,9 @@ class ThemeBuilderInstance extends PageBuilderInstance
         }
     }
 
+    /**
+     *
+     */
     protected function _checkFormRules()
     {
         $this->formRules = [];
@@ -363,6 +395,9 @@ class ThemeBuilderInstance extends PageBuilderInstance
         }
     }
 
+    /**
+     *
+     */
     protected function _loadBlockOverwriteFile()
     {
         $this->blockSettings = [];
@@ -401,6 +436,10 @@ class ThemeBuilderInstance extends PageBuilderInstance
         }
     }
 
+    /**
+     * @param $categoryName
+     * @return mixed
+     */
     protected function _getBlockCategoryIdFromName($categoryName)
     {
         if (!isset($this->blockCategoryIds)) {
@@ -443,6 +482,12 @@ class ThemeBuilderInstance extends PageBuilderInstance
         return $this->blockCategoryIds[trim(strtolower($categoryName))]->id;
     }
 
+    /**
+     * @param string $name
+     * @param array $arguments
+     * @return mixed|string
+     * @throws PageBuilderException
+     */
     public function __call($name, $arguments)
     {
         if (strpos($name, 'block_') === 0) {

@@ -5,10 +5,11 @@ use Auth;
 use CoasterCms\Helpers\Core\Page\Install;
 use CoasterCms\Http\MiddleWare\AdminAuth;
 use CoasterCms\Http\MiddleWare\GuestAuth;
+use CoasterCms\Http\MiddleWare\UploadChecks;
+use Illuminate\Foundation\Http\Kernel;
+use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Foundation\AliasLoader;
-use Request;
-use Route;
 
 class CmsServiceProvider extends ServiceProvider
 {
@@ -23,16 +24,18 @@ class CmsServiceProvider extends ServiceProvider
     /**
      * Bootstrap the application events.
      *
+     * @param Router $router
+     * @param Kernel $kernel
      * @return void
      */
-    public function boot()
+    public function boot(Router $router, Kernel $kernel)
     {
         // override auth settings
         $this->app['config']['auth.guards.web.driver'] = 'coaster';
         $this->app['config']['auth.providers.users.model'] = Models\User::class;
 
         // add router middleware
-        $router = $this->app['router'];
+        $kernel->pushMiddleware(UploadChecks::class);
         $router->middleware('coaster.admin', AdminAuth::class);
         $router->middleware('coaster.guest', GuestAuth::class);
 
@@ -40,7 +43,7 @@ class CmsServiceProvider extends ServiceProvider
         $this->loadViewsFrom(base_path(trim(config('coaster::admin.view'), '/')), 'coaster');
 
         // use coater guard and user provider
-        Auth::extend('coaster', function ($app, $name, array $config) {
+        Auth::extend('coaster', function ($app) {
             return new Helpers\Core\CoasterGuard(
                 'coasterguard',
                 new Providers\CmsAuthUserProvider(),

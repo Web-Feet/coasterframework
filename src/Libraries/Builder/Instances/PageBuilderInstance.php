@@ -27,7 +27,7 @@ use Request;
 use URL;
 use View;
 
-class PageBuilderInstance //implements PageBuilderInterface
+class PageBuilderInstance
 {
 
     /**
@@ -527,7 +527,7 @@ class PageBuilderInstance //implements PageBuilderInterface
     /**
      * @param string $blockName
      * @param array $options
-     * @return string
+     * @return mixed|string
      */
     public function block($blockName, $options = [])
     {
@@ -734,7 +734,7 @@ class PageBuilderInstance //implements PageBuilderInterface
     /**
      * @param string $name
      * @param array $arguments
-     * @return string
+     * @return mixed|string
      * @throws PageBuilderException
      */
     public function __call($name, $arguments)
