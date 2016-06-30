@@ -23,7 +23,7 @@
         "bkwld/croppa": "~4.0",
         "blueimp/jQuery-File-Upload": "9.11.2",
         "guzzlehttp/guzzle": "6.*",
-        "laravelcollective/html": "5.3.0"
+        "laravelcollective/html": "5.3.*@dev"
     },
     "autoload": {
         "psr-4": {
