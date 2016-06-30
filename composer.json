@@ -12,11 +12,18 @@
             "email": "dan@web-feet.co.uk"
         }
     ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/Web-Feet/html"
+        }
+    ],
     "require": {
         "php": ">=5.5.9",
         "bkwld/croppa": "~4.0",
+        "blueimp/jQuery-File-Upload": "9.11.2",
         "guzzlehttp/guzzle": "6.*",
-        "blueimp/jQuery-File-Upload": "9.11.2"
+        "laravelcollective/html": "5.3.*@dev"
     },
     "autoload": {
         "psr-4": {
