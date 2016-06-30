@@ -29,5 +29,6 @@
         "psr-4": {
             "CoasterCms\\": "src/"
         }
-    }
+    },
+    "minimum-stability": "dev"
 }
