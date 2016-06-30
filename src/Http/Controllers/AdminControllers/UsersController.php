@@ -25,20 +25,21 @@ class UsersController extends Controller
     public function post_edit($user_id = 0, $action = null)
     {
         $user = User::find($user_id);
-        if (!empty($user) && $this->user->role->admin >= $user->role->admin) {
+        $authUser = Auth::user();
+        if (!empty($user) && $authUser->role->admin >= $user->role->admin) {
             switch ($action) {
                 case 'password':
                     $data = [];
                     $data['user'] = $user;
                     $data['level'] = 'admin';
-                    $data['form'] = View::make('coaster::partials.forms.user.password', array('current_password' => (Auth::user()->id == $user_id)));
+                    $data['form'] = View::make('coaster::partials.forms.user.password', array('current_password' => ($authUser->id == $user_id)));
                     $data['success'] = $user->change_password();
                     AdminLog::new_log('User \'' . $user->email . '\' updated, password changed');
                     $this->layoutData['content'] = View::make('coaster::pages.account.password', $data);
                     break;
                 case 'role':
                     $user_role = UserRole::find(Request::input('role'));
-                    if (!empty($user_role) && $user_role->admin <= $this->user->role->admin) {
+                    if (!empty($user_role) && $user_role->admin <= $authUser->role->admin) {
                         $user->role_id = Request::input('role');
                         AdminLog::new_log('User \'' . $user->email . '\' updated, role change');
                         $user->save();
@@ -49,7 +50,7 @@ class UsersController extends Controller
                     break;
                 case 'status':
                     // stop admins disabling super admins
-                    if ($this->user->id != $user->id) {
+                    if ($authUser->id != $user->id) {
                         $v = Validator::make(Request::all(), array(
                                 'set' => 'integer|min:0|max:1'
                             )
@@ -72,17 +73,18 @@ class UsersController extends Controller
     public function get_edit($user_id = 0, $action = null)
     {
         $user = User::find($user_id);
+        $authUser = Auth::user();
         if (!empty($user)) {
             switch ($action) {
                 case 'password':
                     $data = [];
                     $data['user'] = $user;
                     $data['level'] = 'admin';
-                    $data['form'] = View::make('coaster::partials.forms.user.password', array('current_password' => (Auth::user()->id == $user_id)));
+                    $data['form'] = View::make('coaster::partials.forms.user.password', array('current_password' => ($authUser->id == $user_id)));
                     $this->layoutData['content'] = View::make('coaster::pages.account.password', $data);
                     break;
                 case 'role':
-                    $all_roles = UserRole::where('admin', '<=', $this->user->role->admin)->get();
+                    $all_roles = UserRole::where('admin', '<=', $authUser->role->admin)->get();
                     $roles = array();
                     foreach ($all_roles as $role) {
                         $roles[$role->id] = $role->name;
@@ -91,7 +93,7 @@ class UsersController extends Controller
                     break;
                 default:
                     $details = View::make('coaster::partials.users.info', array('user' => $user));
-                    if ($this->user->role->admin >= $user->role->admin) {
+                    if ($authUser->role->admin >= $user->role->admin) {
                         $can_edit = true;
                     } else {
                         $can_edit = false;
@@ -105,7 +107,8 @@ class UsersController extends Controller
 
     public function get_add()
     {
-        $all_roles = UserRole::where('admin', '<=', $this->user->role->admin)->get();
+        $authUser = Auth::user();
+        $all_roles = UserRole::where('admin', '<=', $authUser->role->admin)->get();
         $roles = array();
         foreach ($all_roles as $role) {
             $roles[$role->id] = $role->name;
@@ -115,6 +118,7 @@ class UsersController extends Controller
 
     public function post_add()
     {
+        $authUser = Auth::user();
         $v = Validator::make(Request::all(), array(
                 'email' => 'required|email',
                 'role' => 'required|integer'
@@ -123,7 +127,7 @@ class UsersController extends Controller
 
         $perm_issue = true;
         $role = UserRole::find(Request::input('role'));
-        if (!empty($role) && $role->admin <= $this->user->role->admin) {
+        if (!empty($role) && $role->admin <= $authUser->role->admin) {
             $perm_issue = false;
         }
 
@@ -167,7 +171,7 @@ class UsersController extends Controller
     {
         $user = User::find($user_id);
         // stop admins disabling super admins
-        if (!empty($user) && $this->user->role->admin >= $user->role->admin && $this->user->id != $user->id) {
+        if (!empty($user) && $authUser->role->admin >= $user->role->admin && $authUser->id != $user->id) {
             if (!empty($user)) {
                 return $user->delete();
             }

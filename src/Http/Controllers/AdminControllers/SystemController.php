@@ -192,8 +192,9 @@ class SystemController extends Controller
             'testcookie' => 1
         );
 
-        if (!empty($this->user->blog_login)) {
-            $blog_details = unserialize($this->user->blog_login);
+        $authUser = Auth::user();
+        if (!empty($authUser->blog_login)) {
+            $blog_details = unserialize($authUser->blog_login);
             $data_to_post['log'] = $blog_details['login'];
             $data_to_post['pwd'] = $blog_details['password'];
         }

@@ -101,7 +101,7 @@ class AccountController extends Controller
 
     public function post_password()
     {
-        if (!$this->user->change_password()) {
+        if (!Auth::user()->change_password()) {
             $this->get_password();
         } else {
             $data = [];
@@ -123,11 +123,12 @@ class AccountController extends Controller
 
     private function _existing_blog_login()
     {
+        $authLogin = Auth::user();
         $post = Request::input('blog_login');
         if (!empty($post)) {
             return $post;
-        } elseif (!empty($this->user->blog_login)) {
-            $blog_login = unserialize($this->user->blog_login);
+        } elseif ($authLogin->blog_login) {
+            $blog_login = unserialize($authLogin->blog_login);
             return $blog_login['login'];
         } else {
             return '';
@@ -146,8 +147,9 @@ class AccountController extends Controller
         if ($validation->fails()) {
             $this->layoutData['content'] = View::make('coaster::pages.account.blog', $data);
         } else {
-            $this->user->blog_login = serialize(['login' => Request::input('blog_login'), 'password' => Request::input('blog_password')]);
-            $this->user->save();
+            $authLogin = Auth::user();
+            $authLogin->blog_login = serialize(['login' => Request::input('blog_login'), 'password' => Request::input('blog_password')]);
+            $authLogin->save();
             $data['success'] = true;
             $this->layoutData['content'] = View::make('coaster::pages.account.blog', $data);
         }
@@ -191,7 +193,7 @@ class AccountController extends Controller
 
     public function get_index()
     {
-        $account = View::make('coaster::partials.users.info', array('user' => $this->user));
+        $account = View::make('coaster::partials.users.info', array('user' => Auth::user()));
         $this->layoutData['content'] = View::make('coaster::pages.account', array('account' => $account, 'auto_blog_login' => (!empty(config('coaster::blog.url') && Auth::action('account.blog'))), 'change_password' => Auth::action('account.password')));
     }
 
