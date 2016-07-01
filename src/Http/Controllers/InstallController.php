@@ -178,26 +178,28 @@ class InstallController extends Controller
         $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'theme', 'themes' => $themes, 'defaultTheme' => 'coaster2016.zip']);
     }
 
-
     public function installTheme()
     {
         $details = Request::all();
 
+        $error = false;
         if (!empty($details['theme'])) {
-            $error = Theme::unzip($details['theme']);
-            if (!$error) {
+            if (!($error = Theme::unzip($details['theme']))) {
                 $withPageData = !empty($details['page-data'])?1:0;
-                Theme::install(substr($details['theme'], 0, -4), ['withPageData' => $withPageData]);
-            } else {
-                FormMessage::add('theme', $error);
-                $this->setupTheme();
+                $result = Theme::install(substr($details['theme'], 0, -4), ['withPageData' => $withPageData]);
+                $error = $result['error']?$result['response']:$error;
             }
         }
 
-        Install::setInstallState('complete-welcome');
+        if ($error) {
+            FormMessage::add('theme', $error);
+            $this->setupTheme();
+        } else {
+            Install::setInstallState('complete-welcome');
+            $this->layoutData['title'] = 'Install Complete';
+            $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'complete']);
+        }
 
-        $this->layoutData['title'] = 'Install Complete';
-        $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'complete']);
     }
 
 }

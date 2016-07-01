@@ -145,16 +145,20 @@ class ThemesController extends Controller
                 \redirect(config('coaster::admin.url') . '/themes/list')->send();
             } else {
                 $this->getList();
+                print 1;
             }
         }
 
         if (!empty($request['install'])) {
             if (!empty($request['check'])) {
-                return Theme::install($request['theme'], ['check' => 1]);
+                $response = Theme::install($request['theme'], ['check' => 1]);
             } else {
-                return Theme::install($request['theme'], ['withPageData' => $request['withPageData']]);
+                $response = Theme::install($request['theme'], ['withPageData' => $request['withPageData']]);
             }
+            return json_encode($response);
         }
+
+        return null;
     }
 
     public function getExport($themeId, $withPageData = false)
