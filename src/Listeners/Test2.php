@@ -1,10 +1,11 @@
 <?php namespace CoasterCms\Listeners;
 
 use CoasterCms\Events\Cms\InitializePageBuilder;
+use CoasterCms\Events\Cms\LoadedTemplate;
 use CoasterCms\Events\Cms\LoadPageTemplate;
 use CoasterCms\Exceptions\PageBuilderException;
 
-class Test
+class Test2
 {
     /**
      * Create the event listener.
@@ -19,11 +20,12 @@ class Test
     /**
      * Handle the event.
      *
-     * @param InitializePageBuilder $event
+     * @param LoadedTemplate $event
      * @return void
      */
-    public function handle(LoadPageTemplate $event)
+    public function handle(LoadedTemplate $event)
     {
-        $event->template = 'themes.'.\PageBuilder::getData('theme').'.templates.home';
+        dd($event);
+        $event->renderedTemplate .= '1234567890';
     }
 }

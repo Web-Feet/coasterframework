@@ -1,25 +1,29 @@
-<?php namespace CoasterCms\Events;
+<?php namespace CoasterCms\Listeners;
 
-class DisplayPage
+use CoasterCms\Events\Cms\InitializePageBuilder;
+use CoasterCms\Events\Cms\LoadPageTemplate;
+use CoasterCms\Exceptions\PageBuilderException;
+
+class Test
 {
-    public $t;
-
     /**
-     * DisplayPage constructor.
-     * @param $t
+     * Create the event listener.
+     *
+     * @return void
      */
-    public function __construct($t)
+    public function __construct()
     {
-        $this->t = $t;
+        //
     }
 
     /**
-     * Get the channels the event should be broadcast on.
+     * Handle the event.
      *
-     * @return array
+     * @param InitializePageBuilder $event
+     * @return void
      */
-    public function broadcastOn()
+    public function handle(LoadPageTemplate $event)
     {
-        return [];
+        $event->template = 'themes.'.\PageBuilder::getData('theme').'.templates.home';
     }
 }
