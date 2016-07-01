@@ -159,7 +159,7 @@ class InstallController extends Controller
 
     public function setupTheme()
     {
-        $themes = ['' => '-- None --'];
+        $themes = ['' => '-- None/Skip --'];
 
         $themesPath = base_path('resources/views/themes');
         if (is_dir($themesPath)) {

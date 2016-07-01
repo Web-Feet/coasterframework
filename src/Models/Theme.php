@@ -212,51 +212,53 @@ Class Theme extends Eloquent
     public static function install($themeName, $options)
     {
         $themePath = base_path() . '/resources/views/themes/'.$themeName;
-        $theme = self::where('theme', '=', $themeName)->first();
-
-        $unpacked = is_dir($themePath.'/templates') && is_dir(public_path().'/themes/'.$themeName);
         $packed = is_dir($themePath.'/views') && is_dir($themePath.'/public');
 
-        if (empty($theme) && is_dir($themePath) && ($unpacked || $packed)) {
+        if (!empty($options['check'])) {
+            $pagesImport = ($packed)?$themePath.'/views/import/pages':$themePath.'/import/pages';
+            return ['error' => 0, 'response' => is_dir($pagesImport)];
+        }
 
-            if (!empty($options['check'])) {
-                $pagesImport = ($packed)?$themePath.'/views/import/pages':$themePath.'/import/pages';
-                if (is_dir($pagesImport)) {
-                    return 2;
+        if ($packed) {
+
+            // extract public folder, extract uploads folder, and move views to themes root
+            Directory::copy($themePath . '/public', public_path() . '/themes/' . $themeName);
+            Directory::remove($themePath . '/public');
+
+            if (is_dir($themePath . '/uploads')) {
+                $securePaths = [];
+                $secureUploadPaths = explode(',', config('coaster::site.secure_folders'));
+                foreach ($secureUploadPaths as $secureUploadPath) {
+                    $securePaths[] = '/uploads/' . trim($secureUploadPath, '/');
                 }
-                return 1;
-            }
 
-            if ($packed) {
-
-                // extract public folder, extract uploads folder, and move views to themes root
-                Directory::copy($themePath . '/public', public_path() . '/themes/' . $themeName);
-                Directory::remove($themePath . '/public');
-
-                if (is_dir($themePath . '/uploads')) {
-                    $securePaths = [];
-                    $secureUploadPaths = explode(',', config('coaster::site.secure_folders'));
-                    foreach ($secureUploadPaths as $secureUploadPath) {
-                        $securePaths[] = '/uploads/' . trim($secureUploadPath, '/');
-                    }
-
-                    Directory::copy($themePath . '/uploads', public_path() . '/uploads', function ($addFrom, $addTo) use ($securePaths, $themePath) {
-                        $uploadPath = str_replace(public_path(), '', $addTo);
-                        foreach ($securePaths as $securePath) {
-                            if (strpos($uploadPath, $securePath) === 0) {
-                                $addTo = str_replace(public_path() . '/uploads', storage_path() . '/uploads', $addTo);
-                                break;
-                            }
+                Directory::copy($themePath . '/uploads', public_path() . '/uploads', function ($addFrom, $addTo) use ($securePaths, $themePath) {
+                    $uploadPath = str_replace(public_path(), '', $addTo);
+                    foreach ($securePaths as $securePath) {
+                        if (strpos($uploadPath, $securePath) === 0) {
+                            $addTo = str_replace(public_path() . '/uploads', storage_path() . '/uploads', $addTo);
+                            break;
                         }
-                        return [$addFrom, $addTo];
-                    });
-                }
-                Directory::remove($themePath . '/uploads');
-
-                Directory::copy($themePath . '/views', $themePath);
-                Directory::remove($themePath . '/views');
-
+                    }
+                    return [$addFrom, $addTo];
+                });
             }
+            Directory::remove($themePath . '/uploads');
+
+            Directory::copy($themePath . '/views', $themePath);
+            Directory::remove($themePath . '/views');
+
+        }
+
+        $unpacked = is_dir($themePath.'/templates') && is_dir(public_path().'/themes/'.$themeName);
+
+        if (!$unpacked) {
+            return ['error' => 1, 'response' => 'theme files not found'];
+        }
+
+        $theme = self::where('theme', '=', $themeName)->first();
+
+        if (empty($theme)) {
 
             // add theme to database
             $newTheme = new self;
@@ -282,10 +284,11 @@ Class Theme extends Eloquent
                 unlink($themePath . '/import/pages.csv');
             }
 
-            return 1;
+            return ['error' => 0, 'response' => ''];
+        } else {
+            return ['error' => 1, 'response' => 'theme already exists in database'];
         }
 
-        return 0;
     }
 
     public static function activate($themeName)
