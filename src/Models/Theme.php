@@ -253,7 +253,7 @@ Class Theme extends Eloquent
         $unpacked = is_dir($themePath.'/templates') && is_dir(public_path().'/themes/'.$themeName);
 
         if (!$unpacked) {
-            return ['error' => 1, 'response' => 'theme files not found'];
+            return ['error' => 1, 'response' => 'theme files not found for ' . $themeName];
         }
 
         $theme = self::where('theme', '=', $themeName)->first();
@@ -286,7 +286,7 @@ Class Theme extends Eloquent
 
             return ['error' => 0, 'response' => ''];
         } else {
-            return ['error' => 1, 'response' => 'theme already exists in database'];
+            return ['error' => 1, 'response' => 'theme ' . $themeName . ' already exists in database'];
         }
 
     }
