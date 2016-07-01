@@ -145,7 +145,6 @@ class ThemesController extends Controller
                 \redirect(config('coaster::admin.url') . '/themes/list')->send();
             } else {
                 $this->getList();
-                print 1;
             }
         }
 
