@@ -22,17 +22,17 @@
     {!! Form::open(['url' => Request::url()]) !!}
 
             <!-- user email field -->
-    <div class="form-group {!! FormMessage::get_class('email') !!}">
+    <div class="form-group {!! FormMessage::getErrorClass('email') !!}">
         {!! Form::label('email', 'User Email', ['class' => 'control-label']) !!}
         {!! Form::text('email', Request::input('email'), ['class' => 'form-control']) !!}
-        <span class="help-block">{!! FormMessage::get_message('email') !!}</span>
+        <span class="help-block">{!! FormMessage::getErrorMessage('email') !!}</span>
     </div>
 
     <!-- user role field -->
-    <div class="form-group {!! FormMessage::get_class('role') !!}">
+    <div class="form-group {!! FormMessage::getErrorClass('role') !!}">
         {!! Form::label('role', 'User Role', ['class' => 'control-label']) !!}
         {!! Form::select('role', $roles, Request::input('role'), ['class' => 'form-control']) !!}
-        <span class="help-block">{!! FormMessage::get_message('role') !!}</span>
+        <span class="help-block">{!! FormMessage::getErrorMessage('role') !!}</span>
     </div>
 
     <!-- send email -->

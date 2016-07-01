@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Models;
 
-use CoasterCms\Helpers\Core\View\FormMessage;
+use CoasterCms\Libraries\Builder\FormMessage;
 use Eloquent;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;

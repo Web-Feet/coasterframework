@@ -2,43 +2,57 @@
 
 class Feed
 {
+    /**
+     * @var array
+     */
     protected static $_enabledExtensions;
-    
+
+    /**
+     * @param array $extensions
+     */
     public static function enableFeedExtensions($extensions)
     {
         self::$_enabledExtensions = $extensions;
     }
 
-    public static function removeFeedExtension($path)
+    /**
+     * @return array
+     */
+    protected static function _getEnabledFeedExtensions()
     {
-        if ($feedExtension = self::getFeedExtension($path)) {
-            return substr($path, 0, -(1 + strlen($feedExtension)));
-        } else {
-            return $path;
-        }
+        return isset(self::$_enabledExtensions) ? self::$_enabledExtensions : config('coaster::frontend.enabled_feed_extensions');
     }
 
-    public static function getFeedExtension($file)
+    /**
+     * @param string $path
+     * @return bool
+     */
+    public static function getFeedExtensionFromPath($path)
     {
-        $path_info = pathinfo($file);
-        if (!empty(self::$_enabledExtensions) && !empty($path_info['extension']) && in_array($path_info['extension'], self::$_enabledExtensions)) {
-            return $path_info['extension'];
+        $extension = pathinfo($path, PATHINFO_EXTENSION);
+        if (!empty(self::$_enabledExtensions) && $extension && in_array($extension, self::_getEnabledFeedExtensions())) {
+            return $extension;
         }
         return false;
     }
 
-    public static function content_type($extension = null)
+    /**
+     * @param string $path
+     */
+    public static function removeFeedExtensionFromPath(&$path)
     {
-        switch ($extension) {
-            case 'xml':
-            case 'rss':
-                return 'text/xml';
-                break;
-            case 'json':
-                return 'application/json';
-            default:
-                return 'text/html';
+        if ($feedExtension = self::getFeedExtensionFromPath($path)) {
+            $path = substr($path, 0, -(1 + strlen($feedExtension)));
         }
+    }
+
+    /**
+     * @param string $extension
+     * @return string
+     */
+    public static function getMimeType($extension = '')
+    {
+        return \GuzzleHttp\Psr7\mimetype_from_extension($extension) ?: 'text/html';
     }
 
 }

@@ -1,4 +1,4 @@
-<?php namespace CoasterCms\Libraries\Builder\Instances;
+<?php namespace CoasterCms\Libraries\Builder\PageBuilder;
 
 use CoasterCms\Exceptions\PageBuilderException;
 use CoasterCms\Helpers\Admin\Theme\BlockUpdater;

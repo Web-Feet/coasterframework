@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Libraries\Builder;
 
 use CoasterCms\Exceptions\PageBuilderException;
-use CoasterCms\Libraries\Builder\Instances\PageBuilderInstance;
+use CoasterCms\Libraries\Builder\PageBuilder\PageBuilderInstance;
 use CoasterCms\Models\Page;
 
 /**

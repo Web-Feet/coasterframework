@@ -3,7 +3,7 @@
 use Artisan;
 use Carbon\Carbon;
 use CoasterCms\Helpers\Core\Page\Install;
-use CoasterCms\Helpers\Core\View\FormMessage;
+use CoasterCms\Libraries\Builder\FormMessage;
 use CoasterCms\Models\Theme;
 use DB;
 use Dotenv\Dotenv;

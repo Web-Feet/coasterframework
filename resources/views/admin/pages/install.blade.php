@@ -15,15 +15,15 @@
     <p>Select a theme to use</p>
     <p>&nbsp;</p>
 
-    <div class="form-group {!! FormMessage::get_class('theme') !!}">
+    <div class="form-group {!! FormMessage::getErrorClass('theme') !!}">
         {!! Form::label('theme', 'Theme', ['class' => 'control-label']) !!}
         {!! Form::select('theme', $themes, $defaultTheme, ['class' => 'form-control']) !!}
-        <span class="help-block">{!! FormMessage::get_message('theme') !!}</span>
+        <span class="help-block">{!! FormMessage::getErrorMessage('theme') !!}</span>
     </div>
-    <div class="form-group {!! FormMessage::get_class('page-data') !!} page-data-group">
+    <div class="form-group {!! FormMessage::getErrorClass('page-data') !!} page-data-group">
         {!! Form::label('page-data', 'Install with page data (recommended)', ['class' => 'control-label']) !!}
         {!! Form::checkbox('page-data', 1, true, ['class' => 'form-control']) !!}
-        <span class="help-block">{!! FormMessage::get_message('page-data') !!}</span>
+        <span class="help-block">{!! FormMessage::getErrorMessage('page-data') !!}</span>
     </div>
 
     <!-- submit button -->
@@ -38,17 +38,17 @@
     <p>Set up the admin user</p>
     <p>&nbsp;</p>
 
-    <div class="form-group {!! FormMessage::get_class('email') !!}">
+    <div class="form-group {!! FormMessage::getErrorClass('email') !!}">
         {!! Form::label('email', 'Admin Email', ['class' => 'control-label']) !!}
         {!! Form::text('email', Request::input('user'), ['class' => 'form-control']) !!}
-        <span class="help-block">{!! FormMessage::get_message('email') !!}</span>
+        <span class="help-block">{!! FormMessage::getErrorMessage('email') !!}</span>
     </div>
-    <div class="form-group {!! FormMessage::get_class('password') !!}">
+    <div class="form-group {!! FormMessage::getErrorClass('password') !!}">
         {!! Form::label('password', 'Admin Password', ['class' => 'control-label']) !!}
         {!! Form::password('password', ['class' => 'form-control']) !!}
-        <span class="help-block">{!! FormMessage::get_message('password') !!}</span>
+        <span class="help-block">{!! FormMessage::getErrorMessage('password') !!}</span>
     </div>
-    <div class="form-group {!! FormMessage::get_class('password_confirmation') !!}">
+    <div class="form-group {!! FormMessage::getErrorClass('password_confirmation') !!}">
         {!! Form::label('password_confirmation', 'Admin Password Confirmation', ['class' => 'control-label']) !!}
         {!! Form::password('password_confirmation', ['class' => 'form-control']) !!}
     </div>
@@ -65,28 +65,28 @@
     <p>Set up the database connection</p>
     <p>&nbsp;</p>
 
-    <div class="form-group {!! FormMessage::get_class('host') !!}">
+    <div class="form-group {!! FormMessage::getErrorClass('host') !!}">
         {!! Form::label('host', 'Database Host', ['class' => 'control-label']) !!}
         {!! Form::text('host', Request::input('host'), ['class' => 'form-control']) !!}
-        <span class="help-block">{!! FormMessage::get_message('host') !!}</span>
+        <span class="help-block">{!! FormMessage::getErrorMessage('host') !!}</span>
     </div>
 
-    <div class="form-group {!! FormMessage::get_class('user') !!}">
+    <div class="form-group {!! FormMessage::getErrorClass('user') !!}">
         {!! Form::label('user', 'Database User', ['class' => 'control-label']) !!}
         {!! Form::text('user', Request::input('user'), ['class' => 'form-control']) !!}
-        <span class="help-block">{!! FormMessage::get_message('user') !!}</span>
+        <span class="help-block">{!! FormMessage::getErrorMessage('user') !!}</span>
     </div>
-    <div class="form-group {!! FormMessage::get_class('password') !!}">
+    <div class="form-group {!! FormMessage::getErrorClass('password') !!}">
         {!! Form::label('password', 'Database User Password', ['class' => 'control-label']) !!}
         {!! Form::password('password', ['class' => 'form-control']) !!}
     </div>
 
-    <div class="form-group {!! FormMessage::get_class('name') !!}">
+    <div class="form-group {!! FormMessage::getErrorClass('name') !!}">
         {!! Form::label('name', 'Database Name', ['class' => 'control-label']) !!}
         {!! Form::text('name', Request::input('name'), ['class' => 'form-control']) !!}
-        <span class="help-block">{!! FormMessage::get_message('name') !!}</span>
+        <span class="help-block">{!! FormMessage::getErrorMessage('name') !!}</span>
     </div>
-    <div class="form-group {!! FormMessage::get_class('prefix') !!}">
+    <div class="form-group {!! FormMessage::getErrorClass('prefix') !!}">
         {!! Form::label('prefix', 'Database Prefix', ['class' => 'control-label']) !!}
         {!! Form::text('prefix', Request::input('prefix'), ['class' => 'form-control']) !!}
     </div>

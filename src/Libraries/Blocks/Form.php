@@ -2,7 +2,7 @@
 
 use CoasterCms\Exceptions\CmsPageException;
 use CoasterCms\Helpers\Core\BlockManager;
-use CoasterCms\Helpers\Core\View\FormMessage;
+use CoasterCms\Libraries\Builder\FormMessage;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockFormRule;

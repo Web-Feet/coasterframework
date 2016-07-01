@@ -79,7 +79,7 @@ class PageLoader
 
         // check for homepage feed
         if ($urlSegments == 1 && substr(Request::segment(1), 0, 5) == 'root.') {
-            if ($this->feedExtension = Feed::getFeedExtension(Request::segment(1))) {
+            if ($this->feedExtension = Feed::getFeedExtensionFromPath(Request::segment(1))) {
                 $urlSegments = 0;
             }
         }
@@ -104,8 +104,8 @@ class PageLoader
 
                         $currentSegment = Request::segment($i);
                         
-                        if ($urlSegments == $i && $this->feedExtension = Feed::getFeedExtension($currentSegment)) {
-                            $currentSegment = Feed::removeFeedExtension($currentSegment);
+                        if ($urlSegments == $i && $this->feedExtension = Feed::getFeedExtensionFromPath($currentSegment)) {
+                            Feed::removeFeedExtensionFromPath($currentSegment);
                         }
 
                         if ($i > 1) {

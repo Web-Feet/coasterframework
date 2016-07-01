@@ -1,4 +1,4 @@
-<?php namespace CoasterCms\Libraries\Builder\Instances;
+<?php namespace CoasterCms\Libraries\Builder\PageBuilder;
 
 use CoasterCms\Exceptions\PageBuilderException;
 use CoasterCms\Helpers\Core\Page\PageLoader;
@@ -341,17 +341,7 @@ class PageBuilderInstance
      */
     public function menu($menuName, $options = [])
     {
-        $menu = Menu::get_menu($menuName);
-        if (!empty($menu)) {
-            $defaultOptions = [
-                'view' => 'default'
-            ];
-            $options = array_merge($defaultOptions, $options);
-            MenuBuilder::setView($options['view']);
-            return MenuBuilder::buildMenu($menu->items()->get(), 1);
-        } else {
-            return '';
-        }
+        return MenuBuilder::menu($menuName, $options);
     }
 
     /**

@@ -9,6 +9,7 @@ return [
     'external_form_input' => 'coaster',
     'language_fallback' => '1',
     'theme' => '1',
-    'language' => '1'
+    'language' => '1',
+    'enabled_feed_extensions' => ['rss', 'xml']
 
 ];

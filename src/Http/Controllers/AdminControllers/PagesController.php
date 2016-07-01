@@ -2,7 +2,7 @@
 
 use Auth;
 use CoasterCms\Helpers\Core\BlockManager;
-use CoasterCms\Helpers\Core\View\FormMessage;
+use CoasterCms\Libraries\Builder\FormMessage;
 use CoasterCms\Helpers\Core\View\PaginatorRender;
 use CoasterCms\Http\Controllers\AdminController;
 use CoasterCms\Libraries\Blocks\Datetime;

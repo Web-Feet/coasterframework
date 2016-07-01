@@ -7,7 +7,7 @@ use File;
 use Illuminate\Support\ServiceProvider;
 use Schema;
 
-class CmsSettingsProvider extends ServiceProvider
+class CoasterConfigProvider extends ServiceProvider
 {
 
     /**

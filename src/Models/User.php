@@ -2,7 +2,7 @@
 
 use Auth;
 use Carbon\Carbon;
-use CoasterCms\Helpers\Core\View\FormMessage;
+use CoasterCms\Libraries\Builder\FormMessage;
 use Hash;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Auth\Passwords\CanResetPassword;

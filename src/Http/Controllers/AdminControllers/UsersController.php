@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Http\Controllers\AdminControllers;
 
 use Auth;
-use CoasterCms\Helpers\Core\View\FormMessage;
+use CoasterCms\Libraries\Builder\FormMessage;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\User;

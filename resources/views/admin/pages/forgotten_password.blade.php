@@ -10,10 +10,10 @@
     {!! Form::open(['url' => Request::url()]) !!}
 
     <!-- email field -->
-    <div class="form-group {!! FormMessage::get_class('email') !!}">
+    <div class="form-group {!! FormMessage::getErrorClass('email') !!}">
         {!! Form::label('email', 'Email Address', ['class' => 'control-label']) !!}
         {!! Form::text('email', Request::input('email'), ['class' => 'form-control']) !!}
-        <span class="help-block">{!! FormMessage::get_message('email') !!}</span>
+        <span class="help-block">{!! FormMessage::getErrorMessage('email') !!}</span>
     </div>
 
     <!-- submit button -->

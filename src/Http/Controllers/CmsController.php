@@ -1,13 +1,17 @@
 <?php namespace CoasterCms\Http\Controllers;
 
+use CoasterCms\Events\Cms\InitializePageBuilder;
+use CoasterCms\Events\Cms\LoadedTemplate;
+use CoasterCms\Events\Cms\LoadErrorTemplate;
+use CoasterCms\Events\Cms\LoadPageTemplate;
+use CoasterCms\Events\Cms\ReturnPageResponse;
 use CoasterCms\Exceptions\CmsPageException;
 use CoasterCms\Helpers\Core\Html\DOMDocument;
 use CoasterCms\Helpers\Core\Page\Feed;
 use CoasterCms\Helpers\Core\Page\PageLoader;
 use CoasterCms\Helpers\Core\Page\Search;
-use CoasterCms\Helpers\Core\View\FormMessage;
 use CoasterCms\Libraries\Blocks\Form;
-use CoasterCms\Libraries\Builder\Instances\PageBuilderInstance;
+use CoasterCms\Libraries\Builder\PageBuilder\PageBuilderInstance;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\PageRedirect;
 use Illuminate\Routing\Controller;
@@ -48,14 +52,18 @@ class CmsController extends Controller
      */
     public function generatePage()
     {
-        FormMessage::set_class('error', config('coaster::frontend.form_error_class'));
-        Feed::enableFeedExtensions(['xml', 'rss', 'json']);
+        $pageLoader = PageLoader::class;
+        $pageBuilder = [
+            'class' => PageBuilderInstance::class,
+            'args' => []
+        ];
 
         // try to load cms page for current request
-        PageBuilder::setClass(PageBuilderInstance::class, PageLoader::class);
+        event(new InitializePageBuilder($pageLoader, $pageBuilder));
+        PageBuilder::setClass($pageBuilder['class'], $pageLoader, $pageBuilder['args']);
         PageBuilder::setTheme(config('coaster::frontend.theme'));
+        
         $templatePathRoot = 'themes.' . PageBuilder::getData('theme') . '.';
-
         $currentUri = trim(Request::getRequestUri(), '/');
 
         try {
@@ -91,7 +99,7 @@ class CmsController extends Controller
                 $this->_setHtmlContentType();
                 $templatePath = $templatePathRoot . 'externals.' . PageBuilder::getData('externalTemplate');
             } elseif ($extension = PageBuilder::getData('feedExtension')) {
-                $this->_setHeader('Content-Type', Feed::content_type($extension));
+                $this->_setHeader('Content-Type', Feed::getMimeType($extension));
                 $templatePath = $templatePathRoot . 'feed.' . PageBuilder::getData('feedExtension') . '.' . PageBuilder::getData('template');
             } else {
                 $this->_setHtmlContentType();
@@ -99,6 +107,7 @@ class CmsController extends Controller
             }
 
             // load page with template
+            event(new LoadPageTemplate($templatePath));
             if (View::exists($templatePath)) {
                 $this->responseContent = View::make($templatePath)->render();
             } else {
@@ -118,6 +127,7 @@ class CmsController extends Controller
                 $templatePath = $templatePathRoot . 'errors.' . $this->responseCode;
 
                 // display error loading page
+                event(new LoadErrorTemplate($templatePath));
                 if (View::exists($templatePath)) {
                     $this->_setHtmlContentType();
                     $this->responseContent = View::make($templatePath, ['error' => $e->getMessage()])->render();
@@ -127,6 +137,10 @@ class CmsController extends Controller
 
             }
 
+        }
+
+        if (is_string($this->responseContent)) {
+            event(new LoadedTemplate($this->responseContent));
         }
 
         // if response is html, run modifications
@@ -150,6 +164,8 @@ class CmsController extends Controller
             }
         }
 
+        $response = $this->_createResponse();
+        event(new ReturnPageResponse($response));
         return $this->_createResponse();
     }
 

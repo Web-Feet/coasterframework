@@ -46,7 +46,7 @@ class CmsServiceProvider extends ServiceProvider
         Auth::extend('coaster', function ($app) {
             return new Helpers\Core\CoasterGuard(
                 'coasterguard',
-                new Providers\CmsAuthUserProvider(),
+                new Providers\CoasterAuthUserProvider,
                 $app['session.store'],
                 $app['request']
             );
@@ -73,10 +73,10 @@ class CmsServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        // load cms settings first
-        $this->app->register('CoasterCms\Providers\CmsSettingsProvider');
+        $this->app->register('CoasterCms\Providers\CoasterEventsProvider');
+        $this->app->register('CoasterCms\Providers\CoasterConfigProvider');
 
-        // register other providers
+        // register third party providers
         $this->app->register('Bkwld\Croppa\ServiceProvider');
         $this->app->register('Collective\Html\HtmlServiceProvider');
 
@@ -86,7 +86,7 @@ class CmsServiceProvider extends ServiceProvider
         $loader->alias('HTML', 'Collective\Html\HtmlFacade');
         $loader->alias('Croppa', 'CoasterCms\Helpers\Core\Croppa\CroppaFacade');
         $loader->alias('CmsBlockInput', 'CoasterCms\Helpers\Core\View\CmsBlockInput');
-        $loader->alias('FormMessage', 'CoasterCms\Helpers\Core\View\FormMessage');
+        $loader->alias('FormMessage', 'CoasterCms\Libraries\Builder\FormMessage');
         $loader->alias('AssetBuilder', 'CoasterCms\Libraries\Builder\AssetBuilder');
         $loader->alias('PageBuilder', 'CoasterCms\Libraries\Builder\PageBuilder');
         $loader->alias('DateTimeHelper', 'CoasterCms\Helpers\Core\DateTimeHelper');
@@ -100,7 +100,8 @@ class CmsServiceProvider extends ServiceProvider
     public function provides()
     {
         return [
-            'CoasterCms\Providers\CmsSettingsProvider',
+            'CoasterCms\Providers\CoasterConfigProvider',
+            'CoasterCms\Providers\CoasterEventsProvider',
             'Bkwld\Croppa\ServiceProvider',
             'Collective\Html\HtmlServiceProvider'
         ];

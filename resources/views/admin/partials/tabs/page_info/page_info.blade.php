@@ -1,6 +1,6 @@
 {!! CmsBlockInput::make('string', ['name' => 'page_info_lang[name]', 'label' => 'Page Name', 'content' => $page_lang->name, 'disabled' => $disabled_lang]) !!}
 
-<div class="form-group {!! FormMessage::get_class('page_info_lang[url]') !!}">
+<div class="form-group {!! FormMessage::getErrorClass('page_info_lang[url]') !!}">
     {!! Form::label('page_info_lang[url]', 'Page Url:', ['class' => 'control-label col-sm-2']) !!}
     <div class="col-sm-10">
         <div id="url-group" class="input-group">
@@ -17,7 +17,7 @@
                 </span>
             @endif
         </div>
-        <span class="help-block">{!! FormMessage::get_message('page_info_lang[url]') !!}</span>
+        <span class="help-block">{!! FormMessage::getErrorMessage('page_info_lang[url]') !!}</span>
     </div>
 </div>
 
