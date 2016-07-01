@@ -53,7 +53,7 @@ class FormMessage
      */
     public static function getErrorMessage($key)
     {
-        if (!isset(self::$_messages)) {
+        if (isset(self::$_messages)) {
             $message = self::$_messages->first($key);
             $message = $message ?: self::$_messages->first(self::_dotNotation($key));
             return $message;
@@ -67,7 +67,7 @@ class FormMessage
      */
     public static function getErrorClass($key)
     {
-        if (!isset(self::$_messages)) {
+        if (isset(self::$_messages)) {
             $hasErrors = self::$_messages->has($key);
             $hasErrors = $hasErrors ?: self::$_messages->has(self::_dotNotation($key));
             if ($hasErrors) {
