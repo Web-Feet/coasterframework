@@ -38,6 +38,7 @@ class InstallController extends Controller
 
         if (strpos($currentRouteName, $installRoute) !== 0) {
             \redirect()->route($installRoute)->send();
+            exit;
         }
     }
 
@@ -51,7 +52,6 @@ class InstallController extends Controller
             return $actionResponse;
         }
     }
-    
 
     public function setupDatabase()
     {
