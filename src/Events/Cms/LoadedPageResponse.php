@@ -1,19 +1,21 @@
 <?php namespace CoasterCms\Events\Cms;
 
-class LoadedTemplate
+use Symfony\Component\HttpFoundation\Response;
+
+class LoadedPageResponse
 {
     /**
-     * @var string
+     * @var Response
      */
-    public $renderedTemplate;
+    public $response;
 
     /**
-     * LoadedTemplate constructor.
-     * @param $renderedTemplate
+     * ReturnPageResponse constructor.
+     * @param $response
      */
-    public function __construct(&$renderedTemplate)
+    public function __construct(&$response)
     {
-        $this->renderedTemplate = &$renderedTemplate;
+        $this->response = &$response;
     }
     
     /**

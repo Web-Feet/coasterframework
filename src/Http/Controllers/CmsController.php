@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Http\Controllers;
 
 use CoasterCms\Events\Cms\InitializePageBuilder;
-use CoasterCms\Events\Cms\LoadedTemplate;
+use CoasterCms\Events\Cms\LoadedPageResponse;
 use CoasterCms\Events\Cms\LoadErrorTemplate;
 use CoasterCms\Events\Cms\LoadPageTemplate;
 use CoasterCms\Events\Cms\ReturnPageResponse;
@@ -139,14 +139,13 @@ class CmsController extends Controller
 
         }
 
-        if (is_string($this->responseContent)) {
-            event(new LoadedTemplate($this->responseContent));
-        }
+        $response = $this->_createResponse();
+        event(new LoadedPageResponse($response));
 
-        // if response is html, run modifications
-        if (!empty($this->headers['Content-Type']) && stripos($this->headers['Content-Type'], 'html') !== false) {
+        // if response content is html string, run modifications
+        if (!empty($response->headers->get('content-type')) && stripos($response->headers->get('content-type'), 'html') !== false) {
             $domDocument = new DOMDocument;
-            $domDocument->loadHTML($this->responseContent);
+            $domDocument->loadHTML($response->getContent());
 
             $domDocument->addMetaTag('generator', 'Coaster CMS ' . config('coaster::site.version'));
 
@@ -158,15 +157,13 @@ class CmsController extends Controller
             // save page content
             if (PageBuilder::getData('externalTemplate')) {
                 $domDocument->appendInputFieldNames(config('coaster::frontend.external_form_input'));
-                $this->responseContent = $domDocument->saveBodyHMTL();
+                $response->setContent($this->responseContent = $domDocument->saveBodyHMTL());
             } else {
-                $this->responseContent = $domDocument->saveHTML($domDocument);
+                $response->setContent($domDocument->saveHTML($domDocument));
             }
         }
 
-        $response = $this->_createResponse();
-        event(new ReturnPageResponse($response));
-        return $this->_createResponse();
+        return $response;
     }
 
     /**
