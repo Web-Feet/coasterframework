@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Helpers\Core\View;
 
+use CoasterCms\Libraries\Builder\FormMessage;
 use Request;
 use View;
 
@@ -47,8 +48,8 @@ class CmsBlockInput
 
         if (!empty($options['name'])) {
             $options['submitted_data'] = Request::input($options['name']);
-            $options['field_class'] = FormMessage::get_class($options['name']);
-            $options['field_message'] = FormMessage::get_message($options['name']);
+            $options['field_class'] = FormMessage::getErrorClass($options['name']);
+            $options['field_message'] = FormMessage::getErrorMessage($options['name']);
         }
 
         if (isset($options['disabled']) && $options['disabled']) {

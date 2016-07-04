@@ -38,7 +38,7 @@ class Form extends _Base
                 $options['files'] = !empty($options['files'])?$options['files']:true;
                 $options['id'] = !empty($options['id'])?$options['id']:'form' . $block->id;
                 $form_fields = View::make($template, array('form_data' => $form_data))->render();
-                return View::make('coaster::frontend.form_wrap', array('block_id' => $block->id, 'page_id' => PageBuilder::pageId(), 'form_attrs' => $options, 'form_fields' => $form_fields));
+                return View::make('coasterCms::form.wrap', array('block_id' => $block->id, 'page_id' => PageBuilder::pageId(), 'form_attrs' => $options, 'form_fields' => $form_fields));
             } else {
                 return 'Form template not found';
             }
