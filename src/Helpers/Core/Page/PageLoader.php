@@ -98,7 +98,7 @@ class PageLoader
             }
 
             // load subpages
-            if (!empty($this->pageLevels[0]) && $urlSegments) {
+            if ($urlSegments) {
                 for ($i = 1; $i <= $urlSegments; $i++) {
                     if (empty($this->pageLevels[$i])) {
 
@@ -153,7 +153,7 @@ class PageLoader
      */
     protected function _loadPageStatus()
     {
-        $lowestLevelPage = count($this->pageLevels) > 0 ? $this->pageLevels[count($this->pageLevels) - 1] : null;
+        $lowestLevelPage = count($this->pageLevels) > 0 ? end($this->pageLevels) : null;
 
         if ($lowestLevelPage) {
 

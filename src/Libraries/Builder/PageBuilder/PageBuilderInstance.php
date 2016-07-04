@@ -105,12 +105,10 @@ class PageBuilderInstance
      */
     public function __construct(PageLoader $pageLoader)
     {
-        $currentPageIndex = count($pageLoader->pageLevels)-1;
-
-        $this->page = $currentPageIndex >= 0 ? $pageLoader->pageLevels[$currentPageIndex] : null;
+        $this->page = !empty($pageLoader->pageLevels) ? end($pageLoader->pageLevels) : null;
         $this->pageLevels = $pageLoader->pageLevels;
 
-        $this->template = Template::name($this->page->template);
+        $this->template = $this->page ? Template::name($this->page->template) : '';
 
         $this->is404 = $pageLoader->is404;
         $this->isPreview = $pageLoader->isPreview;
@@ -313,7 +311,8 @@ class PageBuilderInstance
         $crumbs = '';
         if (!empty($this->pageLevels)) {
             $url = '';
-            $lowestLevel = count($this->pageLevels)-1;
+            end($this->pageLevels);
+            $lowestLevel = key($this->pageLevels);
             foreach ($this->pageLevels as $level => $page) {
 
                 if ($page->page_lang[0]->url != '/') {
