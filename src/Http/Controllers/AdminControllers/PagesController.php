@@ -423,10 +423,9 @@ class PagesController extends AdminController
                 $li_info->permissions['forms'] = Auth::action('forms.submissions', ['page_id' => $child_page->id]);
                 $li_info->permissions['blog'] = Auth::action('system.wp_login');
 
-                if ($page_url == '/' && $child_page->link == 0) {
+                if ($page_url == '/' && $child_page->parent == 0 && $child_page->link == 0) {
                     $li_info->url = '';
                     $li_info->permissions['add'] = false;
-                    $li_info->permissions['delete'] = false;
                 } else {
                     $li_info->url = $cat_url . '/' . $page_url;
                 }
