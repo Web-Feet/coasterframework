@@ -174,7 +174,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
      * @param array $options
      * @return mixed|string
      */
-    public function block($block_name, $options = array())
+    public function block($block_name, $options = [])
     {
         if (!empty($options['import_ignore'])) {
             return '';
