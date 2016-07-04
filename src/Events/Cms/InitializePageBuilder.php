@@ -14,8 +14,8 @@ class InitializePageBuilder
 
     /**
      * InitializePageBuilder constructor.
-     * @param $pageLoader
-     * @param $pageBuilder
+     * @param string $pageLoader
+     * @param array $pageBuilder
      */
     public function __construct(&$pageLoader, &$pageBuilder)
     {

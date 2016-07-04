@@ -2,6 +2,7 @@
 
 use App;
 use Auth;
+use CoasterCms\Events\LoadRouteFile;
 use CoasterCms\Helpers\Core\Page\Install;
 use CoasterCms\Http\MiddleWare\AdminAuth;
 use CoasterCms\Http\MiddleWare\GuestAuth;
@@ -30,17 +31,10 @@ class CmsServiceProvider extends ServiceProvider
      */
     public function boot(Router $router, Kernel $kernel)
     {
-        // override auth settings
-        $this->app['config']['auth.guards.web.driver'] = 'coaster';
-        $this->app['config']['auth.providers.users.model'] = Models\User::class;
-
         // add router middleware
         $kernel->pushMiddleware(UploadChecks::class);
         $router->middleware('coaster.admin', AdminAuth::class);
         $router->middleware('coaster.guest', GuestAuth::class);
-
-        // load coaster views
-        $this->loadViewsFrom(base_path(trim(config('coaster::admin.view'), '/')), 'coaster');
 
         // use coater guard and user provider
         Auth::extend('coaster', function ($app) {
@@ -55,9 +49,19 @@ class CmsServiceProvider extends ServiceProvider
         // set cookie jar for cookies
         Auth::setCookieJar($this->app['cookie']);
 
+        // load coaster views
+        $this->loadViewsFrom(base_path(trim(config('coaster::admin.view'), '/')), 'coaster');
+        $this->loadViewsFrom(base_path(trim(config('coaster::frontend.view'), '/')), 'coasterCms');
+
         // run routes if not in console
         if (!App::runningInConsole()) {
-            include __DIR__ . '/Http/routes.php';
+            $routeFile = __DIR__ . '/Http/routes.php';
+        } else {
+            $routeFile = '';
+        }
+        event(new LoadRouteFile($routeFile));
+        if ($routeFile && file_exists($routeFile)) {
+            include $routeFile;
         }
 
         // if in console and not installed, display notice

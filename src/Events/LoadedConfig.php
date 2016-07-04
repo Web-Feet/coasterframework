@@ -1,19 +1,19 @@
-<?php namespace CoasterCms\Events\Cms;
+<?php namespace CoasterCms\Events;
 
-class LoadPageTemplate
+class LoadedConfig
 {
     /**
      * @var string
      */
-    public $template;
+    public $configValues;
 
     /**
-     * LoadPageTemplate constructor.
-     * @param string $template
+     * LoadedConfig constructor.
+     * @param array $configValues
      */
-    public function __construct(&$template)
+    public function __construct(&$configValues)
     {
-        $this->template = &$template;
+        $this->configValues = &$configValues;
     }
     
     /**

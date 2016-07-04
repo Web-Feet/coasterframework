@@ -10,8 +10,8 @@ class LoadedPageResponse
     public $response;
 
     /**
-     * ReturnPageResponse constructor.
-     * @param $response
+     * LoadedPageResponse constructor.
+     * @param Response $response
      */
     public function __construct(&$response)
     {

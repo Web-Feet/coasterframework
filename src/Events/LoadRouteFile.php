@@ -1,19 +1,19 @@
-<?php namespace CoasterCms\Events\Cms;
+<?php namespace CoasterCms\Events;
 
-class LoadPageTemplate
+class LoadRouteFile
 {
     /**
      * @var string
      */
-    public $template;
+    public $routeFile;
 
     /**
-     * LoadPageTemplate constructor.
-     * @param string $template
+     * LoadRouteFile constructor.
+     * @param string $routeFile
      */
-    public function __construct(&$template)
+    public function __construct(&$routeFile)
     {
-        $this->template = &$template;
+        $this->routeFile = &$routeFile;
     }
     
     /**
