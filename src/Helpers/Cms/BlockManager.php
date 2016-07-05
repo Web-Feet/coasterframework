@@ -1,8 +1,8 @@
-<?php namespace CoasterCms\Helpers\Core;
+<?php namespace CoasterCms\Helpers\Cms;
 
 use Auth;
-use CoasterCms\Helpers\Core\View\CmsBlockInput;
-use CoasterCms\Helpers\Core\View\PaginatorRender;
+use CoasterCms\Helpers\Cms\View\CmsBlockInput;
+use CoasterCms\Helpers\Cms\View\PaginatorRender;
 use CoasterCms\Libraries\Blocks;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockBeacon;

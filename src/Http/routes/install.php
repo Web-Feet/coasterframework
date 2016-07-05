@@ -12,6 +12,6 @@ Route::any('install/theme', ['uses' => $installController . '@setupTheme', 'as' 
 Route::any('install/theme-install', ['uses' => $installController . '@installTheme', 'as' => $routeNamePrefix . 'themeInstall']);
 
 Route::any('{other}', function() {
-    $installRoute = \CoasterCms\Helpers\Core\Page\Install::getRedirectRoute();
+    $installRoute = \CoasterCms\Helpers\Cms\Install::getRedirectRoute();
     return redirect()->route($installRoute);
 })->where('other', '.*');

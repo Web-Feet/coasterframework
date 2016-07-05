@@ -1,9 +1,9 @@
 <?php namespace CoasterCms\Models;
 
 use CoasterCms\Helpers\Admin\Theme\BlockUpdater;
-use CoasterCms\Helpers\Core\BlockManager;
-use CoasterCms\Helpers\Core\File\Directory;
-use CoasterCms\Helpers\Core\File\Zip;
+use CoasterCms\Helpers\Cms\BlockManager;
+use CoasterCms\Helpers\Cms\File\Directory;
+use CoasterCms\Helpers\Cms\File\Zip;
 use DB;
 use Eloquent;
 use Request;

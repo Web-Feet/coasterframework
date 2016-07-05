@@ -1,4 +1,4 @@
-<?php namespace CoasterCms\Helpers\Core\File;
+<?php namespace CoasterCms\Helpers\Cms\File;
 
 class File
 {

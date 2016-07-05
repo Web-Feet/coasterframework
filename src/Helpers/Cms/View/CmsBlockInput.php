@@ -1,4 +1,4 @@
-<?php namespace CoasterCms\Helpers\Core\View;
+<?php namespace CoasterCms\Helpers\Cms\View;
 
 use CoasterCms\Libraries\Builder\FormMessage;
 use Request;

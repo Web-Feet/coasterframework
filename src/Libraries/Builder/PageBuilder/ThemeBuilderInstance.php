@@ -2,8 +2,8 @@
 
 use CoasterCms\Exceptions\PageBuilderException;
 use CoasterCms\Helpers\Admin\Theme\BlockUpdater;
-use CoasterCms\Helpers\Core\BlockManager;
-use CoasterCms\Helpers\Core\Page\PageLoader;
+use CoasterCms\Helpers\Cms\BlockManager;
+use CoasterCms\Helpers\Cms\Page\PageLoader;
 use CoasterCms\Libraries\Builder\MenuBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockCategory;

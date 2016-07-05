@@ -1,6 +1,6 @@
 <?php
 
-if (\CoasterCms\Helpers\Core\Page\Install::isComplete()) {
+if (\CoasterCms\Helpers\Cms\Install::isComplete()) {
 
     include __DIR__ . '/routes/admin.php';
     include __DIR__ . '/routes/cms.php';

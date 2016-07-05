@@ -3,7 +3,7 @@
 use App;
 use Auth;
 use CoasterCms\Events\LoadRouteFile;
-use CoasterCms\Helpers\Core\Page\Install;
+use CoasterCms\Helpers\Cms\Install;
 use CoasterCms\Http\MiddleWare\AdminAuth;
 use CoasterCms\Http\MiddleWare\GuestAuth;
 use CoasterCms\Http\MiddleWare\UploadChecks;
@@ -38,7 +38,7 @@ class CmsServiceProvider extends ServiceProvider
 
         // use coater guard and user provider
         Auth::extend('coaster', function ($app) {
-            return new Helpers\Core\CoasterGuard(
+            return new Helpers\Cms\CoasterGuard(
                 'coasterguard',
                 new Providers\CoasterAuthUserProvider,
                 $app['session.store'],
@@ -88,12 +88,12 @@ class CmsServiceProvider extends ServiceProvider
         $loader = AliasLoader::getInstance();
         $loader->alias('Form', 'Collective\Html\FormFacade');
         $loader->alias('HTML', 'Collective\Html\HtmlFacade');
-        $loader->alias('Croppa', 'CoasterCms\Helpers\Core\Croppa\CroppaFacade');
-        $loader->alias('CmsBlockInput', 'CoasterCms\Helpers\Core\View\CmsBlockInput');
+        $loader->alias('Croppa', 'CoasterCms\Helpers\Cms\Croppa\CroppaFacade');
+        $loader->alias('CmsBlockInput', 'CoasterCms\Helpers\Cms\View\CmsBlockInput');
         $loader->alias('FormMessage', 'CoasterCms\Libraries\Builder\FormMessage');
         $loader->alias('AssetBuilder', 'CoasterCms\Libraries\Builder\AssetBuilder');
         $loader->alias('PageBuilder', 'CoasterCms\Libraries\Builder\PageBuilder');
-        $loader->alias('DateTimeHelper', 'CoasterCms\Helpers\Core\DateTimeHelper');
+        $loader->alias('DateTimeHelper', 'CoasterCms\Helpers\Cms\DateTimeHelper');
     }
 
     /**

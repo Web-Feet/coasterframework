@@ -1,4 +1,4 @@
-<?php namespace CoasterCms\Helpers\Core\View;
+<?php namespace CoasterCms\Helpers\Cms\View;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 

@@ -1,4 +1,4 @@
-<?php namespace CoasterCms\Helpers\Core;
+<?php namespace CoasterCms\Helpers\Cms;
 
 use Auth;
 use CoasterCms\Models\PageGroup;

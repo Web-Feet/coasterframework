@@ -3,8 +3,8 @@
 use Auth;
 use Cache;
 use CoasterCms\Helpers\Admin\Validation\Database;
-use CoasterCms\Helpers\Core\File\Directory;
-use CoasterCms\Helpers\Core\File\File;
+use CoasterCms\Helpers\Cms\File\Directory;
+use CoasterCms\Helpers\Cms\File\File;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;

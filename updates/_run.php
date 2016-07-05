@@ -27,7 +27,7 @@ if (empty($updateStatus['fileManager']) || version_compare($updateStatus['fileMa
     file_put_contents($updatesFile, json_encode($updateStatus));
 }
 
-if (\CoasterCms\Helpers\Core\Page\Install::isComplete()) {
+if (\CoasterCms\Helpers\Cms\Install::isComplete()) {
 
     if (empty($updateStatus['gallery']) || version_compare($updateStatus['gallery'], 'v.5.2.27', '<')) {
         include __DIR__ . '/galleryMoveFiles.php';

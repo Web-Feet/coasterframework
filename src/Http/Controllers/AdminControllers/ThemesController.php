@@ -2,7 +2,7 @@
 
 use Auth;
 use CoasterCms\Helpers\Admin\Theme\BlockUpdater;
-use CoasterCms\Helpers\Core\BlockManager;
+use CoasterCms\Helpers\Cms\BlockManager;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockBeacon;

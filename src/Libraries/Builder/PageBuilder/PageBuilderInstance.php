@@ -1,17 +1,16 @@
 <?php namespace CoasterCms\Libraries\Builder\PageBuilder;
 
 use CoasterCms\Exceptions\PageBuilderException;
-use CoasterCms\Helpers\Core\Page\PageLoader;
-use CoasterCms\Helpers\Core\Page\Search;
-use CoasterCms\Helpers\Core\View\Classes\BreadCrumb;
-use CoasterCms\Helpers\Core\View\Classes\FullPage;
-use CoasterCms\Helpers\Core\View\PaginatorRender;
+use CoasterCms\Helpers\Cms\Page\PageLoader;
+use CoasterCms\Helpers\Cms\Page\Search;
+use CoasterCms\Libraries\Builder\ViewClasses\BreadCrumb;
+use CoasterCms\Libraries\Builder\ViewClasses\FullPage;
+use CoasterCms\Helpers\Cms\View\PaginatorRender;
 use CoasterCms\Libraries\Blocks\Image;
 use CoasterCms\Libraries\Blocks\Repeater;
 use CoasterCms\Libraries\Builder\MenuBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\Language;
-use CoasterCms\Models\Menu;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageBlock;
 use CoasterCms\Models\PageBlockDefault;

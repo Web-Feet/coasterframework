@@ -1,4 +1,4 @@
-<?php namespace CoasterCms\Helpers\Core\Croppa;
+<?php namespace CoasterCms\Helpers\Cms\Croppa;
 
 use \Illuminate\Support\Facades\Facade;
 
@@ -6,6 +6,6 @@ class CroppaFacade extends Facade
 {
     protected static function getFacadeAccessor()
     {
-        return 'CoasterCms\Helpers\Core\Croppa\Croppa';
+        return 'CoasterCms\Helpers\Cms\Croppa\Croppa';
     }
 }

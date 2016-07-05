@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Http\Controllers\AdminControllers;
 
 use Auth;
-use CoasterCms\Helpers\Core\View\PaginatorRender;
+use CoasterCms\Helpers\Cms\View\PaginatorRender;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\FormSubmission;

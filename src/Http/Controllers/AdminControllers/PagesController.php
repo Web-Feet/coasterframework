@@ -1,9 +1,9 @@
 <?php namespace CoasterCms\Http\Controllers\AdminControllers;
 
 use Auth;
-use CoasterCms\Helpers\Core\BlockManager;
+use CoasterCms\Helpers\Cms\BlockManager;
 use CoasterCms\Libraries\Builder\FormMessage;
-use CoasterCms\Helpers\Core\View\PaginatorRender;
+use CoasterCms\Helpers\Cms\View\PaginatorRender;
 use CoasterCms\Http\Controllers\AdminController;
 use CoasterCms\Libraries\Blocks\Datetime;
 use CoasterCms\Models\AdminLog;

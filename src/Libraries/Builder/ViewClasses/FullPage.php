@@ -1,4 +1,4 @@
-<?php namespace CoasterCms\Helpers\Core\View\Classes;
+<?php namespace CoasterCms\Libraries\Builder\ViewClasses;
 
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageLang;

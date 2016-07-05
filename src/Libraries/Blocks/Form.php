@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
 use CoasterCms\Exceptions\CmsPageException;
-use CoasterCms\Helpers\Core\BlockManager;
+use CoasterCms\Helpers\Cms\BlockManager;
 use CoasterCms\Libraries\Builder\FormMessage;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\Block;

@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Helpers\Admin\Theme;
 
-use CoasterCms\Helpers\Core\Page\PageLoaderDummy;
+use CoasterCms\Helpers\Cms\Page\PageLoaderDummy;
 use CoasterCms\Libraries\Builder\PageBuilder\ThemeBuilderInstance;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\Block;

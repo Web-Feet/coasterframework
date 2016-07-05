@@ -2,7 +2,7 @@
 
 use Artisan;
 use Carbon\Carbon;
-use CoasterCms\Helpers\Core\Page\Install;
+use CoasterCms\Helpers\Cms\Install;
 use CoasterCms\Libraries\Builder\FormMessage;
 use CoasterCms\Models\Theme;
 use DB;

@@ -1,4 +1,4 @@
-<?php namespace CoasterCms\Helpers\Core\Page;
+<?php namespace CoasterCms\Helpers\Cms\Page;
 
 class Search
 {

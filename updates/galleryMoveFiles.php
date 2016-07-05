@@ -10,8 +10,8 @@ if (!$galleryBlocks->isEmpty()) {
         $newGalleryDir = $galleryStorage . $galleryBlock->name;
         if (is_dir($oldGalleryDir)) {
             $action = true;
-            \CoasterCms\Helpers\Core\File\Directory::copy($oldGalleryDir, $newGalleryDir);
-            \CoasterCms\Helpers\Core\File\Directory::remove($oldGalleryDir);
+            \CoasterCms\Helpers\Cms\File\Directory::copy($oldGalleryDir, $newGalleryDir);
+            \CoasterCms\Helpers\Cms\File\Directory::remove($oldGalleryDir);
         }
     }
 }

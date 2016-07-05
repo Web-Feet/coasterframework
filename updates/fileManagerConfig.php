@@ -43,10 +43,10 @@ function updateConfigPhp($configFile)
     global $updatedFileManagerConf;
     $fileContent = file_get_contents($configFile);
     if (strpos($fileContent, '\CoasterCms\Helpers\FileManager::filemanager_set_permissions(') !== false) {
-        \CoasterCms\Helpers\Core\File\File::replaceString($configFile, 'filemanager_set_permissions(', '\CoasterCms\Helpers\Admin\FileManager::filemanager_set_permissions(');
+        \CoasterCms\Helpers\Cms\File\File::replaceString($configFile, 'filemanager_set_permissions(', '\CoasterCms\Helpers\Admin\FileManager::filemanager_set_permissions(');
         $updatedFileManagerConf = true;
     } elseif (strpos($fileContent, 'filemanager_set_permissions(') !== false && strpos($fileContent, '\CoasterCms\Helpers\Admin\FileManager::filemanager_set_permissions(') === false) {
-        \CoasterCms\Helpers\Core\File\File::replaceString($configFile, '\CoasterCms\Helpers\FileManager::', '\CoasterCms\Helpers\Admin\FileManager::');
+        \CoasterCms\Helpers\Cms\File\File::replaceString($configFile, '\CoasterCms\Helpers\FileManager::', '\CoasterCms\Helpers\Admin\FileManager::');
         $updatedFileManagerConf = true;
     }
 }

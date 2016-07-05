@@ -1,4 +1,4 @@
-<?php namespace CoasterCms\Helpers\Core\Html;
+<?php namespace CoasterCms\Helpers\Cms\Html;
 
 use DOMElement;
 use DOMNode;

@@ -2,7 +2,7 @@
 
 use CoasterCms\Events\LoadConfig;
 use CoasterCms\Events\LoadedConfig;
-use CoasterCms\Helpers\Core\Page\Install;
+use CoasterCms\Helpers\Cms\Install;
 use CoasterCms\Models\Setting;
 use CoasterCms\Models\User;
 use Illuminate\Support\ServiceProvider;

@@ -1,4 +1,4 @@
-<?php namespace CoasterCms\Helpers\Core\Croppa;
+<?php namespace CoasterCms\Helpers\Cms\Croppa;
 
 use \Bkwld\Croppa\Helpers;
 use URL;
