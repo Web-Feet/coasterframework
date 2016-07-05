@@ -77,6 +77,8 @@ class Page extends Eloquent
         }
         if (!empty(self::$preloaded_pages[$page_id])) {
             return self::$preloaded_pages[$page_id];
+        } else {
+            return null;
         }
     }
 
@@ -95,7 +97,7 @@ class Page extends Eloquent
         if (!empty(self::$preloaded_page_children[$page_id])) {
             return self::$preloaded_page_children[$page_id];
         } else {
-            return array();
+            return [];
         }
     }
 

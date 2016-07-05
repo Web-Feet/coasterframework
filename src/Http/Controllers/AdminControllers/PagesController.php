@@ -64,7 +64,12 @@ class PagesController extends AdminController
 
         $groups_exist = (bool) (PageGroup::count() > 0);
 
-        $this->layoutData['content'] = View::make('coaster::pages.pages', array('pages' => $this->_list_pages(0, 1), 'add_page' => $add_perm, 'page_states' => Auth::user()->getPageStates(), 'max' => Page::at_limit(), 'groups_exist' => $groups_exist));
+        $rootPages = Page::join('page_lang', 'page_lang.page_id', '=', 'pages.id')->where(function ($query) {
+            $query->whereIn('page_lang.url', ['', '/']);
+        })->where('page_lang.language_id', '=', Language::current())->where('link', '=', 0)->get(['pages.*'])->all();
+        $rootPageIds = array_map(function($rootPage) {return 'list_'.$rootPage->id;}, $rootPages);
+
+        $this->layoutData['content'] = View::make('coaster::pages.pages', array('pages' => $this->_list_pages(0, 1), 'add_page' => $add_perm, 'page_states' => Auth::user()->getPageStates(), 'max' => Page::at_limit(), 'rootPageIds' => $rootPageIds, 'groups_exist' => $groups_exist));
         $this->layoutData['modals'] = View::make('coaster::modals.general.delete_item');
     }
 
@@ -183,43 +188,53 @@ class PagesController extends AdminController
     public function post_sort()
     {
         $pages = Request::input('list');
-        $order = array();
-        $logged = [];
-        $homePage = Page::join('page_lang', 'page_lang.page_id', '=', 'pages.id')->where(function ($query) {
-            $query->where('page_lang.url', '=', '/')->orWhere('page_lang.url', '=', '');
-        })->where('page_lang.language_id', '=', Language::current())->where('parent', '=', 0)->first();
-        $homePageId = $homePage?$homePage->page_id:-1;
         if (!empty($pages)) {
-            foreach ($pages as $pageId => $parent) {
-                $currentPage = Page::preload($pageId);
-                if (empty($currentPage))
-                    return 0;
-                $parent = (!empty($parent) && $parent != 'null' && $parent != $homePageId) ? $parent : 0;
-                if (!isset($order[$parent]))
-                    $order[$parent] = 1;
-                else
-                    $order[$parent]++;
-                if (($currentPage->parent != $parent || $currentPage->order != $order[$parent])) {
-                    if (Auth::action('pages.sort', ['page_id' => $parent]) && Auth::action('pages.sort', ['page_id' => $currentPage->parent])) {
-                        $parentPageName = $parent ? PageLang::preload($parent)->name : '-- Top Level Page --';
-                        if ($parent != $currentPage->parent) {
-                            $logged[$parent] = true;
-                            $logged[$currentPage->parent] = true;
-                            AdminLog::new_log('Moved page \'' . PageLang::preload($pageId)->name . '\' under \'' . $parentPageName . '\' (Page ID ' . $currentPage->id . ')');
-                        }
-                        if (!isset($logged[$parent])) {
-                            $logged[$parent] = true;
-                            AdminLog::new_log('Re-ordered pages in \'' . $parentPageName . '\' (Page ID ' . $currentPage->id . ')');
-                        }
-                        $currentPage->parent = $parent;
-                        $currentPage->order = $order[$parent];
 
-                        $currentPage->save();
-                    } else {
-                        return 0;
+            $rootPages = Page::join('page_lang', 'page_lang.page_id', '=', 'pages.id')->where(function ($query) {
+                $query->whereIn('page_lang.url', ['', '/']);
+            })->where('page_lang.language_id', '=', Language::current())->where('link', '=', 0)->get(['pages.*'])->all();
+            $rootPageIds = array_map(function($rootPage) {return $rootPage->id;}, $rootPages);
+            $order = [];
+            $changeUnderParentIds = [];
+            
+            foreach ($pages as $pageId => $parent) {
+                if ($currentPage = Page::preload($pageId)) {
+
+                    $parent = (empty($parent) || $parent == 'null') ? 0 : $parent;
+                    if ($currentPage->parent != $parent && $parent != 0 && (in_array($currentPage->id, $rootPageIds) || in_array($parent, $rootPageIds))) {
+                        return 0; // don't allow root/home page to be moved under other pages or other pages to be moved under it
                     }
+
+                    // get the order value for current page
+                    $order[$parent] = isset($order[$parent]) ? $order[$parent] : 0;
+                    $order[$parent]++;
+
+                    if (($currentPage->parent != $parent || $currentPage->order != $order[$parent])) {
+                        if (Auth::action('pages.sort', ['page_id' => $parent]) && Auth::action('pages.sort', ['page_id' => $currentPage->parent])) {
+                            $parentPageName = $parent ? PageLang::preload($parent)->name : 'top level';
+                            $pageName = PageLang::preload($pageId)->name;
+                            if ($parent != $currentPage->parent) {
+                                array_push($changeUnderParentIds, $parent, $currentPage->parent);
+                                AdminLog::new_log('Moved page \'' . $pageName . '\' under \'' . $parentPageName . '\' (Page ID ' . $currentPage->id . ')');
+                            }
+                            if (!in_array($parent, $changeUnderParentIds)) {
+                                $changeUnderParentIds[] = $parent;
+                                AdminLog::new_log('Re-ordered pages in \'' . $parentPageName . '\' (Page ID ' . $currentPage->id . ')');
+                            }
+                            $changeUnderParentIds = array_unique($changeUnderParentIds);
+                            $currentPage->parent = $parent;
+                            $currentPage->order = $order[$parent];
+                            $currentPage->save();
+                        } else {
+                            return 0; // error, can't move page to new location
+                        }
+                    }
+
+                } else {
+                    return 0; // error, moved page no longer exists
                 }
             }
+            
         }
         return 1;
     }
