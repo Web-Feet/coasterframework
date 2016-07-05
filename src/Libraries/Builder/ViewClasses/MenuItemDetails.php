@@ -44,7 +44,7 @@ class MenuItemDetails
         $this->active = $active;
 
         $this->name = $item->custom_name ?: PageLang::name($item->page_id);
-        $this->url = $this->page->link ? PageLang::url($item->page_id) : PageLang::full_url($item->page_id);
+        $this->url = ($this->page && $this->page->link) ? PageLang::url($item->page_id) : PageLang::full_url($item->page_id);
     }
 
 }
