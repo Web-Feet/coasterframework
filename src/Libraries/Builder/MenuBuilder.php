@@ -1,9 +1,9 @@
 <?php namespace CoasterCms\Libraries\Builder;
 
+use CoasterCms\Libraries\Builder\ViewClasses\MenuItemDetails;
 use CoasterCms\Models\Menu;
 use CoasterCms\Models\MenuItem;
 use CoasterCms\Models\Page;
-use CoasterCms\Models\PageLang;
 use Illuminate\Support\Collection;
 use View;
 
@@ -83,26 +83,26 @@ class MenuBuilder
     }
 
     /**
-     * @param array $items
+     * @param Page[]|MenuItem[] $items
      * @param int $level
      * @param int $subLevels
      * @return string
      */
     protected static function _buildMenu($items, $level = 1, $subLevels = 0)
     {
-        // remove pages that aren't live and convert page models to menu items
+        // convert page models to menu items and remove non-live pages
         foreach ($items as $k => $item) {
             if (is_a($item, Page::class)) {
+                $pageId = $item->id;
                 $items[$k] = new MenuItem;
                 $items[$k]->page_id = $item->id;
                 $items[$k]->sub_levels = 0;
                 $items[$k]->custom_name = '';
-                $items[$k]->page = $item;
             } else {
-                $string = explode(',', $items[$k]->page_id);
-                $items[$k]->page = Page::preload($string[0]);
+                $pageId = $item->page_id;
             }
-            if (empty($items[$k]->page) || !$items[$k]->page->is_live()) {
+            $page = Page::preload($pageId);
+            if (!$page || !$page->is_live()) {
                 unset($items[$k]);
             }
         }
@@ -110,13 +110,14 @@ class MenuBuilder
         $pageParents = [];
         $pageLevels = PageBuilder::getData('pageLevels')?:[];
         foreach ($pageLevels as $k => $parentPage) {
-            if ($k > 0) $pageParents[] = $parentPage->page_id;
+            if ($k > 0) {
+                $pageParents[] = $parentPage->page_id;
+            }
         }
         $currentPage = PageBuilder::getData('page')?:new Page;
 
         $total = count($items);
         $menuItems = '';
-        $itemData = new \stdClass;
         $defaultSubLevels = $subLevels;
         if (is_a($items, Collection::class)) {
             $items = $items->all();
@@ -125,29 +126,14 @@ class MenuBuilder
         foreach ($items as $count => $item) {
             $isFirst = ($count == 0);
             $isLast = ($count == $total - 1);
-
-            $custom_name = trim($item->custom_name);
-            if (!empty($custom_name)) {
-                $itemData->name = $custom_name;
-            } else {
-                $itemData->name = PageLang::name($item->page_id);
-            }
-            if ($item->page->link == 1) {
-                $itemData->url = PageLang::url($item->page_id);
-            } else {
-                $itemData->url = PageLang::full_url($item->page_id);
-            }
-            if ($currentPage->id == $item->page_id || in_array($item->page_id, $pageParents)) {
-                $itemData->active = true;
-            } else {
-                $itemData->active = false;
-            }
+            
+            $active = ($currentPage->id == $item->page_id || in_array($item->page_id, $pageParents));
+            $itemData = new MenuItemDetails($item, $active);
 
             $subMenu = '';
             $subLevels = $item->sub_levels > 0 ? $item->sub_levels : $defaultSubLevels;
             if ($subLevels > 0) {
-                $childPageIds = Page::child_page_ids($item->page->id);
-                if ($childPageIds) {
+                if ($childPageIds = Page::child_page_ids($item->page_id)) {
                     $subPages = Page::get_ordered_pages($childPageIds);
                     $subMenu = self::_buildMenu($subPages, $level + 1, $subLevels - 1);
                 }

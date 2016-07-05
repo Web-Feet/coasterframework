@@ -69,6 +69,8 @@ class Page extends Eloquent
 
     public static function preload($page_id)
     {
+        $pageIdParts = explode(',', $page_id);
+        $page_id = $pageIdParts[0];
         if (empty(self::$preloaded_pages)) {
             $pages = self::all();
             foreach ($pages as $page) {

@@ -4,7 +4,7 @@ use CoasterCms\Exceptions\PageBuilderException;
 use CoasterCms\Helpers\Cms\Page\PageLoader;
 use CoasterCms\Helpers\Cms\Page\Search;
 use CoasterCms\Libraries\Builder\ViewClasses\BreadCrumb;
-use CoasterCms\Libraries\Builder\ViewClasses\FullPage;
+use CoasterCms\Libraries\Builder\ViewClasses\PageDetails;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
 use CoasterCms\Libraries\Blocks\Image;
 use CoasterCms\Libraries\Blocks\Repeater;
@@ -689,7 +689,7 @@ class PageBuilderInstance
             $isLast = ($count == $total -1);
 
             $page->page_lang = (!$page->page_lang->isEmpty())?$page->page_lang[0]:PageLang::preload($page->id);
-            $fullPageInfo = new FullPage($page, $page->page_lang, $categoryPath);
+            $fullPageInfo = new PageDetails($page, $page->page_lang, $categoryPath);
 
             $this->pageOverride = $page;
 

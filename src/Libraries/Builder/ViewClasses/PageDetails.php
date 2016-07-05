@@ -3,7 +3,7 @@
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageLang;
 
-class FullPage
+class PageDetails
 {
     /**
      * @var string
@@ -53,7 +53,7 @@ class FullPage
     public $pageLang;
 
     /**
-     * FullPage constructor.
+     * PageDetails constructor.
      * @param Page $page
      * @param PageLang $pageLang
      * @param string $groupContainerPath
