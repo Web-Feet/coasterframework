@@ -4,6 +4,7 @@ use CoasterCms\Exceptions\PageBuilderException;
 use CoasterCms\Helpers\Admin\Theme\BlockUpdater;
 use CoasterCms\Helpers\Core\BlockManager;
 use CoasterCms\Helpers\Core\Page\PageLoader;
+use CoasterCms\Libraries\Builder\MenuBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\Menu;
@@ -107,17 +108,6 @@ class ThemeBuilderInstance extends PageBuilderInstance
         $this->_checkRepeaterTemplates();
         $this->_checkSelectBlocks();
         $this->_checkFormRules();
-    }
-
-    /**
-     * @param int|string $template
-     */
-    public function setTemplate($template)
-    {
-        parent::setTemplate($template);
-        if (!isset($this->templateBlocks[$this->template])) {
-            $this->templateBlocks[$this->template] = [];
-        }
     }
 
     /**
@@ -241,6 +231,9 @@ class ThemeBuilderInstance extends PageBuilderInstance
             }
         }
 
+        if (!isset($this->templateBlocks[$template])) {
+            $this->templateBlocks[$template] = [];
+        }
         if (!in_array($block_name, $this->templateBlocks[$template])) {
             $this->templateBlocks[$template][] = $block_name;
         }
@@ -289,7 +282,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
             $newMenu->save();
             $this->loadMenus[$newMenu->name] = $newMenu;
         }
-        return parent::menu($menu_name, $options);
+        return MenuBuilder::customMenu([], 1, 0, $options);
     }
 
     /**

@@ -31,11 +31,7 @@ class MenuBuilder
     {
         $menu = Menu::get_menu($menuName);
         if (!empty($menu)) {
-            $defaultOptions = [
-                'view' => 'default'
-            ];
-            $options = array_merge($defaultOptions, $options);
-            self::setView($options['view']);
+            self::_mergeOptionsAndSetView($options);
             return self::_buildMenu($menu->items()->get(), 1);
         } else {
             return '';
@@ -54,11 +50,7 @@ class MenuBuilder
         $childPageIds = Page::child_page_ids($pageId);
         if (!empty($childPageIds)) {
             $subPages = Page::get_ordered_pages($childPageIds);
-            $defaultOptions = [
-                'view' => 'default'
-            ];
-            $options = array_merge($defaultOptions, $options);
-            self::setView($options['view']);
+            self::_mergeOptionsAndSetView($options);
             return self::_buildMenu($subPages, $subMenuLevel, $subLevels);
         } else {
             return '';
@@ -69,11 +61,25 @@ class MenuBuilder
      * @param array $items
      * @param int $subMenuLevel
      * @param int $subLevels
+     * @param array $options
      * @return string
      */
-    public static function customMenu($items, $subMenuLevel = 1, $subLevels = 0)
+    public static function customMenu($items, $subMenuLevel = 1, $subLevels = 0, $options = [])
     {
+        self::_mergeOptionsAndSetView($options);
         return self::_buildMenu($items, $subMenuLevel, $subLevels);
+    }
+
+    /**
+     * @param array $options
+     */
+    protected static function _mergeOptionsAndSetView(&$options)
+    {
+        $defaultOptions = [
+            'view' => 'default'
+        ];
+        $options = array_merge($defaultOptions, $options);
+        self::setView($options['view']);
     }
 
     /**
