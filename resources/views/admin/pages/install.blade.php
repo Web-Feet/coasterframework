@@ -5,7 +5,7 @@
 @if ($stage == 'complete')
 
     <p class="text-success">Install Complete</p>
-    <p><a href="{{ URL::to(config('coaster::admin.url')) }}">Go to back-end and login</a></p>
+    <p><a href="{{ URL::to(config('coaster::admin.url')) }}">Go to admin and login</a></p>
     <p><a href="{{ URL::to('/') }}">Go to front-end</a></p>
 
 @elseif ($stage == 'theme')

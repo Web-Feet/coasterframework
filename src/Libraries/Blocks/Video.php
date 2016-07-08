@@ -18,7 +18,7 @@ class Video extends _Base
                 if (!empty($cached_vid_info)) {
                     self::$_db_cache[$cached_vid_info->videoId] = unserialize($cached_vid_info->videoInfo);
                 } else {
-                    return 'Video data not found (try saving the page content again in the backend)';
+                    return 'Video data not found (try saving the page content again in the admin)';
                 }
             }
             $video = self::$_db_cache[$block_data];
