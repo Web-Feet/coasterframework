@@ -76,7 +76,7 @@ class FormsController extends Controller
                 $submission_data->sent = $submission->sent;
                 $submission_data->created_at = $submission->created_at;
                 $submission_data->from_page = !empty($submission->from_page_id) ? PageLang::full_name($submission->from_page_id) : '-';
-                $submission_rows .= View::make('coaster::partials.form_submissions.rows', array('submission' => $submission_data))->render();
+                $submission_rows .= View::make('coaster::partials.forms.submissions', array('submission' => $submission_data))->render();
             }
             $this->layoutData['content'] = View::make(
                 'coaster::pages.forms.submissions',

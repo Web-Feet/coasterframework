@@ -32,7 +32,7 @@ class UsersController extends Controller
                     $data = [];
                     $data['user'] = $user;
                     $data['level'] = 'admin';
-                    $data['form'] = View::make('coaster::partials.forms.user.password', array('current_password' => ($authUser->id == $user_id)));
+                    $data['form'] = View::make('coaster::partials.user.forms.password', array('current_password' => ($authUser->id == $user_id)));
                     $data['success'] = $user->change_password();
                     AdminLog::new_log('User \'' . $user->email . '\' updated, password changed');
                     $this->layoutData['content'] = View::make('coaster::pages.account.password', $data);
@@ -80,7 +80,7 @@ class UsersController extends Controller
                     $data = [];
                     $data['user'] = $user;
                     $data['level'] = 'admin';
-                    $data['form'] = View::make('coaster::partials.forms.user.password', array('current_password' => ($authUser->id == $user_id)));
+                    $data['form'] = View::make('coaster::partials.user.forms.password', array('current_password' => ($authUser->id == $user_id)));
                     $this->layoutData['content'] = View::make('coaster::pages.account.password', $data);
                     break;
                 case 'role':
