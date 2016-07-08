@@ -223,7 +223,7 @@ class BlockManager
     {
         $versionsQuery = PageVersion::with(['user', 'scheduled_versions'])->where('page_id', '=', $page_id)->orderBy('version_id', 'desc');
         $versions = $versionsQuery->paginate(15);
-        $pagination = PaginatorRender::run($versions, config('coaster::admin.bootstrap_version'));
+        $pagination = PaginatorRender::admin($versions);
 
         $page_lang = PageLang::where('page_id', '=', $page_id)->where('language_id', '=', Language::current())->first();
         $live_version = PageVersion::where('page_id', '=', $page_id)->where('version_id', '=', $page_lang ? $page_lang->live_version : 0)->first();

@@ -360,7 +360,7 @@ class PagesController extends AdminController
             $requests = 'No awaiting requests';
             $pagination = '';
         } else {
-            $pagination = PaginatorRender::run($requests, config('coaster::admin.bootstrap_version'));
+            $pagination = PaginatorRender::admin($requests);
         }
         return View::make('coaster::partials.tabs.publish_requests.table', array('show' => $show, 'requests' => $requests, 'pagination' => $pagination))->render();
 

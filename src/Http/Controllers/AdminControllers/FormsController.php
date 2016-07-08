@@ -80,7 +80,7 @@ class FormsController extends Controller
             }
             $this->layoutData['content'] = View::make(
                 'coaster::pages.forms.submissions',
-                array('links' => PaginatorRender::run($submissions, config('coaster::admin.bootstrap_version')),
+                array('links' => PaginatorRender::admin($submissions),
                     'submissions' => $submission_rows,
                     'form' => $block_data->label,
                     'can_export' => Auth::action('forms.csv'),

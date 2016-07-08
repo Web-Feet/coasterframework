@@ -79,7 +79,7 @@ class HomeController extends Controller
         $logs = View::make('coaster::partials.logs.table', array('logs' => $logs_data));
 
         $this->layoutData['title'] = 'Logs';
-        $this->layoutData['content'] = View::make('coaster::pages.home.logs', array('logs' => $logs, 'pagination' => PaginatorRender::run($logs_data, config('coaster::admin.bootstrap_version'))));
+        $this->layoutData['content'] = View::make('coaster::pages.home.logs', array('logs' => $logs, 'pagination' => PaginatorRender::admin($logs_data)));
     }
 
     public function getRequests()

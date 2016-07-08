@@ -671,7 +671,7 @@ class PageBuilderInstance
             $pages = array_slice($pagesOfSelectedType, (($paginator->currentPage() - 1) * $options['per_page']), $options['per_page']);
         } else {
             $pages = $pagesOfSelectedType;
-            $paginationLinks = null;
+            $paginationLinks = '';
         }
 
         $list = '';
