@@ -2,11 +2,14 @@
 
 use App;
 use Auth;
+use CoasterCms\Events\LoadAuth;
+use CoasterCms\Events\LoadMiddleware;
 use CoasterCms\Events\LoadRouteFile;
+use CoasterCms\Events\SetViewPaths;
 use CoasterCms\Helpers\Cms\Install;
-use CoasterCms\Http\MiddleWare\AdminAuth;
-use CoasterCms\Http\MiddleWare\GuestAuth;
-use CoasterCms\Http\MiddleWare\UploadChecks;
+use CoasterCms\Http\Middleware\AdminAuth;
+use CoasterCms\Http\Middleware\GuestAuth;
+use CoasterCms\Http\Middleware\UploadChecks;
 use Illuminate\Foundation\Http\Kernel;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
@@ -32,26 +35,49 @@ class CmsServiceProvider extends ServiceProvider
     public function boot(Router $router, Kernel $kernel)
     {
         // add router middleware
-        $kernel->pushMiddleware(UploadChecks::class);
-        $router->middleware('coaster.admin', AdminAuth::class);
-        $router->middleware('coaster.guest', GuestAuth::class);
+        $globalMiddleware = [
+            UploadChecks::class
+        ];
+        $routerMiddleware = [
+            'coaster.admin' => AdminAuth::class,
+            'coaster.guest' => GuestAuth::class
+        ];
+        event(new LoadMiddleware($globalMiddleware, $routerMiddleware));
+        foreach ($globalMiddleware as $globalMiddlewareClass) {
+            $kernel->pushMiddleware($globalMiddlewareClass);
+        }
+        foreach ($routerMiddleware as $routerMiddlewareName => $routerMiddlewareClass) {
+            $router->middleware($routerMiddlewareName, $routerMiddlewareClass);
+        }
 
         // use coater guard and user provider
-        Auth::extend('coaster', function ($app) {
-            return new Helpers\Cms\CoasterGuard(
-                'coasterguard',
-                new Providers\CoasterAuthUserProvider,
-                $app['session.store'],
-                $app['request']
-            );
-        });
+        $authGuard = Helpers\Cms\CoasterGuard::class;
+        $authUserProvider = Providers\CoasterAuthUserProvider::class;
+        event(new LoadAuth($authGuard, $authUserProvider));
+        if ($authGuard && $authUserProvider) {
+            Auth::extend('coaster', function ($app) use ($authGuard, $authUserProvider) {
+                return new $authGuard(
+                    'coasterguard',
+                    new $authUserProvider,
+                    $app['session.store'],
+                    $app['request']
+                );
+            });
+        }
 
         // set cookie jar for cookies
         Auth::setCookieJar($this->app['cookie']);
 
         // load coaster views
-        $this->loadViewsFrom(base_path(trim(config('coaster::admin.view'), '/')), 'coaster');
-        $this->loadViewsFrom(base_path(trim(config('coaster::frontend.view'), '/')), 'coasterCms');
+        $adminViews = [
+            base_path(trim(config('coaster::admin.view'), '/'))
+        ];
+        $frontendViews = [
+            base_path(trim(config('coaster::admin.view'), '/'))
+        ];
+        event(new SetViewPaths($adminViews, $frontendViews));
+        $this->loadViewsFrom($adminViews, 'coaster');
+        $this->loadViewsFrom($frontendViews, 'coasterCms');
 
         // run routes if not in console
         if (!App::runningInConsole()) {

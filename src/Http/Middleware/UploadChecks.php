@@ -1,6 +1,6 @@
 <?php
 
-namespace CoasterCms\Http\MiddleWare;
+namespace CoasterCms\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;

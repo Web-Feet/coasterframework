@@ -1,10 +1,12 @@
 <?php namespace CoasterCms\Http\Controllers;
 
 use Auth;
+use CoasterCms\Events\Admin\LoadResponse;
 use CoasterCms\Helpers\Admin\View\AdminMenu;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Request;
+use Response;
 use URL;
 use View;
 
@@ -21,11 +23,17 @@ class AdminController extends Controller
     protected $layoutData;
 
     /**
+     * @var int
+     */
+    protected $responseCode;
+
+    /**
      * AdminController constructor.
      */
     public function __construct()
     {
         View::make('coaster::asset_builder.main')->render();
+        $this->responseCode = 200;
         $this->layout = 'coaster::template.main';
         $this->layoutData = [
             'site_name' => config('coaster::site.name'),
@@ -50,16 +58,24 @@ class AdminController extends Controller
      */
     public function callAction($method, $parameters)
     {
-        $actionResponse = call_user_func_array([$this, $method], $parameters);
+        $altResponseContent = call_user_func_array([$this, $method], $parameters);
 
-        if (is_null($actionResponse)) {
-            return View::make($this->layout, array_merge([
+        if (is_null($altResponseContent)) {
+            $this->layoutData = array_merge([
                 'system_menu' => AdminMenu::getSystemMenu(),
                 'sections_menu' => Auth::admin() ? AdminMenu::getSectionsMenu() : '',
-            ], $this->layoutData));
-        } else {
-            return $actionResponse;
+            ], $this->layoutData);
         }
+
+        event(new LoadResponse($this->layout, $this->layoutData, $altResponseContent, $this->responseCode));
+
+        if (is_a($altResponseContent, \Symfony\Component\HttpFoundation\Response::class)) {
+            return $altResponseContent;
+        } else {
+            $responseContent = is_null($altResponseContent) ? View::make($this->layout, $this->layoutData) : $altResponseContent;
+        }
+
+        return Response::make($responseContent, $this->responseCode);
     }
 
 }

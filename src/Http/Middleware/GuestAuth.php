@@ -1,4 +1,4 @@
-<?php namespace CoasterCms\Http\MiddleWare;
+<?php namespace CoasterCms\Http\Middleware;
 
 use Auth;
 use Closure;
