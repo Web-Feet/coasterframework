@@ -1,6 +1,6 @@
 <h1>Change Language</h1>
 
-{!! Form::open(['url' => Request::url()]) !!}
+{!! Form::open() !!}
 
 @if ($saved)
     <p class="text-success">Current language updated.</p>

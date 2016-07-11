@@ -36,7 +36,7 @@ class AccountController extends Controller
         return null;
     }
 
-    public function change_password($code = null)
+    public function changePassword($code = null)
     {
         $user = $this->_change_password_checks($code);
         if (!empty($user)) {
@@ -54,8 +54,7 @@ class AccountController extends Controller
         }
     }
 
-
-    public function forgotten_password()
+    public function forgottenPassword()
     {
         $view_data = array();
         $rules = array(
@@ -99,10 +98,10 @@ class AccountController extends Controller
         $this->layoutData['content'] = View::make('coaster::pages.forgotten_password', $view_data);
     }
 
-    public function post_password()
+    public function postPassword()
     {
         if (!Auth::user()->change_password()) {
-            $this->get_password();
+            $this->getPassword();
         } else {
             $data = [];
             $data['user'] = Auth::user();
@@ -112,7 +111,7 @@ class AccountController extends Controller
         }
     }
 
-    public function get_password()
+    public function getPassword()
     {
         $data = [];
         $data['user'] = Auth::user();
@@ -135,7 +134,7 @@ class AccountController extends Controller
         }
     }
 
-    public function post_blog()
+    public function postBlog()
     {
         $rules = array(
             'blog_login' => 'required',
@@ -182,16 +181,16 @@ class AccountController extends Controller
     {
         $input = Request::get('language');
         Language::set($input);
-        \redirect(URL::to(config('coaster::admin.url').'/account/language'))->send();
+        return \redirect()->route('coaster.admin.account.language');
     }
 
-    public function get_blog()
+    public function getBlog()
     {
         $form = View::make('coaster::partials.users.forms.blog', array('blog_login' => $this->_existing_blog_login()));
         $this->layoutData['content'] = View::make('coaster::pages.account.blog', array('form' => $form));
     }
 
-    public function get_index()
+    public function getIndex()
     {
         $account = View::make('coaster::partials.users.info', array('user' => Auth::user()));
         $this->layoutData['content'] = View::make('coaster::pages.account', array('account' => $account, 'auto_blog_login' => (!empty(config('coaster::blog.url') && Auth::action('account.blog'))), 'change_password' => Auth::action('account.password')));

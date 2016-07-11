@@ -5,12 +5,12 @@
 {!! $account !!}
 
 @if ($change_password)
-    <a href="{{ URL::Current().'/password' }}" class="btn btn-warning"><i class="fa fa-unlock-alt"></i> &nbsp; Change
+    <a href="{{ route('coaster.admin.account.password') }}" class="btn btn-warning"><i class="fa fa-unlock-alt"></i> &nbsp; Change
         Password</a>
 @endif
 
 @if ($auto_blog_login)
     {{ ($change_password)?'&nbsp;':'' }}
-    <a href="{{ URL::Current().'/blog' }}" class="btn btn-warning"><i class="fa fa-share"></i> &nbsp; Auto Blog Login
+    <a href="{{ route('coaster.admin.account.blog') }}" class="btn btn-warning"><i class="fa fa-share"></i> &nbsp; Auto Blog Login
         Details</a>
 @endif
