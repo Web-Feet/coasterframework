@@ -43,7 +43,7 @@ class AccountController extends Controller
             $view_data = array(
                 'user' => $user,
                 'level' => 'guest',
-                'form' => View::make('coaster::partials.user.forms.password', array('current_password' => false))
+                'form' => View::make('coaster::partials.users.forms.password', array('current_password' => false))
             );
             if (!empty($_POST)) {
                 if ($user->change_password($code)) {
@@ -117,7 +117,7 @@ class AccountController extends Controller
         $data = [];
         $data['user'] = Auth::user();
         $data['level'] = 'user';
-        $data['form'] = View::make('coaster::partials.user.forms.password', array('current_password' => true));
+        $data['form'] = View::make('coaster::partials.users.forms.password', array('current_password' => true));
         $this->layoutData['content'] = View::make('coaster::pages.account.password', $data);
     }
 
@@ -143,7 +143,7 @@ class AccountController extends Controller
         );
         $validation = Validator::make(Request::all(), $rules);
         $data = [];
-        $data['form'] = View::make('coaster::partials.user.forms.blog', array('blog_login' => $this->_existing_blog_login()));
+        $data['form'] = View::make('coaster::partials.users.forms.blog', array('blog_login' => $this->_existing_blog_login()));
         if ($validation->fails()) {
             $this->layoutData['content'] = View::make('coaster::pages.account.blog', $data);
         } else {
@@ -187,7 +187,7 @@ class AccountController extends Controller
 
     public function get_blog()
     {
-        $form = View::make('coaster::partials.user.forms.blog', array('blog_login' => $this->_existing_blog_login()));
+        $form = View::make('coaster::partials.users.forms.blog', array('blog_login' => $this->_existing_blog_login()));
         $this->layoutData['content'] = View::make('coaster::pages.account.blog', array('form' => $form));
     }
 
