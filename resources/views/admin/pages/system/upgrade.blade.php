@@ -11,5 +11,5 @@
 @endif
 
 @if ($run)
-    <a class="btn btn-primary" href="{{ URL::to(config('coaster::admin.url').'/system/upgrade/1') }}">Start Upgrade</a>
+    <a class="btn btn-primary" href="{{ route('coaster.admin.system.upgrade', ['update' => 1]) }}">Start Upgrade</a>
 @endif

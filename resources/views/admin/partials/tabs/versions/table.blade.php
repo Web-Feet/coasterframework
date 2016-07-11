@@ -50,8 +50,8 @@
                 <td>
                     <a href="{{ \CoasterCms\Models\PageLang::full_url($version->page_id).'?preview='.$version->preview_key }}"
                        target="_blank"><i class="glyphicon glyphicon-eye-open itemTooltip" title="Preview"></i></a>
-                    <a href="{{ URL::to(config('coaster::admin.url').'/pages/edit/'.$version->page_id.'/'.$version->version_id) }}"><i
-                                class="delete glyphicon glyphicon-pencil itemTooltip" title="Edit"></i></a>
+                    <a href="{{ route('coaster.admin.pages.edit', ['pageId' => $version->page_id, 'version' => $version->version_id]) }}"><i
+                                class="glyphicon glyphicon-pencil itemTooltip" title="Edit"></i></a>
                     @if ($can_publish || $version->user_id == Auth::user()->id)
                         <i class="version_rename glyphicon glyphicon-bookmark itemTooltip"
                            data-version="{{ $version->version_id }}" title="Rename"></i>

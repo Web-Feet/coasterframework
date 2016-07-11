@@ -33,7 +33,7 @@ class PagesController extends AdminController
     private $_child_pages;
     private $_live_versions;
 
-    public function get_index()
+    public function getIndex()
     {
         $numb_galleries = Template::blocks_of_type('gallery');
         $numb_forms = Template::blocks_of_type('form');
@@ -73,37 +73,37 @@ class PagesController extends AdminController
         $this->layoutData['modals'] = View::make('coaster::modals.general.delete_item');
     }
 
-    public function get_add($page_id = 0)
+    public function getAdd($pageId = 0)
     {
-        $this->layoutData['content'] = $this->_load_page_data(0, array('parent' => $page_id));
+        $this->layoutData['content'] = $this->_load_page_data(0, array('parent' => $pageId));
     }
 
-    public function post_add($page_id = 0)
+    public function postAdd($pageId = 0)
     {
         $input = Request::all();
         $page_info = $input['page_info'];
-        $page = Page::find($page_id);
+        $page = Page::find($pageId);
         $in_group = !empty($page) ? $page->in_group : 0; // ignore page limit for group pages
         if (Page::at_limit() && $page_info['link'] != 1 && $in_group) {
             $this->layoutData['content'] = 'Page Limit Reached';
         } else {
             $new_page_id = $this->_save_page_info();
             if ($new_page_id === false) {
-                $this->get_add($page_id);
+                $this->getAdd($pageId);
             } else {
                 return Redirect::action('\CoasterCms\Http\Controllers\AdminControllers\PagesController@get_edit', array($new_page_id));
             }
         }
     }
 
-    public function get_edit($page_id, $version = 0)
+    public function getEdit($pageId, $version = 0)
     {
-        $this->layoutData['content'] = $this->_load_page_data($page_id, array('version' => $version));
+        $this->layoutData['content'] = $this->_load_page_data($pageId, array('version' => $version));
     }
 
-    public function post_edit($page_id)
+    public function postEdit($pageId)
     {
-        $existingPage = Page::find($page_id);
+        $existingPage = Page::find($pageId);
 
         // run if duplicate button was hit
         if (Request::input('duplicate') == 1) {
@@ -114,7 +114,7 @@ class PagesController extends AdminController
                 $duplicate_parent = $existingPage->parent;
             }
             if (Auth::action('pages.add', ['page_id' => $duplicate_parent])) {
-                $page_lang_model = PageLang::preload($page_id);
+                $page_lang_model = PageLang::preload($pageId);
                 $page_info_lang = Request::input('page_info_lang');
                 $page_info_lang['name'] = $page_lang_model->name.' Duplicate';
                 $page_info_lang['url'] = $page_lang_model->url.'-duplicate';
@@ -137,11 +137,11 @@ class PagesController extends AdminController
         $alert->header = 'Page Content Updated';
         $alert->content = '';
 
-        $new_version = PageVersion::add_new($page_id);
+        $new_version = PageVersion::add_new($pageId);
         BlockManager::$to_version = $new_version->version_id;
 
         $publishing = config('coaster::admin.publishing') ? true : false;
-        $canPublish = Auth::action('pages.version-publish', ['page_id' => $page_id]);
+        $canPublish = Auth::action('pages.version-publish', ['page_id' => $pageId]);
         if ($publishing && $existingPage->link == 0) {
             // check if publish
             if (Request::input('publish') != '' && $canPublish) {
@@ -149,7 +149,7 @@ class PagesController extends AdminController
                 $new_version->publish();
                 // check if there were requests to publish the version being edited
                 if (Request::input('overwriting_version_id')) {
-                    $overwriting_page_version = PageVersion::where('version_id', '=', Request::input('overwriting_version_id'))->where('page_id', '=', $page_id)->first();
+                    $overwriting_page_version = PageVersion::where('version_id', '=', Request::input('overwriting_version_id'))->where('page_id', '=', $pageId)->first();
                     $requests = PagePublishRequests::where('page_version_id', '=', $overwriting_page_version->id)->where('status', '=', 'awaiting')->get();
                     if (!$requests->isEmpty()) {
                         foreach ($requests as $request) {
@@ -162,7 +162,7 @@ class PagesController extends AdminController
             }
             // check if publish request
             if (Request::input('publish_request') != '') {
-                PagePublishRequests::add($page_id, $new_version->version_id, Request::input('request_note'));
+                PagePublishRequests::add($pageId, $new_version->version_id, Request::input('request_note'));
             }
         } elseif (!$publishing || ($existingPage->link == 1 && $canPublish)) {
             BlockManager::$publish = true;
@@ -170,10 +170,10 @@ class PagesController extends AdminController
         }
 
         // update blocks
-        BlockManager::process_submission($page_id);
+        BlockManager::process_submission($pageId);
 
         // save page info
-        if ($this->_save_page_info($page_id) === false) {
+        if ($this->_save_page_info($pageId) === false) {
             $alert->type = 'warning';
             $alert->content .= 'Error: "Page Info" not updated (check tab for errors)';
         }
@@ -182,10 +182,10 @@ class PagesController extends AdminController
         $this->layoutData['alert'] = $alert;
 
         // display page edit form
-        $this->get_edit($page_id, BlockManager::$to_version);
+        $this->getEdit($pageId, BlockManager::$to_version);
     }
 
-    public function post_sort()
+    public function postSort()
     {
         $pages = Request::input('list');
         if (!empty($pages)) {
@@ -239,9 +239,9 @@ class PagesController extends AdminController
         return 1;
     }
 
-    public function post_delete($page_id)
+    public function postDelete($pageId)
     {
-        $page = Page::find($page_id);
+        $page = Page::find($pageId);
         if (!empty($page)) {
             // backup/delete
             $log_id = $page->delete();
@@ -250,12 +250,12 @@ class PagesController extends AdminController
         return 0;
     }
 
-    public function post_versions($page_id)
+    public function postVersions($pageId)
     {
-        return BlockManager::version_table($page_id);
+        return BlockManager::version_table($pageId);
     }
 
-    public function post_version_schedule($pageId)
+    public function postVersionSchedule($pageId)
     {
         $publishingOn = (config('coaster::admin.publishing') > 0) ? true : false;
         if (!$publishingOn || !Auth::action('pages.version-publish', ['page_id' => $pageId])) {
@@ -314,13 +314,13 @@ class PagesController extends AdminController
         return 0;
     }
 
-    public function post_version_rename($page_id)
+    public function postVersionRename($pageId)
     {
         $version_name = Request::input('version_name');
         $version_id = Request::input('version_id');
-        if (!empty($page_id) && !empty($version_id)) {
-            $page_version = PageVersion::where('page_id', '=', $page_id)->where('version_id', '=', $version_id)->first();
-            if (!empty($page_version) && ($page_version->user_id == Auth::user()->id || Auth::action('pages.version-publish', ['page_id' => $page_id]))) {
+        if (!empty($pageId) && !empty($version_id)) {
+            $page_version = PageVersion::where('page_id', '=', $pageId)->where('version_id', '=', $version_id)->first();
+            if (!empty($page_version) && ($page_version->user_id == Auth::user()->id || Auth::action('pages.version-publish', ['page_id' => $pageId]))) {
                 $page_version->label = $version_name;
                 $page_version->save();
                 return 1;
@@ -329,11 +329,11 @@ class PagesController extends AdminController
         return 0;
     }
 
-    public function post_version_publish($page_id)
+    public function postVersionPublish($pageId)
     {
         $version_id = Request::input('version_id');
-        if (!empty($page_id) && !empty($version_id)) {
-            $page_version = PageVersion::where('page_id', '=', $page_id)->where('version_id', '=', $version_id)->first();
+        if (!empty($pageId) && !empty($version_id)) {
+            $page_version = PageVersion::where('page_id', '=', $pageId)->where('version_id', '=', $version_id)->first();
             if (!empty($page_version)) {
                 return $page_version->publish();
             }
@@ -341,9 +341,9 @@ class PagesController extends AdminController
         return 0;
     }
 
-    public function post_requests($page_id)
+    public function postRequests($pageId)
     {
-        if (empty($page_id)) {
+        if (empty($pageId)) {
             // block access to all requests
             return 0;
         }
@@ -355,7 +355,7 @@ class PagesController extends AdminController
         $show = $show ?: ['page' => false, 'status' => true, 'requested_by' => true];
 
 
-        $requests = PagePublishRequests::all_requests($page_id, $type, 25);
+        $requests = PagePublishRequests::all_requests($pageId, $type, 25);
         if ($requests->isEmpty()) {
             $requests = 'No awaiting requests';
             $pagination = '';
@@ -366,14 +366,14 @@ class PagesController extends AdminController
 
     }
 
-    public function post_request_publish($page_id)
+    public function postRequestPublish($pageId)
     {
         $version_id = Request::input('version_id');
         $note = Request::input('note');
-        return PagePublishRequests::add($page_id, $version_id, $note);
+        return PagePublishRequests::add($pageId, $version_id, $note);
     }
 
-    public function post_request_publish_action($page_id)
+    public function postRequestPublishAction($pageId)
     {
         $request_id = Request::input('request');
         $request = PagePublishRequests::with('page_version')->find($request_id);
@@ -479,16 +479,16 @@ class PagesController extends AdminController
         return null;
     }
 
-    private function _save_page_info($page_id = 0)
+    private function _save_page_info($pageId = 0)
     {
         $input = Request::all();
-        $canPublish = (config('coaster::admin.publishing') > 0 && Auth::action('pages.version-publish', ['page_id' => $page_id])) || config('coaster::admin.publishing') == 0;
+        $canPublish = (config('coaster::admin.publishing') > 0 && Auth::action('pages.version-publish', ['page_id' => $pageId])) || config('coaster::admin.publishing') == 0;
 
         /*
          * Load data from request / db
          */
-        if (!empty($page_id)) {
-            $page = Page::find($page_id);
+        if (!empty($pageId)) {
+            $page = Page::find($pageId);
             if (empty($page)) {
                 throw new \Exception('page not found');
             }
@@ -498,7 +498,7 @@ class PagesController extends AdminController
                 }
             }
             $page_info = $input['page_info'];
-            $page_lang = PageLang::preload($page_id);
+            $page_lang = PageLang::preload($pageId);
             foreach ($page_lang->getAttributes() as $attribute => $value) {
                 if (!in_array($attribute, ['updated_at', 'created_at']) && !isset($input['page_info_lang'][$attribute])) {
                     $input['page_info_lang'][$attribute] = $page_lang->$attribute;
@@ -543,7 +543,7 @@ class PagesController extends AdminController
                 $parentId = $page_info['parent'];
             }
             $parent = Page::find($parentId);
-            if (empty($parent) && !empty($page_id)) {
+            if (empty($parent) && !empty($pageId)) {
                 return false;
             }
         }
@@ -565,7 +565,7 @@ class PagesController extends AdminController
         }
 
         $versionTemplate = $page_info['template'];
-        if (empty($input['publish']) && $page_id) {
+        if (empty($input['publish']) && $pageId) {
             $page_info['template'] = $page->template;
         }
         if ($page_info['link'] == 1) {
@@ -579,7 +579,7 @@ class PagesController extends AdminController
         $page_info['live_end'] = Datetime::jQueryToMysql($page_info['live_end']);
 
         if (!$canPublish) {
-            if ($page_id == 0) {
+            if ($pageId == 0) {
                 $page_info['live'] = 0;
             } else {
                 foreach ($page_info as $attribute => $value) {
@@ -622,7 +622,7 @@ class PagesController extends AdminController
         }
 
         if (!empty($siblings) && $page_info['link'] == 0) {
-            $same_level = PageLang::where('url', '=', $page_info_lang['url'])->where('page_id', '!=', $page_id)->whereIn('page_id', $siblings)->get();
+            $same_level = PageLang::where('url', '=', $page_info_lang['url'])->where('page_id', '!=', $pageId)->whereIn('page_id', $siblings)->get();
             if (!$same_level->isEmpty()) {
                 FormMessage::add('page_info_lang[url]', 'url in use by another page!');
                 return false;
@@ -634,8 +634,8 @@ class PagesController extends AdminController
         if (empty($page_lang->page_id)) {
             $page_lang->page_id = $page->id;
         }
-        if ($canPublish || $page_id == 0) {
-            if ($page_id == 0) {
+        if ($canPublish || $pageId == 0) {
+            if ($pageId == 0) {
                 $page_lang->live_version = 1;
             }
             $page_lang->language_id = Language::current();
@@ -644,7 +644,7 @@ class PagesController extends AdminController
             $page_lang->save();
         }
 
-        if (!$page_id) {
+        if (!$pageId) {
             $title_block = Block::where('name', '=', config('coaster::admin.title_block'))->first();
             if (!empty($title_block)) {
                 BlockManager::update_block($title_block->id, $page_lang->name, $page->id); // saves first page version
@@ -655,7 +655,7 @@ class PagesController extends AdminController
         /*
          * Save Page Version
          */
-        if ($page_id != 0) {
+        if ($pageId != 0) {
             // save page versions template
             $page_version = PageVersion::where('page_id', '=', $page->id)->where('version_id', '=', BlockManager::$to_version)->first();
             $page_version->template = $versionTemplate;
@@ -682,7 +682,7 @@ class PagesController extends AdminController
         /*
          * Save Menu Item
          */
-        if ($canPublish || $page_id == 0) {
+        if ($canPublish || $pageId == 0) {
             // set menu options
             if (Auth::action('menus')) {
                 $menus = !empty($page_info_other['menus']) ? $page_info_other['menus'] : [];
@@ -723,7 +723,7 @@ class PagesController extends AdminController
         /*
          * Log and return saved page id
          */
-        if ($page_id == 0) {
+        if ($pageId == 0) {
             AdminLog::new_log('Added page \'' . $page_lang->name . '\' (Page ID ' . $page->id . ')');
         } else {
             AdminLog::new_log('Updated page \'' . $page_lang->name . '\' (Page ID ' . $page->id . ')');
@@ -731,7 +731,7 @@ class PagesController extends AdminController
         return $page->id;
     }
 
-    private function _load_page_data($page_id = 0, $extra_info = [])
+    private function _load_page_data($pageId = 0, $extra_info = [])
     {
         $page_info = Request::input('page_info');
         $page_info_lang = Request::input('page_info_lang');
@@ -748,12 +748,12 @@ class PagesController extends AdminController
         $frontendLink = '';
 
         $publishingOn = (config('coaster::admin.publishing') > 0) ? true : false;
-        $auth['can_publish'] = ($publishingOn && Auth::action('pages.version-publish', ['page_id' => $page_id])) || !$publishingOn;
+        $auth['can_publish'] = ($publishingOn && Auth::action('pages.version-publish', ['page_id' => $pageId])) || !$publishingOn;
 
-        if (!empty($page_id)) {
+        if (!empty($pageId)) {
 
             // get page data
-            $page = Page::find($page_id);
+            $page = Page::find($pageId);
             if (empty($page)) {
                 return 'Page Not Found';
             }
@@ -764,9 +764,9 @@ class PagesController extends AdminController
             PageVersionSchedule::checkPageVersionIds();
 
             // get page lang data
-            $page_lang = PageLang::where('page_id', '=', $page_id)->where('language_id', '=', Language::current())->first();
+            $page_lang = PageLang::where('page_id', '=', $pageId)->where('language_id', '=', Language::current())->first();
             if (empty($page_lang)) {
-                $page_lang = PageLang::where('page_id', '=', $page_id)->first();
+                $page_lang = PageLang::where('page_id', '=', $pageId)->first();
                 if (empty($page_lang)) {
                     return 'Page Lang Data Not Found';
                 }
@@ -777,14 +777,14 @@ class PagesController extends AdminController
             $page_lang->url = ltrim($page_lang->url, '/');
 
             // get version data
-            $versionData['latest'] = PageVersion::latest_version($page_id);
+            $versionData['latest'] = PageVersion::latest_version($pageId);
             $versionData['editing'] = ($extra_info['version'] == 0 || $extra_info['version'] > $versionData['latest']) ? $versionData['latest'] : $extra_info['version'];
             $versionData['live'] = $page_lang->live_version;
 
             // get frontend link (preview or direct link if document)
-            $frontendLink = PageLang::full_url($page_id);
+            $frontendLink = PageLang::full_url($pageId);
             if (!$page->is_live() && $page->link == 0) {
-                $live_page_version = PageVersion::where('page_id', '=', $page_id)->where('version_id', '=', $versionData['live'])->first();
+                $live_page_version = PageVersion::where('page_id', '=', $pageId)->where('version_id', '=', $versionData['live'])->first();
                 if (!empty($live_page_version)) {
                     $frontendLink .= '?preview=' . $live_page_version->preview_key;
                 }
@@ -792,7 +792,7 @@ class PagesController extends AdminController
 
             // if loading previous version get version template rather than current page template
             if ($versionData['latest'] != $versionData['editing']) {
-                $page_version = PageVersion::where('version_id', '=', $versionData['editing'])->where('page_id', '=', $page_id)->first();
+                $page_version = PageVersion::where('version_id', '=', $versionData['editing'])->where('page_id', '=', $pageId)->first();
                 if (empty($page_version)) {
                     return 'version not found';
                 } else {
@@ -809,7 +809,7 @@ class PagesController extends AdminController
                     return 'active theme not found';
                 }
                 BlockManager::$current_version = $versionData['editing']; // used for repeater data
-                $blocks_content = PageBlock::preload_page($page_id, $versionData['editing']);
+                $blocks_content = PageBlock::preload_page($pageId, $versionData['editing']);
             }
 
             // check duplicate permission
@@ -907,7 +907,7 @@ class PagesController extends AdminController
             $page_lang
         );
 
-        if ($page_id > 0) {
+        if ($pageId > 0) {
             return View::make('coaster::pages.pages.edit', [
                 'page' => $page,
                 'page_lang' => $page_lang,

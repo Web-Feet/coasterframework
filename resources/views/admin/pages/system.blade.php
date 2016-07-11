@@ -91,7 +91,7 @@
                                 <span class="text-success">No errors found</span>
                             @endif
                             @if ($can_validate)
-                                <a href="{!! URL::to(config('coaster::admin.url').'/system/validate-db') !!}">(more details)</a>
+                                <a href="{{ route('coaster.admin.system.validate-db') }}">(more details)</a>
                             @endif
                         </td>
                     </tr>
@@ -113,7 +113,7 @@
 
                 @if ($can_upgrade && $upgrade->required)
                     <br /><br />
-                    <a class="btn btn-primary" href="{{ URL::to(config('coaster::admin.url').'/system/upgrade') }}">Upgrade Coaster CMS</a>
+                    <a class="btn btn-primary" href="{{ route('coaster.admin.system.upgrade') }}">Upgrade Coaster CMS</a>
                 @endif
             </div>
         </div>
@@ -128,8 +128,8 @@
             $('#system_tabs a:first').tab('show');
             $('#search_index').click(function () {
                 $('#search_index').html("(reindex in progress)");
-                var aj = $.ajax({
-                    url: get_admin_url() + 'system/search',
+                $.ajax({
+                    url: '{{ route('coaster.admin.system.search') }}',
                     type: 'GET',
                     success: function (r) {
                         if (r == 1) {
@@ -144,28 +144,6 @@
                     }
                 });
             });
-            @if ($can_validate)
-            $('#db_tables').click(function () {
-                $('#db_tables').addClass("btn-warning");
-                $('#db_tables').html("Validation (In Progress)");
-                var aj = $.ajax({
-                    url: get_admin_url() + 'system/validate-db',
-                    type: 'GET',
-                    dataType: 'json',
-                    success: function (r) {
-                        $('#db_tables').removeClass("btn-warning");
-                        if (r == 1) {
-                            $('#db_tables').addClass("btn-success");
-                            $('#db_tables').html("Reindex (Complete)");
-                        }
-                        else {
-                            $('#db_tables').addClass("btn-danger");
-                            $('#db_tables').html("Reindex (Error)");
-                        }
-                    }
-                });
-            });
-            @endif
         });
     </script>
 @endsection

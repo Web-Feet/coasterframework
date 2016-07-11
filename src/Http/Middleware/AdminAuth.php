@@ -20,7 +20,7 @@ class AdminAuth
         $parameters = $request->route()->parameters();
 
         if (Auth::check()) {
-            if (Auth::actionRoute(array($controller, $action), $parameters)) {
+            if (Auth::actionRoute([$controller, $action], $parameters)) {
                 return $next($request);
             } elseif (Auth::admin()) {
                 return abort(403, 'Action not permitted');

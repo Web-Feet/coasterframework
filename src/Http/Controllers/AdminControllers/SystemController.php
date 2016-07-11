@@ -26,7 +26,7 @@ class SystemController extends Controller
 {
     protected $dot_replace = ':@dot:';
 
-    public function post_index()
+    public function postIndex()
     {
         if (Auth::action('system.update')) {
             $settings = Request::all();
@@ -96,10 +96,10 @@ class SystemController extends Controller
             $this->layoutData['alert'] = $alert;
         }
 
-        \redirect(config('coaster::admin.url').'/system')->send();
+        return \redirect()->route('coaster.admin.system');
     }
 
-    public function get_index()
+    public function getIndex()
     {
         $database_structure = $this->_db_messages();
 
@@ -181,7 +181,7 @@ class SystemController extends Controller
         $this->layoutData['content'] = View::make('coaster::pages.system', array('database_structure' => $database_structure, 'last_indexed_search' => $last_indexed_search, 'site_details' => $settings, 'can_index_search' => Auth::action('system.search'), 'can_validate' => Auth::action('system.validate-db'), 'can_upgrade' => Auth::action('system.upgrade'), 'upgrade' => $upgrade));
     }
 
-    public function get_wp_login()
+    public function getWpLogin()
     {
         $blog_login_url = URL::to('/' . trim(config('coaster::blog.url'), '/') . '/wp-login.php');
         $blog_admin_url = URL::to('/' . trim(config('coaster::blog.url'), '/') . '/wp-admin/');
@@ -224,7 +224,7 @@ class SystemController extends Controller
         return '';
     }
 
-    public function get_search()
+    public function getSearch()
     {
         PageSearchData::update_search_data();
         AdminLog::new_log('Search index updated');
@@ -232,7 +232,7 @@ class SystemController extends Controller
         return 1;
     }
 
-    public function get_validate_db($fix = null)
+    public function getValidateDb($fix = null)
     {
         $messages = $this->_db_messages($fix);
         $this->layoutData['content'] = View::make('coaster::pages.system.validate-db', $messages);
@@ -276,7 +276,7 @@ class SystemController extends Controller
 
     }
 
-    public function post_keys($key = null)
+    public function postKeys($key = null)
     {
         if (strpos($key, 'browser') !== false) {
             return config('coaster::key.' . $key);
@@ -375,7 +375,7 @@ class SystemController extends Controller
         }
 
         if ($basic_fix == 1) {
-            redirect(config('coaster::admin.url').'/system/validate-db')->send();
+            return \redirect()->route('coaster.admin.validate-db');
         }
 
         return ['errors' => $errors, 'warnings' => $warnings, 'notices' => $notices];

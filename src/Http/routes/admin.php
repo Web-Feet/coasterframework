@@ -18,11 +18,6 @@ Route::group(['middleware' => ['web', 'coaster.admin']], function () use($admin,
 
     Route::get($admin . 'logout', ['uses' => $adminController . 'AuthController@logout', 'as' => $routeNamePrefix . 'logout']);
 
-    Route::get($admin . 'home', ['uses' => $adminController . 'HomeController@getIndex', 'as' => $routeNamePrefix . 'home']);
-    Route::get($admin . 'home/logs', ['uses' => $adminController . 'HomeController@getLogs', 'as' => $routeNamePrefix . 'home.logs']);
-    Route::get($admin . 'home/requests', ['uses' => $adminController . 'HomeController@getRequests', 'as' => $routeNamePrefix . 'home.requests']);
-    Route::get($admin . 'home/your-requests', ['uses' => $adminController . 'HomeController@getYourRequests', 'as' => $routeNamePrefix . 'home.your-requests']);
-
     Route::get($admin . 'account', ['uses' => $adminController . 'AccountController@getIndex', 'as' => $routeNamePrefix . '']);
     Route::get($admin . 'account/password', ['uses' => $adminController . 'AccountController@getPassword', 'as' => $routeNamePrefix . 'account.password']);
     Route::post($admin . 'account/password', ['uses' => $adminController . 'AccountController@postPassword']);
@@ -32,23 +27,36 @@ Route::group(['middleware' => ['web', 'coaster.admin']], function () use($admin,
     Route::post($admin . 'account/language', ['uses' => $adminController . 'AccountController@postLanguage']);
     Route::post($admin . 'account/page-state', ['uses' => $adminController . 'AccountController@postPageState', 'as' => $routeNamePrefix . 'account.page-state']);
 
-    Route::get($admin . 'pages', ['uses' => $adminController . 'PagesController@get_index', 'as' => '']);
-    Route::get($admin . 'pages/add/{page_id?}', ['uses' => $adminController . 'PagesController@get_add', 'as' => '']);
-    Route::post($admin . 'pages/add/{page_id?}', ['uses' => $adminController . 'PagesController@post_add', 'as' => '']);
-    Route::get($admin . 'pages/edit/{page_id}/{version?}', ['uses' => $adminController . 'PagesController@get_edit', 'as' => ''])->where(array ( 'page_id' => '\w+', 'version' => '\w+', ));
-    Route::post($admin . 'pages/edit/{page_id}', ['uses' => $adminController . 'PagesController@post_edit', 'as' => '']);
-    Route::post($admin . 'pages/sort', ['uses' => $adminController . 'PagesController@post_sort', 'as' => '']);
-    Route::post($admin . 'pages/delete/{page_id}', ['uses' => $adminController . 'PagesController@post_delete', 'as' => '']);
-    Route::post($admin . 'pages/versions/{page_id}', ['uses' => $adminController . 'PagesController@post_versions', 'as' => '']);
-    Route::post($admin . 'pages/version-schedule/{pageId}', ['uses' => $adminController . 'PagesController@post_version_schedule', 'as' => '']);
-    Route::post($admin . 'pages/version-rename/{page_id}', ['uses' => $adminController . 'PagesController@post_version_rename', 'as' => '']);
-    Route::post($admin . 'pages/version-publish/{page_id}', ['uses' => $adminController . 'PagesController@post_version_publish', 'as' => '']);
-    Route::post($admin . 'pages/requests/{page_id}', ['uses' => $adminController . 'PagesController@post_requests', 'as' => '']);
-    Route::post($admin . 'pages/request-publish/{page_id}', ['uses' => $adminController . 'PagesController@post_request_publish', 'as' => '']);
-    Route::post($admin . 'pages/request-publish-action/{page_id}', ['uses' => $adminController . 'PagesController@post_request_publish_action', 'as' => '']);
-    Route::get($admin . 'pages/tinymce-page-list', ['uses' => $adminController . 'PagesController@getTinymcePageList', 'as' => '']);
-    Route::get($admin . 'pages/middleware', ['uses' => $adminController . 'PagesController@getMiddleware', 'as' => '']);
-    Route::get($admin . 'groups/pages/{group_id}', ['uses' => $adminController . 'GroupsController@get_pages', 'as' => '']);
+    Route::get($admin . 'system', ['uses' => $adminController . 'SystemController@getIndex', 'as' => $routeNamePrefix . 'system']);
+    Route::post($admin . 'system', ['uses' => $adminController . 'SystemController@postIndex']);
+    Route::get($admin . 'system/wp-login', ['uses' => $adminController . 'SystemController@getWpLogin', 'as' => $routeNamePrefix . 'system.wp-login']);
+    Route::get($admin . 'system/search', ['uses' => $adminController . 'SystemController@getSearch', 'as' => $routeNamePrefix . 'system.search']);
+    Route::get($admin . 'system/validate-db/{fix?}', ['uses' => $adminController . 'SystemController@getValidateDb', 'as' => $routeNamePrefix . 'system.validate-db']);
+    Route::get($admin . 'system/upgrade/{update?}', ['uses' => $adminController . 'SystemController@getUpgrade', 'as' => $routeNamePrefix . 'system.upgrade']);
+    Route::post($admin . 'system/keys/{key?}', ['uses' => $adminController . 'SystemController@postKeys', 'as' => $routeNamePrefix . 'system.keys']);
+
+    Route::get($admin . 'home', ['uses' => $adminController . 'HomeController@getIndex', 'as' => $routeNamePrefix . 'home']);
+    Route::get($admin . 'home/logs', ['uses' => $adminController . 'HomeController@getLogs', 'as' => $routeNamePrefix . 'home.logs']);
+    Route::get($admin . 'home/requests', ['uses' => $adminController . 'HomeController@getRequests', 'as' => $routeNamePrefix . 'home.requests']);
+    Route::get($admin . 'home/your-requests', ['uses' => $adminController . 'HomeController@getYourRequests', 'as' => $routeNamePrefix . 'home.your-requests']);
+
+    Route::get($admin . 'pages', ['uses' => $adminController . 'PagesController@getIndex', 'as' => $routeNamePrefix . 'pages']);
+    Route::get($admin . 'pages/add/{pageId?}', ['uses' => $adminController . 'PagesController@getAdd', 'as' => $routeNamePrefix . 'pages.add']);
+    Route::post($admin . 'pages/add/{pageId?}', ['uses' => $adminController . 'PagesController@postAdd']);
+    Route::get($admin . 'pages/edit/{pageId}/{version?}', ['uses' => $adminController . 'PagesController@getEdit', 'as' => $routeNamePrefix . 'pages.edit'])->where(['page_id' => '\w+', 'version' => '\w+']);
+    Route::post($admin . 'pages/edit/{pageId}', ['uses' => $adminController . 'PagesController@postEdit']);
+    Route::post($admin . 'pages/sort', ['uses' => $adminController . 'PagesController@postSort', 'as' => $routeNamePrefix . 'pages.sort']);
+    Route::post($admin . 'pages/delete/{pageId}', ['uses' => $adminController . 'PagesController@postDelete', 'as' => $routeNamePrefix . 'pages.delete']);
+    Route::post($admin . 'pages/versions/{pageId}', ['uses' => $adminController . 'PagesController@postVersions', 'as' => $routeNamePrefix . 'pages.versions']);
+    Route::post($admin . 'pages/version-schedule/{pageId}', ['uses' => $adminController . 'PagesController@postVersionSchedule', 'as' => $routeNamePrefix . 'pages.version-schedule']);
+    Route::post($admin . 'pages/version-rename/{pageId}', ['uses' => $adminController . 'PagesController@postVersionRename', 'as' => $routeNamePrefix . 'pages.version-rename']);
+    Route::post($admin . 'pages/version-publish/{pageId}', ['uses' => $adminController . 'PagesController@postVersionPublish', 'as' => $routeNamePrefix . 'pages.version-publish']);
+    Route::post($admin . 'pages/requests/{pageId}', ['uses' => $adminController . 'PagesController@postRequests', 'as' => $routeNamePrefix . 'pages.requests']);
+    Route::post($admin . 'pages/request-publish/{pageId}', ['uses' => $adminController . 'PagesController@postRequestPublish', 'as' => $routeNamePrefix . 'pages.requests-publish']);
+    Route::post($admin . 'pages/request-publish-action/{pageId}', ['uses' => $adminController . 'PagesController@postRequestPublishAction', 'as' => $routeNamePrefix . 'pages.requests-publish-action']);
+    Route::get($admin . 'pages/tinymce-page-list', ['uses' => $adminController . 'PagesController@getTinymcePageList', 'as' => $routeNamePrefix . 'pages.tinymce-page-list']);
+
+    Route::get($admin . 'groups/pages/{groupId}', ['uses' => $adminController . 'GroupsController@getPages', 'as' => '']);
 
     Route::get($admin . 'menus', ['uses' => $adminController . 'MenusController@get_index', 'as' => '']);
     Route::post($admin . 'menus/add', ['uses' => $adminController . 'MenusController@post_add', 'as' => '']);
@@ -69,14 +77,6 @@ Route::group(['middleware' => ['web', 'coaster.admin']], function () use($admin,
     Route::post($admin . 'redirects/edit', ['uses' => $adminController . 'RedirectsController@postEdit', 'as' => '']);
     Route::get($admin . 'redirects/import', ['uses' => $adminController . 'RedirectsController@get_import', 'as' => '']);
 
-    Route::post($admin . 'system', ['uses' => $adminController . 'SystemController@post_index', 'as' => '']);
-    Route::get($admin . 'system', ['uses' => $adminController . 'SystemController@get_index', 'as' => '']);
-    Route::get($admin . 'system/wp-login', ['uses' => $adminController . 'SystemController@get_wp_login', 'as' => '']);
-    Route::get($admin . 'system/search', ['uses' => $adminController . 'SystemController@get_search', 'as' => '']);
-    Route::get($admin . 'system/validate-db/{fix?}', ['uses' => $adminController . 'SystemController@get_validate_db', 'as' => '']);
-    Route::get($admin . 'system/upgrade/{update?}', ['uses' => $adminController . 'SystemController@getUpgrade', 'as' => '']);
-    Route::post($admin . 'system/keys/{key?}', ['uses' => $adminController . 'SystemController@post_keys', 'as' => '']);
-
     Route::get($admin . 'users', ['uses' => $adminController . 'UsersController@get_index', 'as' => '']);
     Route::post($admin . 'users/edit/{user_id?}/{action?}', ['uses' => $adminController . 'UsersController@post_edit', 'as' => ''])->where(array ( 'user_id' => '\w+', 'action' => '\w+', ));
     Route::get($admin . 'users/edit/{user_id?}/{action?}', ['uses' => $adminController . 'UsersController@get_edit', 'as' => ''])->where(array ( 'user_id' => '\w+', 'action' => '\w+', ));
@@ -93,7 +93,7 @@ Route::group(['middleware' => ['web', 'coaster.admin']], function () use($admin,
     Route::post($admin . 'roles/pages/{role_id}', ['uses' => $adminController . 'RolesController@post_pages', 'as' => '']);
 
     Route::post($admin . 'backups/undo', ['uses' => $adminController . 'BackupsController@post_undo', 'as' => '']);
-    Route::get($admin . 'backups/middleware', ['uses' => $adminController . 'BackupsController@getMiddleware', 'as' => '']);
+
     Route::post($admin . 'repeaters', ['uses' => $adminController . 'RepeatersController@post_index', 'as' => '']);
 
     Route::get($admin . 'gallery/list/{page_id?}', ['uses' => $adminController . 'GalleryController@get_list', 'as' => '']);
@@ -122,7 +122,6 @@ Route::group(['middleware' => ['web', 'coaster.admin']], function () use($admin,
     Route::post($admin . 'themes/selects/{block_id}/{import?}', ['uses' => $adminController . 'ThemesController@postSelects', 'as' => ''])->where(array ( 'block_id' => '\w+', 'import' => '\w+', ));
 
     Route::get($admin . 'search', ['uses' => $adminController . 'SearchController@get_index', 'as' => '']);
-    Route::get($admin . 'search/middleware', ['uses' => $adminController . 'SearchController@getMiddleware', 'as' => '']);
 
 });
 

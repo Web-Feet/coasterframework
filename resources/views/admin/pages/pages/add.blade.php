@@ -5,7 +5,7 @@
 @if (!empty($page->in_group))
     <div class="row textbox">
         <div class="col-sm-12">
-            <p><a href="{!! URL::to(config('coaster::admin.url').'/groups/pages/'.$page->in_group) !!}">Back
+            <p><a href="{!! route('coaster.admin.groups.pages', ['groupId' => $page->in_group]) !!}">Back
                     to {!! $group_name !!}</a></p>
         </div>
     </div>
@@ -13,7 +13,7 @@
 
 <br/>
 
-{!! Form::open(['url' => URL::current(), 'class' => 'form-horizontal', 'id' => 'addForm', 'enctype' => 'multipart/form-data']) !!}
+{!! Form::open(['class' => 'form-horizontal', 'id' => 'addForm', 'enctype' => 'multipart/form-data']) !!}
 
 <div class="tabbable">
 

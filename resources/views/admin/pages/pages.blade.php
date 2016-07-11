@@ -6,7 +6,7 @@
     </div>
     <div class="col-sm-6 text-right">
         @if ($add_page)
-            <a href="{{ Request::url().'/add/' }}" class="btn btn-warning addButton" data-page="0"><i
+            <a href="{{ route('coaster.admin.pages.add') }}" class="btn btn-warning addButton" data-page="0"><i
                         class="fa fa-plus"></i> &nbsp; Add Page</a>
         @endif
     </div>

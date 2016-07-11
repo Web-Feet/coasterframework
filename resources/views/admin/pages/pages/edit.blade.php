@@ -5,7 +5,7 @@
 <div class="row textbox">
     <div class="col-sm-6">
         @if (!empty($page->in_group))
-            <p><a href="{!! URL::to(config('coaster::admin.url').'/groups/pages/'.$page->in_group) !!}">Back
+            <p><a href="{!! route('coaster.admin.groups.pages', ['groupId' => $page->in_group]) !!}">Back
                     to {!! $group_name !!}</a></p>
         @endif
         @if ($publishingOn && $page->link == 0)
@@ -55,7 +55,7 @@
 
 <br/>
 
-{!! Form::open(['url' => Request::url(), 'class' => 'form-horizontal', 'id' => 'editForm', 'enctype' => 'multipart/form-data']) !!}
+{!! Form::open(['class' => 'form-horizontal', 'id' => 'editForm', 'enctype' => 'multipart/form-data']) !!}
 
 <div class="tabbable">
 
@@ -85,7 +85,7 @@
             liveDateOptions();
             $('#page_info\\[live\\]').change(liveDateOptions);
 
-            page_id = {{ $page->id }};
+            page_id = parseInt({{ $page->id }});
 
             @if ($page->link == 1)
             selected_tab('#editForm', 0);

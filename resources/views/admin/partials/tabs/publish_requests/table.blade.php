@@ -52,7 +52,7 @@
                     <td>
                         <a href="{{ \CoasterCms\Models\PageLang::full_url($request->page_version->page_id).'?preview='.$request->page_version->preview_key }}"
                            target="_blank"><i class="glyphicon glyphicon-eye-open itemTooltip" title="Preview"></i></a>
-                        <a href="{{ URL::to(config('coaster::admin.url').'/pages/edit/'.$request->page_version->page_id.'/'.$request->page_version->version_id) }}"><i
+                        <a href="{{ route('coaster.admin.pages.edit', ['pageId' => $request->page_version->page_id, 'version' => $request->page_version->version_id]) }}"><i
                                     class="delete glyphicon glyphicon-pencil itemTooltip" title="Edit"></i></a>
                         @if ($request->status == 'awaiting' && Auth::action('pages.version-publish', ['page_id' => $request->page_version->page_id]))
                             <i class="request_publish_action glyphicon glyphicon-ok-circle itemTooltip"

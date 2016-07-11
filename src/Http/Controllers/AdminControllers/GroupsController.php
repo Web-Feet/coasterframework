@@ -14,13 +14,13 @@ use View;
 class GroupsController extends Controller
 {
 
-    public function get_pages($group_id)
+    public function getPages($groupId)
     {
-        if (!empty($group_id)) {
-            $group = PageGroup::find($group_id);
+        if (!empty($groupId)) {
+            $group = PageGroup::find($groupId);
             if (!empty($group)) {
-                $page_ids = PageGroup::page_ids($group_id, false, true);
-                $attributes = PageGroupAttribute::where('group_id', '=', $group_id)->get();
+                $page_ids = PageGroup::page_ids($groupId, false, true);
+                $attributes = PageGroupAttribute::where('groupId', '=', $groupId)->get();
                 $blocks = array();
                 foreach ($attributes as $attribute) {
                     $blocks[] = Block::preload($attribute->item_block_id);

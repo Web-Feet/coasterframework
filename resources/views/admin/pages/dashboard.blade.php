@@ -30,11 +30,11 @@
           <li>
             <strong>Latest version:</strong> {{ $upgrade->to }}
             @if($upgrade->allowed && $upgrade->required)
-              <a class="btn btn-primary" href="{{ URL::to(config('coaster::admin.url').'/system/upgrade') }}">(upgrade)</a>
+              <a class="btn btn-primary" href="{{ route('coaster.admin.system.upgrade') }}">(upgrade)</a>
             @endif
           </li>
         </ul>
-        <p><a href="{{ URL::to(config('coaster::admin.url').'/system') }}">View all settings</a></p>
+        <p><a href="{{ route('coaster.admin.system') }}">View all settings</a></p>
       </div>
       @if($any_searches)
         <div class="well">
