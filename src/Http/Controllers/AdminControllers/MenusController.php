@@ -19,7 +19,7 @@ class MenusController extends Controller
         $this->page_names = Page::get_page_list();
     }
 
-    public function get_index()
+    public function getIndex()
     {
         $this->preload_menu_item_names();
         $menus = '';
@@ -38,19 +38,19 @@ class MenusController extends Controller
                     $menu_item_info->name = $this->page_names[$menu_item->page_id];
                     $menu_item_info->id = $menu_item->id;
                     $menu_item_info->sub_levels = $menu_item->sub_levels;
-                    $menus_li .= View::make('coaster::partials.menus.li', array('item' => $menu_item_info));
+                    $menus_li .= View::make('coaster::partials.menus.li', array('item' => $menu_item_info))->render();
                 }
             }
-            $menus .= View::make('coaster::partials.menus.ol', array('menus_li' => $menus_li, 'menu' => $menu, 'can_add_item' => Auth::action('menus.add')));
+            $menus .= View::make('coaster::partials.menus.ol', array('menus_li' => $menus_li, 'menu' => $menu, 'can_add_item' => Auth::action('menus.add')))->render();
         }
         $this->layoutData['content'] = View::make('coaster::pages.menus', array('menus' => $menus));
-        $this->layoutData['modals'] = View::make('coaster::modals.menus.add_item', array('options' => Page::get_page_list())) .
-            View::make('coaster::modals.general.delete_item') .
-            View::make('coaster::modals.menus.edit_item') .
-            View::make('coaster::modals.menus.rename_item');
+        $this->layoutData['modals'] = View::make('coaster::modals.menus.add_item', array('options' => Page::get_page_list()))->render() .
+            View::make('coaster::modals.general.delete_item')->render() .
+            View::make('coaster::modals.menus.edit_item')->render() .
+            View::make('coaster::modals.menus.rename_item')->render();
     }
 
-    public function post_add()
+    public function postAdd()
     {
         $menu_id = Request::input('menu');
         $page_id = Request::input('id');
@@ -72,7 +72,7 @@ class MenusController extends Controller
         return $new_item->id;
     }
 
-    public function post_delete($item_id)
+    public function postDelete($item_id)
     {
         $menu_item = MenuItem::find($item_id);
         if (!empty($menu_item)) {
@@ -82,10 +82,12 @@ class MenusController extends Controller
             $log_id = AdminLog::new_log('Menu Item \'' . $item_name . '\' deleted from \'' . Menu::name($menu_item->menu_id) . '\'');
             $menu_item->delete();
             return $log_id;
+        } else {
+            return 0;
         }
     }
 
-    public function post_sort()
+    public function postSort()
     {
         $order = 1;
         $items = Request::input('list');
@@ -100,7 +102,7 @@ class MenusController extends Controller
         return 1;
     }
 
-    public function post_get_levels()
+    public function postGetLevels()
     {
         $item_id = substr(Request::input('id'), 5);
         $item = MenuItem::find($item_id);
@@ -110,7 +112,7 @@ class MenusController extends Controller
         return null;
     }
 
-    public function post_save_levels()
+    public function postSaveLevels()
     {
         $item_id = substr(Request::input('id'), 5);
         $item = MenuItem::find($item_id);
@@ -126,7 +128,7 @@ class MenusController extends Controller
         return null;
     }
 
-    public function post_rename()
+    public function postRename()
     {
         $item_id = substr(Request::input('id'), 5);
         $item = MenuItem::find($item_id);

@@ -6,14 +6,12 @@ use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\PageBlockDefault;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\Theme;
-use Redirect;
-use Request;
 use View;
 
 class BlocksController extends Controller
 {
 
-    public function get_index()
+    public function getIndex()
     {
         // load theme global blocks
         $blocks = array();
@@ -30,7 +28,7 @@ class BlocksController extends Controller
         $this->layoutData['content'] = View::make('coaster::pages.blocks', array('tab' => $tab_data));
     }
 
-    public function post_index()
+    public function postIndex()
     {
         // update blocks
         AdminLog::new_log('Updated Site-wide Content');
@@ -44,7 +42,7 @@ class BlocksController extends Controller
         $alert->content = '';
         $this->layoutData['alert'] = $alert;
 
-        return Redirect::to(Request::url());
+        return \redirect()->route('coaster.admin.blocks');
     }
 
 }

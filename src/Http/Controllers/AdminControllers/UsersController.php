@@ -15,14 +15,14 @@ use View;
 class UsersController extends Controller
 {
 
-    public function get_index()
+    public function getIndex()
     {
         $users = User::join('user_roles', 'user_roles.id', '=', 'users.role_id')->select(array('users.id', 'users.email', 'user_roles.name', 'users.active'))->get();
         $this->layoutData['modals'] = View::make('coaster::modals.general.delete_item');
         $this->layoutData['content'] = View::make('coaster::pages.users', array('users' => $users, 'can_add' => Auth::action('users.add'), 'can_delete' => Auth::action('users.delete'), 'can_edit' => Auth::action('users.edit')));
     }
 
-    public function post_edit($user_id = 0, $action = null)
+    public function postEdit($user_id = 0, $action = null)
     {
         $user = User::find($user_id);
         $authUser = Auth::user();
@@ -45,7 +45,7 @@ class UsersController extends Controller
                         $user->save();
                         $this->layoutData['content'] = View::make('coaster::pages.users.role', array('user' => $user, 'success' => true));
                     } else {
-                        $this->get_edit($user_id, $action);
+                        $this->getEdit($user_id, $action);
                     }
                     break;
                 case 'status':
@@ -70,7 +70,7 @@ class UsersController extends Controller
         }
     }
 
-    public function get_edit($user_id = 0, $action = null)
+    public function getEdit($user_id = 0, $action = null)
     {
         $user = User::find($user_id);
         $authUser = Auth::user();
@@ -98,14 +98,14 @@ class UsersController extends Controller
                     } else {
                         $can_edit = false;
                     }
-                    $this->layoutData['content'] = View::make('coaster::pages.users.edit', array('email' => $user->email, 'account' => $details, 'can_edit' => $can_edit));
+                    $this->layoutData['content'] = View::make('coaster::pages.users.edit', array('user' => $user, 'account' => $details, 'can_edit' => $can_edit));
             }
         } else {
             $this->layoutData['content'] = 'User not found';
         }
     }
 
-    public function get_add()
+    public function getAdd()
     {
         $authUser = Auth::user();
         $all_roles = UserRole::where('admin', '<=', $authUser->role->admin)->get();
@@ -116,7 +116,7 @@ class UsersController extends Controller
         $this->layoutData['content'] = View::make('coaster::pages.users.add', array('roles' => $roles));
     }
 
-    public function post_add()
+    public function postAdd()
     {
         $authUser = Auth::user();
         $v = Validator::make(Request::all(), array(
@@ -163,15 +163,15 @@ class UsersController extends Controller
             if ($perm_issue) {
                 FormMessage::add('role', 'Don\'t have permission to create user with this role, or doesn\'t exist');
             }
-            $this->get_add();
+            $this->getAdd();
         }
     }
 
-    public function post_delete($user_id = 0)
+    public function postDelete($user_id = 0)
     {
         $user = User::find($user_id);
         // stop admins disabling super admins
-        if (!empty($user) && $authUser->role->admin >= $user->role->admin && $authUser->id != $user->id) {
+        if (!empty($user) && Auth::user()->role->admin >= $user->role->admin && Auth::user()->id != $user->id) {
             if (!empty($user)) {
                 return $user->delete();
             }

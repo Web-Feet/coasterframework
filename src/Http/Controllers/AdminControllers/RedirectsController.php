@@ -11,7 +11,7 @@ use View;
 class RedirectsController extends Controller
 {
 
-    public function get_index()
+    public function getIndex()
     {
         $order = Request::input('order');
         $pageRedirect = new PageRedirect;
@@ -23,7 +23,7 @@ class RedirectsController extends Controller
         $this->layoutData['content'] = View::make('coaster::pages.redirects', array('redirects' => $redirects, 'can_edit' => Auth::action('redirects.edit')));
     }
 
-    public function post_index()
+    public function postIndex()
     {
         if (Auth::action('redirects.edit')) {
             // update blocks
@@ -62,7 +62,7 @@ class RedirectsController extends Controller
             $alert->content = '';
             $this->layoutData['alert'] = $alert;
         }
-        $this->get_index();
+        $this->getIndex();
     }
 
     public function getUrlDecode()
@@ -88,7 +88,7 @@ class RedirectsController extends Controller
         return 0;
     }
 
-    public function get_import()
+    public function getImport()
     {
         PageRedirect::import();
         return 'Import Run';

@@ -6,7 +6,7 @@ use View;
 class FilemanagerController extends Controller
 {
 
-    public function get_index()
+    public function getIndex()
     {
         $this->layoutData['content'] = View::make('coaster::pages.filemanager');
     }
