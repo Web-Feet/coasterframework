@@ -7,7 +7,7 @@
                 </label>
             </div>
             @else
-            &raquo; <a href="{{ URL::current().'/pages/' }}" id="page_permissions">{{ $name }}</a>
+            &raquo; <a href="{{ route('coaster.admin.roles.pages') }}" id="page_permissions">{{ $name }}</a>
         @endif
     </td>
 </tr>

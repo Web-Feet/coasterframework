@@ -43,7 +43,7 @@ Route::group(['middleware' => ['web', 'coaster.admin']], function () use($admin,
     Route::get($admin . 'pages', ['uses' => $adminController . 'PagesController@getIndex', 'as' => $routeNamePrefix . 'pages']);
     Route::get($admin . 'pages/add/{pageId?}', ['uses' => $adminController . 'PagesController@getAdd', 'as' => $routeNamePrefix . 'pages.add']);
     Route::post($admin . 'pages/add/{pageId?}', ['uses' => $adminController . 'PagesController@postAdd']);
-    Route::get($admin . 'pages/edit/{pageId}/{version?}', ['uses' => $adminController . 'PagesController@getEdit', 'as' => $routeNamePrefix . 'pages.edit'])->where(['page_id' => '\w+', 'version' => '\w+']);
+    Route::get($admin . 'pages/edit/{pageId}/{version?}', ['uses' => $adminController . 'PagesController@getEdit', 'as' => $routeNamePrefix . 'pages.edit'])->where(['pageId' => '\w+', 'version' => '\w+']);
     Route::post($admin . 'pages/edit/{pageId}', ['uses' => $adminController . 'PagesController@postEdit']);
     Route::post($admin . 'pages/sort', ['uses' => $adminController . 'PagesController@postSort', 'as' => $routeNamePrefix . 'pages.sort']);
     Route::post($admin . 'pages/delete/{pageId}', ['uses' => $adminController . 'PagesController@postDelete', 'as' => $routeNamePrefix . 'pages.delete']);
@@ -60,7 +60,7 @@ Route::group(['middleware' => ['web', 'coaster.admin']], function () use($admin,
 
     Route::get($admin . 'menus', ['uses' => $adminController . 'MenusController@getIndex', 'as' => $routeNamePrefix . 'menus']);
     Route::post($admin . 'menus/add', ['uses' => $adminController . 'MenusController@postAdd', 'as' => $routeNamePrefix . 'menus.add']);
-    Route::post($admin . 'menus/delete/{item_id}', ['uses' => $adminController . 'MenusController@postDelete', 'as' => $routeNamePrefix . 'menus.delete']);
+    Route::post($admin . 'menus/delete/{itemId}', ['uses' => $adminController . 'MenusController@postDelete', 'as' => $routeNamePrefix . 'menus.delete']);
     Route::post($admin . 'menus/sort', ['uses' => $adminController . 'MenusController@postSort', 'as' => $routeNamePrefix . 'menus.sort']);
     Route::post($admin . 'menus/get-levels', ['uses' => $adminController . 'MenusController@postGetLevels', 'as' => $routeNamePrefix . 'menus.get-levels']);
     Route::post($admin . 'menus/save-levels', ['uses' => $adminController . 'MenusController@postSaveLevels', 'as' => $routeNamePrefix . 'menus.save-levels']);
@@ -78,19 +78,19 @@ Route::group(['middleware' => ['web', 'coaster.admin']], function () use($admin,
     Route::get($admin . 'redirects/import', ['uses' => $adminController . 'RedirectsController@getImport', 'as' => $routeNamePrefix . 'redirects.import']);
 
     Route::get($admin . 'users', ['uses' => $adminController . 'UsersController@getIndex', 'as' => $routeNamePrefix . 'users']);
-    Route::get($admin . 'users/edit/{user_id?}/{action?}', ['uses' => $adminController . 'UsersController@getEdit', 'as' => $routeNamePrefix . 'users.edit'])->where(['user_id' => '\w+', 'action' => '\w+']);
-    Route::post($admin . 'users/edit/{user_id?}/{action?}', ['uses' => $adminController . 'UsersController@postEdit'])->where(['user_id' => '\w+', 'action' => '\w+']);
+    Route::get($admin . 'users/edit/{userId?}/{action?}', ['uses' => $adminController . 'UsersController@getEdit', 'as' => $routeNamePrefix . 'users.edit'])->where(['userId' => '\w+', 'action' => '\w+']);
+    Route::post($admin . 'users/edit/{userId?}/{action?}', ['uses' => $adminController . 'UsersController@postEdit'])->where(['userId' => '\w+', 'action' => '\w+']);
     Route::get($admin . 'users/add', ['uses' => $adminController . 'UsersController@getAdd', 'as' => $routeNamePrefix . 'users.add']);
     Route::post($admin . 'users/add', ['uses' => $adminController . 'UsersController@postAdd']);
-    Route::post($admin . 'users/delete/{user_id?}', ['uses' => $adminController . 'UsersController@postDelete', 'as' => $routeNamePrefix . 'users.delete']);
+    Route::post($admin . 'users/delete/{userId?}', ['uses' => $adminController . 'UsersController@postDelete', 'as' => $routeNamePrefix . 'users.delete']);
 
-    Route::get($admin . 'roles', ['uses' => $adminController . 'RolesController@get_index', 'as' => '']);
-    Route::post($admin . 'roles/actions/{role_id?}', ['uses' => $adminController . 'RolesController@post_actions', 'as' => '']);
-    Route::post($admin . 'roles/add', ['uses' => $adminController . 'RolesController@post_add', 'as' => '']);
-    Route::post($admin . 'roles/edit', ['uses' => $adminController . 'RolesController@post_edit', 'as' => '']);
-    Route::post($admin . 'roles/delete', ['uses' => $adminController . 'RolesController@post_delete', 'as' => '']);
-    Route::get($admin . 'roles/pages/{role_id}', ['uses' => $adminController . 'RolesController@get_pages', 'as' => '']);
-    Route::post($admin . 'roles/pages/{role_id}', ['uses' => $adminController . 'RolesController@post_pages', 'as' => '']);
+    Route::get($admin . 'roles', ['uses' => $adminController . 'RolesController@getIndex', 'as' => $routeNamePrefix . 'roles']);
+    Route::post($admin . 'roles/actions/{roleId?}', ['uses' => $adminController . 'RolesController@postActions', 'as' => $routeNamePrefix . 'roles.actions']);
+    Route::post($admin . 'roles/add', ['uses' => $adminController . 'RolesController@postAdd', 'as' => $routeNamePrefix . 'roles.add']);
+    Route::post($admin . 'roles/edit', ['uses' => $adminController . 'RolesController@postEdit', 'as' => $routeNamePrefix . 'roles.edit']);
+    Route::post($admin . 'roles/delete', ['uses' => $adminController . 'RolesController@postDelete', 'as' => $routeNamePrefix . 'roles.delete']);
+    Route::get($admin . 'roles/pages/{roleId}', ['uses' => $adminController . 'RolesController@getPages', 'as' => $routeNamePrefix . 'roles.pages']);
+    Route::post($admin . 'roles/pages/{roleId}', ['uses' => $adminController . 'RolesController@postPages']);
 
     Route::get($admin . 'themes', ['uses' => $adminController . 'ThemesController@getIndex', 'as' => '']);
     Route::get($admin . 'themes/list', ['uses' => $adminController . 'ThemesController@getList', 'as' => '']);
@@ -117,11 +117,11 @@ Route::group(['middleware' => ['web', 'coaster.admin']], function () use($admin,
     Route::get($admin . 'forms/submissions/{page_id?}/{block_id?}', ['uses' => $adminController . 'FormsController@get_submissions', 'as' => ''])->where(array ( 'page_id' => '\w+', 'block_id' => '\w+', ));
     Route::get($admin . 'forms/csv/{page_id?}/{block_id?}', ['uses' => $adminController . 'FormsController@get_csv', 'as' => ''])->where(array ( 'page_id' => '\w+', 'block_id' => '\w+', ));;
 
-    Route::post($admin . 'backups/undo', ['uses' => $adminController . 'BackupsController@post_undo', 'as' => '']);
+    Route::post($admin . 'backups/undo', ['uses' => $adminController . 'BackupsController@post_undo', 'as' => $routeNamePrefix . 'backups.undo']);
 
-    Route::post($admin . 'repeaters', ['uses' => $adminController . 'RepeatersController@post_index', 'as' => '']);
+    Route::post($admin . 'repeaters', ['uses' => $adminController . 'RepeatersController@post_index', 'as' => $routeNamePrefix . 'repeaters']);
 
-    Route::get($admin . 'search', ['uses' => $adminController . 'SearchController@getIndex', 'as' => '']);
+    Route::get($admin . 'search', ['uses' => $adminController . 'SearchController@getIndex', 'as' => $routeNamePrefix . 'search']);
 
 });
 

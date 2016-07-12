@@ -72,9 +72,9 @@ class MenusController extends Controller
         return $new_item->id;
     }
 
-    public function postDelete($item_id)
+    public function postDelete($itemId)
     {
-        $menu_item = MenuItem::find($item_id);
+        $menu_item = MenuItem::find($itemId);
         if (!empty($menu_item)) {
             $this->preload_menu_item_names();
             // log action
@@ -104,8 +104,8 @@ class MenusController extends Controller
 
     public function postGetLevels()
     {
-        $item_id = substr(Request::input('id'), 5);
-        $item = MenuItem::find($item_id);
+        $itemId = substr(Request::input('id'), 5);
+        $item = MenuItem::find($itemId);
         if (!empty($item)) {
             return $item->sub_levels;
         }
@@ -114,8 +114,8 @@ class MenusController extends Controller
 
     public function postSaveLevels()
     {
-        $item_id = substr(Request::input('id'), 5);
-        $item = MenuItem::find($item_id);
+        $itemId = substr(Request::input('id'), 5);
+        $item = MenuItem::find($itemId);
         if (!empty($item)) {
             $item->sub_levels = (int)Request::input('sub_level');
             $item->save();
@@ -130,8 +130,8 @@ class MenusController extends Controller
 
     public function postRename()
     {
-        $item_id = substr(Request::input('id'), 5);
-        $item = MenuItem::find($item_id);
+        $itemId = substr(Request::input('id'), 5);
+        $item = MenuItem::find($itemId);
         if (!empty($item)) {
             $item->custom_name = Request::input('custom_name');
             $item->save();

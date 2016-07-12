@@ -4,7 +4,7 @@
     </div>
     <div class="col-sm-6 text-right">
         @if ($can_add == true)
-            <a href="{{ URL::current().'/add/' }}" class="btn btn-warning addButton"><i class="fa fa-plus"></i> &nbsp;
+            <a href="{{ route('coaster.admin.users.add') }}" class="btn btn-warning addButton"><i class="fa fa-plus"></i> &nbsp;
                 Add User</a>
         @endif
     </div>
@@ -33,7 +33,7 @@
                             <?php $disable = ($user->active == 0) ? ' hide' : null; ?>
                             <i class="glyphicon glyphicon-stop itemTooltip{!! $enable !!}" title="Enable User"></i>
                             <i class="glyphicon glyphicon-play itemTooltip{!! $disable !!}" title="Disable User"></i>
-                            {!! HTML::link(URL::current().'/edit/'.$user->id, '', ['class' => 'glyphicon glyphicon-pencil itemTooltip', 'title' => 'Edit User']) !!}
+                            <a class="glyphicon glyphicon-pencil itemTooltip" href="{{ route('coaster.admin.users.edit', ['userId' => $user->id]) }}" title="Edit User"></a>
                         @endif
                         @if ($can_delete)
                             <i class="glyphicon glyphicon-remove itemTooltip" title="Remove User"
@@ -56,7 +56,7 @@
             }
             else {
                 $.ajax({
-                    url: '{!! URL::Current() !!}/edit/' + user_id + '/status',
+                    url: '{{ route('coaster.admin.users.edit') }}/' + user_id + '/status',
                     type: 'POST',
                     data: {set: active},
                     success: function (r) {

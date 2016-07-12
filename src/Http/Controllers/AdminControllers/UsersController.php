@@ -22,9 +22,9 @@ class UsersController extends Controller
         $this->layoutData['content'] = View::make('coaster::pages.users', array('users' => $users, 'can_add' => Auth::action('users.add'), 'can_delete' => Auth::action('users.delete'), 'can_edit' => Auth::action('users.edit')));
     }
 
-    public function postEdit($user_id = 0, $action = null)
+    public function postEdit($userId = 0, $action = null)
     {
-        $user = User::find($user_id);
+        $user = User::find($userId);
         $authUser = Auth::user();
         if (!empty($user) && $authUser->role->admin >= $user->role->admin) {
             switch ($action) {
@@ -32,7 +32,7 @@ class UsersController extends Controller
                     $data = [];
                     $data['user'] = $user;
                     $data['level'] = 'admin';
-                    $data['form'] = View::make('coaster::partials.users.forms.password', array('current_password' => ($authUser->id == $user_id)));
+                    $data['form'] = View::make('coaster::partials.users.forms.password', array('current_password' => ($authUser->id == $userId)));
                     $data['success'] = $user->change_password();
                     AdminLog::new_log('User \'' . $user->email . '\' updated, password changed');
                     $this->layoutData['content'] = View::make('coaster::pages.account.password', $data);
@@ -45,7 +45,7 @@ class UsersController extends Controller
                         $user->save();
                         $this->layoutData['content'] = View::make('coaster::pages.users.role', array('user' => $user, 'success' => true));
                     } else {
-                        $this->getEdit($user_id, $action);
+                        $this->getEdit($userId, $action);
                     }
                     break;
                 case 'status':
@@ -70,9 +70,9 @@ class UsersController extends Controller
         }
     }
 
-    public function getEdit($user_id = 0, $action = null)
+    public function getEdit($userId = 0, $action = null)
     {
-        $user = User::find($user_id);
+        $user = User::find($userId);
         $authUser = Auth::user();
         if (!empty($user)) {
             switch ($action) {
@@ -80,7 +80,7 @@ class UsersController extends Controller
                     $data = [];
                     $data['user'] = $user;
                     $data['level'] = 'admin';
-                    $data['form'] = View::make('coaster::partials.users.forms.password', array('current_password' => ($authUser->id == $user_id)));
+                    $data['form'] = View::make('coaster::partials.users.forms.password', array('current_password' => ($authUser->id == $userId)));
                     $this->layoutData['content'] = View::make('coaster::pages.account.password', $data);
                     break;
                 case 'role':
@@ -167,9 +167,9 @@ class UsersController extends Controller
         }
     }
 
-    public function postDelete($user_id = 0)
+    public function postDelete($userId = 0)
     {
-        $user = User::find($user_id);
+        $user = User::find($userId);
         // stop admins disabling super admins
         if (!empty($user) && Auth::user()->role->admin >= $user->role->admin && Auth::user()->id != $user->id) {
             if (!empty($user)) {

@@ -1,4 +1,4 @@
-{!! Form::open(['url' => Request::url()]) !!}
+{!! Form::open() !!}
 
         <!-- password field -->
 <div class="form-group {!! FormMessage::getErrorClass('blog_login') !!}">

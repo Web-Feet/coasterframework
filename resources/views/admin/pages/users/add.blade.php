@@ -13,13 +13,13 @@
     @endif
 
     <p>
-        {!! HTML::link(URL::to(config('coaster::admin.url').'/users/add'), 'Add Another User') !!}<br/>
-        {!! HTML::link(URL::to(config('coaster::admin.url').'/users'), 'Back To User List') !!}
+        <a href="{{ route('coaster.admin.users.add') }}">Add Another User</a><br />
+        <a href="{{ route('coaster.admin.users') }}">Back To User List</a>
     </p>
 
     @else
 
-    {!! Form::open(['url' => Request::url()]) !!}
+    {!! Form::open() !!}
 
             <!-- user email field -->
     <div class="form-group {!! FormMessage::getErrorClass('email') !!}">

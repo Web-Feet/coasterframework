@@ -1,4 +1,4 @@
-{!! Form::open(['url' => Request::url()]) !!}
+{!! Form::open() !!}
 
 @if ($current_password)
         <!-- current password field -->
