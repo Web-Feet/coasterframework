@@ -73,7 +73,7 @@ class CmsServiceProvider extends ServiceProvider
             base_path(trim(config('coaster::admin.view'), '/'))
         ];
         $frontendViews = [
-            base_path(trim(config('coaster::admin.view'), '/'))
+            base_path(trim(config('coaster::frontend.view'), '/'))
         ];
         event(new SetViewPaths($adminViews, $frontendViews));
         $this->loadViewsFrom($adminViews, 'coaster');
