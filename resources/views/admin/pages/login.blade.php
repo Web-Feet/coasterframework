@@ -33,7 +33,7 @@
 
 <div class="row">
     <div class="col-sm-12">
-        <a href="{!! URL::to(config('coaster::admin.url').'/forgotten_password') !!}">Forgotten password?</a>
+        <a href="{!! route('coaster.admin.login.password.forgotten') !!}">Forgotten password?</a>
     </div>
 </div>
 

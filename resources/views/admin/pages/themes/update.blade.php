@@ -1,9 +1,9 @@
-<h1>Theme Blocks - {{ $theme }}</h1>
+<h1>Theme Blocks - {{ $theme->theme }}</h1>
 
 @if (isset($saved))
 
     <p class="text-success">Blocks have been successfully updated</p>
-    <p>{!! HTML::link(URL::Current(), '&raquo; Return to review page') !!}</p>
+    <p><a href="{{ route('coaster.admin.themes.update', ['themeId' => $theme->id]) }}">&raquo; Return to review page</a></p>
 
 @else
 
@@ -31,7 +31,7 @@
 
     <p>&nbsp;</p>
 
-    {!! Form::open(['url' => Request::url()]) !!}
+    {!! Form::open() !!}
 
     <div class="table-responsive">
         <table id="themes-table" class="table table-striped table-bordered">

@@ -14,9 +14,9 @@ use View;
 class FormsController extends Controller
 {
 
-    public function get_list($page_id = 0)
+    public function getList($pageId = 0)
     {
-        $page = Page::find($page_id);
+        $page = Page::find($pageId);
         if (!empty($page)) {
             $block_cats = Template::template_blocks(config('coaster::frontend.theme'), $page->template);
             foreach ($block_cats as $block_cat) {
@@ -31,7 +31,7 @@ class FormsController extends Controller
             if (count($form_blocks) == 1) {
                 \redirect(URL::to(config('coaster::admin.url') . '/forms/submissions/' . $page->id . '/' . $form_blocks[0]->id))->send();
             }
-            $page_lang_data = PageLang::preload($page_id);
+            $page_lang_data = PageLang::preload($pageId);
             if (!empty($page_lang_data)) {
                 $name = $page_lang_data->name;
                 if ($page->parent != 0) {
@@ -41,21 +41,21 @@ class FormsController extends Controller
             } else {
                 $name = '';
             }
-            $this->layoutData['content'] = View::make('coaster::pages.forms.list', array('page_name' => $name, 'page_id' => $page_id, 'forms' => $form_blocks));
+            $this->layoutData['content'] = View::make('coaster::pages.forms.list', array('page_name' => $name, 'page_id' => $pageId, 'forms' => $form_blocks));
         } else {
             $this->layoutData['content'] = 'No Forms Found';
         }
     }
 
-    public function get_submissions($page_id = 0, $block_id = 0)
+    public function getSubmissions($pageId = 0, $blockId = 0)
     {
-        $block_data = Block::get_block_on_page($block_id, $page_id);
+        $block_data = Block::get_block_on_page($blockId, $pageId);
         if (empty($block_data) || $block_data->type != 'form') {
             \abort('404', 'Form not found on page');
         } else {
             $submission_rows = '';
             $submission_data = new \stdClass;
-            $submissions = FormSubmission::where('form_block_id', '=', $block_id)->orderBy('id', 'desc')->paginate(10);
+            $submissions = FormSubmission::where('form_block_id', '=', $blockId)->orderBy('id', 'desc')->paginate(10);
             $i = $submissions->total() - ($submissions->currentPage() - 1) * 10;
             foreach ($submissions as $submission) {
                 $submission_data->id = $submission->id;
@@ -84,15 +84,15 @@ class FormsController extends Controller
                     'submissions' => $submission_rows,
                     'form' => $block_data->label,
                     'can_export' => Auth::action('forms.csv'),
-                    'export_link' => URL::to(config('coaster::admin.url') . '/forms/csv/' . $page_id . '/' . $block_id)
+                    'export_link' => URL::to(config('coaster::admin.url') . '/forms/csv/' . $pageId . '/' . $blockId)
                 )
             );
         }
     }
 
-    public function get_csv($page_id = 0, $block_id = 0)
+    public function getCsv($pageId = 0, $blockId = 0)
     {
-        $block_data = Block::get_block_on_page($block_id, $page_id);
+        $block_data = Block::get_block_on_page($blockId, $pageId);
         if (empty($block_data) || $block_data->type != 'form') {
             \abort('404', 'Form not found on page');
         } else {
@@ -100,7 +100,7 @@ class FormsController extends Controller
             $columns = array();
             $column = 2;
             $row = 1;
-            $submissions = FormSubmission::where('form_block_id', '=', $block_id)->orderBy('id', 'desc')->get();
+            $submissions = FormSubmission::where('form_block_id', '=', $blockId)->orderBy('id', 'desc')->get();
             if (!$submissions->isEmpty()) {
                 foreach ($submissions as $submission) {
                     $csv[$row] = array();
@@ -146,7 +146,7 @@ class FormsController extends Controller
                     ksort($csv[$row_id]);
                 }
                 ksort($csv);
-                $block_data = Block::find($block_id);
+                $block_data = Block::find($blockId);
                 header("Content-type: text/csv");
                 header("Content-Disposition: attachment; filename=" . $block_data->name . ".csv");
                 header("Pragma: no-cache");

@@ -27,7 +27,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="logo" href="{{ URL::to(config('coaster::admin.url')) }}">
+            <a class="logo" href="{{ route('coaster.admin') }}">
                 <img src="{{ URL::to(config('coaster::admin.public')) }}/app/img/logo.png" alt="Coaster CMS"/>
             </a>
         </div>
@@ -79,7 +79,7 @@
 {!! $modals !!}
 
 <script type="text/javascript">
-    var adminUrl = '{{ URL::to(config('coaster::admin.url')).'/' }}';
+    var adminUrl = '{{ route('coaster.admin').'/' }}';
     var adminPublicUrl = '{{ URL::to(config('coaster::admin.public')).'/' }}';
     var dateFormat = '{{ config('coaster::date.format.jq_date') }}';
     var timeFormat = '{{ config('coaster::date.format.jq_time') }}';

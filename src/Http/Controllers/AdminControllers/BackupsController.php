@@ -9,7 +9,7 @@ use Request;
 class BackupsController extends Controller
 {
 
-    public function post_undo()
+    public function postUndo()
     {
         $log_ids = Request::input('log_ids');
         $restored = 0;

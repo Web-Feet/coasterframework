@@ -28,7 +28,7 @@
                                 <button data-theme="{{ $thumb->name }}" data-theme-id="{{ $thumb->id }}" class="btn btn-default exportTheme"><span class="glyphicon glyphicon-download"></span> Export</button>
                             @endif
                             @if ($auth['update'])
-                                <a href="{{ URL::to(config('coaster::admin.url').'/themes/update/'.$thumb->id) }}" class="btn btn-default"><span class="glyphicon glyphicon-flag"></span> Review Block Changes</a>
+                                <a href="{{ route('coaster.admin.themes.update', ['themeId' => $thumb->id]) }}" class="btn btn-default"><span class="glyphicon glyphicon-flag"></span> Review Block Changes</a>
                             @endif
                         @endif
                     </p>

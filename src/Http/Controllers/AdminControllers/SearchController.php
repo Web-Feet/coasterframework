@@ -7,7 +7,7 @@ use View;
 class SearchController extends Controller
 {
 
-    public function get_index()
+    public function getIndex()
     {
         $search_data = PageSearchLog::orderBy('count', 'DESC')->orderBy('updated_at', 'DESC')->get();
         $this->layoutData['content'] = View::make('coaster::pages.search', array('search_data' => $search_data));

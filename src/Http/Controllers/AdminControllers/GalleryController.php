@@ -13,9 +13,9 @@ use View;
 class GalleryController extends Controller
 {
 
-    public function get_list($page_id = 0)
+    public function getList($pageId = 0)
     {
-        $page = Page::find($page_id);
+        $page = Page::find($pageId);
         if (!empty($page)) {
             $block_cats = Template::template_blocks(config('coaster::frontend.theme'), $page->template);
             foreach ($block_cats as $block_cat) {
@@ -28,9 +28,9 @@ class GalleryController extends Controller
         }
         if (isset($gallery_blocks)) {
             if (count($gallery_blocks) == 1) {
-                return Redirect::to(URL::to(config('coaster::admin.url') . '/gallery/edit/' . $page_id . '/' . $gallery_blocks[0]->id));
+                return Redirect::to(URL::to(config('coaster::admin.url') . '/gallery/edit/' . $pageId . '/' . $gallery_blocks[0]->id));
             }
-            $page_lang_data = PageLang::preload($page_id);
+            $page_lang_data = PageLang::preload($pageId);
             if (!empty($page_lang_data)) {
                 $name = $page_lang_data->name;
                 if ($page->parent != 0) {
@@ -40,7 +40,7 @@ class GalleryController extends Controller
             } else {
                 $name = '';
             }
-            $this->layoutData['content'] = View::make('coaster::pages.gallery.list', array('page_name' => $name, 'page_id' => $page_id, 'galleries' => $gallery_blocks));
+            $this->layoutData['content'] = View::make('coaster::pages.gallery.list', array('page_name' => $name, 'page_id' => $pageId, 'galleries' => $gallery_blocks));
         } else {
             $this->layoutData['content'] = 'No Galleries Found';
         }
@@ -48,41 +48,41 @@ class GalleryController extends Controller
 
     // main actions
 
-    public function getEdit($page_id = 0, $block_id = 0)
+    public function getEdit($pageId = 0, $blockId = 0)
     {
-        $this->layoutData['content'] = Gallery::page($block_id, $page_id);
+        $this->layoutData['content'] = Gallery::page($blockId, $pageId);
     }
 
-    public function get_update($page_id = 0, $block_id = 0)
+    public function getUpdate($pageId = 0, $blockId = 0)
     {
-        return Gallery::run_handler($block_id, $page_id);
+        return Gallery::run_handler($blockId, $pageId);
     }
 
     // ajax updates
 
-    public function post_caption($page_id = 0, $block_id = 0)
+    public function postCaption($pageId = 0, $blockId = 0)
     {
-        return Gallery::caption($block_id, $page_id);
+        return Gallery::caption($blockId, $pageId);
     }
 
-    public function post_sort($page_id = 0, $block_id = 0)
+    public function postSort($pageId = 0, $blockId = 0)
     {
-        return Gallery::sort($block_id, $page_id);
+        return Gallery::sort($blockId, $pageId);
     }
 
-    public function post_update($page_id = 0, $block_id = 0)
+    public function postUpdate($pageId = 0, $blockId = 0)
     {
-        return Gallery::update($block_id, $page_id);
+        return Gallery::update($blockId, $pageId);
     }
 
-    public function delete_update($page_id = 0, $block_id = 0)
+    public function deleteUpdate($pageId = 0, $blockId = 0)
     {
         $file = Request::input('file');
         if (empty($file)) {
-            $file = $page_id;
-            $page_id = 0;
+            $file = $pageId;
+            $pageId = 0;
         }
-        return Gallery::delete($block_id, $page_id, $file);
+        return Gallery::delete($blockId, $pageId, $file);
     }
 
 }

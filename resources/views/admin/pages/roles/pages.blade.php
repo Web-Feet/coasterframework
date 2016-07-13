@@ -2,7 +2,7 @@
 
 <p>&nbsp;</p>
 <p>These page permissions will override the default settings for this role.</p>
-<p><a href="{{ URL::to(config('coaster::admin.url').'/roles') }}">&raquo; Back to role management</a></p>
+<p><a href="{{ route('coaster.admin.roles') }}">&raquo; Back to role management</a></p>
 <p>&nbsp;</p>
 
 {!! Form::open(['url' => Request::url(), 'id' => 'rolePageForm']) !!}

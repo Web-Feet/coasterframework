@@ -10,7 +10,7 @@
 
 <div class="form-horizontal">
     <div class="form-inline">
-        <a href="{{ URL::to(config('coaster::admin.url').'/themes/list') }}" class="btn btn-warning"><i class="fa fa-tint"></i> &nbsp; Manage Themes</a>
+        <a href="{{ route('coaster.admin.themes.list') }}" class="btn btn-warning"><i class="fa fa-tint"></i> &nbsp; Manage Themes</a>
     </div>
 </div>
 

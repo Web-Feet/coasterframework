@@ -2,13 +2,13 @@
 
 @if (!empty($block))
 
-    <p><a href="{{ URL::to(config('coaster::admin.url').'/themes/selects') }}">&raquo; Back to select option blocks</a></p>
+    <p><a href="{{ route('coaster.admin.themes.selects') }}">&raquo; Back to select option blocks</a></p>
 
-    {!! Form::open(['url' => Request::fullUrl()]) !!}
+    {!! Form::open() !!}
 
     @if (!empty($import))
 
-        <p><a href="{{ URL::to(config('coaster::admin.url').'/themes/selects/'.$block->id) }}">&raquo; Manage options (simple add/edit/remove)</a></p>
+        <p><a href="{{ route('coaster.admin.themes.selects', ['blockId' => $block->id]) }}">&raquo; Manage options (simple add/edit/remove)</a></p>
         <p>&nbsp;</p>
 
         <div class="row">
@@ -50,7 +50,7 @@
 
     @else
 
-        <p><a href="{{ URL::to(config('coaster::admin.url').'/themes/selects/'.$block->id.'/1') }}">&raquo; Import options from source (will overwrite existing options on update)</a></p>
+        <p><a href="{{ route('coaster.admin.themes.selects', ['blockId' => $block->id, 'import' => 1]) }}">&raquo; Import options from source (will overwrite existing options on update)</a></p>
         <p>&nbsp;</p>
 
         <div class="table-responsive">
@@ -129,7 +129,7 @@
 
             @foreach($blocks as $id => $name)
 
-                <li><a href="{{ URL::to(config('coaster::admin.url').'/themes/selects/'.$id) }}">{{ $name }}</a></li>
+                <li><a href="{{ route('coaster.admin.themes.selects', ['blockId' => $id]) }}">{{ $name }}</a></li>
 
             @endforeach
 

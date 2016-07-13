@@ -9,7 +9,7 @@
 
         <div class="col-sm-12">
 
-            {!! Form::open(['url' => URL::to(config('coaster::admin.url').'/themes/manage'), 'id' => 'uploadThemeForm', 'enctype' => 'multipart/form-data']) !!}
+            {!! Form::open(['url' => route('coaster.admin.themes.manage'), 'id' => 'uploadThemeForm', 'enctype' => 'multipart/form-data']) !!}
             <span class="btn btn-primary fileinput-nice">
             <i class="glyphicon glyphicon-upload glyphicon-white"></i>
             <span>Upload a new theme</span>
@@ -31,7 +31,7 @@
             $('.activateTheme').click(function () {
                 themeSelected = $(this).data('theme');
                 $.ajax({
-                    url: get_admin_url() + 'themes/manage',
+                    url: '{{ route('coaster.admin.themes.manage') }}',
                     type: 'POST',
                     data: {
                         theme: themeSelected,
@@ -53,7 +53,7 @@
             function installTheme() {
                 $('#theme'+themeSelected+' .installTheme').html('Installing please wait ...');
                 $.ajax({
-                    url: get_admin_url() + 'themes/manage',
+                    url: '{{ route('coaster.admin.themes.manage') }}',
                     type: 'POST',
                     dataType: 'json',
                     data: {
@@ -78,7 +78,7 @@
                 wPageData = 0;
                 $('#installTheme .themeName').html(themeSelected);
                 $.ajax({
-                    url: get_admin_url() + 'themes/manage',
+                    url: '{{ route('coaster.admin.themes.manage') }}',
                     type: 'POST',
                     dataType: 'json',
                     data: {
@@ -117,7 +117,7 @@
             });
             $('#deleteTheme .yes').click(function () {
                 $.ajax({
-                    url: get_admin_url() + 'themes/manage',
+                    url: '{{ route('coaster.admin.themes.manage') }}',
                     type: 'POST',
                     data: {
                         theme: themeSelected,
@@ -139,7 +139,7 @@
                 $('#exportTheme').modal('show');
             });
             $('#exportTheme .btn').click(function () {
-                window.location.href = '{{ URL::to(config('coaster::admin.url').'/themes/export') }}/'+themeIdSelected+'/'+$(this).data('option');
+                window.location.href = '{{ routte('coaster.admin.themes.export') }}/'+themeIdSelected+'/'+$(this).data('option');
             });
 
             // new theme

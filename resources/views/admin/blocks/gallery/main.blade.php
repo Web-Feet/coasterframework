@@ -3,7 +3,7 @@
     <div class="col-sm-10">
         <div class="row">
             <div class="col-sm-3"> No of Pictures: <b>{!! $content->pictures !!}</b></div>
-            <div class="col-sm-9"> {!! HTML::link(URL::to(config('coaster::admin.url').'/gallery/edit/'.$page_id.'/'.$block_id), 'Edit Gallery', ['class' => 'btn btn-default']) !!}</div>
+            <div class="col-sm-9"> <a href="{{ route('coaster.admin.gallery.edit', ['pageId' => $page_id, 'blockId' => $block_id]) }}" class="btn btn-default">Edit Gallery</a></div>
         </div>
     </div>
 </div>

@@ -149,7 +149,7 @@ class BlockUpdater
             if (is_dir($themePath)) {
 
                 foreach (scandir($themePath) as $templateFile) {
-                    if ($templateName = explode('.', $templateFile)[0]) {
+                    if (($templateName = explode('.', $templateFile)[0]) && !is_dir($themePath.'/'.$templateFile)) {
                         PageBuilder::setTemplate($templateName);
                         View::make('themes.' . $theme->theme . '.templates.' . $templateName)->render();
                     }

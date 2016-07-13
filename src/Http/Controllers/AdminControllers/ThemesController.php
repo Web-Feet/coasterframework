@@ -121,11 +121,11 @@ class ThemesController extends Controller
         }
 
         $this->layoutData['content'] = View::make('coaster::pages.themes.list', ['themes_installed' => $themes_installed, 'can_upload' => $theme_auth['manage']]);
-        $this->layoutData['modals'] = View::make('coaster::modals.themes.delete').
-            View::make('coaster::modals.themes.export').
-            View::make('coaster::modals.themes.install').
-            View::make('coaster::modals.themes.install_confirm').
-            View::make('coaster::modals.themes.install_error');
+        $this->layoutData['modals'] = View::make('coaster::modals.themes.delete')->render().
+            View::make('coaster::modals.themes.export')->render().
+            View::make('coaster::modals.themes.install')->render().
+            View::make('coaster::modals.themes.install_confirm')->render().
+            View::make('coaster::modals.themes.install_error')->render();
     }
 
     public function postManage()
@@ -142,7 +142,7 @@ class ThemesController extends Controller
 
         if (!empty($request['newTheme'])) {
             if (!(self::$_error = Theme::upload($request['newTheme']))) {
-                \redirect(config('coaster::admin.url') . '/themes/list')->send();
+                return \redirect()->route('coaster.admin.themes.list');
             } else {
                 $this->getList();
             }
@@ -190,7 +190,7 @@ class ThemesController extends Controller
 
         $this->layoutData['content'] = View::make('coaster::pages.themes.update',
             [
-                'theme' => $theme->theme,
+                'theme' => $theme,
                 'blocksData' => BlockUpdater::getMainTableData(),
                 'typeList' => $this->_typeList(),
                 'categoryList' => $this->_categoryList(),
@@ -210,7 +210,7 @@ class ThemesController extends Controller
 
         $this->layoutData['content'] = View::make('coaster::pages.themes.update',
             [
-                'theme' => $theme->theme,
+                'theme' => $theme,
                 'saved' => true
             ]
         );
@@ -295,13 +295,13 @@ class ThemesController extends Controller
             }
         }
 
-        \redirect(config('coaster::admin.url').'/themes/forms')->send();
+        return \redirect()->route('coaster.admin.themes.forms');
     }
 
-    public function getSelects($block_id = null, $import = 0)
+    public function getSelects($blockId = null, $import = 0)
     {
-        if ($block_id) {
-            $block = Block::where('type', 'LIKE', '%select%')->where('type', 'NOT LIKE', '%selectpage%')->where('id', '=', $block_id)->first();
+        if ($blockId) {
+            $block = Block::where('type', 'LIKE', '%select%')->where('type', 'NOT LIKE', '%selectpage%')->where('id', '=', $blockId)->first();
         }
 
         if (!empty($block)) {
@@ -316,7 +316,7 @@ class ThemesController extends Controller
 
             } else {
 
-                $options = BlockSelectOption::where('block_id', '=', $block_id)->get();
+                $options = BlockSelectOption::where('block_id', '=', $blockId)->get();
                 $options = $options->isEmpty()?[]:$options;
                 $this->layoutData['content'] = View::make('coaster::pages.themes.selects', ['block' => $block, 'options' => $options]);
 
@@ -337,7 +337,7 @@ class ThemesController extends Controller
         }
     }
 
-    public function postSelects($block_id, $import = 0)
+    public function postSelects($blockId, $import = 0)
     {
         $inputOptions = [];
 
@@ -376,9 +376,9 @@ class ThemesController extends Controller
 
         }
 
-        BlockSelectOption::import($block_id, $inputOptions);
+        BlockSelectOption::import($blockId, $inputOptions);
 
-        \redirect(config('coaster::admin.url').'/themes/selects')->send();
+        return \redirect()->route('coaster.admin.themes.selects');
     }
 
     private function _typeList()

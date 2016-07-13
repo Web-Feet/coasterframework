@@ -7,8 +7,8 @@ $adminController = 'CoasterCms\Http\Controllers\AdminControllers\\';
 Route::group(['middleware' => ['web', 'coaster.guest']], function () use($admin, $adminController, $routeNamePrefix) {
 
     Route::any($admin . 'login', ['uses' => $adminController . 'AuthController@login', 'as' => $routeNamePrefix . 'login']);
-    Route::any($admin . 'forgotten_password', ['uses' => $adminController . 'AccountController@forgottenPassword', 'as' => $routeNamePrefix . 'login.password.forgotten']);
-    Route::any($admin . 'change_password/{code}', ['uses' => $adminController . 'AccountController@changePassword', 'as' => $routeNamePrefix . 'login.password.change']);
+    Route::any($admin . 'forgotten-password', ['uses' => $adminController . 'AccountController@forgottenPassword', 'as' => $routeNamePrefix . 'login.password.forgotten']);
+    Route::any($admin . 'change-password/{code}', ['uses' => $adminController . 'AccountController@changePassword', 'as' => $routeNamePrefix . 'login.password.change']);
 
 });
 
@@ -92,34 +92,34 @@ Route::group(['middleware' => ['web', 'coaster.admin']], function () use($admin,
     Route::get($admin . 'roles/pages/{roleId}', ['uses' => $adminController . 'RolesController@getPages', 'as' => $routeNamePrefix . 'roles.pages']);
     Route::post($admin . 'roles/pages/{roleId}', ['uses' => $adminController . 'RolesController@postPages']);
 
-    Route::get($admin . 'themes', ['uses' => $adminController . 'ThemesController@getIndex', 'as' => '']);
-    Route::get($admin . 'themes/list', ['uses' => $adminController . 'ThemesController@getList', 'as' => '']);
-    Route::post($admin . 'themes/manage', ['uses' => $adminController . 'ThemesController@postManage', 'as' => '']);
-    Route::get($admin . 'themes/export/{themeId}/{withPageData?}', ['uses' => $adminController . 'ThemesController@getExport', 'as' => ''])->where(array ( 'themeId' => '\w+', 'withPageData' => '\w+', ));
-    Route::get($admin . 'themes/beacons', ['uses' => $adminController . 'ThemesController@getBeacons', 'as' => '']);
-    Route::post($admin . 'themes/beacons', ['uses' => $adminController . 'ThemesController@postBeacons', 'as' => '']);
-    Route::get($admin . 'themes/update/{themeId}', ['uses' => $adminController . 'ThemesController@getUpdate', 'as' => '']);
-    Route::post($admin . 'themes/update/{themeId}', ['uses' => $adminController . 'ThemesController@postUpdate', 'as' => '']);
-    Route::get($admin . 'themes/forms/{template?}', ['uses' => $adminController . 'ThemesController@getForms', 'as' => '']);
-    Route::post($admin . 'themes/forms/{template}', ['uses' => $adminController . 'ThemesController@postForms', 'as' => '']);
-    Route::get($admin . 'themes/selects/{block_id?}/{import?}', ['uses' => $adminController . 'ThemesController@getSelects', 'as' => ''])->where(array ( 'block_id' => '\w+', 'import' => '\w+', ));
-    Route::post($admin . 'themes/selects/{block_id}/{import?}', ['uses' => $adminController . 'ThemesController@postSelects', 'as' => ''])->where(array ( 'block_id' => '\w+', 'import' => '\w+', ));
+    Route::get($admin . 'themes', ['uses' => $adminController . 'ThemesController@getIndex', 'as' => $routeNamePrefix . 'themes']);
+    Route::get($admin . 'themes/list', ['uses' => $adminController . 'ThemesController@getList', 'as' => $routeNamePrefix . 'themes.list']);
+    Route::post($admin . 'themes/manage', ['uses' => $adminController . 'ThemesController@postManage', 'as' => $routeNamePrefix . 'themes.manage']);
+    Route::get($admin . 'themes/export/{themeId}/{withPageData?}', ['uses' => $adminController . 'ThemesController@getExport', 'as' => $routeNamePrefix . 'themes.export'])->where(['themeId' => '\w+', 'withPageData' => '\w+']);
+    Route::get($admin . 'themes/beacons', ['uses' => $adminController . 'ThemesController@getBeacons', 'as' => $routeNamePrefix . 'themes.beacons']);
+    Route::post($admin . 'themes/beacons', ['uses' => $adminController . 'ThemesController@postBeacons']);
+    Route::get($admin . 'themes/update/{themeId}', ['uses' => $adminController . 'ThemesController@getUpdate', 'as' => $routeNamePrefix . 'themes.update']);
+    Route::post($admin . 'themes/update/{themeId}', ['uses' => $adminController . 'ThemesController@postUpdate']);
+    Route::get($admin . 'themes/forms/{template?}', ['uses' => $adminController . 'ThemesController@getForms', 'as' => $routeNamePrefix . 'themes.forms']);
+    Route::post($admin . 'themes/forms/{template}', ['uses' => $adminController . 'ThemesController@postForms']);
+    Route::get($admin . 'themes/selects/{blockId?}/{import?}', ['uses' => $adminController . 'ThemesController@getSelects', 'as' => $routeNamePrefix . 'themes.selects'])->where(['blockId' => '\w+', 'import' => '\w+']);
+    Route::post($admin . 'themes/selects/{blockId}/{import?}', ['uses' => $adminController . 'ThemesController@postSelects'])->where(['blockId' => '\w+', 'import' => '\w+']);
 
-    Route::get($admin . 'gallery/list/{page_id?}', ['uses' => $adminController . 'GalleryController@get_list', 'as' => '']);
-    Route::get($admin . 'gallery/edit/{page_id?}/{block_id?}', ['uses' => $adminController . 'GalleryController@getEdit', 'as' => ''])->where(array ( 'page_id' => '\w+', 'block_id' => '\w+', ));
-    Route::get($admin . 'gallery/update/{page_id?}/{block_id?}', ['uses' => $adminController . 'GalleryController@get_update', 'as' => ''])->where(array ( 'page_id' => '\w+', 'block_id' => '\w+', ));
-    Route::post($admin . 'gallery/caption/{page_id?}/{block_id?}', ['uses' => $adminController . 'GalleryController@post_caption', 'as' => ''])->where(array ( 'page_id' => '\w+', 'block_id' => '\w+', ));
-    Route::post($admin . 'gallery/sort/{page_id?}/{block_id?}', ['uses' => $adminController . 'GalleryController@post_sort', 'as' => ''])->where(array ( 'page_id' => '\w+', 'block_id' => '\w+', ));;
-    Route::post($admin . 'gallery/update/{page_id?}/{block_id?}', ['uses' => $adminController . 'GalleryController@post_update', 'as' => ''])->where(array ( 'page_id' => '\w+', 'block_id' => '\w+', ));
-    Route::delete($admin . 'gallery/update/{page_id?}/{block_id?}', ['uses' => $adminController . 'GalleryController@delete_update', 'as' => ''])->where(array ( 'page_id' => '\w+', 'block_id' => '\w+', ));
+    Route::get($admin . 'gallery/list/{pageId?}', ['uses' => $adminController . 'GalleryController@getList', 'as' => $routeNamePrefix . 'gallery.list']);
+    Route::get($admin . 'gallery/edit/{pageId?}/{blockId?}', ['uses' => $adminController . 'GalleryController@getEdit', 'as' => $routeNamePrefix . 'gallery.edit'])->where(['pageId' => '\w+', 'blockId' => '\w+']);
+    Route::get($admin . 'gallery/update/{pageId?}/{blockId?}', ['uses' => $adminController . 'GalleryController@getUpdate', 'as' => $routeNamePrefix . 'gallery.update'])->where(['pageId' => '\w+', 'blockId' => '\w+']);
+    Route::post($admin . 'gallery/caption/{pageId?}/{blockId?}', ['uses' => $adminController . 'GalleryController@postCaption', 'as' => $routeNamePrefix . 'gallery.caption'])->where(['pageId' => '\w+', 'blockId' => '\w+']);
+    Route::post($admin . 'gallery/sort/{pageId?}/{blockId?}', ['uses' => $adminController . 'GalleryController@postSort', 'as' => $routeNamePrefix . 'gallery.sort'])->where(['pageId' => '\w+', 'blockId' => '\w+']);;
+    Route::post($admin . 'gallery/update/{pageId?}/{blockId?}', ['uses' => $adminController . 'GalleryController@postUpdate', 'as' => $routeNamePrefix . 'gallery.update'])->where(['pageId' => '\w+', 'blockId' => '\w+']);
+    Route::delete($admin . 'gallery/update/{pageId?}/{blockId?}', ['uses' => $adminController . 'GalleryController@deleteUpdate'])->where(['pageId' => '\w+', 'blockId' => '\w+']);
 
-    Route::get($admin . 'forms/list/{page_id?}', ['uses' => $adminController . 'FormsController@get_list', 'as' => '']);
-    Route::get($admin . 'forms/submissions/{page_id?}/{block_id?}', ['uses' => $adminController . 'FormsController@get_submissions', 'as' => ''])->where(array ( 'page_id' => '\w+', 'block_id' => '\w+', ));
-    Route::get($admin . 'forms/csv/{page_id?}/{block_id?}', ['uses' => $adminController . 'FormsController@get_csv', 'as' => ''])->where(array ( 'page_id' => '\w+', 'block_id' => '\w+', ));;
+    Route::get($admin . 'forms/list/{pageId?}', ['uses' => $adminController . 'FormsController@getList', 'as' => $routeNamePrefix . 'forms.list']);
+    Route::get($admin . 'forms/submissions/{pageId?}/{blockId?}', ['uses' => $adminController . 'FormsController@getSubmissions', 'as' => $routeNamePrefix . 'forms.submissions'])->where(['pageId' => '\w+', 'blockId' => '\w+']);
+    Route::get($admin . 'forms/csv/{pageId?}/{blockId?}', ['uses' => $adminController . 'FormsController@getCsv', 'as' => $routeNamePrefix . 'forms.csv'])->where(['pageId' => '\w+', 'blockId' => '\w+']);
 
-    Route::post($admin . 'backups/undo', ['uses' => $adminController . 'BackupsController@post_undo', 'as' => $routeNamePrefix . 'backups.undo']);
+    Route::post($admin . 'backups/undo', ['uses' => $adminController . 'BackupsController@postUndo', 'as' => $routeNamePrefix . 'backups.undo']);
 
-    Route::post($admin . 'repeaters', ['uses' => $adminController . 'RepeatersController@post_index', 'as' => $routeNamePrefix . 'repeaters']);
+    Route::post($admin . 'repeaters', ['uses' => $adminController . 'RepeatersController@postIndex', 'as' => $routeNamePrefix . 'repeaters']);
 
     Route::get($admin . 'search', ['uses' => $adminController . 'SearchController@getIndex', 'as' => $routeNamePrefix . 'search']);
 

@@ -7,20 +7,20 @@
                 {!! HTML::link($page->blog, '', ['class' => 'glyphicon glyphicon-share itemTooltip', 'title' => 'WordPress Admin', 'target' => '_blank']) !!}
             @endif
             @if ($page->number_of_forms > 0 && $page->permissions['forms'])
-                {!! HTML::link(URL::to(config('coaster::admin.url').'/forms/list/'.$page->id), '', ['class' => 'glyphicon glyphicon-inbox itemTooltip', 'title' => 'View Form Submissions']) !!}
+                <a href="{{ route('coaster.admin.forms.list', ['pageId' => $page->id]) }}" class="glyphicon glyphicon-inbox itemTooltip" title="View Form Submissions"></a>
             @endif
             @if ($page->number_of_galleries > 0 && $page->permissions['galleries'])
-                {!! HTML::link(URL::to(config('coaster::admin.url').'/gallery/list/'.$page->id), '', ['class' => 'glyphicon glyphicon-picture itemTooltip', 'title' => 'Edit Gallery']) !!}
+                <a href="{{ route('coaster.admin.gallery.list', ['pageId' => $page->id]) }}" class="glyphicon glyphicon-picture itemTooltip" title="Edit Gallery"></a>
             @endif
             @if (!empty($page->group) && $page->permissions['group'])
-                {!! HTML::link(URL::to(config('coaster::admin.url').'/groups/pages/'.$page->group), '', ['class' => 'glyphicon glyphicon-list-alt itemTooltip', 'title' => 'Manage Items']) !!}
+                <a href="{{ route('coaster.admin.groups.pages', ['groupId' => $page->group]) }}" class="glyphicon glyphicon-list-alt itemTooltip" title="Manage Items"></a>
             @endif
             {!! HTML::link($page->preview_link, '', ['class' => 'glyphicon glyphicon-eye-open itemTooltip', 'title' => ($page->type=='type_hidden')?'Preview':'View Page', 'target' => '_blank']) !!}
             @if ($page->permissions['add'] == true && empty($page->link))
-                {!! HTML::link(URL::current().'/add/'.$page->id, '', ['class' => 'glyphicon glyphicon-plus itemTooltip addPage', 'title' => 'Add '.(empty($page->group)?'Subpage':'Item'), 'data-page' => $page->id]) !!}
+                <a href="{{ route('coaster.admin.pages.add', ['pageId' => $page->id]) }}" class="glyphicon glyphicon-plus itemTooltip addPage" title="{{ 'Add '.(empty($page->group)?'Subpage':'Item') }}"></a>
             @endif
             @if ($page->permissions['edit'] == true)
-                {!! HTML::link(URL::current().'/edit/'.$page->id, '', ['class' => 'glyphicon glyphicon-pencil itemTooltip', 'title' => 'Edit Page']) !!}
+                <a href="{{ route('coaster.admin.pages.edit', ['pageId' => $page->id]) }}" class="glyphicon glyphicon-pencil itemTooltip" title="Edit Page"></a>
             @endif
             @if ($page->permissions['delete'] == true)
                 <a href="javascript:void(0)" class="delete glyphicon glyphicon-trash itemTooltip"

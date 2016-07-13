@@ -3,7 +3,7 @@
 <ul>
     @foreach ($forms as $form)
         <li>
-            <a href="{!! URL::to(config('coaster::admin.url')) !!}/forms/submissions/{!! $page_id !!}/{!! $form->id !!}/">{!! $form->label !!}</a>
+            <a href="{{ route('coaster.admin.forms.submissions', ['pageId' => $page_id, 'blockId' => $form->id]) }}/">{!! $form->label !!}</a>
         </li>
     @endforeach
 </ul>

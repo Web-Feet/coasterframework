@@ -5,10 +5,10 @@
 <div class="textbox">
     <div class="col-sm-12">
         @if (!empty($page))
-            <p><a href="{!! URL::to(config('coaster::admin.url').'/pages/edit/'.$page->id) !!}">&raquo; Return and edit
+            <p><a href="{!! route('coaster.admin.pages.edit', ['pageId' => $page->id]) !!}">&raquo; Return and edit
                     settings/other content on the '{!! $page->name !!}' page</a></p>
         @elseif (empty($page))
-            <p><a href="{!! URL::to(config('coaster::admin.url').'/blocks/') !!}">&raquo; Return and edit other
+            <p><a href="{!! route('coaster.admin.blocks') !!}">&raquo; Return and edit other
                     site-wide content and settings</a></p>
         @endif
         <p>&nbsp;</p>

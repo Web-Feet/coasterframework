@@ -1,6 +1,6 @@
 You have been created a new account on {!! URL::to('/') !!} please see details below:<br/>
 <br/>
-Login URL: {!! URL::to(config('coaster::admin.url')) !!}<br/>
+Login URL: {!! route('coaster.admin.login') !!}<br/>
 Username: {!! $email !!}<br/>
 Password: {!! $password !!}<br/>
 <br/>

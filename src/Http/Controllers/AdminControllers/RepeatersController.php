@@ -6,7 +6,7 @@ use CoasterCms\Libraries\Blocks\Repeater;
 class RepeatersController extends Controller
 {
 
-    public function post_index()
+    public function postIndex()
     {
         return Repeater::new_row();
     }

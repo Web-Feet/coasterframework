@@ -23,7 +23,7 @@
         </div>
         <div class="row">
             <div class="col-sm-3">Form Submissions:</div>
-            <div class="col-sm-9">{!! HTML::link(URL::to(config('coaster::admin.url').'/forms/submissions/'.$extra_data['page_id'].'/'.$block_id), 'View', ['class' => 'btn btn-default']) !!}</div>
+            <div class="col-sm-9"><a href="{{ route('coaster.admin.forms.submissions', ['blockId' => $block_id, 'pageId' => $extra_data['page_id']]) }}" class="btn btn-default">View</a></div>
         </div>
     </div>
 </div>
