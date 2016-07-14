@@ -4,8 +4,6 @@ $routeNamePrefix = 'coaster.admin.';
 $admin = config('coaster::admin.url') . '/';
 $adminController = 'CoasterCms\Http\Controllers\AdminControllers\\';
 
-Route::any('{other}', function() {exit;})->where('other', '.*');
-
 Route::group(['middleware' => ['web', 'coaster.guest']], function () use($admin, $adminController, $routeNamePrefix) {
 
     Route::any($admin . 'login', ['uses' => $adminController . 'AuthController@login', 'as' => $routeNamePrefix . 'login']);
