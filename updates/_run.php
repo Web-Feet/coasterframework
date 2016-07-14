@@ -1,6 +1,6 @@
 <?php
 
-require __DIR__.'/../hooks/laravel_basic.php';
+require __DIR__.'/../hooks/laravel.php';
 
 $coasterStorageFolder = storage_path(config('coaster::site.storage_path'));
 if (!file_exists($coasterStorageFolder)) {
