@@ -73,7 +73,7 @@
                     <tr>
                         <td>Site Version</td>
                         @if ($can_upgrade && $upgrade->required)
-                            <td><span class="text-warning">{{ $upgrade->from }} [latest release {{ $upgrade->to }}]</span> <a href="{{ URL::to(config('coaster::admin.url').'/system/upgrade') }}">(upgrade)</a></td>
+                            <td><span class="text-warning">{{ $upgrade->from }} [latest release {{ $upgrade->to }}]</span> <a href="{{ route('coaster.admin.system.upgrade') }}">(upgrade)</a></td>
                         @else
                             <td><span class="text-success">{{ $upgrade->from }} [latest release {{ $upgrade->to }}]</span></td>
                         @endif
@@ -101,7 +101,7 @@
                             @if ($last_indexed_search)
                                 <span id="last_indexed_search">Last ran - {{ $last_indexed_search }}</span>
                                 @if ($can_index_search)
-                                    <a href="javascript:void(0)" id="search_index">(reindex)</a>
+                                    <a href="javascript:void(0)" id="search_index">(reindex)</a href="javascript:void(0)">
                                 @endif
                             @else
                                 N/A

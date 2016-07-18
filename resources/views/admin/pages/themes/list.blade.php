@@ -139,7 +139,7 @@
                 $('#exportTheme').modal('show');
             });
             $('#exportTheme .btn').click(function () {
-                window.location.href = '{{ routte('coaster.admin.themes.export') }}/'+themeIdSelected+'/'+$(this).data('option');
+                window.location.href = '{{ route('coaster.admin.themes.export', ['themeId' => null]) }}/'+themeIdSelected+'/'+$(this).data('option');
             });
 
             // new theme

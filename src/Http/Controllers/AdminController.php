@@ -2,6 +2,7 @@
 
 use Auth;
 use CoasterCms\Events\Admin\LoadResponse;
+use CoasterCms\Helpers\Admin\Routes;
 use CoasterCms\Helpers\Admin\View\AdminMenu;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
@@ -63,6 +64,7 @@ class AdminController extends Controller
             $this->layoutData = array_merge([
                 'system_menu' => AdminMenu::getSystemMenu(),
                 'sections_menu' => Auth::admin() ? AdminMenu::getSectionsMenu() : '',
+                'coaster_routes' => Routes::jsonRoutes()
             ], $this->layoutData);
         }
 

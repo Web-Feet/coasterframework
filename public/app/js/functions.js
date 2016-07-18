@@ -142,7 +142,7 @@ function undo_log(log_id) {
         last_delete = {'item':'log',name:'ID '+log_id};
     }
     $.ajax({
-        url: get_admin_url()+'backups/undo/',
+        url: route('coaster.admin.backups.undo'),
         data: {'log_ids': log_ids},
         type: 'POST',
         success: function (r) {

@@ -30,31 +30,31 @@ class AdminMenu
             if (Language::count() > 1) {
                 $page_lang = Language::find(Language::current());
                 $systemMenuItems['Language:' . $page_lang->language] = [
-                    'link' => URL::to(config('coaster::admin.url') . '/account/language'),
+                    'link' => route('coaster.admin.account.language'),
                     'icon' => 'fa fa-language'
                 ];
             }
             if (Auth::action('account')) {
                 $systemMenuItems['My Account'] = [
-                    'link' => URL::to(config('coaster::admin.url') . '/account'),
+                    'link' => route('coaster.admin.account'),
                     'icon' => 'fa fa-lock'
                 ];
             }
             if (Auth::action('system')) {
                 $systemMenuItems['System Settings'] = [
-                    'link' => URL::to(config('coaster::admin.url') . '/system'),
+                    'link' =>  route('coaster.admin.system'),
                     'icon' => 'fa fa-cog'
                 ];
             }
             $systemMenuItems['Logout'] = [
-                'link' => URL::to(config('coaster::admin.url') . '/logout'),
+                'link' => route('coaster.admin.logout'),
                 'icon' => 'fa fa-sign-out'
             ];
 
         } else {
 
             $systemMenuItems['Login'] = [
-                'link' => URL::to(config('coaster::admin.url') . '/login'),
+                'link' => route('coaster.admin.login'),
                 'icon' => 'fa fa-lock'
             ];
 

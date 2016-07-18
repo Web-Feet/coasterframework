@@ -18,7 +18,7 @@ Route::group(['middleware' => ['web', 'coaster.admin']], function () use($admin,
 
     Route::get($admin . 'logout', ['uses' => $adminController . 'AuthController@logout', 'as' => $routeNamePrefix . 'logout']);
 
-    Route::get($admin . 'account', ['uses' => $adminController . 'AccountController@getIndex', 'as' => $routeNamePrefix . '']);
+    Route::get($admin . 'account', ['uses' => $adminController . 'AccountController@getIndex', 'as' => $routeNamePrefix . 'account']);
     Route::get($admin . 'account/password', ['uses' => $adminController . 'AccountController@getPassword', 'as' => $routeNamePrefix . 'account.password']);
     Route::post($admin . 'account/password', ['uses' => $adminController . 'AccountController@postPassword']);
     Route::get($admin . 'account/blog', ['uses' => $adminController . 'AccountController@getBlog', 'as' => $routeNamePrefix . 'account.blog']);

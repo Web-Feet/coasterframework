@@ -25,7 +25,7 @@
             <li>{!! $warning !!}</li>
         @endforeach
     </ul>
-    <a href="{{ rtrim(rtrim(URL::current(),'/1'),'/').'/1' }}">Autofix column settings</a>
+    <a href="{{ route('coaster.admin.system.validate-db', ['fix' => 1]) }}">Autofix column settings</a>
 @else
     <p>None</p>
 @endif
