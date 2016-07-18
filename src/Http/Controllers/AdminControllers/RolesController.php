@@ -18,7 +18,7 @@ class RolesController extends Controller
     private $_child_pages;
     private $_role_permissions;
 
-    public function get_index()
+    public function getIndex()
     {
         $actions = array();
         foreach (AdminAction::where('inherit', '=', 0)->where('edit_based', '=', 0)->get() as $action) {
@@ -80,7 +80,7 @@ class RolesController extends Controller
         $this->layoutData['modals'] = View::make('coaster::modals.roles.add', array('roles' => $copy_roles)) . View::make('coaster::modals.roles.delete', array('roles' => $roles));
     }
 
-    public function post_actions($role_id = 0)
+    public function postActions($role_id = 0)
     {
         $allowed_actions = array();
         if ($role_id != 0) {
@@ -94,7 +94,7 @@ class RolesController extends Controller
         return json_encode($allowed_actions);
     }
 
-    public function post_add()
+    public function postAdd()
     {
         $v = Validator::make(Request::all(), array(
             'name' => 'required',
@@ -124,7 +124,7 @@ class RolesController extends Controller
         return 0;
     }
 
-    public function post_edit()
+    public function postEdit()
     {
         $v = Validator::make(Request::all(), array(
             'role' => 'required|integer',
@@ -148,7 +148,7 @@ class RolesController extends Controller
         return 0;
     }
 
-    public function post_delete()
+    public function postDelete()
     {
         $v = Validator::make(Request::all(), array(
             'role' => 'required|integer',
@@ -165,7 +165,7 @@ class RolesController extends Controller
         return 0;
     }
 
-    public function get_pages($role_id)
+    public function getPages($role_id)
     {
         $this->_role_permissions = UserRole::find($role_id);
 
@@ -185,7 +185,7 @@ class RolesController extends Controller
         }
     }
 
-    public function post_pages($role_id)
+    public function postPages($role_id)
     {
         if (config('coaster::admin.advanced_permissions')) {
 
@@ -276,7 +276,7 @@ class RolesController extends Controller
             $this->layoutData['alert'] = $alert;
         }
 
-        $this->get_pages($role_id);
+        $this->getPages($role_id);
     }
 
     private function _print_pages($parent)

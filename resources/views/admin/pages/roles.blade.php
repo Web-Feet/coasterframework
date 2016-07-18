@@ -36,7 +36,7 @@
             clearTimeout(load_timer);
             $('#loading_icon').show();
             $('#loading_text').show();
-            $('#page_permissions').attr('href', '{{ route('coaster.admin.roles.pages') }}/' + $('#role').val());
+            $('#page_permissions').attr('href', route('coaster.admin.roles.pages', {roleId: $('#role').val()}));
             $.ajax({
                 url: '{{ route('coaster.admin.roles.actions') }}/' + role_id,
                 type: 'POST',

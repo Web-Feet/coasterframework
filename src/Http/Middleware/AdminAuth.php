@@ -2,6 +2,7 @@
 
 use Auth;
 use Closure;
+use Request;
 
 class AdminAuth
 {
@@ -15,11 +16,18 @@ class AdminAuth
      */
     public function handle($request, Closure $next)
     {
-        $controller = $request->segment(2);
-        $action = $request->segment(3);
-        $parameters = $request->route()->parameters();
+        $routeParts = explode('.', Request::route()->getName());
 
         if (Auth::check()) {
+
+            if (empty($routeParts[0]) || $routeParts[0] != 'coaster' || empty($routeParts[1]) || $routeParts[1] != 'admin') {
+                return abort(403, 'Not a CoasterCMS admin route');
+            }
+
+            $controller = !empty($routeParts[2]) ? $routeParts[2] : null;
+            $action = !empty($routeParts[3]) ? $routeParts[3] : null;
+            $parameters = $request->route()->parameters();
+
             if (Auth::actionRoute([$controller, $action], $parameters)) {
                 return $next($request);
             } elseif (Auth::admin()) {

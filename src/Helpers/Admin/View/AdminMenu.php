@@ -126,9 +126,7 @@ class AdminMenu
                 /** @var AdminController $adminController */
                 $adminController = AdminController::preload($adminAction->controller_id);
 
-                return URL::to(
-                    config('coaster::admin.url') . '/' . $adminController->controller . ($adminAction->action == 'index' ? '' : '/' . $adminAction->action)
-                );
+                return route('coaster.admin.' . $adminController->controller . ($adminAction->action == 'index' ? '' : '.' . $adminAction->action));
 
             }
 
