@@ -7,7 +7,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Request;
 use Response;
-use URL;
 use View;
 
 class AdminController extends Controller
@@ -48,7 +47,7 @@ class AdminController extends Controller
      */
     public function catchAll()
     {
-        return redirect(URL::to(config('coaster::admin.url')));
+        return \redirect()->route('coaster.admin');
     }
 
     /**

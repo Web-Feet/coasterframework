@@ -8,7 +8,6 @@ use CoasterCms\Models\Language;
 use CoasterCms\Models\User;
 use Mail;
 use Request;
-use URL;
 use Validator;
 use View;
 

@@ -5,9 +5,7 @@ use CoasterCms\Libraries\Blocks\Gallery;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Template;
-use Redirect;
 use Request;
-use URL;
 use View;
 
 class GalleryController extends Controller
@@ -28,7 +26,7 @@ class GalleryController extends Controller
         }
         if (isset($gallery_blocks)) {
             if (count($gallery_blocks) == 1) {
-                return Redirect::to(URL::to(config('coaster::admin.url') . '/gallery/edit/' . $pageId . '/' . $gallery_blocks[0]->id));
+                return \redirect()->route('coaster.admin.gallery.edit', ['pageId' => $pageId, 'blockId' => $gallery_blocks[0]->id]);
             }
             $page_lang_data = PageLang::preload($pageId);
             if (!empty($page_lang_data)) {

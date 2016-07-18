@@ -22,7 +22,6 @@ use CoasterCms\Models\PageVersionSchedule;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
 use CoasterCms\Models\UserRole;
-use Redirect;
 use Request;
 use URL;
 use View;
@@ -91,7 +90,7 @@ class PagesController extends AdminController
             if ($new_page_id === false) {
                 $this->getAdd($pageId);
             } else {
-                return Redirect::action('\CoasterCms\Http\Controllers\AdminControllers\PagesController@get_edit', array($new_page_id));
+                return \redirect()->route('coaster.admin.pages.edit', ['pageId' => $new_page_id]);
             }
         }
     }
@@ -125,7 +124,7 @@ class PagesController extends AdminController
 
                 $new_page_id = $this->_save_page_info();
                 BlockManager::process_submission($new_page_id);
-                return Redirect::action('\CoasterCms\Http\Controllers\AdminControllers\PagesController@get_edit', array($new_page_id));
+                return \redirect()->route('coaster.admin.pages.edit', ['pageId' => $new_page_id]);
             } else {
                 return abort(403, 'Action not permitted');
             }

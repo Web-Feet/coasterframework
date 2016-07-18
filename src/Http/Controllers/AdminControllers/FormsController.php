@@ -29,7 +29,7 @@ class FormsController extends Controller
         }
         if (isset($form_blocks)) {
             if (count($form_blocks) == 1) {
-                \redirect(URL::to(config('coaster::admin.url') . '/forms/submissions/' . $page->id . '/' . $form_blocks[0]->id))->send();
+                return \redirect()->route('coaster.admin.forms.submissions', ['pageId' => $page->id, 'blockId' => $form_blocks[0]->id]);
             }
             $page_lang_data = PageLang::preload($pageId);
             if (!empty($page_lang_data)) {

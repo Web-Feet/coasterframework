@@ -12,7 +12,6 @@ use CoasterCms\Models\Theme;
 use CoasterCms\Models\ThemeBlock;
 use Illuminate\Http\Response;
 use Mail;
-use Redirect;
 use Request;
 use Session;
 use Validator;
@@ -266,7 +265,7 @@ class Form extends _Base
                         }
                     }
                     Session::set('form_data', $form_submission);
-                    return Redirect::to(PageBuilder::pageUrl($form_settings->page_to));
+                    return \redirect(PageBuilder::pageUrl($form_settings->page_to));
                 } else {
                     FormMessage::set($v->messages());
                     if (!$captcha) {

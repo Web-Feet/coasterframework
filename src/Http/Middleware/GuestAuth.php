@@ -19,7 +19,7 @@ class GuestAuth
                 return \redirect($login_path)
                     ->withCookie(cookie('login_path', null, -2628000));
             } else {
-                return \redirect()->action('\CoasterCms\Http\Controllers\AdminControllers\HomeController@getIndex');
+                return \redirect()->route('coaster.admin');
             }
         } else {
             return $next($request);
