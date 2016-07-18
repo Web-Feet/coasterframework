@@ -101,7 +101,7 @@
                             @if ($last_indexed_search)
                                 <span id="last_indexed_search">Last ran - {{ $last_indexed_search }}</span>
                                 @if ($can_index_search)
-                                    <a href="javascript:void(0)" id="search_index">(reindex)</a href="javascript:void(0)">
+                                    <a href="javascript:void(0)" id="search_index">(reindex)</a>
                                 @endif
                             @else
                                 N/A
