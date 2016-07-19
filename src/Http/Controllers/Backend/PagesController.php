@@ -776,8 +776,8 @@ class PagesController extends _Base
                 }
             }
 
-            // if loading previous version get version template rather than current page template
-            if ($versionData['latest'] != $versionData['editing']) {
+            // if loading a non live version get version template rather than current page template
+            if ($versionData['live'] != $versionData['editing']) {
                 $page_version = PageVersion::where('version_id', '=', $versionData['editing'])->where('page_id', '=', $page_id)->first();
                 if (empty($page_version)) {
                     return 'version not found';
