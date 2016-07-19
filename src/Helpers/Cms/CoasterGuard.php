@@ -1,6 +1,5 @@
 <?php namespace CoasterCms\Helpers\Cms;
 
-use Auth;
 use CoasterCms\Events\Admin\AuthRoute;
 use CoasterCms\Models\User;
 use Illuminate\Auth\SessionGuard;
@@ -52,7 +51,7 @@ class CoasterGuard extends SessionGuard
         $authRouteCheck = new AuthRoute($controller, $action, $parameters, $returnOptions);
         event($authRouteCheck);
 
-        return ($authRouteCheck->ignore || Auth::action([$controller, $action], $returnOptions));
+        return ($authRouteCheck->ignore || $this->action([$controller, $action], $returnOptions));
     }
 
 }
