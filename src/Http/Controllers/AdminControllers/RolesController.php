@@ -63,21 +63,21 @@ class RolesController extends Controller
             }
             foreach ($actions[$controller->id] as $action) {
                 $class = ' controller-' . $controller->controller;
-                $options .= View::make('coaster::partials.roles.option', array('name' => $action->name, 'id' => $action->id, 'val' => false, 'class' => $class));
+                $options .= View::make('coaster::partials.roles.option', array('name' => $action->name, 'id' => $action->id, 'val' => false, 'class' => $class))->render();
             }
-            $sections[$controller->role_section] .= View::make('coaster::partials.roles.section', array('section' => $controller->role_name, 'options' => $options));
+            $sections[$controller->role_section] .= View::make('coaster::partials.roles.section', array('section' => $controller->role_name, 'options' => $options))->render();
 
         }
         $content = '';
         foreach ($group as $id => $name) {
-            $content .= View::make('coaster::partials.roles.group', array('group' => $name, 'sections' => $sections[$id]));
+            $content .= View::make('coaster::partials.roles.group', array('group' => $name, 'sections' => $sections[$id]))->render();
         }
 
         $this->layoutData['content'] = View::make('coaster::pages.roles', array('actions' => $content, 'roles' => $roles));
         $copy_roles = $roles;
         $copy_roles[0] = '-- None --';
         ksort($copy_roles);
-        $this->layoutData['modals'] = View::make('coaster::modals.roles.add', array('roles' => $copy_roles)) . View::make('coaster::modals.roles.delete', array('roles' => $roles));
+        $this->layoutData['modals'] = View::make('coaster::modals.roles.add', array('roles' => $copy_roles))->render() . View::make('coaster::modals.roles.delete', array('roles' => $roles))->render();
     }
 
     public function postActions($role_id = 0)
@@ -319,7 +319,7 @@ class RolesController extends Controller
                 }
             }
 
-            $pages_li .= View::make('coaster::partials.roles.pages.li', array('page_lang' => $page_lang, 'sub_pages' => $sub_pages, 'actions' => $page_actions));
+            $pages_li .= View::make('coaster::partials.roles.pages.li', array('page_lang' => $page_lang, 'sub_pages' => $sub_pages, 'actions' => $page_actions))->render();
 
         }
         return View::make('coaster::partials.roles.pages.ul', array('pages_li' => $pages_li));

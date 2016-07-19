@@ -1,7 +1,5 @@
 <?php namespace CoasterCms\Helpers\Admin\Validation\Database;
 
-use CoasterCms\Helpers\Validation\Database;
-
 class Blueprint {
 
 	public $tableName;

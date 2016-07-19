@@ -45,6 +45,7 @@ class FormsController extends Controller
         } else {
             $this->layoutData['content'] = 'No Forms Found';
         }
+        return null;
     }
 
     public function getSubmissions($pageId = 0, $blockId = 0)

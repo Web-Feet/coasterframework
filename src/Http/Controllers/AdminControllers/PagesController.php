@@ -93,11 +93,13 @@ class PagesController extends AdminController
                 return \redirect()->route('coaster.admin.pages.edit', ['pageId' => $new_page_id]);
             }
         }
+        return null;
     }
 
     public function getEdit($pageId, $version = 0)
     {
         $this->layoutData['content'] = $this->_load_page_data($pageId, array('version' => $version));
+        return null;
     }
 
     public function postEdit($pageId)
@@ -181,7 +183,7 @@ class PagesController extends AdminController
         $this->layoutData['alert'] = $alert;
 
         // display page edit form
-        $this->getEdit($pageId, BlockManager::$to_version);
+        return $this->getEdit($pageId, BlockManager::$to_version);
     }
 
     public function postSort()

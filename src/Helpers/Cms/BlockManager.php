@@ -85,7 +85,7 @@ class BlockManager
             $tab_contents[0] = '';
 
             if ($publishingOn && !empty($page) && $page->link == 0) {
-                $tab_contents[0] .= View::make('coaster::partials.tabs.page_info.notice');
+                $tab_contents[0] .= View::make('coaster::partials.tabs.page_info.notice')->render();
             }
 
             // page type and location (only updated for new pages)

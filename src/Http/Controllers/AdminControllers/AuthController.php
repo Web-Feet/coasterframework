@@ -35,6 +35,7 @@ class AuthController extends Controller
 
         $this->layoutData['content'] = View::make('coaster::pages.login');
         $this->layoutData['title'] = 'Login';
+        return null;
     }
 
     public function logout()

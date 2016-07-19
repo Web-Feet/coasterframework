@@ -114,11 +114,12 @@ class PageVersionSchedule extends Eloquent
                     $currentDay = 0;
                     $newDay = (int) $newDate->format('d');
                     $i = 1;
+                    $newDateClone = clone $newDate;
                     while ($currentDay != $newDay) {
-                        $newDateClone = clone $newDate;
                         $currentDay = (int) $newDateClone->format('d');
                         $newDateClone->modify('+'.$i++.' month');
                         $newDay = (int) $newDateClone->format('d');
+                        $newDateClone = clone $newDate;
                     }
                     $newDate = $newDateClone;
                 break;
@@ -126,11 +127,12 @@ class PageVersionSchedule extends Eloquent
                     $currentDay = 0;
                     $newDay = (int) $newDate->format('d');
                     $i = 1;
+                    $newDateClone = clone $newDate;
                     while ($currentDay != $newDay) {
-                        $newDateClone = clone $newDate;
                         $currentDay = (int) $newDateClone->format('d');
                         $newDateClone->modify('+'.$i++.' year');
                         $newDay = (int) $newDateClone->format('d');
+                        $newDateClone = clone $newDate;
                     }
                     $newDate = $newDateClone;
                     break;

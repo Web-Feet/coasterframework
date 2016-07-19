@@ -8,7 +8,6 @@ use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\PagePublishRequests;
 use CoasterCms\Models\PageSearchLog;
 use CoasterCms\Models\Setting;
-use File;
 use View;
 
 class HomeController extends Controller

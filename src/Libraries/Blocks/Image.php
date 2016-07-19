@@ -14,12 +14,11 @@ class Image extends _Base
     public static function display($block, $block_data, $options = array())
     {
         if (!empty($block_data)) {
-            if (is_string($block_data)) {
-                $image_data = unserialize($block_data);
-            } else
-                $image_data = $block_data;
-        }
-        if (empty($block_data) || empty($image_data->file)) {
+            $image_data = is_string($block_data) ? unserialize($block_data) : $block_data;
+            if (empty($image_data->file)) {
+                return '';
+            }
+        } else {
             return '';
         }
         if (empty($image_data->title)) {

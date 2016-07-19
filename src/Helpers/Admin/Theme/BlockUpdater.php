@@ -94,7 +94,6 @@ class BlockUpdater
         // re process theme files without the overwrite file
         $blockSettings = self::$_blockSettings;
         self::processFiles($theme, false);
-        $blocksFound = self::$_fileBlockTemplates;
 
         // check for extra templates in overwrite file that BlockUpdater did not pick up
         $extraTemplates = [];

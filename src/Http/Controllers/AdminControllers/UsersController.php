@@ -68,6 +68,7 @@ class UsersController extends Controller
         } else {
             return 'Can\'t edit this user';
         }
+        return null;
     }
 
     public function getEdit($userId = 0, $action = null)

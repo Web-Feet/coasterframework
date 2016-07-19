@@ -68,7 +68,7 @@ class AccountController extends Controller
             $user = User::where('email', '=', $email_addr)->first();
 
             if ($user !== null) {
-                if (!Auth::Action('account.password', ['user_id' => $user->id])) {
+                if (!Auth::action('account.password', ['user_id' => $user->id])) {
                     FormMessage::add('email', 'You can\'t change the password for this account');
                 } else {
                     $code = urlencode(str_random(32) . microtime());

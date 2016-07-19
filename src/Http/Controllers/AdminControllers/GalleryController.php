@@ -42,6 +42,7 @@ class GalleryController extends Controller
         } else {
             $this->layoutData['content'] = 'No Galleries Found';
         }
+        return null;
     }
 
     // main actions
