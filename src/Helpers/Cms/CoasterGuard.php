@@ -13,7 +13,9 @@ class CoasterGuard extends SessionGuard
      */
     public function admin()
     {
-        return ($this->check() && $this->user()->role->admin > 0);
+        /** @var User|null $user */
+        $user = $this->user();
+        return ($this->check() && $user->role->admin > 0);
     }
 
     /**
@@ -25,13 +27,13 @@ class CoasterGuard extends SessionGuard
     {
         if (!empty($options['user_id'])) {
             $user = User::find($options['user_id']);
-        } elseif ($user = $this->user()) {
-            $options['user_id'] = $user->id;
         } else {
-            return false;
+            /** @var User $user */
+            $user = $this->user();
+            $options['user_id'] = $user->id;
         }
 
-        return $user->role->check_action($action, $options);
+        return (!empty($user) && $user->role->check_action($action, $options));
     }
 
     /**
@@ -42,7 +44,7 @@ class CoasterGuard extends SessionGuard
      */
     public function actionRoute($controller, $action, $parameters = [])
     {
-        if (!$this->user() || $this->user()->role->admin < 1) {
+        if (!$this->admin()) {
             return false;
         }
 
