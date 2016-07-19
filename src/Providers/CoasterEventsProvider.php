@@ -1,6 +1,5 @@
 <?php namespace CoasterCms\Providers;
 
-use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider;
 
 class CoasterEventsProvider extends EventServiceProvider
@@ -11,13 +10,9 @@ class CoasterEventsProvider extends EventServiceProvider
      * @var array
      */
     protected $listen = [
+        'CoasterCms\Events\Admin\AuthRoute' => [
+            'CoasterCms\Listeners\Admin\AuthRouteCheck',
+        ],
     ];
-
-    /**
-     * @return void
-     */
-    public function boot()
-    {
-
-    }
+    
 }
