@@ -85,7 +85,7 @@ class FormsController extends Controller
                     'submissions' => $submission_rows,
                     'form' => $block_data->label,
                     'can_export' => Auth::action('forms.csv'),
-                    'export_link' => URL::to(config('coaster::admin.url') . '/forms/csv/' . $pageId . '/' . $blockId)
+                    'export_link' => route('coaster.admin.forms.csv', ['pageId' => $pageId, 'blockId' => $blockId])
                 )
             );
         }
