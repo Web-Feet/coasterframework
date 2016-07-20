@@ -97,7 +97,7 @@ class PageLoader
                 $this->pageLevels[0] = self::_loadHomePage($languageId);
             }
 
-            // load subpages
+            // load sub pages
             if ($urlSegments) {
                 for ($i = 1; $i <= $urlSegments; $i++) {
                     if (empty($this->pageLevels[$i])) {
@@ -157,6 +157,7 @@ class PageLoader
 
         if ($lowestLevelPage) {
 
+            /** @var Page $lowestLevelPage */
             $this->isLive = $lowestLevelPage->is_live();
 
             if (!$this->is404) {

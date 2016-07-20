@@ -26,7 +26,7 @@
                 @endforeach
                 <td>
                     @if ($can_edit[$page->id])
-                        <a href="{{ route('coaster.admin.pages.edit', ['pageId' => $page_id]) }}" class="glyphicon glyphicon-pencil itemTooltip">{{ 'Edit '.$item_name }}</a>
+                        <a href="{{ route('coaster.admin.pages.edit', ['pageId' => $page->id]) }}" class="glyphicon glyphicon-pencil itemTooltip" title="{{ 'Edit '.$item_name }}"></a>
                     @endif
                     @if ($can_delete[$page->id])
                         <i class="delete glyphicon glyphicon-trash itemTooltip" data-name="{!! $page->name !!}"

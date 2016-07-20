@@ -5,56 +5,103 @@ use Eloquent;
 
 class PageGroup extends Eloquent
 {
+    /**
+     * @var string
+     */
     protected $table = 'page_group';
 
-    private static $group_pages = array();
+    /**
+     * @var array
+     */
+    protected static $groupPages = [];
 
-    public static function page_ids($group_id, $check_live = false, $sort = false)
+    /**
+     * @var array
+     */
+    protected static $groupPagesFiltered = [];
+
+    /**
+     * Get all pageIds for this group, can filter by only live pages
+     * @param bool $checkLive
+     * @param bool $sort
+     * @return array
+     */
+    public function itemPageIds($checkLive = false, $sort = false)
     {
-        if (empty(self::$group_pages[$group_id][$check_live]) || (!empty(self::$group_pages[$group_id][$check_live]) && (!self::$group_pages[$group_id][$check_live]->sort && $sort))) {
-            $pages = Page::where('in_group', '=', $group_id)->get();
-            $page_ids = array();
-            if (!empty($pages)) {
+        $filterType = $checkLive ? 'all' : 'live';
+        $sortedSuffix = '-sorted';
+        $sorted = $sort ? $sortedSuffix : '';
+
+        if (empty(self::$groupPages[$this->id])) {
+            self::$groupPages[$this->id] = [
+                'all' => [],
+                'live' => [],
+            ];
+            foreach (self::$groupPages[$this->id] as $filter => $arr) {
+                self::$groupPages[$this->id][$filter.$sortedSuffix] = $arr;
+            }
+            $pages = Page::where('in_group', '=', $this->id)->get();
+            if (!$pages->isEmpty()) {
                 foreach ($pages as $page) {
-                    if (!$check_live || ($check_live && $page->is_live())) {
-                        $page_ids[] = $page->id;
-                    }
-                }
-                if (!empty($page_ids) && $sort) {
-                    $group = self::find($group_id);
-                    if ($group->order_by_attribute_id > 0) {
-                        $sort_by_attribute = PageGroupAttribute::find($group->order_by_attribute_id);
-                        // sort via live version attributes
-                        $sorted_pages = BlockManager::get_data_for_version(
-                            new PageBlock,
-                            -1,
-                            array('block_id', 'page_id'),
-                            array($sort_by_attribute->item_block_id, $page_ids),
-                            'content ' . $group->order_dir
-                        );
-                        $sorted_page_ids = array();
-                        foreach ($sorted_pages as $sorted_page) {
-                            $sorted_page_ids[] = $sorted_page->page_id;
-                        }
-                        // if sort by block is empty for any page in the group, then add at top
-                        foreach ($pages as $page) {
-                            if (!in_array($page->id, $sorted_page_ids)) {
-                                array_unshift($sorted_page_ids, $page->id);
-                            }
-                        }
-                        $page_ids = $sorted_page_ids;
+                    self::$groupPages[$this->id]['all'][] = $page->id;
+                    if ($page->is_live()) {
+                        self::$groupPages[$this->id]['live'][] = $page->id;
                     }
                 }
             }
-            $save = new \stdClass;
-            $save->sort = $sort;
-            $save->page_ids = $page_ids;
-            if (!isset(self::$group_pages[$group_id])) {
-                self::$group_pages[$group_id] = array();
-            }
-            self::$group_pages[$group_id][$check_live] = $save;
         }
-        return self::$group_pages[$group_id][$check_live]->page_ids;
+
+        if ($sort && empty(self::$groupPages[$this->id][$filterType.$sorted])) {
+            if (!empty(self::$groupPages[$this->id][$filterType])) {
+                if ($sortByAttribute = PageGroupAttribute::find($this->order_by_attribute_id)) {
+                    // sort via live version attributes
+                    $sortedPages = BlockManager::get_data_for_version(
+                        new PageBlock,
+                        -1,
+                        array('block_id', 'page_id'),
+                        array($sortByAttribute->item_block_id, self::$groupPages[$this->id][$filterType]),
+                        'content ' . $this->order_dir
+                    );
+                    $sortedPageIds = [];
+                    foreach ($sortedPages as $sortedPage) {
+                        $sortedPageIds[] = $sortedPage->page_id;
+                    }
+                    // if sort by block is empty for any page in the group, then add at top
+                    foreach (self::$groupPages[$this->id][$filterType] as $page) {
+                        if (!in_array($page->id, $sortedPageIds)) {
+                            array_unshift($sortedPageIds, $page->id);
+                        }
+                    }
+                    self::$groupPages[$this->id][$filterType.$sorted] = $sortedPageIds;
+                } else {
+                    // if no sort by attribute
+                    self::$groupPages[$this->id][$filterType.$sorted] = self::$groupPages[$this->id][$filterType];
+                }
+            } else {
+                // if nothing to sort
+                self::$groupPages[$this->id][$filterType.$sorted] = [];
+            }
+        }
+
+        return self::$groupPages[$this->id][$filterType.$sorted];
+    }
+
+    /**
+     * Filter by container block content
+     * @param bool $checkLive
+     * @param bool $sort
+     * @return array
+     */
+    public function itemPageIdsFiltered($checkLive = false, $sort = false)
+    {
+
+        if (empty(self::$groupPagesFiltered[$this->id])) {
+
+            $unfiltered = $this->itemPageIds($checkLive, $sort);
+
+        }
+
+        return [];
     }
 
 }

@@ -142,7 +142,7 @@ class Page extends Eloquent
             $pages = array();
             if (!empty($group)) {
                 $filters = PageGroupAttribute::where('group_id', '=', $group_id)->where('filter_by_block_id', '>', 0)->get();
-                $group_pages = PageGroup::page_ids($group_id, $check_live, true);
+                $group_pages =  $group->itemPageIds($check_live, true);
                 if (!empty($group_pages)) {
                     foreach ($filters as $filter) {
                         $filtered_pages = array();

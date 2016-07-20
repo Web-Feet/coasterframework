@@ -532,26 +532,24 @@ class PagesController extends AdminController
         /*
          * Save Page
          */
-        if ($page_info['parent'] > 0 || $page_info['in_group'] > 0) {
-            if ($page_info['in_group']) {
-                $group = PageGroup::find($page_info['in_group']);
-                if (!empty($group)) {
-                    $parentId = $group->default_parent;
-                } else {
-                    $parentId = -1;
-                }
+        $group = PageGroup::find($page_info['in_group']);
+        if ($page_info['in_group']) {
+            if (!empty($group)) {
+                $parentId = $group->default_parent;
             } else {
-                $parentId = $page_info['parent'];
+                $parentId = -1;
             }
-            $parent = Page::find($parentId);
-            if (empty($parent) && !empty($pageId)) {
-                return false;
-            }
+        } else {
+            $parentId = $page_info['parent'];
+        }
+        $parent = Page::find($parentId);
+        if (empty($parent) && !empty($pageId)) {
+            return false;
         }
 
         if ($page_info['in_group'] > 0) {
             $page_info['parent'] = -1;
-            $siblings = PageGroup::page_ids($page_info['in_group']);
+            $siblings = $group->itemPageIds();
             $page_info['order'] = 0;
         } else {
             $siblings = Page::child_page_ids($page_info['parent']);

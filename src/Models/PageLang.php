@@ -178,18 +178,20 @@ class PageLang extends Eloquent
                 self::_load_sub_paths($child_ids, $page_path);
             } else {
                 if ($page_data->group_container > 0) {
-                    $group_pages = PageGroup::page_ids($page_data->group_container);
-                    foreach ($group_pages as $group_page) {
-                        $pl = self::preload($group_page);
-                        $group_page_path = clone $pl;
-                        $group_page_path->full_name = $page_path->full_name . '{sep}' . $group_page_path->name;
-                        $group_page_path->full_url = $page_path->url . '/' . $group_page_path->url;
-                        $group_page_path->group_default = false;
-                        self::$preloaded_full_paths[$group_page . ',' . $page_id] = $group_page_path;
-                        if (empty(self::$preloaded_full_paths[$group_page]) || $groups_array[$page_data->group_container]->default_parent == $page_id) {
-                            $def_group_page_path = clone $group_page_path;
-                            $def_group_page_path->group_default = true;
-                            self::$preloaded_full_paths[$group_page] = $def_group_page_path;
+                    $group = PageGroup::find($page_data->group_container);
+                    if (!empty($group)) {
+                        foreach ($group->itemPageIds() as $group_page) {
+                            $pl = self::preload($group_page);
+                            $group_page_path = clone $pl;
+                            $group_page_path->full_name = $page_path->full_name . '{sep}' . $group_page_path->name;
+                            $group_page_path->full_url = $page_path->url . '/' . $group_page_path->url;
+                            $group_page_path->group_default = false;
+                            self::$preloaded_full_paths[$group_page . ',' . $page_id] = $group_page_path;
+                            if (empty(self::$preloaded_full_paths[$group_page]) || $groups_array[$page_data->group_container]->default_parent == $page_id) {
+                                $def_group_page_path = clone $group_page_path;
+                                $def_group_page_path->group_default = true;
+                                self::$preloaded_full_paths[$group_page] = $def_group_page_path;
+                            }
                         }
                     }
                 }

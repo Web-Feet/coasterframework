@@ -19,7 +19,7 @@ class GroupsController extends Controller
         if (!empty($groupId)) {
             $group = PageGroup::find($groupId);
             if (!empty($group)) {
-                $page_ids = PageGroup::page_ids($groupId, false, true);
+                $page_ids = $group->itemPageIds(false, true);
                 $attributes = PageGroupAttribute::where('group_id', '=', $groupId)->get();
                 $blocks = array();
                 foreach ($attributes as $attribute) {
