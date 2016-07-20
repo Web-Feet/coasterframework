@@ -69,7 +69,7 @@
                 li.toggleClass('mjs-nestedSortable-collapsed').toggleClass('mjs-nestedSortable-expanded');
                 if (!e.isTrigger) {
                     $.ajax({
-                        url: '{{ route('coaster.admin.account.page-state') }}',
+                        url:  route('coaster.admin.account.page-state'),
                         type: 'POST',
                         data: {
                             page_id: li.attr('id').replace('list_', ''),

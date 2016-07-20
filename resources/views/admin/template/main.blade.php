@@ -80,11 +80,10 @@
 
 <script src="{{ URL::to(config('coaster::admin.public')).'/app/js/router.js' }}"></script>
 <script type="text/javascript">
-    var adminUrl = '{{ route('coaster.admin').'/' }}';
-    var adminPublicUrl = '{{ URL::to(config('coaster::admin.public')).'/' }}';
     var dateFormat = '{{ config('coaster::date.format.jq_date') }}';
     var timeFormat = '{{ config('coaster::date.format.jq_time') }}';
     var ytBrowserKey = '{{ config('coaster::key.yt_browser') }}';
+    var adminPublicUrl = '{{ URL::to(config('coaster::admin.public')).'/' }}';
     router.addRoutes({!! $coaster_routes !!});
     router.setBase('{{ URL::to('/') }}');
 </script>

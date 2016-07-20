@@ -35,7 +35,7 @@ class PageVersion extends Eloquent
         $page_version->version_id = self::latest_version($page_id) + 1;
         $page_version->template = !empty($page_id) ? Page::find($page_id)->template : 0;
         $page_version->label = $label;
-        $page_version->preview_key = base_convert((rand(10, 99) . microtime(true) * 10000), 10, 36);
+        $page_version->preview_key = base_convert((rand(10, 99) . microtime(true)), 10, 36);
         $page_version->save();
         return $page_version;
     }

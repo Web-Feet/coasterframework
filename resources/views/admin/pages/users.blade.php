@@ -56,7 +56,7 @@
             }
             else {
                 $.ajax({
-                    url: '{{ route('coaster.admin.users.edit') }}/' + user_id + '/status',
+                    url: route('coaster.admin.users.edit', {userId: user_id, action: 'status'}),
                     type: 'POST',
                     data: {set: active},
                     success: function (r) {

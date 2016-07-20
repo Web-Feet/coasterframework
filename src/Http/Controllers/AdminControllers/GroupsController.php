@@ -20,7 +20,7 @@ class GroupsController extends Controller
             $group = PageGroup::find($groupId);
             if (!empty($group)) {
                 $page_ids = PageGroup::page_ids($groupId, false, true);
-                $attributes = PageGroupAttribute::where('groupId', '=', $groupId)->get();
+                $attributes = PageGroupAttribute::where('group_id', '=', $groupId)->get();
                 $blocks = array();
                 foreach ($attributes as $attribute) {
                     $blocks[] = Block::preload($attribute->item_block_id);

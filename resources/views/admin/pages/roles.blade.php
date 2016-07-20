@@ -38,7 +38,7 @@
             $('#loading_text').show();
             $('#page_permissions').attr('href', route('coaster.admin.roles.pages', {roleId: $('#role').val()}));
             $.ajax({
-                url: '{{ route('coaster.admin.roles.actions') }}/' + role_id,
+                url: route('coaster.admin.roles.actions', {roleId: role_id}),
                 type: 'POST',
                 dataType: 'json',
                 success: function (data) {
@@ -72,7 +72,7 @@
                 $('#loading_icon').show();
                 $('#saving_text').show();
                 $.ajax({
-                    url: '{{ route('coaster.admin.roles.edit') }}',
+                    url: route('coaster.admin.roles.edit'),
                     type: 'POST',
                     data: {action: $(this).attr('name'), role: $('#role').val(), value: $(this).prop('checked')},
                     success: function (r) {
@@ -92,7 +92,7 @@
                 else {
                     $('#addRoleModal').modal('hide');
                     $.ajax({
-                        url: '{{ route('coaster.admin.roles.add') }}',
+                        url: route('coaster.admin.roles.add'),
                         type: 'POST',
                         dataType: 'json',
                         data: {name: $('#role_name').val(), copy: $('#role_copy').val()},
@@ -129,7 +129,7 @@
                 else {
                     $('#deleteModal').modal('hide');
                     $.ajax({
-                        url: '{{ route('coaster.admin.roles.delete') }}',
+                        url: route('coaster.admin.roles.delete'),
                         type: 'POST',
                         data: {role: delete_item, new_role: $('#new_role').val()},
                         success: function (r) {

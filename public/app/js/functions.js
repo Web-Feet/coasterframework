@@ -31,10 +31,6 @@ function get_url() {
     return pathArray[0] + '//' + pathArray[2] + '/';
 }
 
-function get_admin_url() {
-    return adminUrl;
-}
-
 function get_public_url() {
     return adminPublicUrl;
 }

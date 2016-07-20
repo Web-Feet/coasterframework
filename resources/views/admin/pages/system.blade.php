@@ -129,7 +129,7 @@
             $('#search_index').click(function () {
                 $('#search_index').html("(reindex in progress)");
                 $.ajax({
-                    url: '{{ route('coaster.admin.system.search') }}',
+                    url: route('coaster.admin.system.search'),
                     type: 'GET',
                     success: function (r) {
                         if (r == 1) {

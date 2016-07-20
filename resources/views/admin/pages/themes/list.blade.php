@@ -31,7 +31,7 @@
             $('.activateTheme').click(function () {
                 themeSelected = $(this).data('theme');
                 $.ajax({
-                    url: '{{ route('coaster.admin.themes.manage') }}',
+                    url: route('coaster.admin.themes.manage'),
                     type: 'POST',
                     data: {
                         theme: themeSelected,
@@ -53,7 +53,7 @@
             function installTheme() {
                 $('#theme'+themeSelected+' .installTheme').html('Installing please wait ...');
                 $.ajax({
-                    url: '{{ route('coaster.admin.themes.manage') }}',
+                    url: route('coaster.admin.themes.manage'),
                     type: 'POST',
                     dataType: 'json',
                     data: {
@@ -78,7 +78,7 @@
                 wPageData = 0;
                 $('#installTheme .themeName').html(themeSelected);
                 $.ajax({
-                    url: '{{ route('coaster.admin.themes.manage') }}',
+                    url: route('coaster.admin.themes.manage'),
                     type: 'POST',
                     dataType: 'json',
                     data: {
@@ -117,7 +117,7 @@
             });
             $('#deleteTheme .yes').click(function () {
                 $.ajax({
-                    url: '{{ route('coaster.admin.themes.manage') }}',
+                    url: route('coaster.admin.themes.manage'),
                     type: 'POST',
                     data: {
                         theme: themeSelected,
@@ -139,7 +139,7 @@
                 $('#exportTheme').modal('show');
             });
             $('#exportTheme .btn').click(function () {
-                window.location.href = '{{ route('coaster.admin.themes.export', ['themeId' => null]) }}/'+themeIdSelected+'/'+$(this).data('option');
+                window.location.href = route('coaster.admin.themes.export', {themeId: themeIdSelected, withPageData: $(this).data('option')});
             });
 
             // new theme

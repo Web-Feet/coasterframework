@@ -79,7 +79,7 @@
             var check_new = id.toString().substr(0, 3);
             if (check_new != 'new') {
                 $.ajax({
-                    url: '{{ route('coaster.admin.redirects.edit') }}',
+                    url: route('coaster.admin.redirects.edit'),
                     type: 'POST',
                     data: {delete_id: id},
                     success: function () {

@@ -18,12 +18,12 @@
         $(document).ready(function () {
 
             $('.addButton').click(function () {
-                document.location.href = '{{ route('coaster.admin.pages.add') }}/' + $(this).attr('data-page');
+                document.location.href = route('coaster.admin.pages.add', {pageId: $(this).attr('data-page')});
             });
 
             watch_for_delete('.delete', 'page', function (el) {
                 return el.closest('tr').attr('id');
-            }, '{{ route('coaster.admin.pages.delete') }}');
+            }, route('coaster.admin.pages.delete', {pageId : ''}));
 
         });
     </script>
