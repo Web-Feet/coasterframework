@@ -16,53 +16,50 @@ class GroupsController extends Controller
 
     public function getPages($groupId)
     {
-        if (!empty($groupId)) {
-            $group = PageGroup::find($groupId);
-            if (!empty($group)) {
-                $page_ids = $group->itemPageIds(false, true);
-                $attributes = PageGroupAttribute::where('group_id', '=', $groupId)->get();
-                $blocks = array();
-                foreach ($attributes as $attribute) {
-                    $blocks[] = Block::preload($attribute->item_block_id);
-                }
-                $page_info = array();
-                $can_edit = [];
-                $can_delete = [];
-                if (!empty($page_ids)) {
-                    foreach ($page_ids as $page_id) {
-                        $page_info[$page_id] = new \stdClass;
-                        $page_lang = PageLang::preload($page_id);
-                        $page_info[$page_id]->name = $page_lang->name;
-                        $page_info[$page_id]->id = $page_id;
-                        $page_info[$page_id]->col = array();
-                        foreach ($attributes as $k => $attribute) {
-                            $page_block = PageBlock::preload_block($page_id, $attribute->item_block_id, $page_lang->live_version);
-                            if (!empty($page_block)) {
-                                $page_block = $page_block[Language::current()];
-                            }
-                            if (!empty($page_block)) {
-                                if ($blocks[$k]->type == 'selectmultiple') {
-                                    // selectmultiple
-                                    $page_info[$page_id]->col[] = implode(', ', unserialize($page_block->content));
-                                } elseif ($blocks[$k]->type == 'datetime') {
-                                    // datetime
-                                    $page_info[$page_id]->col[] = (new Carbon($page_block->content))->format('d/m/Y H:iA');
-                                } else {
-                                    // text/string/select
-                                    $page_info[$page_id]->col[] = $page_block->content;
-                                }
-                            } else {
-                                $page_info[$page_id]->col[] = '';
-                            }
-                        }
-                        $can_edit[$page_id] = Auth::action('pages.edit', ['page_id' => $page_id]);
-                        $can_delete[$page_id] = Auth::action('pages.delete', ['page_id' => $page_id]);
-                    }
-                }
-                $pages = View::make('coaster::partials.groups.page_list', array('pages' => $page_info, 'item_name' => $group->item_name, 'blocks' => $blocks, 'can_edit' => $can_edit, 'can_delete' => $can_delete))->render();
-                $this->layoutData['modals'] = View::make('coaster::modals.general.delete_item');
-                $this->layoutData['content'] = View::make('coaster::pages.groups', array('group' => $group, 'pages' => $pages, 'can_add' => Auth::action('pages.add', ['page_id' => $group->default_parent])));
+        $group = PageGroup::find($groupId);
+        if (!empty($group)) {
+            $pageIds = $group->itemPageIds(false, true);
+
+            $attributes = PageGroupAttribute::where('group_id', '=', $groupId)->get();
+            $attributeBlocks = [];
+            foreach ($attributes as $attribute) {
+                $attributeBlocks[$attribute->item_block_id] = Block::preload($attribute->item_block_id);
             }
+
+            $pageRows = '';
+
+            if (!empty($pageIds)) {
+                foreach ($pageIds as $pageId) {
+                    $pageLang = PageLang::preload($pageId);
+
+                    $showBlocks = [];
+                    $canEdit = Auth::action('pages.edit', ['page_id' => $pageId]);
+                    $canDelete = Auth::action('pages.delete', ['page_id' => $pageId]);
+
+                    foreach ($attributeBlocks as $attributeBlock) {
+                        $pageBlock = PageBlock::preload_block($pageId, $attributeBlock->id, $pageLang->live_version);
+                        $pageBlockContent = !empty($pageBlock) ? $pageBlock[Language::current()]->content : '';
+                        if ($attributeBlock->type == 'selectmultiple' && !empty($pageBlockContent)) {
+                            // selectmultiple
+                            $showBlocks[] = implode(', ', unserialize($pageBlockContent));
+                        } elseif ($attributeBlock->type == 'datetime'&& !empty($pageBlockContent)) {
+                            // datetime
+                            $showBlocks[] = (new Carbon($pageBlockContent))->format(config('coaster::date.long'));
+                        } else {
+                            // text/string/select
+                            $showBlocks[] = $pageBlockContent;
+                        }
+                    }
+
+                    $pageRows .= View::make('coaster::partials.groups.page_row', array('page_lang' => $pageLang, 'item_name' => $group->item_name, 'showBlocks' => $showBlocks, 'can_edit' => $canEdit, 'can_delete' => $canDelete))->render();
+                }
+            }
+
+            $pagesTable = View::make('coaster::partials.groups.page_table', array('rows' => $pageRows, 'item_name' => $group->item_name, 'blocks' => $attributeBlocks))->render();
+            $canAdd = Auth::action('pages.add', ['page_id' => $group->default_parent]);
+
+            $this->layoutData['modals'] = View::make('coaster::modals.general.delete_item');
+            $this->layoutData['content'] = View::make('coaster::pages.groups', array('group' => $group, 'pages' => $pagesTable, 'can_add' => $canAdd));
         }
     }
 
