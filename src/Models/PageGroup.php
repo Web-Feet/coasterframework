@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Models;
 
 use CoasterCms\Helpers\Cms\BlockManager;
+use CoasterCms\Libraries\Builder\PageBuilder;
 use Eloquent;
 
 class PageGroup extends Eloquent
@@ -19,6 +20,14 @@ class PageGroup extends Eloquent
      * @var array
      */
     protected static $groupPagesFiltered = [];
+
+    /**
+     * @return mixed
+     */
+    public function blockFilters()
+    {
+        return $this->hasMany('CoasterCms\Models\PageGroupAttribute', 'group_id')->where('filter_by_block_id', '>', 0);
+    }
 
     /**
      * Get all pageIds for this group, can filter by only live pages
@@ -67,9 +76,9 @@ class PageGroup extends Eloquent
                         $sortedPageIds[] = $sortedPage->page_id;
                     }
                     // if sort by block is empty for any page in the group, then add at top
-                    foreach (self::$groupPages[$this->id][$filterType] as $page) {
-                        if (!in_array($page->id, $sortedPageIds)) {
-                            array_unshift($sortedPageIds, $page->id);
+                    foreach (self::$groupPages[$this->id][$filterType] as $pageId) {
+                        if (!in_array($pageId, $sortedPageIds)) {
+                            array_unshift($sortedPageIds, $pageId);
                         }
                     }
                     self::$groupPages[$this->id][$filterType.$sorted] = $sortedPageIds;
@@ -87,21 +96,53 @@ class PageGroup extends Eloquent
     }
 
     /**
-     * Filter by container block content
+     * Filter by container block content (filtered by group container content - pageId)
+     * @param int $pageId
      * @param bool $checkLive
      * @param bool $sort
      * @return array
      */
-    public function itemPageIdsFiltered($checkLive = false, $sort = false)
+    public function itemPageIdsFiltered($pageId, $checkLive = false, $sort = false)
     {
+        $pageIds = $this->itemPageIds($checkLive, $sort);
 
-        if (empty(self::$groupPagesFiltered[$this->id])) {
+        if (!empty($pageIds)) {
 
-            $unfiltered = $this->itemPageIds($checkLive, $sort);
+            $pageLang = PageLang::preload($pageId);
 
+            foreach ($this->blockFilters as $blockFilter) {
+
+                // get data to filter by
+                $filterByBlock = Block::preload($blockFilter->filter_by_block_id);
+                $filterBy = PageBlock::preload_block($pageId, $blockFilter->filter_by_block_id, $pageLang->live_version);
+                $filterByContent = !empty($filterBy[Language::current()]) ? $filterBy[Language::current()]->content : null;
+                if ($filterByBlock->type == 'selectmultiple') {
+                    $filterByContentArr = unserialize($filterByContent);
+                    $filterByContentArr = is_array($filterByContentArr) ? $filterByContentArr : [];
+                } else {
+                    $filterByContentArr = [$filterByContent];
+                }
+                $filterByContentArr = array_filter($filterByContentArr, function($filterByContentEl) { return !is_null($filterByContentEl); });
+
+                if (!empty($filterByContentArr)) {
+                    // get block data for block to filter on
+                    $itemBlock = Block::preload($blockFilter->item_block_id);
+                    $blockType = $itemBlock->get_class();
+
+                    // run filter with filterBy content
+                    $blockContentOnPageIds = [];
+                    foreach ($filterByContentArr as $filterByContentEl) {
+                        $newPageIds = $blockType::filter($itemBlock->id, $filterByContentEl, '=');
+                        $blockContentOnPageIds = array_unique(array_merge($blockContentOnPageIds, $newPageIds));
+                    }
+                    $pageIds = array_intersect($pageIds, $blockContentOnPageIds);
+                }
+
+            }
+            
         }
 
-        return [];
+        return $pageIds;
     }
 
 }

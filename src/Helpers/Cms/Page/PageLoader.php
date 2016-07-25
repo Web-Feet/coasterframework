@@ -2,6 +2,7 @@
 
 use CoasterCms\Models\Language;
 use CoasterCms\Models\Page;
+use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\PageVersionSchedule;
 use Illuminate\Database\Eloquent\Builder;
@@ -203,6 +204,10 @@ class PageLoader
 
         if (!$page && $parentPage->group_container > 0) {
             $page = self::_pageQuery($paths, $languageId, false, $parentPage->group_container);
+            if ($page) {
+                $group = PageGroup::find($parentPage->group_container);
+                $page = in_array($page->id, $group->itemPageIdsFiltered($parentPage->id)) ? $page : null;
+            }
         }
 
         return $page;

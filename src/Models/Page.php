@@ -125,7 +125,7 @@ class Page extends Eloquent
 
     public static function category_pages($page_id, $check_live = false)
     {
-        $check_live_string = ($check_live) ? 'true' : 'false';
+        $check_live_string = $check_live ? 'true' : 'false';
         // check if previously generated (used a lot in the link blocks)
         if (!empty(self::$preloaded_catpages[$page_id])) {
             if (!empty(self::$preloaded_catpages[$page_id][$check_live_string])) {
@@ -134,70 +134,19 @@ class Page extends Eloquent
         } else {
             self::$preloaded_catpages[$page_id] = array();
         }
+        $pages = [];
         $page = Page::preload($page_id);
         if (!empty($page) && $page->group_container > 0) {
-            $group_id = $page->group_container;
-            $group = PageGroup::find($group_id);
-            $page_lang = PageLang::preload($page_id);
-            $pages = array();
+            $group = PageGroup::find($page->group_container);
             if (!empty($group)) {
-                $filters = PageGroupAttribute::where('group_id', '=', $group_id)->where('filter_by_block_id', '>', 0)->get();
-                $group_pages =  $group->itemPageIds($check_live, true);
-                if (!empty($group_pages)) {
-                    foreach ($filters as $filter) {
-                        $filtered_pages = array();
-                        // get data to filter by
-                        $filter_by = PageBlock::preload_block($page_id, $filter->filter_by_block_id, $page_lang->live_version);
-                        $filter_by = $filter_by[Language::current()];
-                        if (!empty($filter_by)) {
-                            $filter_by_block = Block::preload($filter->filter_by_block_id);
-                            if ($filter_by_block->type == 'selectmultiple') {
-                                $filter_by_content = unserialize($filter_by->content);
-                            } else {
-                                $filter_by_content = $filter_by->content;
-                            }
-                            if (empty($filter_by_content) || $filter_by_content == false) {
-                                $filter_by_content = array();
-                            } elseif (!is_array($filter_by_content)) {
-                                $filter_by_content = array($filter_by->content);
-                            }
-                        } else {
-                            $filter_by_content = array();
-                        }
-                        // get pages that match filter data
-                        $page_blocks = PageBlock::whereIn('page_id', $group_pages)->where('block_id', '=', $filter->item_block_id)->get();
-                        $item_block = Block::preload($filter->item_block_id);
-                        foreach ($page_blocks as $page_block) {
-                            if ($item_block->type == 'selectmultiple') {
-                                $page_block_content = unserialize($page_block->content);
-                            } else {
-                                $page_block_content = $page_block->content;
-                            }
-                            if (empty($page_block_content) || $page_block_content == false) {
-                                $page_block_content = array();
-                            } elseif (!is_array($page_block_content)) {
-                                $page_block_content = array($page_block->content);
-                            }
-                            $check = array_intersect($filter_by_content, $page_block_content);
-                            if (!empty($check)) {
-                                $filtered_pages[] = $page_block->page_id;
-                            }
-                        }
-                        // remove pages from ordered array that didn't come back through the filter
-                        foreach ($group_pages as $k => $group_page) {
-                            if (!in_array($group_page, $filtered_pages)) {
-                                unset($group_pages[$k]);
-                            }
-                        }
-                    }
-                    foreach ($group_pages as $group_page) {
-                        $pages[] = Page::preload($group_page);
-                    }
+                $group_pages = $group->itemPageIdsFiltered($page_id, $check_live, true);
+                foreach ($group_pages as $group_page) {
+                    $pages[] = Page::preload($group_page);
                 }
             }
         } else {
-            $pages = Page::where('parent', '=', $page_id)->orderBy('order', 'asc')->get();
-            $pages = $pages->isEmpty() ? [] : $pages;
+            $categoryPages = Page::where('parent', '=', $page_id)->orderBy('order', 'asc')->get();
+            $pages = $categoryPages->isEmpty() ? $pages : $categoryPages;
             if ($check_live) {
                 foreach ($pages as $key => $page) {
                     if (!$page->is_live()) {

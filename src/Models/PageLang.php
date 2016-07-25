@@ -180,7 +180,7 @@ class PageLang extends Eloquent
                 if ($page_data->group_container > 0) {
                     $group = PageGroup::find($page_data->group_container);
                     if (!empty($group)) {
-                        foreach ($group->itemPageIds() as $group_page) {
+                        foreach ($group->itemPageIdsFiltered($page_id) as $group_page) {
                             $pl = self::preload($group_page);
                             $group_page_path = clone $pl;
                             $group_page_path->full_name = $page_path->full_name . '{sep}' . $group_page_path->name;
