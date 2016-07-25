@@ -1,7 +1,6 @@
 <?php namespace CoasterCms\Models;
 
 use CoasterCms\Helpers\Cms\BlockManager;
-use CoasterCms\Libraries\Builder\PageBuilder;
 use Eloquent;
 
 class PageGroup extends Eloquent
