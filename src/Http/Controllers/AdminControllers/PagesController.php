@@ -543,7 +543,7 @@ class PagesController extends AdminController
             $parentId = $page_info['parent'];
         }
         $parent = Page::find($parentId);
-        if (empty($parent) && !empty($pageId)) {
+        if (empty($parent) && !empty($parentId)) {
             return false;
         }
 
