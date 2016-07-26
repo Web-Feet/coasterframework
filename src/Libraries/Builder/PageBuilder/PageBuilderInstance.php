@@ -303,18 +303,30 @@ class PageBuilderInstance
     public function breadcrumb($options = [])
     {
         $defaultOptions = [
-            'view' => 'default'
+            'view' => 'default',
+            '404-name' => '404'
         ];
         $options = array_merge($defaultOptions, $options);
 
-        $crumbs = '';
-        if (!empty($this->pageLevels)) {
-            $url = '';
-            end($this->pageLevels);
-            $lowestLevel = key($this->pageLevels);
-            foreach ($this->pageLevels as $level => $page) {
+        $pageLevels = $this->pageLevels;
 
-                if ($page->page_lang[0]->url != '/') {
+        if ($this->is404) {
+            $page404 = new Page;
+            $pageLang = new PageLang();
+            $pageLang->url = '';
+            $pageLang->name = $options['404-name'];
+            $page404->setRelation('page_lang', [$pageLang]);
+            $pageLevels[] = $page404;
+        }
+
+        $crumbs = '';
+        if (!empty($pageLevels)) {
+            $url = '';
+            end($pageLevels);
+            $lowestLevel = key($pageLevels);
+            foreach ($pageLevels as $level => $page) {
+
+                if ($page && $page->page_lang[0]->url != '/') {
                     $url .= '/' . $page->page_lang[0]->url;
                 }
                 $active = ($lowestLevel == $level);
@@ -325,7 +337,7 @@ class PageBuilderInstance
                     $crumbs .= $this->_getRenderedView('breadcrumbs.' . $options['view'] . '.active_element', ['crumb' => $crumb]);
                 } else {
                     $crumbs .= $this->_getRenderedView('breadcrumbs.' . $options['view'] . '.link_element', ['crumb' => $crumb]);
-                    $crumbs .= ($active ? $this->_getRenderedView('breadcrumbs.' . $options['view'] . '.separator') : '');
+                    $crumbs .= $active ? $this->_getRenderedView('breadcrumbs.' . $options['view'] . '.separator') : '';
                 }
             }
         }
