@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Helpers\Cms;
 
 use Auth;
+use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Helpers\Cms\View\CmsBlockInput;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
 use CoasterCms\Libraries\Blocks;
@@ -118,8 +119,8 @@ class BlockManager
 
             // page name, url, template
             $fullUrls = [0 => '/'];
-            foreach (PageLang::getPreloadedFullPaths() as $pageId => $details) {
-                $fullUrls[$pageId] = rtrim($details->full_url, '/') . '/';
+            foreach (Path::all() as $pageId => $details) {
+                $fullUrls[$pageId] = rtrim($details->fullUrl, '/') . '/';
             }
             $templateData = Template::find($page->template);
             $selectData = new \stdClass;

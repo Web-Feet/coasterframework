@@ -1,10 +1,11 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
+use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Libraries\Builder\PageBuilder;
+use CoasterCms\Libraries\Builder\ViewClasses\PageDetails;
 use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageBlock;
-use CoasterCms\Models\PageLang;
 use View;
 
 class Selectpages extends _Base
@@ -16,16 +17,15 @@ class Selectpages extends _Base
         $page_ids = [];
         if (isset($options['reverse'])) {
             // get page_ids on which current page is selected in this block
-            $currentPageId = !empty(PageBuilder::$page)?PageBuilder::$page->id:0;
+            $currentPageId = PageBuilder::pageId(true);
             if ($currentPageId) {
                 $same_blocks = PageBlock::where('block_id', '=', $block->id)->get();
                 foreach ($same_blocks as $same_block) {
                     $block_page_ids = @unserialize($same_block->content);
                     if (!empty($block_page_ids)) {
                         foreach ($block_page_ids as $k => $block_page_id) {
-                            // if comma remove it (used for group page url, not used in getting content)
-                            $string = explode(',', $block_page_id);
-                            if ($string[0] == $currentPageId) {
+                            $block_page_id = Path::parsePageId($block_page_id);
+                            if ($currentPageId == $block_page_id) {
                                 $page_ids[] = $same_block->page_id;
                                 break;
                             }
@@ -38,13 +38,8 @@ class Selectpages extends _Base
         }
         if (!empty($page_ids)) {
             foreach ($page_ids as $page_id) {
-                $paths = PageLang::get_full_path($page_id);
-                $data = new \stdClass;
-                $data->id = $page_id;
-                $data->name = $paths->name;
-                $data->full_name = $paths->full_name;
-                $data->url = $paths->full_url;
-                $pages[] = $data;
+                $parsedPageId = Path::parsePageId($page_id, false);
+                $pages[$page_id] = new PageDetails($parsedPageId[0], !empty($parsedPageId[1]) ? $parsedPageId[1] : 0);
             }
         }
         $template = !empty($options['view']) ? $options['view'] : $block->name;

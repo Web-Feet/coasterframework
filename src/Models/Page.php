@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Models;
 
 use Auth;
+use CoasterCms\Helpers\Cms\Page\Path;
 use Eloquent;
 
 class Page extends Eloquent
@@ -69,8 +70,6 @@ class Page extends Eloquent
 
     public static function preload($page_id)
     {
-        $pageIdParts = explode(',', $page_id);
-        $page_id = $pageIdParts[0];
         if (empty(self::$preloaded_pages)) {
             $pages = self::all();
             foreach ($pages as $page) {
@@ -195,11 +194,11 @@ class Page extends Eloquent
                 }
             }
         }
-        $paths = PageLang::get_full_paths($pages_array);
+        $paths = Path::getFullPaths($pages_array);
         $list = array();
         foreach ($paths as $page_id => $path) {
-            if (!isset($options['exclude_home']) || $path->full_url != '/') {
-                $list[$page_id] = $path->full_name;
+            if (!isset($options['exclude_home']) || $path->fullUrl != '/') {
+                $list[$page_id] = $path->fullName;
             }
         }
         // order

@@ -2,6 +2,7 @@
 
 use CoasterCms\Exceptions\PageBuilderException;
 use CoasterCms\Helpers\Cms\Page\PageLoader;
+use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Helpers\Cms\Page\Search;
 use CoasterCms\Libraries\Builder\ViewClasses\BreadCrumb;
 use CoasterCms\Libraries\Builder\ViewClasses\PageDetails;
@@ -197,7 +198,7 @@ class PageBuilderInstance
     public function pageUrl($pageId = 0, $noOverride = false)
     {
         $pageId = $pageId ?: $this->pageId($noOverride);
-        return $pageId ? PageLang::full_url($pageId): '';
+        return $pageId ? Path::getFullUrl($pageId): '';
     }
 
     /**
@@ -220,7 +221,7 @@ class PageBuilderInstance
     public function pageFullName($pageId = 0, $noOverride = false, $sep = ' &raquo; ')
     {
         $pageId = $pageId ?: $this->pageId($noOverride);
-        return $pageId ? PageLang::full_name($pageId, $sep): '';
+        return $pageId ? Path::getFullName($pageId, $sep): '';
     }
 
     /**
@@ -416,10 +417,10 @@ class PageBuilderInstance
                     }
                     if (isset($key)) {
                         if (!empty($pages[$key + 1])) {
-                            $this->_pageCategoryLinks['next'] = PageLang::full_url($pages[$key + 1]->id);
+                            $this->_pageCategoryLinks['next'] = Path::getFullUrl($pages[$key + 1]->id);
                         }
                         if (!empty($pages[$key - 1])) {
-                            $this->_pageCategoryLinks['prev'] = PageLang::full_url($pages[$key - 1]->id);
+                            $this->_pageCategoryLinks['prev'] = Path::getFullUrl($pages[$key - 1]->id);
                         }
                     }
                 }
@@ -538,9 +539,8 @@ class PageBuilderInstance
         $blockData = null;
 
         if (!empty($options['page_id'])) {
-            $string = explode(',', $options['page_id']); // if comma remove it (only used for group page url)
-            $pageId = $string[0];
-            $selectedPage = PageLang::preload($string[0]);
+            $pageId = Path::parsePageId($options['page_id']);
+            $selectedPage = PageLang::preload($pageId);
             $pageVersionId = !empty($selectedPage) ? $selectedPage->live_version : 0;
         } else {
             $pageId = $this->pageId();
@@ -689,19 +689,18 @@ class PageBuilderInstance
         $list = '';
         $total = count($pages);
 
-        $categoryPath = '';
+        $groupPageContainerId = 0;
         if ($categoryPageId) {
             $categoryPage = Page::preload($categoryPageId);
-            $categoryPath = ($categoryPage && $categoryPage->group_container > 0) ? ',' . $categoryPage->id : '';
+            $groupPageContainerId = ($categoryPage && $categoryPage->group_container > 0) ? $categoryPage->id : 0;
         }
 
         $pages = array_values($pages);
         foreach ($pages as $count => $page) {
             $isFirst = ($count == 0);
             $isLast = ($count == $total -1);
-
-            $page->page_lang = (!$page->page_lang->isEmpty())?$page->page_lang[0]:PageLang::preload($page->id);
-            $fullPageInfo = new PageDetails($page, $page->page_lang, $categoryPath);
+            
+            $fullPageInfo = new PageDetails($page->id, $groupPageContainerId);
 
             $this->pageOverride = $page;
 

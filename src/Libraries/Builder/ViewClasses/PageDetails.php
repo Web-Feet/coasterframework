@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Libraries\Builder\ViewClasses;
 
+use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageLang;
 
@@ -38,11 +39,6 @@ class PageDetails
     public $name;
 
     /**
-     * @var bool
-     */
-    public $active;
-
-    /**
      * @var Page
      */
     public $page;
@@ -54,19 +50,20 @@ class PageDetails
 
     /**
      * PageDetails constructor.
-     * @param Page $page
-     * @param PageLang $pageLang
-     * @param string $groupContainerPath
+     * @param int $pageId
+     * @param int $groupContainerPageId
      */
-    public function __construct(Page $page, PageLang $pageLang, $groupContainerPath = '')
+    public function __construct($pageId, $groupContainerPageId = 0)
     {
-        $fullPaths = PageLang::get_full_path($page->id . $groupContainerPath);
+        $fullPaths = Path::getFullPath($pageId . ($groupContainerPageId ? ',' . $groupContainerPageId : ''));
+        $page = Page::preload($pageId);
+        $pageLang = PageLang::preload($pageId);
         
         $this->urlSegment = $pageLang->url;
-        $this->url = $fullPaths->full_url;
+        $this->url = $fullPaths->fullUrl;
 
         $this->name = $pageLang->name;
-        $this->fullName = $fullPaths->full_name;
+        $this->fullName = $fullPaths->fullName;
 
         $this->full_name = $this->fullName;
         $this->full_url = $this->url;

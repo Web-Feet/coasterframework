@@ -2,6 +2,7 @@
 
 use Auth;
 use CoasterCms\Helpers\Cms\BlockManager;
+use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Libraries\Builder\FormMessage;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
 use CoasterCms\Http\Controllers\AdminController;
@@ -23,7 +24,6 @@ use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
 use CoasterCms\Models\UserRole;
 use Request;
-use URL;
 use View;
 
 class PagesController extends AdminController
@@ -396,12 +396,12 @@ class PagesController extends AdminController
             }
             $pages[] = $page->id;
         }
-        $page_details = PageLang::get_full_paths($pages, ' » ');
+        $page_details = Path::getFullPaths($pages, html_entity_decode(' &raquo; '));
         $json_array = array();
         foreach ($page_details as $page_detail) {
             $details = new \stdClass;
-            $details->title = $page_detail->full_name;
-            $details->value = $page_detail->full_url;
+            $details->title = $page_detail->fullName;
+            $details->value = $page_detail->fullUrl;
             $json_array[] = $details;
         }
         usort($json_array, function ($a, $b) {
@@ -781,7 +781,7 @@ class PagesController extends AdminController
             $versionData['live'] = $page_lang->live_version;
 
             // get frontend link (preview or direct link if document)
-            $frontendLink = PageLang::full_url($pageId);
+            $frontendLink = Path::getFullUrl($pageId);
             if (!$page->is_live() && $page->link == 0) {
                 $live_page_version = PageVersion::where('page_id', '=', $pageId)->where('version_id', '=', $versionData['live'])->first();
                 if (!empty($live_page_version)) {

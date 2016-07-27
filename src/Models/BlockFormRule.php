@@ -43,8 +43,6 @@ class BlockFormRule extends Eloquent
                 $toUpdate = array_intersect_key($fields, $databaseTemplateRules);
                 $toDelete = array_diff_key($databaseTemplateRules, $fields);
 
-                //dd($databaseTemplateRules);
-
                 if (!empty($toDelete)) {
                     self::where('form_template', '=', $template)->whereIn('field', array_keys($toDelete))->delete();
                 }

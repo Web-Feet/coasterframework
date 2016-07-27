@@ -114,7 +114,7 @@ class Form extends _Base
      */
     public static function submission($form_data)
     {
-        if (PageBuilder::$externalTemplate) {
+        if (PageBuilder::getData('externalTemplate')) {
             $form_data = $form_data[config('coaster::frontend.external_form_input')];
         }
 
@@ -275,7 +275,7 @@ class Form extends _Base
                 }
 
             }
-        } elseif (!PageBuilder::$externalTemplate) {
+        } elseif (!PageBuilder::getData('externalTemplate')) {
             // error if called from within CMS
             throw new CmsPageException('Form Not Found', 500);
         }

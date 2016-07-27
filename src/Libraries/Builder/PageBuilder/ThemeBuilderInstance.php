@@ -204,9 +204,6 @@ class ThemeBuilderInstance extends PageBuilderInstance
 
             $this->repeaterView = $tmp;
         } else {
-            if ($block_name == 'feature') {
-                dd($this->repeaterTemplates);
-            }
             // always use blank data for processing blocks
             $output = $block_class::display($block, '', $options);
         }

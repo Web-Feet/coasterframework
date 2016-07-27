@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Libraries\Builder\ViewClasses;
 
+use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Models\MenuItem;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageLang;
@@ -44,7 +45,7 @@ class MenuItemDetails
         $this->active = $active;
 
         $this->name = $item->custom_name ?: PageLang::name($item->page_id);
-        $this->url = ($this->page && $this->page->link) ? PageLang::url($item->page_id) : PageLang::full_url($item->page_id);
+        $this->url = ($this->page && $this->page->link) ? PageLang::url($item->page_id) : Path::getFullUrl($item->page_id);
     }
 
 }

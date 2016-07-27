@@ -8,7 +8,6 @@ use CoasterCms\Models\FormSubmission;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Template;
-use URL;
 use View;
 
 class FormsController extends Controller
