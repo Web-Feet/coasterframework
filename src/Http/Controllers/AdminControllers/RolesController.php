@@ -5,6 +5,7 @@ use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminAction;
 use CoasterCms\Models\AdminController;
 use CoasterCms\Models\Page;
+use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\User;
 use CoasterCms\Models\UserRole;
@@ -239,8 +240,8 @@ class RolesController extends Controller
                             // remove existing
                             $this->_role_permissions->page_actions()->newPivotStatementForId($page->id)->whereActionId($action_id)->delete();
                             if ($page->group_container > 0) {
-                                $group_pages = Page::where('in_group', '=', $page->group_container)->get();
-                                foreach ($group_pages as $group_page) {
+                                $group = PageGroup::find($page->group_container);
+                                foreach ($group->pages as $group_page) {
                                     $this->_role_permissions->page_actions()->newPivotStatementForId($group_page->id)->whereActionId($action_id)->delete();
                                 }
                             }
@@ -249,8 +250,8 @@ class RolesController extends Controller
                             // update existing
                             $this->_role_permissions->page_actions()->newPivotStatementForId($page->id)->whereActionId($action_id)->update(['access' => $value]);
                             if ($page->group_container > 0) {
-                                $group_pages = Page::where('in_group', '=', $page->group_container)->get();
-                                foreach ($group_pages as $group_page) {
+                                $group = PageGroup::find($page->group_container);
+                                foreach ($group->pages as $group_page) {
                                     $this->_role_permissions->page_actions()->newPivotStatementForId($group_page->id)->whereActionId($action_id)->update(['access' => $value]);
                                 }
                             }
@@ -259,8 +260,8 @@ class RolesController extends Controller
                         // add new page action
                         $this->_role_permissions->page_actions()->attach($page->id, ['action_id' => $action_id, 'access' => $value]);
                         if ($page->group_container > 0) {
-                            $group_pages = Page::where('in_group', '=', $page->group_container)->get();
-                            foreach ($group_pages as $group_page) {
+                            $group = PageGroup::find($page->group_container);
+                            foreach ($group->pages as $group_page) {
                                 $this->_role_permissions->page_actions()->attach($group_page->id, ['action_id' => $action_id, 'access' => $value]);
                             }
                         }

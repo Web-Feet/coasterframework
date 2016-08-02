@@ -231,6 +231,7 @@ class Path
      */
     public static function all($separator = ' &raquo; ')
     {
+        self::_preLoad();
         $paths = [];
         foreach (self::$_preLoaded as $pageId => $path) {
             $paths[$pageId] = self::getFullPath($pageId, $separator);

@@ -4,10 +4,10 @@
 
 <div class="row textbox">
     <div class="col-sm-6">
-        @if (!empty($page->in_group))
-            <p><a href="{!! route('coaster.admin.groups.pages', ['groupId' => $page->in_group]) !!}">Back
-                    to {!! $group_name !!}</a></p>
-        @endif
+        @foreach($page->groups as $group)
+            <p><a href="{!! route('coaster.admin.groups.pages', ['groupId' => $group->id]) !!}">Back
+                    to {!! $group->name !!}</a></p>
+        @endforeach
         @if ($publishingOn && $page->link == 0)
             <p id="version-well" class="well">
                 Published Version: #<span class="live_version_id">{{ $version['live'] }}</span>

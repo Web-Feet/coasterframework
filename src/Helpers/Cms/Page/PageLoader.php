@@ -233,7 +233,7 @@ class PageLoader
         }
 
         if ($byGroupContainerId !== false) {
-            $pageQuery->where('in_group', '=', $byGroupContainerId);
+            $pageQuery->join('page_group_pages', 'page_group_pages.page_id', '=', 'pages.id')->where('page_group_pages.group_id', '=', $byGroupContainerId);
         }
 
         /** @var Page $page */

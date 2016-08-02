@@ -399,13 +399,14 @@ Class Theme extends Eloquent
         $allFilesUsed = [];
 
         $groupIds = [];
+        $groups = PageGroup::all();
+        foreach($groups as $group) {
+            $groupIds[] = $group->id;
+        }
         $pagesData = [];
         $pages = Page::all();
         foreach($pages as $page) {
             $pagesData[$page->id] = $page;
-            if ($page->group_container) {
-                $groupIds[] = $page->group_container;
-            }
         }
         $pageLangData = [];
         $pageLangs = PageLang::where('language_id', '=', Language::current())->orderBy('page_id')->get();
@@ -434,16 +435,12 @@ Class Theme extends Eloquent
             'Is Live (0 or 1)',
             'In Sitemap (0 or 1)',
             'Container for Group Id',
-            'Item in Group Id'
+            'Group Ids (Comma Separated)'
         ]);
 
         foreach ($pageLangs as $pageLang) {
             if (!empty($pagesData[$pageLang->page_id])) {
                 $page = $pagesData[$pageLang->page_id];
-                if (empty($groupIds)) {
-                    $page->group_container = 0;
-                    $page->in_group = 0;
-                }
                 if ($page->link && (strpos($pageLang->url, URL::to('/')) === 0 || strpos($pageLang->url, '/') === 0)) {
                     $filesUsed = [str_replace(URL::to('/'), '', $pageLang->url)];
                     $allFilesUsed = array_merge($filesUsed, $allFilesUsed);
@@ -459,8 +456,8 @@ Class Theme extends Eloquent
                     $page->link,
                     $page->live?1:0,
                     $page->sitemap,
-                    $page->group_container?:'',
-                    $page->in_group?:''
+                    ($page->group_container && !empty($groupIds[$page->group_container]))?$page->group_container:'',
+                    implode(',', $page->groupIds())
                 ]);
             }
         }
@@ -517,66 +514,62 @@ Class Theme extends Eloquent
         }
 
         // export page groups
+        if (!$groups->isEmpty()) {
 
-        if (!empty($groupIds)) {
-            $pageGroups = PageGroup::whereIn('id', $groupIds)->orderBy('id')->get();
-            if (!$pageGroups->isEmpty()) {
+            $groupsCsv = fopen(base_path().'/resources/views/themes/'.$theme->theme.'/export/pages/groups.csv', 'w');
+            $groupAttributesCsv = fopen(base_path().'/resources/views/themes/'.$theme->theme.'/export/pages/group_attributes.csv', 'w');
 
-                $groupsCsv = fopen(base_path().'/resources/views/themes/'.$theme->theme.'/export/pages/groups.csv', 'w');
-                $groupAttributesCsv = fopen(base_path().'/resources/views/themes/'.$theme->theme.'/export/pages/group_attributes.csv', 'w');
+            fputcsv($groupsCsv, [
+                'Group Id',
+                'Group Name',
+                'Group Item Name',
+                'Default Container Page Id',
+                'Default Template',
+                'Order By Attribute Id',
+                'Order Direction (default: asc)'
+            ]);
+
+            fputcsv($groupAttributesCsv, [
+                'Attribute Id',
+                'Group Id',
+                'Block Name',
+                'Container Filter by Block Name'
+            ]);
+
+            $groupAttributesByGroupId = [];
+            $groupAttributes = PageGroupAttribute::orderBy('group_id')->get();
+            foreach ($groupAttributes as $groupAttribute) {
+                if (!isset($groupAttributesByGroupId[$groupAttribute->group_id])) {
+                    $groupAttributesByGroupId[$groupAttribute->group_id] = [];
+                }
+                $groupAttributesByGroupId[$groupAttribute->group_id][] = $groupAttribute;
+            }
+
+            foreach ($groups as $pageGroup) {
 
                 fputcsv($groupsCsv, [
-                    'Group Id',
-                    'Group Name',
-                    'Group Item Name',
-                    'Default Container Page Id',
-                    'Default Template',
-                    'Order By Attribute Id',
-                    'Order Direction (default: asc)'
+                    $pageGroup->id,
+                    $pageGroup->name,
+                    $pageGroup->item_name,
+                    $pageGroup->default_parent,
+                    !empty($templatesById[$pageGroup->default_template])?$templatesById[$pageGroup->default_template]:'',
+                    $pageGroup->order_by_attribute_id,
+                    $pageGroup->order_dir
                 ]);
 
-                fputcsv($groupAttributesCsv, [
-                    'Attribute Id',
-                    'Group Id',
-                    'Block Name',
-                    'Container Filter by Block Name'
-                ]);
-
-                $groupAttributesByGroupId = [];
-                $groupAttributes = PageGroupAttribute::orderBy('group_id')->get();
-                foreach ($groupAttributes as $groupAttribute) {
-                    if (!isset($groupAttributesByGroupId[$groupAttribute->group_id])) {
-                        $groupAttributesByGroupId[$groupAttribute->group_id] = [];
-                    }
-                    $groupAttributesByGroupId[$groupAttribute->group_id][] = $groupAttribute;
-                }
-
-                foreach ($pageGroups as $pageGroup) {
-
-                    fputcsv($groupsCsv, [
-                        $pageGroup->id,
-                        $pageGroup->name,
-                        $pageGroup->item_name,
-                        $pageGroup->default_parent,
-                        !empty($templatesById[$pageGroup->default_template])?$templatesById[$pageGroup->default_template]:'',
-                        $pageGroup->order_by_attribute_id,
-                        $pageGroup->order_dir
-                    ]);
-
-                    foreach ($groupAttributesByGroupId as $groupId => $attributes) {
-                        foreach ($attributes as $attribute) {
-                            fputcsv($groupAttributesCsv, [
-                                $attribute->id,
-                                $groupId,
-                                Block::preload($attribute->item_block_id)->name,
-                                $attribute->filter_by_block_id?:''
-                            ]);
-                        }
+                foreach ($groupAttributesByGroupId as $groupId => $attributes) {
+                    foreach ($attributes as $attribute) {
+                        fputcsv($groupAttributesCsv, [
+                            $attribute->id,
+                            $groupId,
+                            Block::preload($attribute->item_block_id)->name,
+                            $attribute->filter_by_block_id?:''
+                        ]);
                     }
                 }
-                fclose($groupsCsv);
-                fclose($groupAttributesCsv);
             }
+            fclose($groupsCsv);
+            fclose($groupAttributesCsv);
         }
 
         // export page block data
@@ -762,7 +755,7 @@ Class Theme extends Eloquent
                 $row = 0;
                 while (($data = fgetcsv($fileHandle)) !== false) {
                     if ($row++ == 0 && $data[0] == 'Page Id') continue;
-                    list($pageId, $pageName, $pageUrl, $templateName, $parentId, $defaultChildTemplateName, $order, $link, $live, $sitemap, $groupContainer, $groupItem) = $data;
+                    list($pageId, $pageName, $pageUrl, $templateName, $parentId, $defaultChildTemplateName, $order, $link, $live, $sitemap, $groupContainer, $groupIds) = $data;
                     $newPage = new Page;
                     $newPage->id = $pageId;
                     $newPage->template = !empty($templateIds[$templateName]) ? $templateIds[$templateName] : 0;
@@ -773,7 +766,6 @@ Class Theme extends Eloquent
                     $newPage->live = $live;
                     $newPage->sitemap = $sitemap;
                     $newPage->group_container = $groupContainer;
-                    $newPage->in_group = $groupItem;
                     $newPage->save();
                     $newPageLang = new PageLang;
                     $newPageLang->page_id = $pageId;
@@ -783,6 +775,14 @@ Class Theme extends Eloquent
                     $newPageLang->live_version = 1;
                     $newPageLang->save();
                     PageVersion::add_new($pageId);
+                    $groupIds = trim($groupIds);
+                    $groupIds = $groupIds?explode(',', $groupIds):[];
+                    foreach ($groupIds as $groupId) {
+                        $newPageGroupPage = new PageGroupPages;
+                        $newPageGroupPage->page_id = $pageId;
+                        $newPageGroupPage->group_id = $groupId;
+                        $newPageGroupPage->save();
+                    }
                 }
             }
 

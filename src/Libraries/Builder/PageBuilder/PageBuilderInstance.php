@@ -361,7 +361,7 @@ class PageBuilderInstance
      */
     public function sitemap($options = [])
     {
-        $topLevelPages = Page::where('parent', '=', 0)->where('in_group', '=', 0)->get();
+        $topLevelPages = Page::where('parent', '=', 0)->get();
         $topLevelPages = $topLevelPages->isEmpty() ? [] : $topLevelPages;
         foreach ($topLevelPages as $key => $page) {
             if (!$page->is_live() || !$page->sitemap) {

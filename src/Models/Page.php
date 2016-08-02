@@ -27,9 +27,9 @@ class Page extends Eloquent
         return $this->hasOne('CoasterCms\Models\PageLang')->where('language_id', '=', config('coaster::frontend.language'));
     }
 
-    public function group()
+    public function groups()
     {
-        return $this->belongsTo('CoasterCms\Models\PageGroup', 'in_group');
+        return $this->belongsToMany('CoasterCms\Models\PageGroup', 'page_group_pages', 'page_id', 'group_id');
     }
 
     public function versions()
@@ -51,12 +51,59 @@ class Page extends Eloquent
         return false;
     }
 
+    public function groupItemsNames()
+    {
+        $itemNames = '';
+        foreach ($this->groups as $group) {
+            $itemNames[] = $group->item_name;
+        }
+        return implode('/', array_unique($itemNames));
+    }
+
+    public function groupNames()
+    {
+        $itemNames = '';
+        foreach ($this->groups as $group) {
+            $itemNames[] = $group->name;
+        }
+        return implode('/', array_unique($itemNames));
+    }
+
+    public function groupIds()
+    {
+        $ids = [];
+        foreach ($this->groups as $group) {
+            $ids[] = $group->id;
+        }
+        return array_unique($ids);
+    }
+
+    public function canDuplicate()
+    {
+        foreach ($this->groups as $group) {
+            $canDuplicate = false;
+            $containers = Page::where('group_container', '=', $group)->get();
+            foreach ($containers as $container) {
+                if ($canDuplicate = Auth::action('pages.add', ['page_id' => $container->id])) {
+                    break;
+                }
+            }
+            if (!$canDuplicate) {
+                return false;
+            }
+        }
+        if ($this->parent >= 0 && !Auth::action('pages.add', ['page_id' => $this->parent])) {
+            return false;
+        }
+        return true;
+    }
+
     public static function get_total($include_group = false)
     {
         if ($include_group) {
             return self::where('link', '=', '0')->count();
         } else {
-            return self::where('link', '=', '0')->where('in_group', '=', '0')->where('group_container', '=', '0')->count();
+            return self::where('link', '=', '0')->where('parent', '<=', '0')->where('group_container', '=', '0')->count();
         }
     }
 
@@ -189,7 +236,7 @@ class Page extends Eloquent
                 continue;
             }
             if ($page->link <= $max_link && $page->parent >= $min_parent) {
-                if (((isset($match_parent) && $page->parent == $match_parent) || !isset($match_parent)) && ((isset($match_group) && $page->in_group == $match_group) || !isset($match_group))) {
+                if (!((isset($match_parent) && $page->parent == $match_parent) || (isset($match_group) && in_array($match_group, $page->groupIds())))) {
                     $pages_array[] = $page->id;
                 }
             }

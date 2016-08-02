@@ -73,12 +73,8 @@ class Gallery extends _Base
             if (!empty($page)) {
                 $page_lang_data = PageLang::preload($page_id);
                 $name = $page_lang_data->name;
-                if ($page->in_group > 0) {
-                    $parent_page = PageGroup::find($page->in_group);
-                    if (!empty($parent_page)) {
-                        $parent_lang_data = PageLang::preload($parent_page->default_parent);
-                        $name = $parent_lang_data->name . " / " . $name;
-                    }
+                if ($page->groups) {
+                    $name = $page->groupNames() . " / " . $name;
                 } elseif ($page->parent > 0) {
                     $page = Page::preload($page->parent);
                     $parent_lang_data = PageLang::preload($page->id);

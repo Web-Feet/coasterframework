@@ -29,6 +29,14 @@ class PageGroup extends Eloquent
     }
 
     /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function pages()
+    {
+        return $this->belongsToMany('CoasterCms\Models\Page', 'page_group_pages', 'group_id', 'page_id');
+    }
+
+    /**
      * Get all pageIds for this group, can filter by only live pages
      * @param bool $checkLive
      * @param bool $sort
@@ -48,12 +56,13 @@ class PageGroup extends Eloquent
             foreach (self::$groupPages[$this->id] as $filter => $arr) {
                 self::$groupPages[$this->id][$filter.$sortedSuffix] = $arr;
             }
-            $pages = Page::where('in_group', '=', $this->id)->get();
-            if (!$pages->isEmpty()) {
-                foreach ($pages as $page) {
-                    self::$groupPages[$this->id]['all'][] = $page->id;
-                    if ($page->is_live()) {
-                        self::$groupPages[$this->id]['live'][] = $page->id;
+            $groupPages = $this->pages;
+            if (!$groupPages->isEmpty()) {
+                foreach ($groupPages as $groupPage) {
+                    /** @var Page $groupPage */
+                    self::$groupPages[$this->id]['all'][] = $groupPage->id;
+                    if ($groupPage->is_live()) {
+                        self::$groupPages[$this->id]['live'][] = $groupPage->id;
                     }
                 }
             }

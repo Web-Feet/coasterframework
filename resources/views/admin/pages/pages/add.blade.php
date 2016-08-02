@@ -2,15 +2,6 @@
 
 <h1>Adding New {!! $item_name !!}</h1>
 
-@if (!empty($page->in_group))
-    <div class="row textbox">
-        <div class="col-sm-12">
-            <p><a href="{!! route('coaster.admin.groups.pages', ['groupId' => $page->in_group]) !!}">Back
-                    to {!! $group_name !!}</a></p>
-        </div>
-    </div>
-@endif
-
 <br/>
 
 {!! Form::open(['class' => 'form-horizontal', 'id' => 'addForm', 'enctype' => 'multipart/form-data']) !!}
@@ -40,7 +31,8 @@
             selected_tab('#addForm', 0);
 
             $('#page_info\\[link\\]').change(function () {
-                if ($(this).val() == 1) {
+                console.log($(this).is(':checked'));
+                if ($(this).is(':checked')) {
                     url_prefix = $('#url-prefix').detach();
                     if (link_show) {
                         link_show.appendTo('#url-group');
