@@ -40,10 +40,14 @@ Class Theme extends Eloquent
             $includeTemplateModel = Template::find($includeTemplate);
             if (empty($includeTemplateModel)) {
                 $templates[$includeTemplate] = 'Non existent template';
-            } elseif (!empty($templateFile[$includeTemplateModel->template])) {
-                $templates[$includeTemplate] = $templates[$templateFile[$includeTemplateModel->template]].' (using closest match in current theme)';
             } else {
-                $templates[$includeTemplate] = (!empty($includeTemplateModel->label) ? $includeTemplateModel->label : $includeTemplateModel->template).' (not found in current theme - frontend won\'t load)';
+                $altTheme = Theme::find($includeTemplateModel->theme_id);
+                $altThemeName = $altTheme ? $altTheme->theme : 'Non Existent';
+                if (!empty($templateFile[$includeTemplateModel->template])) {
+                    $templates[$includeTemplate] = $templates[$templateFile[$includeTemplateModel->template]] . ' (warning - from \''.$altThemeName.'\' theme, frontend will use template from \''.$theme->theme.'\' theme)';
+                } else {
+                    $templates[$includeTemplate] = (!empty($includeTemplateModel->label) ? $includeTemplateModel->label : $includeTemplateModel->template) . ' (error - from \''.$altThemeName.'\' theme, choose other template from current theme)';
+                }
             }
         }
         asort($templates);
@@ -778,7 +782,7 @@ Class Theme extends Eloquent
                     $groupIds = trim($groupIds);
                     $groupIds = $groupIds?explode(',', $groupIds):[];
                     foreach ($groupIds as $groupId) {
-                        $newPageGroupPage = new PageGroupPages;
+                        $newPageGroupPage = new PageGroupPage;
                         $newPageGroupPage->page_id = $pageId;
                         $newPageGroupPage->group_id = $groupId;
                         $newPageGroupPage->save();

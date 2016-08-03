@@ -31,7 +31,6 @@
             selected_tab('#addForm', 0);
 
             $('#page_info\\[link\\]').change(function () {
-                console.log($(this).is(':checked'));
                 if ($(this).is(':checked')) {
                     url_prefix = $('#url-prefix').detach();
                     if (link_show) {
@@ -53,7 +52,7 @@
             });
 
             $('#page_info_lang\\[name\\]').change(function () {
-                if ($('#page_info\\[link\\]').val() == 0) {
+                if (!$('#page_info\\[link\\]').is(':checked')) {
                     $('#page_info_url').val(
                         $(this).val()
                             .toLowerCase()

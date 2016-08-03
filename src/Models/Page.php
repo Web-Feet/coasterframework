@@ -53,7 +53,7 @@ class Page extends Eloquent
 
     public function groupItemsNames()
     {
-        $itemNames = '';
+        $itemNames = [];
         foreach ($this->groups as $group) {
             $itemNames[] = $group->item_name;
         }
@@ -62,7 +62,7 @@ class Page extends Eloquent
 
     public function groupNames()
     {
-        $itemNames = '';
+        $itemNames = [];
         foreach ($this->groups as $group) {
             $itemNames[] = $group->name;
         }

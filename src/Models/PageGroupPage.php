@@ -2,7 +2,7 @@
 
 use Eloquent;
 
-class PageGroupPages extends Eloquent
+class PageGroupPage extends Eloquent
 {
     /**
      * @var string

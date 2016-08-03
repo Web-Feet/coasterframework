@@ -1,7 +1,5 @@
 @if (!$page->id || $page->link == 0 || $menus)
-    <div class="form-group">
-        <h4 class="col-sm-12">Display Info</h4>
-    </div>
+    <h4>Display Info</h4>
 @endif
 
 @if (!$page->id || $page->link == 0)

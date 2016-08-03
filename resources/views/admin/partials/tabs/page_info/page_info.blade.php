@@ -1,6 +1,4 @@
-<div class="form-group">
-    <h4 class="col-sm-12">Page Details</h4>
-</div>
+<h4>Page Details</h4>
 
 @if ($pageSelect && !$page->id && $page->groups->isEmpty())
     {!! CmsBlockInput::make('select', ['name' => 'page_info[parent]', 'label' => 'Parent Page', 'content' => $pageSelect]) !!}
@@ -9,9 +7,7 @@
 @endif
 
 @if ($publishing_on && $page->id && $page->link == 0)
-    <div class="form-group">
-        <p class="col-sm-offset-2 col-sm-10">Page {{ $beacon_select ? 'beacons, ' : '' }}name and url are NOT versioned, changes to these will be made live on save.</p>
-    </div>
+    <p class="col-sm-offset-2 col-sm-10">Page {{ $beacon_select ? 'beacons, ' : '' }}name and url are NOT versioned, changes to these will be made live on save.</p>
 @endif
 
 @if ($beacon_select)

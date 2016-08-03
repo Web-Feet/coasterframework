@@ -15,6 +15,7 @@ use CoasterCms\Models\MenuItem;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageBlock;
 use CoasterCms\Models\PageGroup;
+use CoasterCms\Models\PageGroupPage;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\PagePublishRequests;
 use CoasterCms\Models\PageSearchData;
@@ -83,7 +84,7 @@ class PagesController extends AdminController
         $input = Request::all();
         $page_info = $input['page_info'];
         $page = Page::find($pageId);
-        $groups = $page->id ? $page->groups : []; // ignore page limit for group pages
+        $groups = $page ? $page->groups : []; // ignore page limit for group pages
         if (Page::at_limit() && $page_info['link'] != 1 && !$groups) {
             $this->layoutData['content'] = 'Page Limit Reached';
         } else {
@@ -529,9 +530,9 @@ class PagesController extends AdminController
         }
 
         $siblings = [];
-        foreach ($page_groups as $pageGroupId) {
+        foreach ($page_groups as $pageGroupId => $checkedVal) {
             $pageGroup = PageGroup::find($pageGroupId);
-            $siblings = array_merge($pageGroup->itemPageIds(), $siblings);
+            $siblings = array_merge($pageGroup ? $pageGroup->itemPageIds() : [], $siblings);
         }
         if ($page_info['parent'] >= 0) {
             $siblings = array_merge(Page::child_page_ids($page_info['parent']), $siblings);
@@ -576,8 +577,8 @@ class PagesController extends AdminController
         }
 
         foreach ($page_info as $attribute => $value) {
-            if (!in_array($attribute, ['updated_at', 'created_at'])) {
-                $page->$attribute = $page_info[$attribute];
+            if (!in_array($attribute, ['updated_at', 'created_at']) && isset($page_info[$attribute])) {
+                $page->$attribute = ($page_info[$attribute] !== '' ? $page_info[$attribute] : null);
             }
         }
 
@@ -635,6 +636,16 @@ class PagesController extends AdminController
             }
         }
         PageSearchData::update_processed_text(0, strip_tags($page_lang->name), $page->id, Language::current());
+
+        /*
+         * Save Groups
+         */
+        $currentGroupIds = $page->groupIds();
+        $newGroupIds = array_keys($page_groups);
+        PageGroupPage::where('page_id', '=', $page->id)->whereIn('group_id', array_diff($currentGroupIds, $newGroupIds))->delete();
+        foreach (array_diff($newGroupIds, $currentGroupIds) as $addGroupId) {
+            $page->groups()->attach($addGroupId);
+        }
 
         /*
          * Save Page Version
@@ -811,7 +822,8 @@ class PagesController extends AdminController
             if ($parent = Page::find($extra_info['parent'])) {
                 if ($parent->group_container) {
                     $page->parent = -1;
-                    $page->groups = new Collection([PageGroup::find($parent->group_container)]);
+                    $group = PageGroup::find($parent->group_container);
+                    $page->groups = new Collection($group ? [$group] : []);
                 } else {
                     $page->parent = $extra_info['parent'];
                     $page->template = $parent->child_template;

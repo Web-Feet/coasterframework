@@ -12,6 +12,7 @@ use CoasterCms\Models\Language;
 use CoasterCms\Models\Menu;
 use CoasterCms\Models\MenuItem;
 use CoasterCms\Models\Page;
+use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\PagePublishRequests;
 use CoasterCms\Models\PageSearchData;
@@ -113,6 +114,12 @@ class BlockManager
             }
 
             $tab_contents[0] .= View::make('coaster::partials.tabs.page_info.page_info', ['page' => $page, 'page_lang' => $page_lang, 'beacon_select' => $beaconSelect, 'pageSelect' => $pageSelect, 'urlArray' => $fullUrls, 'urlPrefixPage' => $urlPrefixPage, 'publishing_on' => $publishingOn, 'can_publish' => $canPublish])->render();
+
+            // groups
+            $groups = PageGroup::all();
+            if (!$groups->isEmpty()) {
+                $tab_contents[0] .= View::make('coaster::partials.tabs.page_info.groups', ['page' => $page, 'page_lang' => $page_lang, 'groups' => $groups])->render();
+            }
 
             //template
             $templateData = Template::find($page->template);

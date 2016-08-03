@@ -1,6 +1,4 @@
-<div class="form-group">
-    <h4 class="col-sm-12">Live Options</h4>
-</div>
+<h4>Live Options</h4>
 
 {!! CmsBlockInput::make('select', ['name' => 'page_info[live]', 'label' => ($page->link)?'Link Visible ?':'Live ?', 'content' => $liveSelect, 'disabled' => $disabled]) !!}
 <div class="live-date-options">
