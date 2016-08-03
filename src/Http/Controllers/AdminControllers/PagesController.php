@@ -473,7 +473,7 @@ class PagesController extends AdminController
         $canPublish = (config('coaster::admin.publishing') > 0 && Auth::action('pages.version-publish', ['page_id' => $pageId])) || config('coaster::admin.publishing') == 0;
 
         /*
-         * Load data from request / db
+         * Load missing page & page_lang request data from db or use defaults
          */
         if ($pageId || $existingPage) {
             $page = $existingPage ?: Page::find($pageId);
@@ -493,7 +493,6 @@ class PagesController extends AdminController
                 }
             }
             $page_info_lang = $input['page_info_lang'];
-            $input['page_groups'] = $page->groupIds();
         } else {
             $page = new Page;
             $page_lang = new PageLang;
