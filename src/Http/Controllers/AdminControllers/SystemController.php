@@ -234,6 +234,9 @@ class SystemController extends Controller
     public function getValidateDb($fix = null)
     {
         $messages = $this->_db_messages($fix);
+        if (isset($messages['redirect'])) {
+            return $messages['redirect'];
+        }
         $this->layoutData['content'] = View::make('coaster::pages.system.validate-db', $messages);
     }
 
@@ -374,7 +377,7 @@ class SystemController extends Controller
         }
 
         if ($basic_fix == 1) {
-            return \redirect()->route('coaster.admin.validate-db');
+            return ['redirect' => \redirect()->route('coaster.admin.system.validate-db')];
         }
 
         return ['errors' => $errors, 'warnings' => $warnings, 'notices' => $notices];

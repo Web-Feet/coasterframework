@@ -27,6 +27,10 @@ class Blueprint {
 
 	public function __call($type, $args)
 	{
+        if ($type == 'dropColumn') {
+            unset(Column::$instances[$this->tableName][$args[0]]);
+            return null;
+        }
         $details = ['Type' => $type];
         if ($type == 'enum') {
             $details['Type'] .= '(\''.implode('\',\'', $args[1]).'\')';

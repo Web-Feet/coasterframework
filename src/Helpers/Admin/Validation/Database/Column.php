@@ -16,8 +16,9 @@ class Column {
 
         $details['Field'] = $fieldName;
 
+        $default = ['Type' => '', 'Null' => 'NO', 'Key' => '', 'Default' => null, 'Extra' => ''];
 		self::$instances[$this->tableName][$this->fieldName] = array_merge(
-            ['Type' => '', 'Null' => 'NO', 'Key' => '', 'Default' => null, 'Extra' => ''],
+            isset(self::$instances[$this->tableName][$this->fieldName]) ? self::$instances[$this->tableName][$this->fieldName] : $default,
             $details
         );
 
