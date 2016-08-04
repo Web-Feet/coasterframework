@@ -110,7 +110,7 @@ class BlockManager
             }
             $urlPrefixPage = $page->parent;
             if (!$page->groups->isEmpty()) {
-                $urlPrefixPage = $page->groups[0]->default_parent;
+                //$urlPrefixPage = -1;
             }
 
             $tab_contents[0] .= View::make('coaster::partials.tabs.page_info.page_info', ['page' => $page, 'page_lang' => $page_lang, 'beacon_select' => $beaconSelect, 'pageSelect' => $pageSelect, 'urlArray' => $fullUrls, 'urlPrefixPage' => $urlPrefixPage, 'publishing_on' => $publishingOn, 'can_publish' => $canPublish])->render();

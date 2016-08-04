@@ -555,7 +555,7 @@ Class Theme extends Eloquent
                     $pageGroup->id,
                     $pageGroup->name,
                     $pageGroup->item_name,
-                    $pageGroup->default_parent,
+                    $pageGroup->url_priority,
                     !empty($templatesById[$pageGroup->default_template])?$templatesById[$pageGroup->default_template]:'',
                     $pageGroup->order_by_attribute_id,
                     $pageGroup->order_dir
@@ -801,7 +801,7 @@ Class Theme extends Eloquent
                     $newGroup->id = $groupId;
                     $newGroup->name = $groupName;
                     $newGroup->item_name = $itemName;
-                    $newGroup->default_parent = $defaultContainerPageId;
+                    $newGroup->url_priority = $defaultContainerPageId;
                     $newGroup->default_template = !empty($templateIds[$defaultTemplate]) ? $templateIds[$defaultTemplate] : 0;
                     $newGroup->order_by_attribute_id = $orderAttributeId;
                     $newGroup->order_dir = $orderDirection;

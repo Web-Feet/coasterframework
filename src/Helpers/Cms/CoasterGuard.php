@@ -47,11 +47,15 @@ class CoasterGuard extends SessionGuard
             return false;
         }
 
-        $returnOptions = [];
-        $authRouteCheck = new AuthRoute($controller, $action, $parameters, $returnOptions);
+        $actionOptions = [];
+        $authRouteCheck = new AuthRoute($controller, $action, $parameters, $actionOptions);
         event($authRouteCheck);
 
-        return ($authRouteCheck->ignore || $this->action([$controller, $action], $returnOptions));
+        if ($authRouteCheck->override !== null) {
+            return $authRouteCheck->override;
+        } else {
+            return $this->action([$controller, $action], $actionOptions);
+        }
     }
 
 }

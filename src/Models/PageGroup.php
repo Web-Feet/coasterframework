@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Models;
 
 use CoasterCms\Helpers\Cms\BlockManager;
+use Auth;
 use Eloquent;
 
 class PageGroup extends Eloquent
@@ -34,6 +35,34 @@ class PageGroup extends Eloquent
     public function pages()
     {
         return $this->belongsToMany('CoasterCms\Models\Page', 'page_group_pages', 'group_id', 'page_id');
+    }
+
+    /**
+     * @return bool
+     */
+    public function canAddItems()
+    {
+        $containers = Page::where('group_container', '=', $this->id)->get();
+        $canDuplicate = false;
+        foreach ($containers as $container) {
+            if ($canDuplicate = Auth::action('pages.add', ['page_id' => $container->id])) {
+                break;
+            }
+        }
+        return $canDuplicate;
+    }
+
+    /**
+     * @return array
+     */
+    public function containerPageIds()
+    {
+        $containerIds = [];
+        $containers = Page::where('group_container', '=', $this->id)->get();
+        foreach ($containers as $container) {
+            $containerIds[] = $container->id;
+        }
+        return $containerIds;
     }
 
     /**

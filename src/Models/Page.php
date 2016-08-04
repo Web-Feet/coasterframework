@@ -80,15 +80,9 @@ class Page extends Eloquent
 
     public function canDuplicate()
     {
+        // must be able to add to all groups and parent page of existing page
         foreach ($this->groups as $group) {
-            $canDuplicate = false;
-            $containers = Page::where('group_container', '=', $group)->get();
-            foreach ($containers as $container) {
-                if ($canDuplicate = Auth::action('pages.add', ['page_id' => $container->id])) {
-                    break;
-                }
-            }
-            if (!$canDuplicate) {
+            if (!$group->canAddItems()) {
                 return false;
             }
         }

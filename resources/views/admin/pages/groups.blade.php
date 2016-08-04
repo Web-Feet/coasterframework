@@ -4,8 +4,8 @@
     </div>
     <div class="col-sm-6 text-right">
         @if ($can_add)
-            <button class="btn btn-warning addButton" data-page="{!! $group->default_parent !!}"><i
-                        class="fa fa-plus"></i> &nbsp; Add {!! $group->item_name !!}</button>
+            <button class="btn btn-warning addButton" data-group="{!! $group->id !!}">
+                <i class="fa fa-plus"></i> &nbsp; Add {!! $group->item_name !!}</button>
         @endif
     </div>
 </div>
@@ -18,7 +18,7 @@
         $(document).ready(function () {
 
             $('.addButton').click(function () {
-                document.location.href = route('coaster.admin.pages.add', {pageId: $(this).attr('data-page')});
+                document.location.href = route('coaster.admin.pages.add', {pageId: 0, groupId: $(this).attr('data-group')});
             });
 
             watch_for_delete('.delete', 'page', function (el) {

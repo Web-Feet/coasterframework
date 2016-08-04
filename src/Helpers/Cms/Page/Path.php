@@ -66,7 +66,6 @@ class Path
         $this->url = 'not_set';
         $this->groupContainerNames = [];
         $this->groupContainerUrls = [];
-        $this->groupContainerDefault = 0;
     }
 
     /**
@@ -112,7 +111,6 @@ class Path
                             $groupPagePathData->url = $groupPageLang->url;
                             $groupPagePathData->groupContainerNames[$pageId] = $pagePathData->fullName;
                             $groupPagePathData->groupContainerUrls[$pageId] = $pagePathData->fullUrl;
-                            $groupPagePathData->groupContainerDefault = $group->default_parent;
                         }
                     }
                 }
@@ -155,7 +153,7 @@ class Path
         $groupContainerPageId = !empty($pageData[1]) ? $pageData[1] : 0;
         if (!$pagePathData->fullUrl) {
             $pagePathData = clone $pagePathData;
-            $groupContainerPageId = $groupContainerPageId ?: $pagePathData->groupContainerDefault;
+            $groupContainerPageId = $groupContainerPageId ?: key($pagePathData->groupContainerUrls);
             if (!empty($pagePathData->groupContainerUrls[$groupContainerPageId])) {
                 $pagePathData->fullName = $pagePathData->groupContainerNames[$groupContainerPageId] . $pagePathData->separator . $pagePathData->name;
                 $pagePathData->fullUrl = $pagePathData->groupContainerUrls[$groupContainerPageId] . '/' . $pagePathData->url;

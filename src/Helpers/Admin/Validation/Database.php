@@ -7,7 +7,7 @@ class Database {
 	public static function generateJson($migrationsFolder = null)
 	{
         if (empty($migrationsFolder)) {
-            $migrationsFolder = realpath(__DIR__ . '/../../../database/migrations');
+            $migrationsFolder = realpath(__DIR__ . '/../../../../database/migrations');
         }
 
         if (!is_dir($migrationsFolder)) {

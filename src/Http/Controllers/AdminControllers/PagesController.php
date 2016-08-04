@@ -74,18 +74,18 @@ class PagesController extends AdminController
         $this->layoutData['modals'] = View::make('coaster::modals.general.delete_item');
     }
 
-    public function getAdd($pageId = 0)
+    public function getAdd($pageId = 0, $groupId = 0)
     {
-        $this->layoutData['content'] = $this->_load_page_data(0, array('parent' => $pageId));
+        $this->layoutData['content'] = $this->_load_page_data(0, 0, ['parentPageId' => $pageId, 'groupId' => $groupId]);
     }
 
-    public function postAdd($pageId = 0)
+    public function postAdd($pageId = 0, $groupId = 0)
     {
         $input = Request::all();
         $page_info = $input['page_info'];
         $page = Page::find($pageId);
         $groups = $page ? $page->groups : []; // ignore page limit for group pages
-        if (Page::at_limit() && $page_info['link'] != 1 && !$groups) {
+        if (Page::at_limit() && $page_info['link'] != 1 && !$page_info['parent_id']) {
             $this->layoutData['content'] = 'Page Limit Reached';
         } else {
             $new_page_id = $this->_save_page_info();
@@ -98,9 +98,9 @@ class PagesController extends AdminController
         return null;
     }
 
-    public function getEdit($pageId, $version = 0)
+    public function getEdit($pageId, $versionId = 0)
     {
-        $this->layoutData['content'] = $this->_load_page_data($pageId, array('version' => $version));
+        $this->layoutData['content'] = $this->_load_page_data($pageId, $versionId);
         return null;
     }
 
@@ -718,15 +718,10 @@ class PagesController extends AdminController
         return $page->id;
     }
 
-    private function _load_page_data($pageId = 0, $extra_info = [])
+    private function _load_page_data($pageId = 0, $versionId = 0, $addPageInfo = [])
     {
         $page_info = Request::input('page_info');
         $page_info_lang = Request::input('page_info_lang');
-
-        $extra_info = array_merge([
-            'parent' => 0,
-            'version' => 0
-        ], $extra_info);
 
         $blocks = null;
         $blocks_content = null;
@@ -764,7 +759,7 @@ class PagesController extends AdminController
 
             // get version data
             $versionData['latest'] = PageVersion::latest_version($pageId);
-            $versionData['editing'] = ($extra_info['version'] == 0 || $extra_info['version'] > $versionData['latest']) ? $versionData['latest'] : $extra_info['version'];
+            $versionData['editing'] = ($versionId == 0 || $versionId > $versionData['latest']) ? $versionData['latest'] : $versionId;
             $versionData['live'] = $page_lang->live_version;
 
             // get frontend link (preview or direct link if document)
@@ -815,22 +810,18 @@ class PagesController extends AdminController
 
             // set page data
             $page = new Page;
-            $page->groups = new Collection;
-            $page->parent = 0;
+            if (!empty($addPageInfo['parentPageId']) && $parent = Page::find($addPageInfo['parentPageId'])) {
+                $page->parent = $parent->id;
+                $page->template = $parent->child_template;
+            } else {
+                $page->parent = 0;
+            }
+            if (!empty($addPageInfo['groupId']) && $group = PageGroup::find($addPageInfo['groupId'])) {
+                $page->groups->add($group);
+                $page->template = $group->default_template;
+                $page->parent = empty($addPageInfo['parentPageId']) ? -1 : $page->parent;
+            }
             $page->group_container = 0;
-            if ($parent = Page::find($extra_info['parent'])) {
-                if ($parent->group_container) {
-                    $page->parent = -1;
-                    $group = PageGroup::find($parent->group_container);
-                    $page->groups = new Collection($group ? [$group] : []);
-                } else {
-                    $page->parent = $extra_info['parent'];
-                    $page->template = $parent->child_template;
-                }
-            }
-            if (!$page->groups->isEmpty()) {
-                $page->template = $page->groups[0]->default_template;
-            }
             $page->link = 0;
             if (!$auth['can_publish']) {
                 $page->live = 0;

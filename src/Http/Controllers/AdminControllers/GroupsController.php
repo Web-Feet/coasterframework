@@ -56,10 +56,9 @@ class GroupsController extends Controller
             }
 
             $pagesTable = View::make('coaster::partials.groups.page_table', array('rows' => $pageRows, 'item_name' => $group->item_name, 'blocks' => $attributeBlocks))->render();
-            $canAdd = Auth::action('pages.add', ['page_id' => $group->default_parent]);
 
             $this->layoutData['modals'] = View::make('coaster::modals.general.delete_item');
-            $this->layoutData['content'] = View::make('coaster::pages.groups', array('group' => $group, 'pages' => $pagesTable, 'can_add' => $canAdd));
+            $this->layoutData['content'] = View::make('coaster::pages.groups', array('group' => $group, 'pages' => $pagesTable, 'can_add' => $group->canAddItems()));
         }
     }
 

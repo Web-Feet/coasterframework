@@ -1,6 +1,6 @@
 <h4>Page Details</h4>
 
-@if ($pageSelect && !$page->id && $page->groups->isEmpty())
+@if ($pageSelect && !$page->id && $page->parent != -1)
     {!! CmsBlockInput::make('select', ['name' => 'page_info[parent]', 'label' => 'Parent Page', 'content' => $pageSelect]) !!}
 @else
     {!! Form::hidden('page_info[parent]', $page->parent, ['id' => 'page_info[parent]']) !!}

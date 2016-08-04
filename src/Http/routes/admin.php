@@ -41,8 +41,8 @@ Route::group(['middleware' => ['web', 'coaster.admin'], 'namespace' => $adminCon
     Route::get($adminUrl . 'home/your-requests', ['uses' => 'HomeController@getYourRequests', 'as' => $routeNamePrefix . 'home.your-requests']);
 
     Route::get($adminUrl . 'pages', ['uses' => 'PagesController@getIndex', 'as' => $routeNamePrefix . 'pages']);
-    Route::get($adminUrl . 'pages/add/{pageId?}', ['uses' => 'PagesController@getAdd', 'as' => $routeNamePrefix . 'pages.add']);
-    Route::post($adminUrl . 'pages/add/{pageId?}', ['uses' => 'PagesController@postAdd', 'as' => $routeNamePrefix . 'pages.add.post']);
+    Route::get($adminUrl . 'pages/add/{pageId?}/{groupId?}', ['uses' => 'PagesController@getAdd', 'as' => $routeNamePrefix . 'pages.add']);
+    Route::post($adminUrl . 'pages/add/{pageId?}/{groupId?}', ['uses' => 'PagesController@postAdd', 'as' => $routeNamePrefix . 'pages.add.post']);
     Route::get($adminUrl . 'pages/edit/{pageId}/{version?}', ['uses' => 'PagesController@getEdit', 'as' => $routeNamePrefix . 'pages.edit'])->where(['pageId' => '\w+', 'version' => '\w+']);
     Route::post($adminUrl . 'pages/edit/{pageId}', ['uses' => 'PagesController@postEdit', 'as' => $routeNamePrefix . 'pages.edit.post']);
     Route::post($adminUrl . 'pages/sort', ['uses' => 'PagesController@postSort', 'as' => $routeNamePrefix . 'pages.sort']);

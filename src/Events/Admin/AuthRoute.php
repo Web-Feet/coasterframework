@@ -23,9 +23,9 @@ class AuthRoute
     public $returnOptions;
 
     /**
-     * @var bool
+     * @var bool|null
      */
-    public $ignore;
+    public $override;
 
     /**
      * LoadResponse constructor.
@@ -40,7 +40,7 @@ class AuthRoute
         $this->action = $action;
         $this->parameters = $parameters;
         $this->returnOptions = &$returnOptions;
-        $this->ignore = false;
+        $this->override = null;
     }
     
     /**
