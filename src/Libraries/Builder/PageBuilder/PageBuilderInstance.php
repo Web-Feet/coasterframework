@@ -313,7 +313,7 @@ class PageBuilderInstance
 
         if ($this->is404) {
             $page404 = new Page;
-            $pageLang = new PageLang();
+            $pageLang = new PageLang;
             $pageLang->url = '';
             $pageLang->name = $options['404-name'];
             $page404->setRelation('page_lang', [$pageLang]);

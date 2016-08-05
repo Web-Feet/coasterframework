@@ -29,7 +29,7 @@ class Page extends Eloquent
 
     public function groups()
     {
-        return $this->belongsToMany('CoasterCms\Models\PageGroup', 'page_group_pages', 'page_id', 'group_id');
+        return $this->belongsToMany('CoasterCms\Models\PageGroup', 'page_group_pages', 'page_id', 'group_id')->withPivot('url_priority');
     }
 
     public function versions()
@@ -90,6 +90,21 @@ class Page extends Eloquent
             return false;
         }
         return true;
+    }
+
+    public function parentPathIds()
+    {
+        $urls = [];
+        if ($this->parent >= 0) {
+            $urls[$this->parent] = 100;
+        }
+        foreach ($this->groups as $group) {
+            foreach ($group->containerPageIds() as $containerPageId) {
+                $urls[$containerPageId] = $group->pivot->url_priority ?: $group->url_priority;
+            }
+        }
+        arsort($urls);
+        return $urls ?: [-1 => 100];
     }
 
     public static function get_total($include_group = false)

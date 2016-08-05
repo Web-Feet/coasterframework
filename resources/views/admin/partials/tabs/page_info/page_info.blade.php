@@ -21,7 +21,9 @@
     <div class="col-sm-10">
         <div id="url-group" class="input-group">
             @if (!$page->id || $page->link == 0)
-                <span class="input-group-addon" id="url-prefix">{{ $urlArray[$urlPrefixPage] }}</span>
+                @foreach($urlPrefixes as $urlPrefix => $priority)
+                    <span class="input-group-addon" id="url-prefix">{{ $urlArray[$urlPrefix] }}</span>
+                @endforeach
             @endif
             <?php $options = []; if (!$can_publish && $page->id): $options = ['disabled' => true]; endif; ?>
             {!! Form::text('page_info_lang[url]', urldecode($page_lang->url), ['class' => 'form-control', 'id' => 'page_info_url'] + $options) !!}

@@ -108,12 +108,8 @@ class BlockManager
             foreach (Path::all() as $pageId => $details) {
                 $fullUrls[$pageId] = rtrim($details->fullUrl, '/') . '/';
             }
-            $urlPrefixPage = $page->parent;
-            if (!$page->groups->isEmpty()) {
-                //$urlPrefixPage = -1;
-            }
-
-            $tab_contents[0] .= View::make('coaster::partials.tabs.page_info.page_info', ['page' => $page, 'page_lang' => $page_lang, 'beacon_select' => $beaconSelect, 'pageSelect' => $pageSelect, 'urlArray' => $fullUrls, 'urlPrefixPage' => $urlPrefixPage, 'publishing_on' => $publishingOn, 'can_publish' => $canPublish])->render();
+            $urlPrefixes = $page->parentPathIds();
+            $tab_contents[0] .= View::make('coaster::partials.tabs.page_info.page_info', ['page' => $page, 'page_lang' => $page_lang, 'beacon_select' => $beaconSelect, 'pageSelect' => $pageSelect, 'urlArray' => $fullUrls, 'urlPrefixes' => $urlPrefixes, 'publishing_on' => $publishingOn, 'can_publish' => $canPublish])->render();
 
             // groups
             $groups = PageGroup::all();

@@ -58,7 +58,7 @@ class AdminController extends Controller
      */
     public function callAction($method, $parameters)
     {
-        $altResponseContent = call_user_func_array([$this, $method], $parameters);
+        $altResponseContent = parent::callAction($method, $parameters);
 
         if (is_null($altResponseContent)) {
             $this->layoutData = array_merge([
