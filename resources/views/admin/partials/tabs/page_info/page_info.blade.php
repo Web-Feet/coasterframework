@@ -21,9 +21,18 @@
     <div class="col-sm-10">
         <div id="url-group" class="input-group">
             @if (!$page->id || $page->link == 0)
-                @foreach($urlPrefixes as $urlPrefix => $priority)
-                    <span class="input-group-addon" id="url-prefix">{{ $urlArray[$urlPrefix] }}</span>
-                @endforeach
+                @if (count($urlPrefixes) > 1)
+                    <div class="input-group-addon">
+                        <span id="url-prefix" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{ $urlArray[key($urlPrefixes)] }}</span>
+                        <ul class="dropdown-menu">
+                            @foreach($urlPrefixes as $urlPrefix => $priority)
+                                <li><a href="#">{{ $urlArray[$urlPrefix] }}</a></li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @else
+                    <span class="input-group-addon" id="url-prefix">{{ $urlArray[key($urlPrefixes)] }}</span>
+                @endif
             @endif
             <?php $options = []; if (!$can_publish && $page->id): $options = ['disabled' => true]; endif; ?>
             {!! Form::text('page_info_lang[url]', urldecode($page_lang->url), ['class' => 'form-control', 'id' => 'page_info_url'] + $options) !!}

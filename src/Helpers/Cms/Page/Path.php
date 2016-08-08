@@ -3,6 +3,7 @@
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageLang;
+use Illuminate\Support\Facades\Schema;
 
 class Path
 {
@@ -35,21 +36,11 @@ class Path
      * @var string
      */
     public $fullUrl;
-
+    
     /**
      * @var array
      */
-    public $groupContainerNames;
-
-    /**
-     * @var array
-     */
-    public $groupContainerUrls;
-
-    /**
-     * @var int
-     */
-    public $groupContainerDefault;
+    public $groupContainers;
 
     /**
      * @var Path[]
@@ -64,8 +55,7 @@ class Path
         $this->separator = '{sep}';
         $this->name = 'Not set';
         $this->url = 'not_set';
-        $this->groupContainerNames = [];
-        $this->groupContainerUrls = [];
+        $this->groupContainers = [];
     }
 
     /**
@@ -74,28 +64,16 @@ class Path
      */
     protected static function _loadSubPaths($pageIds, $parentPathData = null)
     {
-        $groups = PageGroup::all();
-        $groupsArray = [];
-        foreach ($groups as $group) {
-            $groupsArray[$group->id] = $group;
-        }
         foreach ($pageIds as $pageId) {
-            $pageLang = PageLang::preload($pageId);
             $pageData = Page::preload($pageId);
 
             $pagePathData = self::_getById($pageId);
-            $pagePathData->pageId = $pageId;
-            $pagePathData->name = $pageLang->name;
-            $pagePathData->url = $pageLang->url;
-
             $pagePathData->fullName = ($parentPathData ? $parentPathData->fullName . $pagePathData->separator : '')  . $pagePathData->name;
             if ($pageData->link > 0) {
                 $pagePathData->fullUrl = $pagePathData->url;
             } else {
                 $pagePathData->fullUrl = ($parentPathData ? $parentPathData->fullUrl : '') . '/' . $pagePathData->url;
-                if ($pagePathData->fullUrl == '//') {
-                    $pagePathData->fullUrl = '/';
-                }
+                $pagePathData->fullUrl = $pagePathData->fullUrl == '//' ? '/' : $pagePathData->fullUrl;
             }
 
             if ($childPageIds = Page::child_page_ids($pageId)) {
@@ -104,13 +82,13 @@ class Path
                 if ($pageData->group_container > 0) {
                     $group = PageGroup::find($pageData->group_container);
                     if (!empty($group)) {
-                        foreach ($group->itemPageIdsFiltered($pageId) as $groupPageId) {
-                            $groupPageLang = PageLang::preload($groupPageId);
-                            $groupPagePathData = self::_getById($groupPageId);
-                            $groupPagePathData->name = $groupPageLang->name;
-                            $groupPagePathData->url = $groupPageLang->url;
-                            $groupPagePathData->groupContainerNames[$pageId] = $pagePathData->fullName;
-                            $groupPagePathData->groupContainerUrls[$pageId] = $pagePathData->fullUrl;
+                        foreach ($group->itemPageFiltered($pageId) as $groupPage) {
+                            $groupPagePathData = self::_getById($groupPage->id);
+                            $groupPagePathData->groupContainers[$pageId] = [
+                                'name' => $pagePathData->fullName,
+                                'url' => $pagePathData->fullUrl,
+                                'priority' => $groupPage->group_canonical == $pageId ? pow(2, 31)-1 : ($pageData->group_container_url_priority ?: $group->url_priority)
+                            ];
                         }
                     }
                 }
@@ -126,6 +104,28 @@ class Path
         if (!self::$_preLoaded) {
             $topLevelPages = Page::child_page_ids(0);
             self::_loadSubPaths($topLevelPages);
+            $loadedIds = [];
+            foreach (self::$_preLoaded as $pageId => $pagePathData) {
+                if ($pagePathData->groupContainers) {
+                    uasort($pagePathData->groupContainers, function ($a, $b) {
+                        if ($a['priority'] == $b['priority']) {
+                            return 0;
+                        }
+                        return ($a['priority'] > $b['priority']) ? -1 : 1;
+                    });
+                    reset($pagePathData->groupContainers);
+                    $groupPath = current($pagePathData->groupContainers);
+                    if ($groupPath['priority'] > 100) {
+                        $pagePathData->fullName = $groupPath['name'] . $pagePathData->separator . $pagePathData->name;
+                        $pagePathData->fullUrl = $groupPath['url'] . '/' . $pagePathData->url;
+                    }
+                }
+                $loadedIds[] = $pageId;
+            }
+            $missingPages = Page::whereNotIn('id', $loadedIds)->get();
+            foreach ($missingPages as $missingPage) {
+                self::_getById($missingPage->id);
+            }
         }
     }
 
@@ -135,7 +135,13 @@ class Path
      */
     protected static function _getById($pageId)
     {
-        self::$_preLoaded[$pageId] = !empty(self::$_preLoaded[$pageId]) ? self::$_preLoaded[$pageId] : new self;
+        if (empty(self::$_preLoaded[$pageId])) {
+            $pageLang = PageLang::preload($pageId);
+            self::$_preLoaded[$pageId] = new self;
+            self::$_preLoaded[$pageId]->pageId = $pageId;
+            self::$_preLoaded[$pageId]->name = $pageLang->name;
+            self::$_preLoaded[$pageId]->url = $pageLang->url;
+        }
         return self::$_preLoaded[$pageId];
     }
 
@@ -151,13 +157,10 @@ class Path
         $pagePathData = !empty(self::$_preLoaded[$pageId]) ? self::$_preLoaded[$pageId] : new self;
 
         $groupContainerPageId = !empty($pageData[1]) ? $pageData[1] : 0;
-        if (!$pagePathData->fullUrl) {
+        if ($groupContainerPageId) {
             $pagePathData = clone $pagePathData;
-            $groupContainerPageId = $groupContainerPageId ?: key($pagePathData->groupContainerUrls);
-            if (!empty($pagePathData->groupContainerUrls[$groupContainerPageId])) {
-                $pagePathData->fullName = $pagePathData->groupContainerNames[$groupContainerPageId] . $pagePathData->separator . $pagePathData->name;
-                $pagePathData->fullUrl = $pagePathData->groupContainerUrls[$groupContainerPageId] . '/' . $pagePathData->url;
-            }
+            $pagePathData->fullName = $pagePathData->groupContainers[$groupContainerPageId]['name'] . $pagePathData->separator . $pagePathData->name;
+            $pagePathData->fullUrl = $pagePathData->groupContainers[$groupContainerPageId]['url'] . '/' . $pagePathData->url;
         }
 
         return $pagePathData;
@@ -191,7 +194,7 @@ class Path
     public static function getFullPath($pageId, $separator = ' &raquo; ')
     {
         $pagePathData = Path::getById($pageId);
-        $pagePathData->fullName = str_replace($pagePathData->separator, $separator, $pagePathData->fullName);
+        $pagePathData->fullName = $pagePathData->fullName ? str_replace($pagePathData->separator, $separator, $pagePathData->fullName) : $pagePathData->fullName;
         return $pagePathData;
     }
     
@@ -204,21 +207,7 @@ class Path
     {
         $paths = [];
         foreach ($pageIds as $pageId) {
-            $addPagePath = true;
-            $pagePathData = self::getFullPath($pageId, $separator);
-            if ($pagePathData->groupContainerUrls) {
-                foreach ($pagePathData->groupContainerUrls as $groupContainerPageId => $fullUrl) {
-                    $groupPageId = $pageId . ',' . $groupContainerPageId;
-                    $paths[$groupPageId] = self::getFullPath($groupPageId, $separator);
-                    if ($paths[$groupPageId]->fullUrl == $pagePathData->fullUrl) {
-                        $addPagePath = false;
-                    }
-                }
-            }
-            // if default route is not a group route and not blank
-            if ($addPagePath && $pagePathData->fullUrl) {
-                $paths[$pageId] = $pagePathData;
-            }
+            $paths[$pageId] = self::getFullPath($pageId, $separator);
         }
         return $paths;
     }

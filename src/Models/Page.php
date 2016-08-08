@@ -29,7 +29,7 @@ class Page extends Eloquent
 
     public function groups()
     {
-        return $this->belongsToMany('CoasterCms\Models\PageGroup', 'page_group_pages', 'page_id', 'group_id')->withPivot('url_priority');
+        return $this->belongsToMany('CoasterCms\Models\PageGroup', 'page_group_pages', 'page_id', 'group_id');
     }
 
     public function versions()
@@ -99,8 +99,8 @@ class Page extends Eloquent
             $urls[$this->parent] = 100;
         }
         foreach ($this->groups as $group) {
-            foreach ($group->containerPageIds() as $containerPageId) {
-                $urls[$containerPageId] = $group->pivot->url_priority ?: $group->url_priority;
+            foreach ($group->containerPagesFiltered($this->id) as $containerPage) {
+                $urls[$containerPage->id] = $containerPage->group_container_url_priority ?: $group->url_priority;
             }
         }
         arsort($urls);

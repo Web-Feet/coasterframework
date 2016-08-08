@@ -3,6 +3,7 @@
 use CoasterCms\Helpers\Cms\BlockManager;
 use Auth;
 use Eloquent;
+use Illuminate\Database\Eloquent\Collection;
 
 class PageGroup extends Eloquent
 {
@@ -63,6 +64,39 @@ class PageGroup extends Eloquent
             $containerIds[] = $container->id;
         }
         return $containerIds;
+    }
+
+    /**
+     * @param int $pageId
+     * @return array
+     */
+    public function containerPageIdsFiltered($pageId)
+    {
+        $containerPageIds = [];
+        foreach($this->containerPageIds() as $containerPageId) {
+            if (in_array($pageId, $this->itemPageIdsFiltered($containerPageId))) {
+                $containerPageIds[] = $containerPageId;
+            }
+        }
+        return $containerPageIds;
+    }
+
+    /**
+     * @return Collection
+     */
+    public function containerPages()
+    {
+        return Page::where('group_container', '=', $this->id)->get();
+    }
+
+    /**
+     * @param int $pageId
+     * @return Collection
+     */
+    public function containerPagesFiltered($pageId)
+    {
+        $pageIds = $this->containerPageIdsFiltered($pageId);
+        return $pageIds ? Page::whereIn('id', $pageIds)->get() : new Collection;
     }
 
     /**
@@ -180,6 +214,25 @@ class PageGroup extends Eloquent
         }
 
         return $pageIds;
+    }
+
+    /**
+     * @param int $pageId
+     * @param bool $checkLive
+     * @param bool $sort
+     * @return Collection
+     */
+    public function itemPageFiltered($pageId, $checkLive = false, $sort = false)
+    {
+        $pages = new Collection;
+        if ($pageIds = $this->itemPageIdsFiltered($pageId, $checkLive, $sort)) {
+            foreach ($this->pages as $page) {
+                if (in_array($page->id, $pageIds)) {
+                    $pages->add($page);
+                }
+            }
+        }
+        return $pages;
     }
 
 }
