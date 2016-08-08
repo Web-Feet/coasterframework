@@ -116,6 +116,9 @@ class RolesController extends _Base
                     }
                 }
                 $role->actions()->sync($copy_actions);
+                foreach ($copy->page_actions as $page_action) {
+                    $role->page_actions()->attach($page_action->id,['action_id' => $page_action->pivot->action_id, 'access' => $page_action->pivot->access]);
+                }
             }
             $role_info[$role->id] = $role->name;
             return json_encode($role_info);
