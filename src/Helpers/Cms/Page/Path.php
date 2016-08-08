@@ -3,7 +3,6 @@
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageLang;
-use Illuminate\Support\Facades\Schema;
 
 class Path
 {
