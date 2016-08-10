@@ -58,13 +58,12 @@ class Path
     }
 
     /**
-     * @param array $pageIds
+     * @param Page[] $pages
      * @param Path|null $parentPathData
      */
-    protected static function _loadSubPaths($pageIds, $parentPathData = null)
+    protected static function _loadSubPaths($pages, $parentPathData = null)
     {
-        foreach ($pageIds as $pageId) {
-            $pageData = Page::preload($pageId);
+        foreach ($pages as $pageId => $pageData) {
 
             $pagePathData = self::_getById($pageId);
             $pagePathData->fullName = ($parentPathData ? $parentPathData->fullName . $pagePathData->separator : '')  . $pagePathData->name;
@@ -75,8 +74,8 @@ class Path
                 $pagePathData->fullUrl = $pagePathData->fullUrl == '//' ? '/' : $pagePathData->fullUrl;
             }
 
-            if ($childPageIds = Page::child_page_ids($pageId)) {
-                self::_loadSubPaths($childPageIds, $pagePathData);
+            if ($childPages = Page::getChildPages($pageId)) {
+                self::_loadSubPaths($childPages, $pagePathData);
             } else {
                 if ($pageData->group_container > 0) {
                     $group = PageGroup::find($pageData->group_container);
@@ -92,6 +91,7 @@ class Path
                     }
                 }
             }
+            
         }
     }
 
@@ -101,7 +101,7 @@ class Path
     protected static function _preLoad()
     {
         if (!self::$_preLoaded) {
-            $topLevelPages = Page::child_page_ids(0);
+            $topLevelPages = Page::getChildPages(0);
             self::_loadSubPaths($topLevelPages);
             $loadedIds = [];
             foreach (self::$_preLoaded as $pageId => $pagePathData) {
@@ -114,7 +114,7 @@ class Path
                     });
                     reset($pagePathData->groupContainers);
                     $groupPath = current($pagePathData->groupContainers);
-                    if ($groupPath['priority'] > 100) {
+                    if ($groupPath['priority'] > 100 || is_null($pagePathData->fullUrl)) {
                         $pagePathData->fullName = $groupPath['name'] . $pagePathData->separator . $pagePathData->name;
                         $pagePathData->fullUrl = $groupPath['url'] . '/' . $pagePathData->url;
                     }
@@ -151,12 +151,12 @@ class Path
     public static function getById($pageId)
     {
         self::_preLoad();
-        $pageData = self::parsePageId($pageId, false);
+        $pageData = self::unParsePageId($pageId, false);
         $pageId = $pageData[0];
         $pagePathData = !empty(self::$_preLoaded[$pageId]) ? self::$_preLoaded[$pageId] : new self;
 
         $groupContainerPageId = !empty($pageData[1]) ? $pageData[1] : 0;
-        if ($groupContainerPageId) {
+        if ($groupContainerPageId && !empty($pagePathData->groupContainers[$groupContainerPageId])) {
             $pagePathData = clone $pagePathData;
             $pagePathData->fullName = $pagePathData->groupContainers[$groupContainerPageId]['name'] . $pagePathData->separator . $pagePathData->name;
             $pagePathData->fullUrl = $pagePathData->groupContainers[$groupContainerPageId]['url'] . '/' . $pagePathData->url;
@@ -212,6 +212,29 @@ class Path
     }
 
     /**
+     * Get paths with group variations
+     * @param array $pageIds
+     * @param string $separator
+     * @return Path[]
+     */
+    public static function getFullPathsVariations($pageIds, $separator = ' &raquo; ')
+    {
+        $paths = [];
+        foreach ($pageIds as $pageId) {
+            $paths[$pageId] = self::getFullPath($pageId, $separator);
+            if ($paths[$pageId]->groupContainers) {
+                foreach ($paths[$pageId]->groupContainers as $groupContainerPageId => $groupContainer) {
+                    if ($paths[$pageId]->fullUrl != $groupContainer['url'] . '/' . $paths[$pageId]->url) {
+                        $parsedId = self::parsePageId($pageId, $groupContainerPageId);
+                        $paths[$parsedId] = self::getFullPath($parsedId, $separator);
+                    }
+                }
+            }
+        }
+        return $paths;
+    }
+
+    /**
      * @param string $separator
      * @return array
      */
@@ -229,12 +252,22 @@ class Path
      * remove group data from saved block content or block options
      * @param int|string $unParsedPageId
      * @param bool $returnFirstEl
-     * @return int
+     * @return int|array
      */
-    public static function parsePageId($unParsedPageId, $returnFirstEl = true)
+    public static function unParsePageId($unParsedPageId, $returnFirstEl = true)
     {
         $parts = explode(',', $unParsedPageId);
         return $returnFirstEl ? (int) $parts[0] : $parts;
+    }
+
+    /**
+     * @param int $pageId
+     * @param int $groupContainerPageId
+     * @return string
+     */
+    public static function parsePageId($pageId, $groupContainerPageId = 0)
+    {
+        return $pageId . ($groupContainerPageId ? ',' . $groupContainerPageId : '');
     }
 
 }

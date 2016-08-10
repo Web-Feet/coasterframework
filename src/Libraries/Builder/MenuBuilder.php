@@ -15,12 +15,9 @@ class MenuBuilder
     protected static $_view;
 
     /**
-     * @param string $view
+     * @var bool
      */
-    public static function setView($view)
-    {
-        self::$_view = $view;
-    }
+    protected static $_canonicals;
 
     /**
      * @param array $menuName
@@ -31,8 +28,8 @@ class MenuBuilder
     {
         $menu = Menu::get_menu($menuName);
         if (!empty($menu)) {
-            self::_mergeOptionsAndSetView($options);
-            return self::_buildMenu($menu->items()->get(), 1);
+            self::_setOptions($options);
+            return self::_buildMenu($menu->items()->get(), 0, 1);
         } else {
             return '';
         }
@@ -47,11 +44,9 @@ class MenuBuilder
      */
     public static function pageMenu($pageId, $subMenuLevel = 1, $subLevels = 0, $options = [])
     {
-        $childPageIds = Page::child_page_ids($pageId);
-        if (!empty($childPageIds)) {
-            $subPages = Page::get_ordered_pages($childPageIds);
-            self::_mergeOptionsAndSetView($options);
-            return self::_buildMenu($subPages, $subMenuLevel, $subLevels);
+        if ($subPages = Page::getChildPages($pageId)) {
+            self::_setOptions($options);
+            return self::_buildMenu($subPages, $pageId, $subMenuLevel, $subLevels);
         } else {
             return '';
         }
@@ -59,27 +54,29 @@ class MenuBuilder
 
     /**
      * @param array $items
+     * @param int $parentPageId
      * @param int $subMenuLevel
      * @param int $subLevels
      * @param array $options
      * @return string
      */
-    public static function customMenu($items, $subMenuLevel = 1, $subLevels = 0, $options = [])
+    public static function customMenu($items, $parentPageId = 0, $subMenuLevel = 1, $subLevels = 0, $options = [])
     {
-        self::_mergeOptionsAndSetView($options);
-        return self::_buildMenu($items, $subMenuLevel, $subLevels);
+        self::_setOptions($options);
+        return self::_buildMenu($items, $parentPageId, $subMenuLevel, $subLevels);
     }
 
     /**
      * @param array $options
      */
-    protected static function _mergeOptionsAndSetView(&$options)
+    protected static function _setOptions($options)
     {
-        $defaultOptions = [
-            'view' => 'default'
-        ];
-        $options = array_merge($defaultOptions, $options);
-        self::setView($options['view']);
+        $options = array_merge([
+            'view' => 'default',
+            'canonicals' => false
+        ], $options);
+        self::$_view = $options['view'];
+        self::$_canonicals = $options['canonicals'];
     }
 
     /**
@@ -88,7 +85,7 @@ class MenuBuilder
      * @param int $subLevels
      * @return string
      */
-    protected static function _buildMenu($items, $level = 1, $subLevels = 0)
+    protected static function _buildMenu($items, $parentPageId, $level = 1, $subLevels = 0)
     {
         // convert page models to menu items and remove non-live pages
         foreach ($items as $k => $item) {
@@ -128,14 +125,13 @@ class MenuBuilder
             $isLast = ($count == $total - 1);
             
             $active = ($currentPage->id == $item->page_id || in_array($item->page_id, $pageParents));
-            $itemData = new MenuItemDetails($item, $active);
+            $itemData = new MenuItemDetails($item, $active, $parentPageId, self::$_canonicals);
 
             $subMenu = '';
             $subLevels = $item->sub_levels > 0 ? $item->sub_levels : $defaultSubLevels;
             if ($subLevels > 0) {
-                if ($childPageIds = Page::child_page_ids($item->page_id)) {
-                    $subPages = Page::get_ordered_pages($childPageIds);
-                    $subMenu = self::_buildMenu($subPages, $level + 1, $subLevels - 1);
+                if ($subPages = Page::category_pages($item->page_id)) {
+                    $subMenu = self::_buildMenu($subPages, $item->page_id, $level + 1, $subLevels - 1);
                 }
             }
 

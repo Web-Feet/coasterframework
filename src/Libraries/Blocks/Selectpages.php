@@ -24,7 +24,7 @@ class Selectpages extends _Base
                     $block_page_ids = @unserialize($same_block->content);
                     if (!empty($block_page_ids)) {
                         foreach ($block_page_ids as $k => $block_page_id) {
-                            $block_page_id = Path::parsePageId($block_page_id);
+                            $block_page_id = Path::unParsePageId($block_page_id);
                             if ($currentPageId == $block_page_id) {
                                 $page_ids[] = $same_block->page_id;
                                 break;
@@ -38,7 +38,7 @@ class Selectpages extends _Base
         }
         if (!empty($page_ids)) {
             foreach ($page_ids as $page_id) {
-                $parsedPageId = Path::parsePageId($page_id, false);
+                $parsedPageId = Path::unParsePageId($page_id, false);
                 $pages[$page_id] = new PageDetails($parsedPageId[0], !empty($parsedPageId[1]) ? $parsedPageId[1] : 0);
             }
         }

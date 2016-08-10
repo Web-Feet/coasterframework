@@ -83,9 +83,7 @@ class PagesController extends AdminController
     {
         $input = Request::all();
         $page_info = $input['page_info'];
-        $page = Page::find($pageId);
-        $groups = $page ? $page->groups : []; // ignore page limit for group pages
-        if (Page::at_limit() && $page_info['link'] != 1 && !$page_info['parent_id']) {
+        if (Page::at_limit() && $page_info['link'] != 1 && $page_info['parent_id'] > -1) {
             $this->layoutData['content'] = 'Page Limit Reached';
         } else {
             $new_page_id = $this->_save_page_info();
@@ -106,24 +104,31 @@ class PagesController extends AdminController
 
     public function postEdit($pageId)
     {
+        // notify user
+        $alert = new \stdClass;
+        $alert->type = 'success';
+        $alert->header = 'Page Content Updated';
+        $alert->content = '';
+
         $existingPage = Page::find($pageId);
 
         // run if duplicate button was hit
         if (Request::input('duplicate') == 1) {
             if ($existingPage->canDuplicate()) {
                 $new_page_id = $this->_save_page_info(0, $existingPage);
-                BlockManager::process_submission($new_page_id);
-                return \redirect()->route('coaster.admin.pages.edit', ['pageId' => $new_page_id]);
+                if ($new_page_id === false) {
+                    $alert->type = 'danger';
+                    $alert->header = 'Error: Duplication failed';
+                    $this->layoutData['alert'] = $alert;
+                    return $this->getEdit($pageId, BlockManager::$to_version);
+                } else {
+                    BlockManager::process_submission($new_page_id);
+                    return \redirect()->route('coaster.admin.pages.edit', ['pageId' => $new_page_id]);
+                }
             } else {
                 return abort(403, 'Action not permitted');
             }
         }
-
-        // notify user
-        $alert = new \stdClass;
-        $alert->type = 'success';
-        $alert->header = 'Page Content Updated';
-        $alert->content = '';
 
         $new_version = PageVersion::add_new($pageId);
         BlockManager::$to_version = $new_version->version_id;
@@ -476,8 +481,13 @@ class PagesController extends AdminController
          * Load missing page & page_lang request data from db or use defaults
          */
         if ($pageId || $existingPage) {
-            $page = $existingPage ?: Page::find($pageId);
-            if (empty($page) || !$page->id) {
+            if ($existingPage) {
+                $page = $existingPage->replicate();
+                $page->setRelations([]);
+            } else {
+                $page = Page::find($pageId);
+            }
+            if (empty($page) || (!$existingPage && !$page->id)) {
                 throw new \Exception('page not found');
             }
             foreach ($page->getAttributes() as $attribute => $value) {
@@ -514,8 +524,8 @@ class PagesController extends AdminController
             ], $input['page_info_lang']);
         }
         if ($existingPage) {
-            $page_info_lang['name'] .= ' Duplicate';
-            $page_info_lang['url'] .= '-duplicate';
+            $page_info_lang['name'] = preg_replace('/\s+Duplicate$/', '', $page_info_lang['name']) . ' Duplicate';
+            $page_info_lang['url'] = preg_replace('/--v\w+$/', '', $page_info_lang['url']) . '--v' . base_convert(microtime(true), 10, 36);
         }
         $page_info_other = !empty($input['page_info_other'])?$input['page_info_other']:[];
         $page_groups = !empty($input['page_groups'])?$input['page_groups']:[];
@@ -534,7 +544,7 @@ class PagesController extends AdminController
             $siblings = array_merge($pageGroup ? $pageGroup->itemPageIds() : [], $siblings);
         }
         if ($page_info['parent'] >= 0) {
-            $siblings = array_merge(Page::child_page_ids($page_info['parent']), $siblings);
+            $siblings = array_merge(Page::getChildPageIds($page_info['parent']), $siblings);
             if (isset($page->order)) {
                 $page_info['order'] = $page->order;
             } else {
@@ -564,7 +574,7 @@ class PagesController extends AdminController
         }
 
         if (!$canPublish) {
-            if ($page->id == 0) {
+            if (!$page->id) {
                 $page_info['live'] = 0;
             } else {
                 foreach ($page_info as $attribute => $value) {
@@ -657,7 +667,7 @@ class PagesController extends AdminController
         } elseif ($existingPage) {
             // duplicate role actions from original page
             foreach (UserRole::all() as $role) {
-                $page_actions = $role->page_actions()->where('page_id', '=', $existingPage)->get();
+                $page_actions = $role->page_actions()->where('page_id', '=', $existingPage->id)->get();
                 if (!empty($page_actions)) {
                     foreach ($page_actions as $page_action) {
                         $role->page_actions()->attach($page->id, ['action_id' => $page_action->pivot->action_id, 'access' => $page_action->pivot->access]);

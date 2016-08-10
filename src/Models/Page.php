@@ -8,9 +8,9 @@ class Page extends Eloquent
 {
 
     protected $table = 'pages';
-    private static $preloaded_pages = array();
-    private static $preloaded_page_children = array();
-    private static $preloaded_catpages = array();
+    protected static $preloaded_pages = array();
+    protected static $preloaded_page_children = array();
+    protected static $preloaded_catpages = array();
 
     public function page_blocks()
     {
@@ -86,10 +86,7 @@ class Page extends Eloquent
                 return false;
             }
         }
-        if ($this->parent >= 0 && !Auth::action('pages.add', ['page_id' => $this->parent])) {
-            return false;
-        }
-        return true;
+        return $this->parent < 0 || Auth::action('pages.add', ['page_id' => $this->parent]);
     }
 
     public function parentPathIds()
@@ -118,13 +115,10 @@ class Page extends Eloquent
 
     public static function at_limit()
     {
-        if (self::get_total() >= config('coaster::site.pages') && config('coaster::site.pages') != 0) {
-            return true;
-        }
-        return false;
+        return self::get_total() >= config('coaster::site.pages') && config('coaster::site.pages') != 0;
     }
 
-    public static function preload($page_id)
+    public static function preload($pageId)
     {
         if (empty(self::$preloaded_pages)) {
             $pages = self::all();
@@ -132,45 +126,43 @@ class Page extends Eloquent
                 self::$preloaded_pages[$page->id] = $page;
             }
         }
-        if (!empty(self::$preloaded_pages[$page_id])) {
-            return self::$preloaded_pages[$page_id];
-        } else {
-            return null;
-        }
+        return !empty(self::$preloaded_pages[$pageId]) ? self::$preloaded_pages[$pageId] : null;
     }
 
-    // returns page ids
-    public static function child_page_ids($page_id)
+    // returns child page ids (parent only / no group)
+    public static function getChildPageIds($pageId)
     {
         if (empty(self::$preloaded_page_children)) {
             self::preload(-1);
             foreach (self::$preloaded_pages as $key => $page) {
                 if (!isset(self::$preloaded_page_children[$page->parent])) {
-                    self::$preloaded_page_children[$page->parent] = array();
+                    self::$preloaded_page_children[$page->parent] = [];
                 }
                 self::$preloaded_page_children[$page->parent][] = $page->id;
             }
         }
-        if (!empty(self::$preloaded_page_children[$page_id])) {
-            return self::$preloaded_page_children[$page_id];
-        } else {
-            return [];
-        }
+        return !empty(self::$preloaded_page_children[$pageId]) ? self::$preloaded_page_children[$pageId] : [];
+    }
+
+    public static function getChildPages($categoryPageId)
+    {
+        $categoryPagesIds = self::getChildPageIds($categoryPageId);
+        return self::getOrderedPages($categoryPagesIds);
     }
 
     // returns ordered pages
-    public static function get_ordered_pages($page_ids)
+    public static function getOrderedPages($pageIds)
     {
         self::preload(-1);
-        $pages = array();
-        foreach ($page_ids as $page_id) {
-            $pages[] = self::$preloaded_pages[$page_id];
+        $pages = [];
+        foreach ($pageIds as $pageId) {
+            $pages[$pageId] = self::$preloaded_pages[$pageId];
         }
-        usort($pages, array("self", "_order_asc"));
+        uasort($pages, ['self', '_orderAsc']);
         return $pages;
     }
 
-    private static function _order_asc($a, $b)
+    protected static function _orderAsc($a, $b)
     {
         if ($a->order == $b->order) {
             return 0;
@@ -190,18 +182,17 @@ class Page extends Eloquent
             self::$preloaded_catpages[$page_id] = array();
         }
         $pages = [];
-        $page = Page::preload($page_id);
+        $page = self::preload($page_id);
         if (!empty($page) && $page->group_container > 0) {
             $group = PageGroup::find($page->group_container);
             if (!empty($group)) {
                 $group_pages = $group->itemPageIdsFiltered($page_id, $check_live, true);
                 foreach ($group_pages as $group_page) {
-                    $pages[] = Page::preload($group_page);
+                    $pages[] = self::preload($group_page);
                 }
             }
         } else {
-            $categoryPages = Page::where('parent', '=', $page_id)->orderBy('order', 'asc')->get();
-            $pages = $categoryPages->isEmpty() ? $pages : $categoryPages;
+            $pages = self::getChildPages($page_id);
             if ($check_live) {
                 foreach ($pages as $key => $page) {
                     if (!$page->is_live()) {
@@ -216,47 +207,40 @@ class Page extends Eloquent
 
     public static function get_page_list($options = array())
     {
-        $default_options = array('links' => true, 'group_pages' => true, 'language_id' => Language::current());
+        $default_options = array('links' => true, 'group_pages' => true, 'language_id' => Language::current(), 'parent' => null);
         $options = array_merge($default_options, $options);
-        if ($options['links']) {
-            $max_link = 1;
-        } else {
-            $max_link = 0;
-        }
-        if ($options['group_pages']) {
-            $min_parent = -1;
-        } else {
-            $min_parent = 0;
-        }
-        $options['parent'] = !empty($options['parent']) ? (int)$options['parent'] : 0;
-        if (!empty($options['parent'])) {
-            $parent = self::find($options['parent']);
-            if (!empty($parent)) {
-                if ($parent->group_container > 0) {
-                    $match_group = $parent->group_container;
-                } else {
-                    $match_parent = $options['parent'];
-                }
+
+        if ($parent = !empty($options['parent']) ? self::find($options['parent']) : null) {
+            if ($parent->group_container > 0) {
+                $group = PageGroup::find($parent->group_container);
+                $pages = $group->itemPagesFiltered($parent->id);
+            } else {
+                $pages = self::where('parent', '=', $options['parent'])->get();
             }
+        } else {
+            $pages = self::all();
         }
+
         $pages_array = array();
-        foreach (self::all() as $page) {
+        $max_link = $options['links'] ? 1 : 0;
+        $min_parent = $options['group_pages'] ? -1 : 0;
+        foreach ($pages as $page) {
             if (config('coaster::admin.advanced_permissions') && !Auth::action('pages', ['page_id' => $page->id])) {
                 continue;
             }
             if ($page->link <= $max_link && $page->parent >= $min_parent) {
-                if (!((isset($match_parent) && $page->parent == $match_parent) || (isset($match_group) && in_array($match_group, $page->groupIds())))) {
-                    $pages_array[] = $page->id;
-                }
+                $pages_array[] = $page->id;
             }
         }
-        $paths = Path::getFullPaths($pages_array);
+
+        $paths = $options['group_pages'] ? Path::getFullPathsVariations($pages_array) : Path::getFullPaths($pages_array);
         $list = array();
         foreach ($paths as $page_id => $path) {
-            if (!isset($options['exclude_home']) || $path->fullUrl != '/') {
+            if ((!isset($options['exclude_home']) || $path->fullUrl != '/') && !is_null($path->fullUrl)) {
                 $list[$page_id] = $path->fullName;
             }
         }
+
         // order
         asort($list);
         return $list;

@@ -539,7 +539,7 @@ class PageBuilderInstance
         $blockData = null;
 
         if (!empty($options['page_id'])) {
-            $pageId = Path::parsePageId($options['page_id']);
+            $pageId = Path::unParsePageId($options['page_id']);
             $selectedPage = PageLang::preload($pageId);
             $pageVersionId = !empty($selectedPage) ? $selectedPage->live_version : 0;
         } else {
@@ -653,7 +653,8 @@ class PageBuilderInstance
             'type' => 'all',
             'per_page' => 20,
             'limit' => 0,
-            'content' => ''
+            'content' => '',
+            'canonicals' => false
         ];
         $options = array_merge($defaultOptions, array_filter($options));
 
@@ -663,7 +664,7 @@ class PageBuilderInstance
             $pagesOfSelectedType = is_a($pages, Collection::class) ? $pages->all() : $pages;
         } else {
             foreach ($pages as $page) {
-                $children = count(Page::child_page_ids($page->id));
+                $children = count(Page::getChildPageIds($page->id));
                 if (($options['type'] == 'pages' && $children == 0) || ($options['type'] == 'categories' && $children > 0)) {
                     $pagesOfSelectedType[] = $page;
                 }
@@ -690,7 +691,7 @@ class PageBuilderInstance
         $total = count($pages);
 
         $groupPageContainerId = 0;
-        if ($categoryPageId) {
+        if ($categoryPageId && !$options['canonicals']) {
             $categoryPage = Page::preload($categoryPageId);
             $groupPageContainerId = ($categoryPage && $categoryPage->group_container > 0) ? $categoryPage->id : 0;
         }
