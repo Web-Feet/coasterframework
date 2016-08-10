@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Libraries\Builder;
 
+use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Libraries\Builder\ViewClasses\MenuItemDetails;
 use CoasterCms\Models\Menu;
 use CoasterCms\Models\MenuItem;
@@ -98,6 +99,7 @@ class MenuBuilder
             } else {
                 $pageId = $item->page_id;
             }
+            $pageId = Path::unParsePageId($pageId);
             $page = Page::preload($pageId);
             if (!$page || !$page->is_live()) {
                 unset($items[$k]);
@@ -123,14 +125,16 @@ class MenuBuilder
         foreach ($items as $count => $item) {
             $isFirst = ($count == 0);
             $isLast = ($count == $total - 1);
+
+            $pageId = Path::unParsePageId($item->page_id);
             
-            $active = ($currentPage->id == $item->page_id || in_array($item->page_id, $pageParents));
+            $active = ($currentPage->id == $pageId || in_array($pageId, $pageParents));
             $itemData = new MenuItemDetails($item, $active, $parentPageId, self::$_canonicals);
 
             $subMenu = '';
             $subLevels = $item->sub_levels > 0 ? $item->sub_levels : $defaultSubLevels;
             if ($subLevels > 0) {
-                if ($subPages = Page::category_pages($item->page_id)) {
+                if ($subPages = Page::category_pages($pageId)) {
                     $subMenu = self::_buildMenu($subPages, $item->page_id, $level + 1, $subLevels - 1);
                 }
             }

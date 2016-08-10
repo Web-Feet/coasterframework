@@ -46,7 +46,8 @@ class MenuItemDetails
      */
     public function __construct(MenuItem $item, $active = false, $parentPageId = 0, $canonicals = false)
     {
-        $parsedPageId = $canonicals ? $item->page_id : Path::parsePageId($item->page_id, $parentPageId);
+        $pageId = Path::unParsePageId($item->page_id);
+        $parsedPageId = Path::parsePageId($item->page_id, $parentPageId);
 
         $this->item = $item;
         $this->page = Page::preload($item->page_id);
@@ -54,7 +55,7 @@ class MenuItemDetails
 
         $this->active = $active;
 
-        $this->name = $item->custom_name ?: PageLang::name($item->page_id);
+        $this->name = $item->custom_name ?: PageLang::name($pageId);
         $this->url = ($this->page && $this->page->link) ? PageLang::url($item->page_id) : Path::getFullUrl($parsedPageId);
     }
 
