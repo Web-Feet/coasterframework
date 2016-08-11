@@ -33,7 +33,7 @@ class MovePageGroupPagesData extends Migration
         Schema::table('pages', function (Blueprint $table) {
             $table->dropColumn('in_group');
             $table->integer('group_container_url_priority')->after('group_container');
-            $table->integer('group_use_canonical_container')->after('group_container_url_priority');
+            $table->integer('canonical_parent')->after('group_container_url_priority');
         });
     }
 

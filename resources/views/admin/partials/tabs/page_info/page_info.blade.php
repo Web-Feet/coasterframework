@@ -22,13 +22,15 @@
         <div id="url-group" class="input-group">
             @if (!$page->id || $page->link == 0)
                 @if (count($urlPrefixes) > 1)
-                    <div class="input-group-addon">
-                        <span id="url-prefix" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{ $urlArray[key($urlPrefixes)] }}</span>
-                        <ul class="dropdown-menu">
+                    <div class="input-group-addon url-dropdown">
+                        <select name="page_info[canonical_parent]">
+                            @if ($page->canonical_parent)
+                                <option value="0">Unset canonical: {{ $urlArray[$page->canonical_parent] }}</option>
+                            @endif
                             @foreach($urlPrefixes as $urlPrefix => $priority)
-                                <li><a href="#">{{ $urlArray[$urlPrefix] }}</a></li>
+                                <option value="{{ $urlPrefix }}" {{ $loop->first ? 'selected="selected"' : '' }}>{{ $urlArray[$urlPrefix] }}</option>
                             @endforeach
-                        </ul>
+                        </select>
                     </div>
                 @else
                     <span class="input-group-addon" id="url-prefix">{{ $urlArray[key($urlPrefixes)] }}</span>

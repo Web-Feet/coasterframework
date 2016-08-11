@@ -109,6 +109,9 @@ class BlockManager
                 $fullUrls[$pageId] = rtrim($details->fullUrl, '/') . '/';
             }
             $urlPrefixes = $page->parentPathIds();
+            if ($page->canonical_parent) {
+                
+            }
             $tab_contents[0] .= View::make('coaster::partials.tabs.page_info.page_info', ['page' => $page, 'page_lang' => $page_lang, 'beacon_select' => $beaconSelect, 'pageSelect' => $pageSelect, 'urlArray' => $fullUrls, 'urlPrefixes' => $urlPrefixes, 'publishing_on' => $publishingOn, 'can_publish' => $canPublish])->render();
 
             // groups

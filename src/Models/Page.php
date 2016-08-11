@@ -101,6 +101,9 @@ class Page extends Eloquent
             }
         }
         arsort($urls);
+        if (!empty($urls[$this->canonical_parent])) {
+            $urls = [$this->canonical_parent => $urls[$this->canonical_parent]] + $urls;
+        }
         return $urls ?: [-1 => 100];
     }
 

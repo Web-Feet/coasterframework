@@ -85,7 +85,8 @@ class Path
                             $groupPagePathData->groupContainers[$pageId] = [
                                 'name' => $pagePathData->fullName,
                                 'url' => $pagePathData->fullUrl,
-                                'priority' => $groupPage->group_canonical == $pageId ? pow(2, 31)-1 : ($pageData->group_container_url_priority ?: $group->url_priority)
+                                'priority' => $pageData->group_container_url_priority ?: $group->url_priority,
+                                'canonical' => $groupPage->canonical_parent == $pageData->id
                             ];
                         }
                     }
@@ -107,6 +108,12 @@ class Path
             foreach (self::$_preLoaded as $pageId => $pagePathData) {
                 if ($pagePathData->groupContainers) {
                     uasort($pagePathData->groupContainers, function ($a, $b) {
+                        if ($a['canonical']) {
+                            return -1;
+                        }
+                        if ($b['canonical']) {
+                            return 1;
+                        }
                         if ($a['priority'] == $b['priority']) {
                             return 0;
                         }
@@ -114,7 +121,7 @@ class Path
                     });
                     reset($pagePathData->groupContainers);
                     $groupPath = current($pagePathData->groupContainers);
-                    if ($groupPath['priority'] > 100 || is_null($pagePathData->fullUrl)) {
+                    if ($groupPath['canonical'] || $groupPath['priority'] > 100 || is_null($pagePathData->fullUrl)) {
                         $pagePathData->fullName = $groupPath['name'] . $pagePathData->separator . $pagePathData->name;
                         $pagePathData->fullUrl = $groupPath['url'] . '/' . $pagePathData->url;
                     }
