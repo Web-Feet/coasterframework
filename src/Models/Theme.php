@@ -439,6 +439,8 @@ Class Theme extends Eloquent
             'Is Live (0 or 1)',
             'In Sitemap (0 or 1)',
             'Container for Group Id',
+            'Container Url Priority',
+            'Canonical Parent Page Id',
             'Group Ids (Comma Separated)'
         ]);
 
@@ -461,6 +463,8 @@ Class Theme extends Eloquent
                     $page->live?1:0,
                     $page->sitemap,
                     ($page->group_container && !empty($groupIds[$page->group_container]))?$page->group_container:'',
+                    ($page->group_container && !empty($groupIds[$page->group_container]))?$page->group_container_url_priority:'',
+                    $page->canonical_parent,
                     implode(',', $page->groupIds())
                 ]);
             }
@@ -759,7 +763,7 @@ Class Theme extends Eloquent
                 $row = 0;
                 while (($data = fgetcsv($fileHandle)) !== false) {
                     if ($row++ == 0 && $data[0] == 'Page Id') continue;
-                    list($pageId, $pageName, $pageUrl, $templateName, $parentId, $defaultChildTemplateName, $order, $link, $live, $sitemap, $groupContainer, $groupIds) = $data;
+                    list($pageId, $pageName, $pageUrl, $templateName, $parentId, $defaultChildTemplateName, $order, $link, $live, $sitemap, $groupContainer, $groupContainerUrlPriority, $canonicalParentPageId, $groupIds) = $data;
                     $newPage = new Page;
                     $newPage->id = $pageId;
                     $newPage->template = !empty($templateIds[$templateName]) ? $templateIds[$templateName] : 0;
@@ -770,6 +774,8 @@ Class Theme extends Eloquent
                     $newPage->live = $live;
                     $newPage->sitemap = $sitemap;
                     $newPage->group_container = $groupContainer;
+                    $newPage->group_container_url_priority = $groupContainerUrlPriority;
+                    $newPage->canonical_parent = $canonicalParentPageId;
                     $newPage->save();
                     $newPageLang = new PageLang;
                     $newPageLang->page_id = $pageId;
