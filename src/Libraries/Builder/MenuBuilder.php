@@ -135,7 +135,7 @@ class MenuBuilder
             $subLevels = $item->sub_levels > 0 ? $item->sub_levels : $defaultSubLevels;
             if ($subLevels > 0) {
                 if ($subPages = Page::category_pages($pageId)) {
-                    $subMenu = self::_buildMenu($subPages, $item->page_id, $level + 1, $subLevels - 1);
+                    $subMenu = self::_buildMenu($subPages, $pageId, $level + 1, $subLevels - 1);
                 }
             }
 
