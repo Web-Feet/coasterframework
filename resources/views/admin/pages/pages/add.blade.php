@@ -22,14 +22,15 @@
 
 @section('scripts')
     <script type='text/javascript'>
-        var link_show, url_prefix;
         $(document).ready(function () {
 
-            liveDateOptions();
-            $('#page_info\\[live\\]').change(liveDateOptions);
-
             selected_tab('#addForm', 0);
+            updateListenPageUrl();
+            updateListenGroupFields();
+            updateListenLiveOptions();
+            load_editor_js();
 
+            var link_show, url_prefix;
             $('#page_info\\[link\\]').change(function () {
                 if ($(this).is(':checked')) {
                     url_prefix = $('#url-prefix').detach();
@@ -51,22 +52,6 @@
                 $('#url-prefix').html(urlArray[$(this).val()]);
             });
 
-            $('#page_info_lang\\[name\\]').change(function () {
-                if (!$('#page_info\\[link\\]').is(':checked')) {
-                    $('#page_info_url').val(
-                        $(this).val()
-                            .toLowerCase()
-                            .replace(/\s+/g, '-')
-                            .replace(/[^\w-]/g, '-')
-                            .replace(/-{2,}/g, '-')
-                            .replace(/^-+/g, '')
-                            .replace(/-+$/g, '')
-                    );
-                }
-            });
-
-            load_editor_js();
-
         });
     </script>
-@stop
+@append

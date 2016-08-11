@@ -193,11 +193,3 @@ function load_editor_js(rerun) {
 function repeater_delete(repeater_id, row_id) {
     $("#"+repeater_id+"_"+row_id).remove();
 }
-
-function liveDateOptions() {
-    if($('#page_info\\[live\\]').val() != 2) {
-        $('.live-date-options').addClass('hidden');
-    } else {
-        $('.live-date-options').removeClass('hidden');
-    }
-}

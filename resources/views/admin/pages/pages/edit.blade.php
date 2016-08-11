@@ -75,40 +75,22 @@
 
 @section('scripts')
     <script type='text/javascript'>
-        latest_version = '{{ $version['latest'] }}';
         function duplicate_page() {
             $('#duplicate_set').val(1);
             $('#editForm').trigger('submit');
         }
+
         $(document).ready(function () {
 
-            liveDateOptions();
-            $('#page_info\\[live\\]').change(liveDateOptions);
+            selected_tab('#editForm', {{ $page->link ? 0 : 1 }});
+            updateListenPageUrl(true);
+            updateListenLiveOptions();
+            updateListenGroupFields();
+            load_editor_js();
 
             page_id = parseInt({{ $page->id }});
-
-            @if ($page->link == 1)
-            selected_tab('#editForm', 0);
-            @else
-            selected_tab('#editForm', 1);
-            @endif
-
-            $('#page_info_lang\\[name\\]').change(function () {
-                if ($('#page_info_url').val().substr($('#page_info_url').val().length - 10) == '-duplicate') {
-                    $('#page_info_url').val(
-                            $(this).val()
-                                    .toLowerCase()
-                                    .replace(/\s+/g, '-')
-                                    .replace(/[^\w-]/g, '-')
-                                    .replace(/-{2,}/g, '-')
-                                    .replace(/^-+/g, '')
-                                    .replace(/-+$/g, '')
-                    );
-                }
-            });
-
-            load_editor_js();
+            latest_version = '{{ $version['latest'] }}';
 
         });
     </script>
-@stop
+@append

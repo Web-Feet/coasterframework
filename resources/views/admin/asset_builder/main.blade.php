@@ -40,6 +40,7 @@ AssetBuilder::set('cms-editor', [
         '/jquery/select2/select2.min.css',
         '/jquery/tinymce/tinymce.jquery.min.js',
         '/app/js/functions.js',
+        '/app/js/pageInfo.js',
         '/app/js/editor.js'
 ], false, 5);
 
