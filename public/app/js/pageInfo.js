@@ -10,9 +10,9 @@ function updateListenLiveOptions() {
 }
 
 function updateListenPageUrl(onlyIfEmpty) {
-    var nameInput = $('#page_info_lang\\[name\\]'), urlInput = $('#page_info_url');
+    var nameInput = $('#page_info_lang\\[name\\]'), urlInput = $('#page_info_url'), linkCheckBox = $('#page_info\\[link\\]');
     nameInput.change(function () {
-        if (!urlInput.val() || onlyIfEmpty === undefined) {
+        if ((!linkCheckBox.length || !linkCheckBox.is(':checked')) && (!urlInput.val() || onlyIfEmpty === undefined)) {
             urlInput.val(parsePageUrl(nameInput.val()));
         }
     });
