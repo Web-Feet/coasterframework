@@ -30,7 +30,9 @@ function parsePageUrl(url) {
 function updateListenGroupFields() {
     var groupContainer = $('#groupContainer'), inGroup = $('#inGroup');
     var inGroups = inGroup.find('input[type=checkbox]');
-    groupContainer.find('select').change(function () {
+    var groupContainerSelect = groupContainer.find('select');
+    var oldGroup = -1;
+    groupContainerSelect.change(function () {
         if ($(this).val() != 0) {
             inGroup.addClass('hidden');
         } else {
@@ -48,4 +50,21 @@ function updateListenGroupFields() {
             groupContainer.removeClass('hidden');
         }
     }).trigger('change');
+    groupContainer.find('input[type=radio]').change(function() {
+        if ($(this).val() == 1) {
+            groupContainerSelect.find('option[value=0]').addClass('hidden');
+            if (groupContainerSelect.val() == 0) {
+                groupContainerSelect.val(oldGroup);
+            }
+            groupContainerSelect.removeClass('hidden');
+            inGroup.addClass('hidden');
+        } else {
+            groupContainerSelect.find('option[value=0]').removeClass('hidden');
+            oldGroup = groupContainerSelect.val();
+            groupContainerSelect.val(0);
+            groupContainerSelect.addClass('hidden');
+            inGroup.removeClass('hidden');
+        }
+    });
+    groupContainer.find('input[type=radio]:checked').trigger('change');
 }
