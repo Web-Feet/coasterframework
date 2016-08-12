@@ -260,6 +260,7 @@ class Page extends Eloquent
         $page_blocks = PageBlock::where('page_id', '=', $this->id);
         $menu_items = MenuItem::where('page_id', '=', $this->id)->orWhere('page_id', 'LIKE', $this->id . ',%');
         $user_role_page_actions = UserRolePageAction::where('page_id', '=', $this->id);
+        $page_groups = PageGroupPage::where('page_id', '=', $this->id);
 
         $publish_request_ids = [];
         foreach ($page_versions as $page_version) {
@@ -272,6 +273,7 @@ class Page extends Eloquent
         Backup::new_backup($log_id, '\CoasterCms\Models\PageBlock', $page_blocks->get());
         Backup::new_backup($log_id, '\CoasterCms\Models\MenuItem', $menu_items->get());
         Backup::new_backup($log_id, '\CoasterCms\Models\UserRolePageAction', $user_role_page_actions->get());
+        Backup::new_backup($log_id, '\CoasterCms\Models\PageGroupPages', $page_groups->get());
 
         // publish requests
         if (!empty($publish_request_ids)) {
@@ -306,13 +308,14 @@ class Page extends Eloquent
         }
 
         // delete data
-        parent::delete();
+        $this->groups()->detach();
         $page_versions->delete();
         $page_langs->delete();
         $page_blocks->delete();
         $menu_items->delete();
         $user_role_page_actions->delete();
         PageSearchData::where('page_id', '=', $this->id)->delete();
+        parent::delete();
 
         $return_log_ids = array($log_id);
 
