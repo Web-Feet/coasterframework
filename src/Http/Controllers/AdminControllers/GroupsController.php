@@ -62,4 +62,11 @@ class GroupsController extends Controller
         }
     }
 
+    public function getEdit($groupId)
+    {
+        $group = PageGroup::find($groupId);
+        
+        $this->layoutData['content'] = View::make('coaster::pages.groups.edit', ['group' => $group]);
+    }
+
 }

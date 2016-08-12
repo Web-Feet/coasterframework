@@ -65,8 +65,8 @@ class CmsBlockInput
             'note' => '',
             'label' => 'None set',
             'submitted_data' => '',
-            'form_class' => '',
-            'form_message' => ''
+            'field_class' => '',
+            'field_message' => ''
         ], $options);
 
         return View::make($location . strtolower($type), $options)->render();

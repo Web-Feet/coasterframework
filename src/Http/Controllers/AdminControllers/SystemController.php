@@ -342,7 +342,7 @@ class SystemController extends Controller
                                 } else {
                                     $update = true;
                                 }
-                                $warnings[] = 'Warning: ' . $dbTableName . '/' . $dbColumnData->Field . ' default values needs changing, ' . (((string) $dbColumnData->Default)?'\''.$dbColumnData->Default.'\'':'No default') . ' => ' .  (((string) $migrationFieldData->Default)?'\''.$migrationFieldData->Default.'\'':'No default');
+                                $warnings[] = 'Warning: ' . $dbTableName . '/' . $dbColumnData->Field . ' default values needs changing, ' . ($dbColumnData->Default!==null?'\''.$dbColumnData->Default.'\'':'No default') . ' => ' .  ($migrationFieldData->Default!==null?'\''.$migrationFieldData->Default.'\'':'No default');
                             }
                             if ($basic_fix == 1 && $update) {
                                 if (strpos($migrationFieldData->Default, 'CURRENT_TIMESTAMP') !== false) {

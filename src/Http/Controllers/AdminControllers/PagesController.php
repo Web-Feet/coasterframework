@@ -534,7 +534,7 @@ class PagesController extends AdminController
          * Save Page
          */
         $parent = Page::find($page_info['parent']);
-        if ($page_info['parent'] >= 0 && !$parent) {
+        if ($page_info['parent'] > 0 && !$parent) {
             return false;
         }
 
@@ -570,6 +570,15 @@ class PagesController extends AdminController
             } else {
                 $page_info['live_start'] = Datetime::jQueryToMysql($page_info['live_start']);
                 $page_info['live_end'] = Datetime::jQueryToMysql($page_info['live_end']);
+            }
+        }
+
+        $createNewGroup = ($page_info['group_container'] == -1);
+        $page_info['group_container'] = $createNewGroup ? 0 : $page_info['group_container'];
+        if ($page_info['group_container']) {
+            $groupContainer = PageGroup::find($page_info['group_container']);
+            if (!$groupContainer || !$groupContainer->canAddContainers()) {
+                $page_info['group_container'] = 0;
             }
         }
 
@@ -715,6 +724,19 @@ class PagesController extends AdminController
                     BlockBeacon::updateUrl($uniqueId, 0);
                 }
             }
+        }
+
+        /*
+         * Create New Group
+         */
+        if ($createNewGroup) {
+            $newGroup =  new PageGroup;
+            $newGroup->name = $page_lang->name;
+            $newGroup->item_name = 'Page';
+            $newGroup->default_template = 0;
+            $newGroup->save();
+            $page->group_container = $newGroup->id;
+            $page->save();
         }
 
         /*

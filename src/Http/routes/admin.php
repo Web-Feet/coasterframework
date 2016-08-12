@@ -57,6 +57,7 @@ Route::group(['middleware' => ['web', 'coaster.admin'], 'namespace' => $adminCon
     Route::get($adminUrl . 'pages/tinymce-page-list', ['uses' => 'PagesController@getTinymcePageList', 'as' => $routeNamePrefix . 'pages.tinymce-page-list']);
 
     Route::get($adminUrl . 'groups/pages/{groupId}', ['uses' => 'GroupsController@getPages', 'as' => $routeNamePrefix . 'groups.pages']);
+    Route::get($adminUrl . 'groups/edit/{groupId}', ['uses' => 'GroupsController@getEdit', 'as' => $routeNamePrefix . 'groups.edit']);
 
     Route::get($adminUrl . 'menus', ['uses' => 'MenusController@getIndex', 'as' => $routeNamePrefix . 'menus']);
     Route::post($adminUrl . 'menus/add', ['uses' => 'MenusController@postAdd', 'as' => $routeNamePrefix . 'menus.add']);

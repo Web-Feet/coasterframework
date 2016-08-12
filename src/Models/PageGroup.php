@@ -25,9 +25,17 @@ class PageGroup extends Eloquent
     /**
      * @return mixed
      */
+    public function groupAttributes()
+    {
+        return $this->hasMany('CoasterCms\Models\PageGroupAttribute', 'group_id')->orderBy('item_block_order_priority', 'desc');
+    }
+
+    /**
+     * @return mixed
+     */
     public function blockFilters()
     {
-        return $this->hasMany('CoasterCms\Models\PageGroupAttribute', 'group_id')->where('filter_by_block_id', '>', 0);
+        return $this->groupAttributes()->where('filter_by_block_id', '>', 0);
     }
 
     /**
@@ -43,14 +51,29 @@ class PageGroup extends Eloquent
      */
     public function canAddItems()
     {
-        $containers = Page::where('group_container', '=', $this->id)->get();
-        $canDuplicate = false;
+        $containers = $this->containerPages();
+        $canAddItems = false;
         foreach ($containers as $container) {
-            if ($canDuplicate = Auth::action('pages.add', ['page_id' => $container->id])) {
+            if ($canAddItems = Auth::action('pages.add', ['page_id' => $container->id])) {
                 break;
             }
         }
-        return $canDuplicate;
+        return $canAddItems;
+    }
+
+    /**
+     * @return bool
+     */
+    public function canAddContainers()
+    {
+        $containers = $this->containerPages();
+        $canAddContainers = $containers->isEmpty();
+        foreach ($containers as $container) {
+            if ($canAddContainers = Auth::action('pages.edit', ['page_id' => $container->id])) {
+                break;
+            }
+        }
+        return $canAddContainers;
     }
 
     /**
@@ -59,7 +82,7 @@ class PageGroup extends Eloquent
     public function containerPageIds()
     {
         $containerIds = [];
-        $containers = Page::where('group_container', '=', $this->id)->get();
+        $containers = $this->containerPages();
         foreach ($containers as $container) {
             $containerIds[] = $container->id;
         }
@@ -133,26 +156,46 @@ class PageGroup extends Eloquent
 
         if ($sort && empty(self::$groupPages[$this->id][$filterType.$sorted])) {
             if (!empty(self::$groupPages[$this->id][$filterType])) {
-                if ($sortByAttribute = PageGroupAttribute::find($this->order_by_attribute_id)) {
-                    // sort via live version attributes
-                    $sortedPages = BlockManager::get_data_for_version(
-                        new PageBlock,
-                        -1,
-                        array('block_id', 'page_id'),
-                        array($sortByAttribute->item_block_id, self::$groupPages[$this->id][$filterType]),
-                        'content ' . $this->order_dir
-                    );
+                if ($sortByBlockIds = $this->orderAttributeBlocksIds()) {
+
+                    $orderPriority = 1;
                     $sortedPageIds = [];
-                    foreach ($sortedPages as $sortedPage) {
-                        $sortedPageIds[] = $sortedPage->page_id;
-                    }
-                    // if sort by block is empty for any page in the group, then add at top
                     foreach (self::$groupPages[$this->id][$filterType] as $pageId) {
-                        if (!in_array($pageId, $sortedPageIds)) {
-                            array_unshift($sortedPageIds, $pageId);
-                        }
+                        $sortedPageIds[$pageId] = [];
                     }
-                    self::$groupPages[$this->id][$filterType.$sorted] = $sortedPageIds;
+
+                    foreach ($sortByBlockIds as $sortByBlockId => $orderDir) {
+                        $sortedPages = BlockManager::get_data_for_version(
+                            new PageBlock,
+                            -1,
+                            array('block_id', 'page_id'),
+                            array($sortByBlockId, self::$groupPages[$this->id][$filterType]),
+                            'content ' . $orderDir
+                        );
+                        foreach ($sortedPages as $index => $sortedPage) {
+                            $sortedPageIds[$sortedPage->page_id][$orderPriority] = $index + 1;
+                        }
+                        // if sort by block is empty for any page in the group, then add at top
+                        foreach ($sortedPageIds as $pageId => $orderValues) {
+                            if (empty($sortedPageIds[$pageId][$orderPriority])) {
+                                $sortedPageIds[$pageId][$orderPriority] = 0;
+                            }
+                        }
+                        $orderPriority++;
+                    }
+                    uasort($sortedPageIds, function($a, $b) {
+                        foreach ($a as $orderPriority => $orderValue) {
+                            if ($orderValue < $b[$orderPriority]) {
+                                return -1;
+                            } elseif ($orderValue > $b[$orderPriority]) {
+                                return 1;
+                            }
+                        }
+                        return 0;
+                    });
+
+                    self::$groupPages[$this->id][$filterType.$sorted] = array_keys($sortedPageIds);
+
                 } else {
                     // if no sort by attribute
                     self::$groupPages[$this->id][$filterType.$sorted] = self::$groupPages[$this->id][$filterType];
@@ -233,6 +276,16 @@ class PageGroup extends Eloquent
             }
         }
         return $pages;
+    }
+
+    public function orderAttributeBlocksIds() {
+        $blockIds = [];
+        foreach ($this->groupAttributes as $attribute) {
+            if ($attribute->item_block_order_priority) {
+                $blockIds[$attribute->item_block_id] = $attribute->item_block_order_dir == 'desc' ? 'asc' : $attribute->item_block_order_dir;
+            }
+        }
+        return $blockIds;
     }
 
 }
