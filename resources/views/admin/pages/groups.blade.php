@@ -4,8 +4,12 @@
     </div>
     <div class="col-sm-6 text-right">
         @if ($can_add)
-            <button class="btn btn-warning addButton" data-group="{!! $group->id !!}">
-                <i class="fa fa-plus"></i> &nbsp; Add {!! $group->item_name !!}</button>
+            <a href="{{ route('coaster.admin.groups.edit', ['groupId' => $group->id]) }}" class="btn btn-warning addButton">
+                <i class="fa fa-pencil"></i> &nbsp; Edit {!! $group->name !!} Group</a> &nbsp;
+        @endif
+        @if ($can_add)
+            <a href="{{ route('coaster.admin.pages.add', ['pageId' => 0, 'groupId' => $group->id]) }}" class="btn btn-warning addButton">
+                <i class="fa fa-plus"></i> &nbsp; Add {!! $group->item_name !!}</a>
         @endif
     </div>
 </div>
@@ -16,10 +20,6 @@
     <script type='text/javascript'>
 
         $(document).ready(function () {
-
-            $('.addButton').click(function () {
-                document.location.href = route('coaster.admin.pages.add', {pageId: 0, groupId: $(this).attr('data-group')});
-            });
 
             watch_for_delete('.delete', 'page', function (el) {
                 return el.closest('tr').attr('id');

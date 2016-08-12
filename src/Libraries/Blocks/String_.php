@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
+use CoasterCms\Helpers\Cms\StringHelper;
 use CoasterCms\Libraries\Builder\PageBuilder;
 
 class String_ extends _Base
@@ -21,14 +22,7 @@ class String_ extends _Base
             $block_data = str_replace('%page_name%', PageBuilder::pageName(), $block_data);
             $block_data = str_replace('%site_name%', config('coaster::site.name'), $block_data);
             $block_data = htmlentities(strip_tags(html_entity_decode($block_data, ENT_QUOTES, 'UTF-8')));
-            if (strlen($block_data) > 200) {
-                $str = str_random(15);
-                $block_data = substr($block_data, 0, strpos(wordwrap($block_data, 200, "/$str/"), "/$str/"));
-                if (substr($block_data, -1) != '.') {
-                    $block_data .= ' ...';
-                }
-            }
-
+            $block_data = StringHelper::cutString($block_data);
         }
         return $block_data;
     }

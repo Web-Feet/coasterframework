@@ -18,10 +18,10 @@
 
             <br /> <br />
 
-            {!! CmsBlockInput::make('string', ['label' => 'Group Name', 'name' => 'name']) !!}
-            {!! CmsBlockInput::make('string', ['label' => 'Item Name', 'name' => 'name']) !!}
-            {!! CmsBlockInput::make('string', ['label' => 'Default Template', 'name' => 'name']) !!}
-            {!! CmsBlockInput::make('string', ['label' => 'Url Priority', 'name' => 'name']) !!}
+            {!! CmsBlockInput::make('string', ['label' => 'Group Name', 'name' => 'name', 'value' => $group->name]) !!}
+            {!! CmsBlockInput::make('string', ['label' => 'Item Name', 'name' => 'item_name', 'value' => $group->item_name]) !!}
+            {!! CmsBlockInput::make('select', ['label' => 'Default Template', 'name' => 'default_template', 'value' => $templateSelectContent]) !!}
+            {!! CmsBlockInput::make('string', ['label' => 'Url Priority', 'name' => 'url_priority', 'value' => $group->url_priority]) !!}
 
         </div>
         <div class="tab-pane" id="group-attributes">

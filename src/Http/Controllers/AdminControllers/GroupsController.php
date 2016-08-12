@@ -2,6 +2,7 @@
 
 use Auth;
 use Carbon\Carbon;
+use CoasterCms\Helpers\Cms\StringHelper;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\Language;
@@ -9,6 +10,7 @@ use CoasterCms\Models\PageBlock;
 use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageGroupAttribute;
 use CoasterCms\Models\PageLang;
+use CoasterCms\Models\Theme;
 use View;
 
 class GroupsController extends Controller
@@ -23,7 +25,9 @@ class GroupsController extends Controller
             $attributes = PageGroupAttribute::where('group_id', '=', $groupId)->get();
             $attributeBlocks = [];
             foreach ($attributes as $attribute) {
-                $attributeBlocks[$attribute->item_block_id] = Block::preload($attribute->item_block_id);
+                if ($block = Block::preload($attribute->item_block_id)) {
+                    $attributeBlocks[$attribute->item_block_id] = $block;
+                }
             }
 
             $pageRows = '';
@@ -47,7 +51,7 @@ class GroupsController extends Controller
                             $showBlocks[] = (new Carbon($pageBlockContent))->format(config('coaster::date.long'));
                         } else {
                             // text/string/select
-                            $showBlocks[] = $pageBlockContent;
+                            $showBlocks[] = StringHelper::cutString($pageBlockContent, 50);
                         }
                     }
 
@@ -65,8 +69,20 @@ class GroupsController extends Controller
     public function getEdit($groupId)
     {
         $group = PageGroup::find($groupId);
+
+        $templateSelectContent = new \stdClass;
+        $templateSelectContent->options = [0 => '-- No default --'] + Theme::get_template_list($group->default_template);
+        $templateSelectContent->selected = $group->default_template;
         
-        $this->layoutData['content'] = View::make('coaster::pages.groups.edit', ['group' => $group]);
+        $this->layoutData['content'] = View::make('coaster::pages.groups.edit', ['group' => $group, 'templateSelectContent' => $templateSelectContent]);
     }
+
+
+    public function postEdit($groupId)
+    {
+
+        $this->getEdit($groupId);
+    }
+
 
 }

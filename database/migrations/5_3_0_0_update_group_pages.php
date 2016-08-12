@@ -44,7 +44,7 @@ class UpdateGroupPages extends Migration
         });
 
         Schema::table('page_group_attributes', function (Blueprint $table) {
-            $table->string('item_block_order_priority')->default(0)->after('item_block_id');
+            $table->integer('item_block_order_priority')->default(0)->after('item_block_id');
             $table->string('item_block_order_dir')->default('asc')->after('item_block_order_priority');
         });
 
