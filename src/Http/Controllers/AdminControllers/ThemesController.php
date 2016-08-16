@@ -69,7 +69,7 @@ class ThemesController extends Controller
                     $theme = new \stdClass;
                     $theme->name = $themeFolder;
 
-                    $theme->image = 'http://www.placehold.it/252x142/EFEFEF/AAAAAA&text=no+image';
+                    $theme->image = 'https://placeholdit.imgix.net/~text?txtsize=19&bg=efefef&txtclr=aaaaaa%26text%3Dno%2Bimage&txt=no+image&w=200&h=150';
                     $publicLocations = [public_path('themes/' . $themeFolder), $themesPath . '/' . $themeFolder . '/public'];
                     foreach ($publicLocations as $k => $publicLocation) {
                         if (is_dir($publicLocation)) {
