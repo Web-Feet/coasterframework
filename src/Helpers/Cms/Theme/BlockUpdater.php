@@ -1,4 +1,4 @@
-<?php namespace CoasterCms\Helpers\Admin\Theme;
+<?php namespace CoasterCms\Helpers\Cms\Theme;
 
 use CoasterCms\Helpers\Cms\Page\PageLoaderDummy;
 use CoasterCms\Libraries\Builder\PageBuilder\ThemeBuilderInstance;
@@ -8,7 +8,6 @@ use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\BlockFormRule;
 use CoasterCms\Models\BlockRepeater;
 use CoasterCms\Models\BlockSelectOption;
-use CoasterCms\Models\Page;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\TemplateBlock;
 use CoasterCms\Models\Theme;

@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Http\Controllers\AdminControllers;
 
 use Auth;
-use CoasterCms\Helpers\Admin\Theme\BlockUpdater;
+use CoasterCms\Helpers\Cms\Theme\BlockUpdater;
 use CoasterCms\Helpers\Cms\BlockManager;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\Block;

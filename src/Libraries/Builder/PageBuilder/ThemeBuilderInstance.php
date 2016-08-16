@@ -1,15 +1,13 @@
 <?php namespace CoasterCms\Libraries\Builder\PageBuilder;
 
 use CoasterCms\Exceptions\PageBuilderException;
-use CoasterCms\Helpers\Admin\Theme\BlockUpdater;
+use CoasterCms\Helpers\Cms\Theme\BlockUpdater;
 use CoasterCms\Helpers\Cms\BlockManager;
 use CoasterCms\Helpers\Cms\Page\PageLoader;
 use CoasterCms\Libraries\Builder\MenuBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\Menu;
-use CoasterCms\Models\Page;
-use CoasterCms\Models\Template;
 use View;
 
 class ThemeBuilderInstance extends PageBuilderInstance

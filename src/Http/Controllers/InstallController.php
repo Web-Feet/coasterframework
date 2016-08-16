@@ -2,8 +2,10 @@
 
 use Artisan;
 use Carbon\Carbon;
+use CoasterCms\Helpers\Admin\Routes;
 use CoasterCms\Helpers\Cms\Install;
 use CoasterCms\Libraries\Builder\FormMessage;
+use CoasterCms\Models\Setting;
 use CoasterCms\Models\Theme;
 use DB;
 use Dotenv\Dotenv;
@@ -31,6 +33,7 @@ class InstallController extends Controller
             'sections_menu' => '',
             'modals' => '',
             'content' => '',
+            'coaster_routes' => Routes::jsonRoutes()
         ];
         
         $currentRouteName = Request::route()->getName();
@@ -53,10 +56,43 @@ class InstallController extends Controller
         }
     }
 
+    public function checkPermissions($next = false)
+    {
+        $dirs = [
+            storage_path('app/coaster'),
+            public_path('coaster'),
+            public_path('themes'),
+            public_path('uploads'),
+            base_path('.env'),
+        ];
+        $continue = true;
+
+        $dirs = array_flip($dirs);
+        foreach ($dirs as $dir => &$isWritable) {
+            if (!$isWritable = is_writable($dir)) {
+                $continue = false;
+            }
+        }
+
+        if ($next && $continue) {
+            Install::setInstallState('coaster.install.database');
+            return \redirect()->route('coaster.install.database');
+        }
+
+        $this->layoutData['title'] = 'Check Permissions';
+        $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'permissions', 'dirs' => $dirs, 'continue' => $continue]);
+        return null;
+    }
+
     public function setupDatabase()
     {
+        // basic db prefix checks
+        $envFile = file_get_contents(base_path('.env'));
+        $dbConf = file_get_contents(config_path('database.php'));
+        $allowPrefix = (strpos($envFile, 'DB_PREFIX') !== false) && (strpos($dbConf, "'prefix' => env('DB_PREFIX', '')") !== false);
+
         $this->layoutData['title'] = 'Install Database';
-        $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'database']);
+        $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'database', 'allowPrefix' => $allowPrefix]);
     }
 
     public function saveDatabaseSettings()
@@ -66,7 +102,7 @@ class InstallController extends Controller
         $v = Validator::make($details, array('host' => 'required', 'user' => 'required', 'name' => 'required'));
         if (!$v->passes()) {
             FormMessage::set($v->messages());
-            return $this->getIndex();
+            return $this->setupDatabase();
         }
 
         try {
@@ -82,7 +118,7 @@ class InstallController extends Controller
                 default:
                     FormMessage::add('host', $e->getMessage());
             }
-            return $this->getIndex();
+            return $this->setupDatabase();
         }
 
         Artisan::call('key:generate');
@@ -134,7 +170,7 @@ class InstallController extends Controller
         $v = Validator::make($details, array('email' => 'required|email', 'password' => 'required|confirmed|min:4'));
         if (!$v->passes()) {
             FormMessage::set($v->messages());
-            return $this->getAdmin();
+            return $this->setupAdminUser();
         }
 
         $date = new Carbon;
@@ -164,18 +200,18 @@ class InstallController extends Controller
         $themesPath = base_path('resources/views/themes');
         if (is_dir($themesPath)) {
             foreach (scandir($themesPath) as $themeFile) {
-                if (!is_dir($themesPath . '/' . $themeFile) && substr($themeFile, -4) == '.zip') {
-                    $themeName = substr($themeFile, 0, -4);
-                    $themes[$themeFile] = $themeName;
+                if (substr($themeFile, -4) == '.zip' || (is_dir($themesPath . '/' . $themeFile) && substr($themeFile, 0, 1) != '.')) {
+                    $themeName = (substr($themeFile, -4) == '.zip') ? substr($themeFile, 0, -4) : $themeFile;
+                    $themes[$themeName] = $themeName;
                     if ($themeName == 'default') {
-                        $themes[$themeFile] .= ' (minimal theme)';
+                        $themes[$themeName] .= ' (minimal theme)';
                     }
                 }
             }
         }
 
         $this->layoutData['title'] = 'Install Theme';
-        $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'theme', 'themes' => $themes, 'defaultTheme' => 'coaster2016.zip']);
+        $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'theme', 'themes' => $themes, 'defaultTheme' => 'coaster2016']);
     }
 
     public function installTheme()
@@ -184,10 +220,16 @@ class InstallController extends Controller
 
         $error = false;
         if (!empty($details['theme'])) {
-            if (!($error = Theme::unzip($details['theme']))) {
-                $withPageData = !empty($details['page-data'])?1:0;
-                $result = Theme::install(substr($details['theme'], 0, -4), ['withPageData' => $withPageData]);
-                $error = $result['error']?$result['response']:$error;
+            if (!($error = Theme::unzip($details['theme'].'.zip', false))) {
+                $withPageData = !empty($details['page-data']) ? 1 : 0;
+                $result = Theme::install($details['theme'], ['withPageData' => $withPageData]);
+                if ($result['error']) {
+                    $error = $result['response'];
+                }
+                if (($usedThemeSetting = Setting::where('name', '=', 'frontend.theme')->first()) && ($theme = Theme::where('theme', '=', $details['theme'])->first())) {
+                    $usedThemeSetting->value = $theme->id;
+                    $usedThemeSetting->save();
+                }
             }
         }
 
@@ -195,6 +237,7 @@ class InstallController extends Controller
             FormMessage::add('theme', $error);
             $this->setupTheme();
         } else {
+            include __DIR__ . '/../../Http/routes/admin.php';
             Install::setInstallState('complete-welcome');
             $this->layoutData['title'] = 'Install Complete';
             $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'complete']);

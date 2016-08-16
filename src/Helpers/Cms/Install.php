@@ -14,7 +14,7 @@ class Install
             $installStateFile = self::_getFilePath();
 
             if (!File::exists($installStateFile)) {
-                File::put($installStateFile, 'coaster.install.database');
+                File::put($installStateFile, 'coaster.install.permissions');
             }
 
             self::$_loadedState = File::get($installStateFile);
@@ -32,7 +32,7 @@ class Install
     {
         $installState = self::getInstallState();
         if (!Route::getRoutes()->hasNamedRoute($installState)) {
-            $installState = 'coaster.install.database';
+            $installState = 'coaster.install.permissions';
         }
         return $installState;
     }

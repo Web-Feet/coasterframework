@@ -6,7 +6,7 @@
 
     <p class="text-success">Install Complete</p>
     <p><a href="{{ route('coaster.admin.login') }}">Go to admin and login</a></p>
-    <p><a href="{{ URL::to('/') }}">Go to front-end</a></p>
+    <p><a href="{{ URL::to('/') }}" target="_blank">Go to front-end</a></p>
 
 @elseif ($stage == 'theme')
 
@@ -21,7 +21,7 @@
         <span class="help-block">{!! FormMessage::getErrorMessage('theme') !!}</span>
     </div>
     <div class="form-group {!! FormMessage::getErrorClass('page-data') !!} page-data-group">
-        {!! Form::label('page-data', 'Install with page data (recommended)', ['class' => 'control-label']) !!}
+        {!! Form::label('page-data', 'Install with example page data (recommended)', ['class' => 'control-label']) !!}
         {!! Form::checkbox('page-data', 1, true, ['class' => 'form-control']) !!}
         <span class="help-block">{!! FormMessage::getErrorMessage('page-data') !!}</span>
     </div>
@@ -86,15 +86,44 @@
         {!! Form::text('name', Request::input('name'), ['class' => 'form-control']) !!}
         <span class="help-block">{!! FormMessage::getErrorMessage('name') !!}</span>
     </div>
+    @if ($allowPrefix)
     <div class="form-group {!! FormMessage::getErrorClass('prefix') !!}">
         {!! Form::label('prefix', 'Database Prefix', ['class' => 'control-label']) !!}
         {!! Form::text('prefix', Request::input('prefix'), ['class' => 'form-control']) !!}
     </div>
+    @endif
 
     <!-- submit button -->
-    {!! Form::submit('Run Install', ['class' => 'btn btn-primary']) !!}
+    {!! Form::submit('Run Database Setup', ['class' => 'btn btn-primary']) !!}
 
     {!! Form::close() !!}
+
+@elseif ($stage == 'permissions')
+
+    <p>Checking the following folders and files are writable:</p>
+    <p>&nbsp;</p>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Location</th>
+                <th>Writable ?</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach($dirs as $dir => $isWritable)
+            <tr>
+                <td>{!! $dir . (base_path('.env') == $dir ? ' *' : '') !!}</td>
+                <td class="{{ $isWritable ? 'text-success' : 'text-danger' }}">{{ $isWritable ? 'Yes' : 'Nah' }}</td>
+            </tr>
+        @endforeach
+        </tbody>
+    </table>
+
+    <p>* only required to be writable for installation</p>
+    <p>&nbsp;</p>
+
+    <a href="{{ route('coaster.install.permissions') }}" class="btn btn-default">Recheck</a> &nbsp; <a href="{{ $continue ? route('coaster.install.permissions', ['next' => 1]) : '#' }}" class="btn btn-primary" {{ $continue ? '' : 'disabled="disabled"' }}>Continue</a>
 
 @endif
 
