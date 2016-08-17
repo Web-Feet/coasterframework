@@ -152,10 +152,10 @@ class SystemController extends Controller
                 case 'site.pages':
                     $total_pages = Page::get_total();
                     $note = 'set to 0 for no limit - currently ' . $total_pages . ' normal pages in use';
-                    if (PageGroup::count() > 0) {
-                        $true_total_pages = Page::get_total(true);
-                        $note .= ', total including group pages is ' . $true_total_pages;
-                    }
+                    break;
+                case 'site.groups':
+                    $total_pages = Page::get_total(true);
+                    $note = 'set to 0 for no limit on group pages - currently ' . $total_pages . ' pages in use';
                     break;
                 case 'site.secure_folders':
                     $note = 'list of comma separated folders, will copy files to secure folders and vice versa on update';

@@ -3,6 +3,7 @@
 use Auth;
 use CoasterCms\Helpers\Cms\Page\Path;
 use Eloquent;
+use View;
 
 class Page extends Eloquent
 {
@@ -109,16 +110,17 @@ class Page extends Eloquent
 
     public static function get_total($include_group = false)
     {
-        if ($include_group) {
-            return self::where('link', '=', '0')->count();
-        } else {
-            return self::where('link', '=', '0')->where('parent', '<=', '0')->where('group_container', '=', '0')->count();
+        $pages = self::where('link', '=', '0');
+        if (!$include_group) {
+            $pages = $pages->where('parent', '>=', '0');
         }
+        return $pages->count();
     }
 
-    public static function at_limit()
+    public static function at_limit($for_group = false)
     {
-        return self::get_total() >= config('coaster::site.pages') && config('coaster::site.pages') != 0;
+        $limit = ($for_group && config('coaster::site.groups') !== '') ? config('coaster::site.groups') : config('coaster::site.pages');
+        return $limit === '0' ? false : (self::get_total($for_group) >= $limit);
     }
 
     public static function preload($pageId)
@@ -247,6 +249,68 @@ class Page extends Eloquent
         // order
         asort($list);
         return $list;
+    }
+
+    public static function get_page_list_view($parent, $level, $cat_url = '')
+    {
+        if ($childPages = self::getChildPages($parent)) {
+            $pages_li = '';
+            foreach ($childPages as $child_page) {
+
+                if (config('coaster::admin.advanced_permissions') && !Auth::action('pages', ['page_id' => $child_page->id])) {
+                    continue;
+                }
+
+                $permissions = [];
+                $permissions['add'] = Auth::action('pages.add', ['page_id' => $child_page->id]);
+                $permissions['edit'] = Auth::action('pages.edit', ['page_id' => $child_page->id]);
+                $permissions['delete'] = Auth::action('pages.delete', ['page_id' => $child_page->id]);
+                $permissions['group'] = Auth::action('groups.pages', ['page_id' => $child_page->id]);
+                $permissions['galleries'] = Auth::action('gallery.edit', ['page_id' => $child_page->id]);
+                $permissions['forms'] = Auth::action('forms.submissions', ['page_id' => $child_page->id]);
+                $permissions['blog'] = Auth::action('system.wp_login');
+
+                $page_lang = PageLang::preload($child_page->id);
+
+                $li_info = new \stdClass;
+                $li_info->preview_link = $cat_url . '/' . $page_lang->url;
+                $li_info->preview_link = ($li_info->preview_link == '//') ? '/' : $li_info->preview_link;
+                $li_info->number_of_forms = Template::preload_blocks_of_type('form', $child_page->template);
+                $li_info->number_of_galleries = Template::preload_blocks_of_type('gallery', $child_page->template);
+
+                if (trim($page_lang->url, '/') == '' && $child_page->parent == 0 && $child_page->link == 0) {
+                    $permissions['add'] = false;
+                }
+                if ($child_page->group_container > 0) {
+                    $li_info->type = 'type_group';
+                    $li_info->leaf = '';
+                } else {
+                    $li_info->leaf = self::get_page_list_view($child_page->id, $level + 1, $li_info->preview_link);
+                    if ($child_page->link == 1) {
+                        $li_info->preview_link = $page_lang->url;
+                        $li_info->type = 'type_link';
+                    } else {
+                        $li_info->type = 'type_normal';
+                    }
+                }
+                if (trim($li_info->preview_link, '/') != '' && trim($li_info->preview_link, '/') == trim(config('coaster::blog.url'), '/')) {
+                    $li_info->blog = route('coaster.admin.system.wp-login');
+                } else {
+                    $li_info->blog = '';
+                }
+                if (!$child_page->is_live()) {
+                    $li_info->type = 'type_hidden';
+                    if ($child_page->link == 0) {
+                        if ($liveVersion = PageVersion::get_live_version($child_page->id)) {
+                            $li_info->preview_link .= '?preview=' . $liveVersion->preview_key;
+                        }
+                    }
+                }
+                $pages_li .= View::make('coaster::partials.pages.li', array('page' => $child_page, 'page_lang' => $page_lang, 'li_info' => $li_info, 'permissions' => $permissions))->render();
+            }
+            return View::make('coaster::partials.pages.ol', array('pages_li' => $pages_li, 'level' => $level))->render();
+        }
+        return null;
     }
 
     public function delete()

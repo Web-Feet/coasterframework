@@ -8,6 +8,7 @@ class PageVersion extends Eloquent
 {
 
     protected $table = 'page_versions';
+    protected static $_liveVersions = [];
 
     public function user()
     {
@@ -26,6 +27,21 @@ class PageVersion extends Eloquent
             return $return_obj ? $version : $version->version_id;
         }
         return 0;
+    }
+
+    public static function get_live_version($pageId)
+    {
+        if (empty(self::$_liveVersions)) {
+            $pageLangTable = (new PageLang)->getTable();
+            $pageVersionsTable = (new self)->getTable();
+            $pageVersions = self::join($pageLangTable, function ($join) use($pageLangTable, $pageVersionsTable) {
+                $join->on($pageLangTable.'.page_id', '=', $pageVersionsTable.'.page_id')->on($pageLangTable.'.live_version', '=', $pageVersionsTable.'.version_id');
+            })->where('language_id', '=', Language::current())->orderBy($pageLangTable.'.page_id')->get([$pageVersionsTable.'.*']);
+            foreach ($pageVersions as $pageVersion) {
+                self::$_liveVersions[$pageVersion->page_id] = $pageVersion;
+            }
+        }
+        return !empty(self::$_liveVersions[$pageId]) ? self::$_liveVersions[$pageId] : null;
     }
 
     public static function add_new($page_id, $label = null)

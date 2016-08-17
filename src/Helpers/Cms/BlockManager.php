@@ -113,7 +113,7 @@ class BlockManager
 
             // groups
             $groups = PageGroup::all();
-            if (!$groups->isEmpty()) {
+            if (!$groups->isEmpty() || config('coaster::site.groups') !== '') {
                 $tab_contents[0] .= View::make('coaster::partials.tabs.page_info.groups', ['page' => $page, 'page_lang' => $page_lang, 'groups' => $groups])->render();
             }
 

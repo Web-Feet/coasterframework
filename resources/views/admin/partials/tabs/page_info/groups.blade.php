@@ -21,6 +21,7 @@
     </div>
 </div>
 
+@if (!$groups->isEmpty())
 <div class="form-group" id="inGroup">
     {!! Form::label('page_groups', 'In Group', ['class' => 'control-label col-sm-2']) !!}
     <div class="col-sm-10">
@@ -31,3 +32,4 @@
         @endforeach
     </div>
 </div>
+@endif
