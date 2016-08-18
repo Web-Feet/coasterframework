@@ -24,7 +24,7 @@
             @endif
             @if ($permissions['delete'] == true)
                 <a href="javascript:void(0)" class="delete glyphicon glyphicon-trash itemTooltip"
-                   data-name="{!! $page->name !!}" title="Delete Page"></a>
+                   data-name="{!! $page_lang->name !!}" title="Delete Page"></a>
             @endif
         </span>
     </div>
