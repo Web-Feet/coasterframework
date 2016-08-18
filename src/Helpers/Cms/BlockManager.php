@@ -89,7 +89,7 @@ class BlockManager
             // page parent (only updated for new pages)
             if (empty($page_id)) {
                 $pageSelect = new \stdClass;
-                $pageSelect->options = ['0' => '-- Top Level Page --'] + Page::get_page_list(['links' => false, 'exclude_home' => true, 'group_pages' => false]);
+                $pageSelect->options = [-1 => '-- None --', 0 => '-- Top Level Page --'] + Page::get_page_list(['links' => false, 'exclude_home' => true, 'group_pages' => false]);
                 $pageSelect->selected = $page->parent;
             } else {
                 $pageSelect = null;
