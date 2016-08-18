@@ -13,6 +13,7 @@ use CoasterCms\Libraries\Blocks\Form;
 use CoasterCms\Libraries\Builder\PageBuilder\PageBuilderInstance;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\PageRedirect;
+use Exception;
 use Illuminate\Routing\Controller;
 use Request;
 use Response;
@@ -110,7 +111,7 @@ class CmsController extends Controller
             if (View::exists($templatePath)) {
                 $this->responseContent = View::make($templatePath)->render();
             } else {
-                throw new CmsPageException('cms page found with non existent template', 500);
+                throw new CmsPageException('cms page found with non existent template - '.$templatePath, 500);
             }
 
             // if declared as a search page, must have search block
@@ -121,20 +122,12 @@ class CmsController extends Controller
         } catch (CmsPageException $e) {
 
             if (!($this->responseContent = $e->getAlternateResponse())) {
-
-                $this->responseCode = $e->getCode();
-                $templatePath = $templatePathRoot . 'errors.' . $this->responseCode;
-
-                // display error loading page
-                event(new LoadErrorTemplate($templatePath));
-                if (View::exists($templatePath)) {
-                    $this->_setHtmlContentType();
-                    $this->responseContent = View::make($templatePath, ['error' => $e->getMessage()])->render();
-                } else {
-                    $this->responseContent = $e->getMessage();
-                }
-
+                $this->_setErrorContent($templatePathRoot, $e);
             }
+
+        } catch (Exception $e) {
+
+            $this->_setErrorContent($templatePathRoot, $e);
 
         }
 
@@ -163,6 +156,21 @@ class CmsController extends Controller
         }
 
         return $response;
+    }
+
+    protected function _setErrorContent($templatePathRoot, Exception $e)
+    {
+        $this->responseCode = $e->getCode() ?: 500;
+        $templatePath = $templatePathRoot . 'errors.' . $this->responseCode;
+
+        // display error loading page
+        event(new LoadErrorTemplate($templatePath));
+        if (View::exists($templatePath)) {
+            $this->_setHtmlContentType();
+            $this->responseContent = View::make($templatePath, ['e' => $e, 'error' => $e->getMessage()])->render();
+        } else {
+            $this->responseContent = $e->getMessage();
+        }
     }
 
     /**
