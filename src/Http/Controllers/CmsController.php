@@ -158,6 +158,10 @@ class CmsController extends Controller
         return $response;
     }
 
+    /**
+     * @param strin $templatePathRoot
+     * @param Exception $e
+     */
     protected function _setErrorContent($templatePathRoot, Exception $e)
     {
         $this->responseCode = $e->getCode() ?: 500;
