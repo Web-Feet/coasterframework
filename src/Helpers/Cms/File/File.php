@@ -40,7 +40,7 @@ class File
     public static function getEnvContents()
     {
         try {
-            return file_get_contents(self::getEnvFile());
+            return file_get_contents(base_path(self::getEnvFile()));
         } catch(\Exception $e) {
             return '';
         }
@@ -50,7 +50,7 @@ class File
     {
         $envFiles = [
             '.env',
-            '.env.examples'
+            '.env.example'
         ];
         foreach ($envFiles as $envFile) {
             if (file_exists(base_path($envFile)) && file_get_contents(base_path($envFile))) {
