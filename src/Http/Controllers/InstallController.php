@@ -67,7 +67,6 @@ class InstallController extends Controller
         ];
         $continue = true;
 
-        $dirs = array_flip($dirs);
         foreach ($dirs as $dir => &$isWritable) {
             try {
                 if (!file_exists($dir)) {
