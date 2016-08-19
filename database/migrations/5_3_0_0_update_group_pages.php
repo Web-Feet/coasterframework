@@ -46,6 +46,7 @@ class UpdateGroupPages extends Migration
         Schema::table('page_group_attributes', function (Blueprint $table) {
             $table->integer('item_block_order_priority')->default(0)->after('item_block_id');
             $table->string('item_block_order_dir')->default('asc')->after('item_block_order_priority');
+            $table->integer('filter_by_block_id')->default(0)->change();
         });
 
         $groupsController = DB::table('admin_controllers')->select('id')->where('controller', '=', 'groups')->first();

@@ -83,6 +83,15 @@ class Block extends Eloquent
         return $array;
     }
 
+    public static function idToLabelArray()
+    {
+        $array = [];
+        foreach (self::all() as $block) {
+            $array[$block->id] = $block->label;
+        }
+        return $array;
+    }
+
     /**
      * @return \CoasterCms\Libraries\Blocks\_Base
      */

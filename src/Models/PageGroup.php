@@ -172,8 +172,12 @@ class PageGroup extends Eloquent
                             array($sortByBlockId, self::$groupPages[$this->id][$filterType]),
                             'content ' . $orderDir
                         );
+                        $sortOrder = 0;
                         foreach ($sortedPages as $index => $sortedPage) {
-                            $sortedPageIds[$sortedPage->page_id][$orderPriority] = $index + 1;
+                            if (empty($sortedPages[$index-1]) || $sortedPages[$index-1]->content != $sortedPage->content) {
+                                $sortOrder++;
+                            }
+                            $sortedPageIds[$sortedPage->page_id][$orderPriority] = $sortOrder;
                         }
                         // if sort by block is empty for any page in the group, then add at top
                         foreach ($sortedPageIds as $pageId => $orderValues) {
@@ -282,7 +286,7 @@ class PageGroup extends Eloquent
         $blockIds = [];
         foreach ($this->groupAttributes as $attribute) {
             if ($attribute->item_block_order_priority) {
-                $blockIds[$attribute->item_block_id] = $attribute->item_block_order_dir == 'desc' ? 'asc' : $attribute->item_block_order_dir;
+                $blockIds[$attribute->item_block_id] = $attribute->item_block_order_dir == 'desc' ? 'desc' : 'asc';
             }
         }
         return $blockIds;

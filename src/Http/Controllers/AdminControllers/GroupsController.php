@@ -11,6 +11,7 @@ use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageGroupAttribute;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Theme;
+use Request;
 use View;
 
 class GroupsController extends Controller
@@ -51,7 +52,7 @@ class GroupsController extends Controller
                             $showBlocks[] = (new Carbon($pageBlockContent))->format(config('coaster::date.long'));
                         } else {
                             // text/string/select
-                            $showBlocks[] = StringHelper::cutString($pageBlockContent, 50);
+                            $showBlocks[] = strip_tags(StringHelper::cutString($pageBlockContent, 50));
                         }
                     }
 
@@ -62,7 +63,7 @@ class GroupsController extends Controller
             $pagesTable = View::make('coaster::partials.groups.page_table', array('rows' => $pageRows, 'item_name' => $group->item_name, 'blocks' => $attributeBlocks))->render();
 
             $this->layoutData['modals'] = View::make('coaster::modals.general.delete_item');
-            $this->layoutData['content'] = View::make('coaster::pages.groups', array('group' => $group, 'pages' => $pagesTable, 'can_add' => $group->canAddItems()));
+            $this->layoutData['content'] = View::make('coaster::pages.groups', array('group' => $group, 'pages' => $pagesTable, 'can_add' => $group->canAddItems(), 'can_edit' => $group->canAddContainers()));
         }
     }
 
@@ -73,13 +74,44 @@ class GroupsController extends Controller
         $templateSelectContent = new \stdClass;
         $templateSelectContent->options = [0 => '-- No default --'] + Theme::get_template_list($group->default_template);
         $templateSelectContent->selected = $group->default_template;
+        $blockList = Block::idToLabelArray();
         
-        $this->layoutData['content'] = View::make('coaster::pages.groups.edit', ['group' => $group, 'templateSelectContent' => $templateSelectContent]);
+        $this->layoutData['content'] = View::make('coaster::pages.groups.edit', ['group' => $group, 'templateSelectContent' => $templateSelectContent, 'blockList' => $blockList]);
     }
 
 
     public function postEdit($groupId)
     {
+        if ($group = PageGroup::find($groupId)) {
+            $groupInput = Request::input('group', []);
+            foreach ($groupInput as $groupAttribute => $attributeValue) {
+                if ($group->$groupAttribute !== null && $groupAttribute != 'id') {
+                    $group->$groupAttribute = $attributeValue;
+                }
+            }
+            $group->save();
+
+            $currentAttributes = [];
+            $newAttributes = [];
+            foreach ($group->groupAttributes as $currentAttribute) {
+                $currentAttributes[$currentAttribute->id] = $currentAttribute;
+            }
+            $groupPageAttributes = Request::input('groupAttribute', []);
+
+            foreach ($groupPageAttributes as $attributeId => $groupPageAttribute) {
+                if ($newAttribute = strpos($attributeId, 'new') === 0 ? new PageGroupAttribute : (!empty($currentAttributes[$attributeId]) ? $currentAttributes[$attributeId] : null)) {
+                    $newAttribute->group_id = $group->id;
+                    $newAttribute->item_block_id = $groupPageAttribute['item_block_id'];
+                    $newAttribute->item_block_order_priority = $groupPageAttribute['item_block_order_priority'];
+                    $newAttribute->item_block_order_dir = $groupPageAttribute['item_block_order_dir'];
+                    $newAttribute->save();
+                    $newAttributes[$newAttribute->id] = $newAttribute;
+                }
+            }
+
+            $deleteAttributeIds = array_diff(array_keys($currentAttributes), array_keys($newAttributes));
+            PageGroupAttribute::whereIn('id', $deleteAttributeIds)->delete();
+        }
 
         $this->getEdit($groupId);
     }

@@ -4,7 +4,7 @@
     </td>
     @foreach ($showBlocks as $showBlock)
         <td>
-            {!! $showBlock !!}
+            {{ $showBlock }}
         </td>
     @endforeach
     <td>
