@@ -140,8 +140,10 @@ class InstallController extends Controller
         ];
 
         try {
-            $envFile = file_exists(base_path('.env')) ? base_path('.env') : base_path('.env.example');
-            $envFileContents = file_get_contents($envFile);
+            $envFileContents = file_get_contents(base_path('.env'));
+            if (!trim($envFileContents)) {
+                $envFileContents = file_exists(base_path('.env.example')) ? file_get_contents(base_path('.env.example')) : '';
+            }
             $dotEnv = new Dotenv(base_path()); // Laravel 5.2
             foreach ($dotEnv->load() as $env) {
                 $envParts = explode('=', $env);
