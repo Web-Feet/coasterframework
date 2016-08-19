@@ -131,16 +131,22 @@ class InstallController extends Controller
             'DB_PASSWORD' => $details['password']
         ];
 
-        $envFile = file_get_contents(base_path('.env'));
-        $dotEnv = new Dotenv(base_path()); // Laravel 5.2
-        foreach ($dotEnv->load() as $env) {
-            $envParts = explode('=', $env);
-            if (key_exists($envParts[0], $updateEnv)) {
-                $envFile = str_replace($env, $envParts[0].'='.$updateEnv[$envParts[0]], $envFile);
+        try {
+            $envFile = file_exists(base_path('.env')) ? base_path('.env') : base_path('.env.example');
+            $envFileContents = file_get_contents($envFile);
+            $dotEnv = new Dotenv(base_path()); // Laravel 5.2
+            foreach ($dotEnv->load() as $env) {
+                $envParts = explode('=', $env);
+                if (key_exists($envParts[0], $updateEnv)) {
+                    $envFileContents = str_replace($env, $envParts[0] . '=' . $updateEnv[$envParts[0]], $envFileContents);
+                }
             }
-        }
 
-        file_put_contents(base_path('.env'), $envFile);
+            file_put_contents(base_path('.env'), $envFileContents);
+        } catch (\Exception $e) {
+            FormMessage::add('host', 'can\'t write settings to the .env file, check it is writable for the installation');
+            return $this->setupDatabase();
+        }
 
         Install::setInstallState('coaster.install.databaseMigrate');
 
