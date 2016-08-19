@@ -130,8 +130,6 @@ class InstallController extends Controller
             return $this->setupDatabase();
         }
 
-        Artisan::call('key:generate');
-
         $updateEnv = [
             'DB_HOST' => $details['host'],
             'DB_DATABASE' => $details['name'],
@@ -151,6 +149,7 @@ class InstallController extends Controller
             }
 
             file_put_contents(base_path('.env'), $envFileContents);
+            Artisan::call('key:generate');
         } catch (\Exception $e) {
             FormMessage::add('host', 'can\'t write settings to the .env file, check it is writable for the installation');
             return $this->setupDatabase();
