@@ -140,7 +140,7 @@ class InstallController extends Controller
 
         try {
             $envFileContents = File::getEnvContents();
-            $dotEnv = new Dotenv(base_path()); // Laravel 5.2
+            $dotEnv = new Dotenv(base_path(), File::getEnvFile());
             foreach ($dotEnv->load() as $env) {
                 $envParts = explode('=', $env);
                 if (key_exists($envParts[0], $updateEnv)) {

@@ -40,14 +40,24 @@ class File
     public static function getEnvContents()
     {
         try {
-            $envFileContents = file_get_contents(base_path('.env'));
-            if (!trim($envFileContents)) {
-                $envFileContents = file_exists(base_path('.env.example')) ? file_get_contents(base_path('.env.example')) : '';
-            }
+            return file_get_contents(self::getEnvFile());
         } catch(\Exception $e) {
-            $envFileContents = '';
+            return '';
         }
-        return $envFileContents;
+    }
+
+    public static function getEnvFile()
+    {
+        $envFiles = [
+            '.env',
+            '.env.examples'
+        ];
+        foreach ($envFiles as $envFile) {
+            if (file_exists(base_path($envFile)) && file_get_contents(base_path($envFile))) {
+                return $envFile;
+            }
+        }
+        return $envFiles[0];
     }
 
 }
