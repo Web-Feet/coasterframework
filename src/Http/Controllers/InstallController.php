@@ -3,6 +3,7 @@
 use Artisan;
 use Carbon\Carbon;
 use CoasterCms\Helpers\Admin\Routes;
+use CoasterCms\Helpers\Cms\File\File;
 use CoasterCms\Helpers\Cms\Install;
 use CoasterCms\Libraries\Builder\FormMessage;
 use CoasterCms\Models\Setting;
@@ -95,9 +96,9 @@ class InstallController extends Controller
     public function setupDatabase()
     {
         // basic db prefix checks
-        $envFile = file_get_contents(base_path('.env'));
+        $envFileContents = File::getEnvContents();
         $dbConf = file_get_contents(config_path('database.php'));
-        $allowPrefix = (strpos($envFile, 'DB_PREFIX') !== false) && (strpos($dbConf, "'prefix' => env('DB_PREFIX', '')") !== false);
+        $allowPrefix = (strpos($envFileContents, 'DB_PREFIX') !== false) && (strpos($dbConf, "'prefix' => env('DB_PREFIX', '')") !== false);
 
         $this->layoutData['title'] = 'Install Database';
         $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'database', 'allowPrefix' => $allowPrefix]);
@@ -134,16 +135,13 @@ class InstallController extends Controller
         $updateEnv = [
             'DB_HOST' => $details['host'],
             'DB_DATABASE' => $details['name'],
-            'DB_PREFIX' => $details['prefix'],
+            'DB_PREFIX' => !empty($details['prefix']) ? $details['prefix'] : '',
             'DB_USERNAME' => $details['user'],
             'DB_PASSWORD' => $details['password']
         ];
 
         try {
-            $envFileContents = file_get_contents(base_path('.env'));
-            if (!trim($envFileContents)) {
-                $envFileContents = file_exists(base_path('.env.example')) ? file_get_contents(base_path('.env.example')) : '';
-            }
+            $envFileContents = File::getEnvContents();
             $dotEnv = new Dotenv(base_path()); // Laravel 5.2
             foreach ($dotEnv->load() as $env) {
                 $envParts = explode('=', $env);

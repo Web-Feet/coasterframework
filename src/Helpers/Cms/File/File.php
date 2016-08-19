@@ -37,4 +37,17 @@ class File
         file_put_contents($src, $str);
     }
 
+    public static function getEnvContents()
+    {
+        try {
+            $envFileContents = file_get_contents(base_path('.env'));
+            if (!trim($envFileContents)) {
+                $envFileContents = file_exists(base_path('.env.example')) ? file_get_contents(base_path('.env.example')) : '';
+            }
+        } catch(\Exception $e) {
+            $envFileContents = '';
+        }
+        return $envFileContents;
+    }
+
 }
