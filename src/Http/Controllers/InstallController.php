@@ -59,16 +59,25 @@ class InstallController extends Controller
     public function checkPermissions($next = false)
     {
         $dirs = [
-            storage_path('app/coaster'),
-            public_path('coaster'),
-            public_path('themes'),
-            public_path('uploads'),
-            base_path('.env'),
+            storage_path('app/coaster') => true,
+            public_path('coaster') => true,
+            public_path('themes') => true,
+            public_path('uploads') => true,
+            base_path('.env') => false,
         ];
         $continue = true;
 
         $dirs = array_flip($dirs);
         foreach ($dirs as $dir => &$isWritable) {
+            try {
+                if (!file_exists($dir)) {
+                    if (!$isWritable) { // is dir at this point
+                        file_put_contents($dir, '');
+                    } else {
+                        \mkdir($dir, 0777, true);
+                    }
+                }
+            } catch (\Exception $e) {}
             if (!$isWritable = is_writable($dir)) {
                 $continue = false;
             }
