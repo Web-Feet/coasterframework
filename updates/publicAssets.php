@@ -55,7 +55,7 @@ if (empty($assetsVersions['bootstrap']) || version_compare($assetsVersions['boot
     unlink($zipPath);
 
     // Copy html_blade syntax highlighter
-    copy(realpath(__DIR__.'/../public/ace/html_blade.js') , $coasterPublicFolder . '/ace/html_blade.js');
+    copy(realpath(__DIR__.'/../public/ace/mode-html_blade.js'), $coasterPublicFolder . '/ace/mode-html_blade.js');
     echo ".";
 
 
