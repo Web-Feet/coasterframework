@@ -46,9 +46,9 @@ if (empty($assetsVersions['bootstrap']) || version_compare($assetsVersions['boot
 
     $zip = new \CoasterCms\Helpers\Cms\File\Zip;
     $zip->open($zipPath);
-    $zip->extractDir('/src', public_path('coaster/ace'));
+    $zip->extractDir('src', public_path('coaster/ace'));
     $zip->close();
-    unlink($zipPath);
+    // unlink($zipPath);
 
     // Coopy html_blade syntax highlighter
     \CoasterCms\Helpers\Cms\File\Directory::copy(realpath(__DIR__.'/../public/ace') , $coasterPublicFolder . '/ace/');
