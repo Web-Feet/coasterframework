@@ -106,7 +106,7 @@ class Form extends _Base
                 $form_data = new \stdClass;
                 $form_data->email_from = $updated_form_data['from'];
                 $form_data->email_to = $updated_form_data['to'];
-                $form_data->template = $updated_form_data['template'];
+                $form_data->template = !empty($updated_form_data['template'])?$updated_form_data['template']:0;
                 $form_data->page_to = $updated_form_data['page'];
                 $form_data->captcha = !empty($updated_form_data['captcha']) ? true : false;
                 $block_content = serialize($form_data);
