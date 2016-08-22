@@ -40,7 +40,7 @@ if (empty($assetsVersions['bootstrap']) || version_compare($assetsVersions['boot
     $releaseFileName = 'v1.2.5.zip';
     $zip = public_path('coaster/ace-'.$releaseFileName);
     $response = $guzzleClient->request('GET', 'https://github.com/ajaxorg/ace/archive/'.$releaseFileName, [
-        'sink' => $bootstrapZip
+        'sink' => $zip
     ]);
     echo ".";
 
