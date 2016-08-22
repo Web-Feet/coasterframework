@@ -42,7 +42,7 @@ if (empty($assetsVersions['bootstrap']) || version_compare($assetsVersions['boot
 
     $releaseFileName = 'v'.$assetsVersions['ace'].'.zip';
     $zipPath = public_path('coaster/ace-'.$releaseFileName);
-    $response = $guzzleClient->request('GET', 'https://github.com/ajaxorg/ace/archive/'.$releaseFileName, [
+    $response = $guzzleClient->request('GET', 'https://github.com/ajaxorg/ace/releases/'.$releaseFileName, [
         'sink' => $zipPath
     ]);
     echo ".";
@@ -50,7 +50,7 @@ if (empty($assetsVersions['bootstrap']) || version_compare($assetsVersions['boot
     $zip = new \CoasterCms\Helpers\Cms\File\Zip;
     $zip->open($zipPath);
     $xfld = str_replace('.zip', '', $releaseFileName);
-    $zip->extractDir('ace-'.$xfld.'/build/src', public_path('coaster/ace'));
+    $zip->extractDir('ace-'.$xfld.'/build/src-min', public_path('coaster/ace'));
     $zip->close();
     unlink($zipPath);
 
