@@ -38,17 +38,17 @@ if (empty($assetsVersions['bootstrap']) || version_compare($assetsVersions['boot
 
     echo "Coaster Framework: Updating twitter bootstrap .";
     $releaseFileName = 'v1.2.5.zip';
-    $zip = public_path('coaster/ace-'.$releaseFileName);
+    $zipPath = public_path('coaster/ace-'.$releaseFileName);
     $response = $guzzleClient->request('GET', 'https://github.com/ajaxorg/ace/archive/'.$releaseFileName, [
-        'sink' => $zip
+        'sink' => $zipPath
     ]);
     echo ".";
 
     $zip = new \CoasterCms\Helpers\Cms\File\Zip;
-    $zip->open($zip);
+    $zip->open($zipPath);
     $zip->extractDir('/src', public_path('coaster/ace'));
     $zip->close();
-    unlink($zip);
+    unlink($zipPath);
 
     // Coopy html_blade syntax highlighter
     \CoasterCms\Helpers\Cms\File\Directory::copy(realpath(__DIR__.'/../public/ace') , $coasterPublicFolder . '/ace/');
