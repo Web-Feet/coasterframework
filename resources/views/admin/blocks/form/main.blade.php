@@ -13,10 +13,12 @@
             <div class="col-sm-3">Submit Page:</div>
             <div class="col-sm-9">{!! Form::select($name.'[page]', $content->pages_array, $content->page_to, ['class' => 'form-control']) !!}</div>
         </div>
+        @if ($content->template)
         <div class="row">
             <div class="col-sm-3">Form Template:</div>
             <div class="col-sm-9">{!! Form::select($name.'[template]', $content->template_array, $content->template, ['class' => 'form-control form-template']) !!}</div>
         </div>
+        @endif
         <div class="row">
             <div class="col-sm-3">Enable Secure Captcha:</div>
             <div class="col-sm-9">{!! Form::checkbox($name.'[captcha]', 1, $content->captcha, ['class' => 'form-control']) !!}</div>

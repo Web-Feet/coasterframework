@@ -3,6 +3,7 @@
 use Artisan;
 use Carbon\Carbon;
 use CoasterCms\Helpers\Admin\Routes;
+use CoasterCms\Helpers\Cms\File\File;
 use CoasterCms\Helpers\Cms\Install;
 use CoasterCms\Libraries\Builder\FormMessage;
 use CoasterCms\Models\Setting;
@@ -59,16 +60,24 @@ class InstallController extends Controller
     public function checkPermissions($next = false)
     {
         $dirs = [
-            storage_path('app/coaster'),
-            public_path('coaster'),
-            public_path('themes'),
-            public_path('uploads'),
-            base_path('.env'),
+            storage_path('app/coaster') => true,
+            public_path('coaster') => true,
+            public_path('themes') => true,
+            public_path('uploads') => true,
+            base_path('.env') => false,
         ];
         $continue = true;
 
-        $dirs = array_flip($dirs);
         foreach ($dirs as $dir => &$isWritable) {
+            try {
+                if (!file_exists($dir)) {
+                    if (!$isWritable) { // is dir at this point
+                        file_put_contents($dir, '');
+                    } else {
+                        \mkdir($dir, 0777, true);
+                    }
+                }
+            } catch (\Exception $e) {}
             if (!$isWritable = is_writable($dir)) {
                 $continue = false;
             }
@@ -87,9 +96,9 @@ class InstallController extends Controller
     public function setupDatabase()
     {
         // basic db prefix checks
-        $envFile = file_get_contents(base_path('.env'));
+        $envFileContents = File::getEnvContents();
         $dbConf = file_get_contents(config_path('database.php'));
-        $allowPrefix = (strpos($envFile, 'DB_PREFIX') !== false) && (strpos($dbConf, "'prefix' => env('DB_PREFIX', '')") !== false);
+        $allowPrefix = (strpos($envFileContents, 'DB_PREFIX') !== false) && (strpos($dbConf, "'prefix' => env('DB_PREFIX', '')") !== false);
 
         $this->layoutData['title'] = 'Install Database';
         $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'database', 'allowPrefix' => $allowPrefix]);
@@ -121,20 +130,17 @@ class InstallController extends Controller
             return $this->setupDatabase();
         }
 
-        Artisan::call('key:generate');
-
         $updateEnv = [
             'DB_HOST' => $details['host'],
             'DB_DATABASE' => $details['name'],
-            'DB_PREFIX' => $details['prefix'],
+            'DB_PREFIX' => !empty($details['prefix']) ? $details['prefix'] : '',
             'DB_USERNAME' => $details['user'],
             'DB_PASSWORD' => $details['password']
         ];
 
         try {
-            $envFile = file_exists(base_path('.env')) ? base_path('.env') : base_path('.env.example');
-            $envFileContents = file_get_contents($envFile);
-            $dotEnv = new Dotenv(base_path()); // Laravel 5.2
+            $envFileContents = File::getEnvContents();
+            $dotEnv = new Dotenv(base_path(), File::getEnvFile());
             foreach ($dotEnv->load() as $env) {
                 $envParts = explode('=', $env);
                 if (key_exists($envParts[0], $updateEnv)) {
@@ -143,6 +149,7 @@ class InstallController extends Controller
             }
 
             file_put_contents(base_path('.env'), $envFileContents);
+            Artisan::call('key:generate');
         } catch (\Exception $e) {
             FormMessage::add('host', 'can\'t write settings to the .env file, check it is writable for the installation');
             return $this->setupDatabase();
