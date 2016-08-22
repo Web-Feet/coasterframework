@@ -54,8 +54,8 @@ if (empty($assetsVersions['bootstrap']) || version_compare($assetsVersions['boot
     $zip->close();
     unlink($zipPath);
 
-    // Coopy html_blade syntax highlighter
-    \CoasterCms\Helpers\Cms\File\Directory::copy(realpath(__DIR__.'/../public/ace') , $coasterPublicFolder . '/ace/');
+    // Copy html_blade syntax highlighter
+    copy(realpath(__DIR__.'/../public/ace/html_blade.js') , $coasterPublicFolder . '/ace/html_blade.js');
     echo ".";
 
 
