@@ -34,9 +34,9 @@ if (empty($assetsVersions['app']) || version_compare($assetsVersions['app'], con
   * ACE (HTML / Code Editor)
   */
 
-if (empty($assetsVersions['bootstrap']) || version_compare($assetsVersions['bootstrap'], '3.3.6', '<')) {
+if (empty($assetsVersions['ace']) || version_compare($assetsVersions['ace'], '1.2.5', '<')) {
 
-    echo "Coaster Framework: Updating twitter bootstrap .";
+    echo "Coaster Framework: Updating ACE HTML/CSS/Code Editor.";
 
     $assetsVersions['ace'] = '1.2.5';
 
@@ -49,16 +49,13 @@ if (empty($assetsVersions['bootstrap']) || version_compare($assetsVersions['boot
 
     $zip = new \CoasterCms\Helpers\Cms\File\Zip;
     $zip->open($zipPath);
-    $xfld = str_replace('.zip', '', $releaseFileName);
-    $zip->extractDir('ace-'.$xfld.'/src-min', public_path('coaster/ace'));
+    $zip->extractDir('ace-builds-'.$assetsVersions['ace'].'/src-min', public_path('coaster/ace'));
     $zip->close();
     unlink($zipPath);
 
     // Copy html_blade syntax highlighter
     copy(realpath(__DIR__.'/../public/ace/mode-html_blade.js'), $coasterPublicFolder . '/ace/mode-html_blade.js');
     echo ".";
-
-
 
     file_put_contents($assetsFile, json_encode($assetsVersions));
 
@@ -71,7 +68,7 @@ if (empty($assetsVersions['bootstrap']) || version_compare($assetsVersions['boot
  */
 if (empty($assetsVersions['bootstrap']) || version_compare($assetsVersions['bootstrap'], '3.3.6', '<')) {
 
-    echo "Coaster Framework: Updating ACE HTML/CSS/Code Editor.";
+    echo "Coaster Framework: Updating twitter bootstrap .";
 
     $bootstrapZip = public_path('coaster/bootstrap-3.3.6-dist.zip');
     $response = $guzzleClient->request('GET', 'https://github.com/twbs/bootstrap/releases/download/v3.3.6/bootstrap-3.3.6-dist.zip', [
