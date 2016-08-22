@@ -30,9 +30,9 @@ if (empty($assetsVersions['app']) || version_compare($assetsVersions['app'], con
     echo " done\n";
 }
 
-/*
- * Bootstrap
- */
+ /*
+  * ACE (HTML / Code Editor)
+  */
 
 if (empty($assetsVersions['bootstrap']) || version_compare($assetsVersions['bootstrap'], '3.3.6', '<')) {
 
@@ -63,9 +63,8 @@ if (empty($assetsVersions['bootstrap']) || version_compare($assetsVersions['boot
 
 
 /*
- * ACE (HTML / Code Editor)
+ * Bootstrap
  */
-
 if (empty($assetsVersions['bootstrap']) || version_compare($assetsVersions['bootstrap'], '3.3.6', '<')) {
 
     echo "Coaster Framework: Updating ACE HTML/CSS/Code Editor.";
