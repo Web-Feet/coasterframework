@@ -4,11 +4,14 @@ use Auth;
 use CoasterCms\Models\AdminAction;
 use CoasterCms\Models\AdminController;
 use CoasterCms\Models\Language;
+use Request;
 use URL;
 use View;
 
 class AdminMenu
 {
+
+    protected static $_setActive;
 
     public static function getSystemMenu()
     {
@@ -87,6 +90,8 @@ class AdminMenu
         foreach ($menu[0] as $topLevelItem) {
             if (Auth::action($topLevelItem->action_id)) {
 
+                self::$_setActive = false;
+
                 // check if top level item has sub menu
                 $subMenuItems = '';
                 if (!empty($menu[$topLevelItem->id])) {
@@ -102,7 +107,8 @@ class AdminMenu
                 }
 
                 // get top level item view
-                $adminMenu .= View::make('coaster::menus.sections.item', ['sub_menu' => $subMenuItems, 'item' => $topLevelItem, 'url' => self::_itemUrl($topLevelItem->action_id)])->render();
+                $url = self::_itemUrl($topLevelItem->action_id);
+                $adminMenu .= View::make('coaster::menus.sections.item', ['sub_menu' => $subMenuItems, 'item' => $topLevelItem, 'active' => self::$_setActive, 'url' => $url])->render();
 
             }
         }
@@ -126,7 +132,13 @@ class AdminMenu
                 /** @var AdminController $adminController */
                 $adminController = AdminController::preload($adminAction->controller_id);
 
-                return route('coaster.admin.' . $adminController->controller . ($adminAction->action == 'index' ? '' : '.' . $adminAction->action));
+                $routeName = 'coaster.admin.' . $adminController->controller . ($adminAction->action == 'index' ? '' : '.' . $adminAction->action);
+
+                if (strpos(Request::route()->getName(), $routeName) === 0) {
+                    //self::$_setActive = true;
+                }
+
+                return route($routeName);
 
             }
 
