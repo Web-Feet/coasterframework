@@ -29,7 +29,7 @@
     <pre id="editor"></pre>
     {!! Form::submit('Save file', ['class' => 'btn btn-promary']) !!}
   {!! Form::close() !!}
-
+  <a href="{{ route('coaster.admin.themes.list') }}" class="btn btn-default pull-right"><span class="fa fa-chevron-left"></span>&nbsp;back to themes</a>
 </div>
 
 

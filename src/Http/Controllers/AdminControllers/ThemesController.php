@@ -6,6 +6,7 @@ use CoasterCms\Helpers\Cms\BlockManager;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Libraries\Builder\AssetBuilder;
 use CoasterCms\Models\Block;
+use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\BlockBeacon;
 use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\BlockFormRule;
@@ -110,6 +111,7 @@ class ThemesController extends Controller
             'update' => Auth::action('themes.update'),
             'manage' => Auth::action('themes.manage'),
             'export' => Auth::action('themes.export'),
+            'edit' => Auth::action('themes.edit')
         ];
 
         $themes_installed = View::make('coaster::partials.themes.thumbs', ['thumbs' => $thumbs, 'auth' => $theme_auth]);

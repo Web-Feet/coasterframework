@@ -24,6 +24,9 @@
                             @if ($auth['manage'])
                                 <button data-theme="{{ $thumb->name }}" class="btn btn-default activateTheme activeSwitch {{ (isset($thumb->active)||isset($thumb->install))?' hidden':'' }}"><span class="glyphicon glyphicon-ok"></span> Activate</button>
                             @endif
+                            @if ($auth['edit'])
+                                <a href="{{ route('coaster.admin.themes.edit', ['themeId' => $thumb->id]) }}" class="btn btn-default"><span class="glyphicon glyphicon-pencil"></span> Edit</a>
+                            @endif
                             @if ($auth['export'])
                                 <button data-theme="{{ $thumb->name }}" data-theme-id="{{ $thumb->id }}" class="btn btn-default exportTheme"><span class="glyphicon glyphicon-download"></span> Export</button>
                             @endif
