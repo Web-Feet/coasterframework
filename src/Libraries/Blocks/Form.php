@@ -62,8 +62,10 @@ class Form extends _Base
             $form_data = new \stdClass;
             $form_data->email_from = '';
             $form_data->email_to = '';
-            $form_data->template = '';
+            $form_data->template = 0;
             $form_data->page_to = '';
+        } else {
+            $form_data->template = $form_data->template == $block->name ? 0 : $form_data->template;
         }
         $form_data->captcha_hide = '';
         if (!isset($form_data->captcha)) {
