@@ -23,26 +23,36 @@ class Form extends _Base
 
     public static function display($block, $block_data, $options = array())
     {
+        $form_data = new \stdClass;
+        $template = !empty($options['view']) ? $options['view'] : $block->name;
         if (!empty($block_data)) {
             $form_data = unserialize($block_data);
-            $template = 'themes.' . PageBuilder::getData('theme') . '.blocks.forms.' . $form_data->template;
-            if (View::exists($template)) {
-                $forwarded_url = Request::input('forwarded_url');
-                if (empty($forwarded_url)) {
-                    $options['url'] = Request::fullUrl() . '#form' . $block->id;
-                } else {
-                    $options['url'] = $forwarded_url . '#form' . $block->id;
-                }
-                unset($options['version']);
-                $options['files'] = !empty($options['files'])?$options['files']:true;
-                $options['id'] = !empty($options['id'])?$options['id']:'form' . $block->id;
-                $form_fields = View::make($template, array('form_data' => $form_data))->render();
-                return View::make('coasterCms::form.wrap', array('block_id' => $block->id, 'page_id' => PageBuilder::pageId(), 'form_attrs' => $options, 'form_fields' => $form_fields));
-            } else {
-                return 'Form template not found';
+            if (!empty($form_data->template)) {
+                $template = $form_data->template;
             }
         } else {
-            return 'No form data, try saving the block in the admin';
+            $form_data->captcha = false;
+            $form_data->email_from = '';
+            $form_data->email_to = '';
+            $form_data->template = '';
+            $form_data->page_to = '';
+            $form_data->template = '';
+        }
+        $template = 'themes.' . PageBuilder::getData('theme') . '.blocks.forms.' . $template;
+        if (View::exists($template)) {
+            $forwarded_url = Request::input('forwarded_url');
+            if (empty($forwarded_url)) {
+                $options['url'] = Request::fullUrl() . '#form' . $block->id;
+            } else {
+                $options['url'] = $forwarded_url . '#form' . $block->id;
+            }
+            unset($options['version']);
+            $options['files'] = !empty($options['files'])?$options['files']:true;
+            $options['id'] = !empty($options['id'])?$options['id']:'form' . $block->id;
+            $form_fields = View::make($template, array('form_data' => $form_data))->render();
+            return View::make('coasterCms::form.wrap', array('block_id' => $block->id, 'page_id' => PageBuilder::pageId(), 'form_attrs' => $options, 'form_fields' => $form_fields));
+        } else {
+            return 'Form template not found';
         }
     }
 
@@ -60,7 +70,7 @@ class Form extends _Base
             $form_data->captcha = false;
         }
         $form_data->pages_array = Page::get_page_list();
-        $form_data->template_array = array();
+        $form_data->template_array = [0 => '-- Use view from template --'];
         $theme = Theme::find(config('coaster::frontend.theme'));
         if (!empty($theme)) {
             $forms = base_path('/resources/views/themes/' . $theme->theme . '/blocks/forms');
