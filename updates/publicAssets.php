@@ -49,7 +49,8 @@ if (empty($assetsVersions['bootstrap']) || version_compare($assetsVersions['boot
 
     $zip = new \CoasterCms\Helpers\Cms\File\Zip;
     $zip->open($zipPath);
-    $zip->extractDir('ace-'.$releaseFileName.'/src', public_path('coaster/ace'));
+    $xfld = str_replace('.zip', '', $releaseFileName);
+    $zip->extractDir('ace-'.$xfld.'/src', public_path('coaster/ace'));
     $zip->close();
     unlink($zipPath);
 
