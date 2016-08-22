@@ -338,6 +338,28 @@ Class Theme extends Eloquent
         return 1;
     }
 
+    public static function getViewFolderTree($dir, $ret = array())
+    {
+      $tmp = new \stdClass;
+      $dirArr = explode('/', $dir);
+      $tmp->directory = end($dirArr);
+      $tmp->path = $dir;
+      $tmp->files = \File::files($dir);
+      foreach ($tmp->files as $fk => $file)
+      {
+        $filArr = explode('/', $file);
+        $tmp->files[$fk] = end($filArr);
+      }
+      $tmp->folders = \File::directories($dir);
+      foreach ($tmp->folders as $fk => $folder)
+      {
+        $tmp->folders[$fk] = static::getViewFolderTree($folder, $ret);
+      }
+      $ret = $tmp;
+
+      return $ret;
+    }
+
     public static function export($themeId, $withPageData)
     {
         $theme = self::find($themeId);

@@ -29,7 +29,7 @@ class UpdateGroupPages extends Migration
             }
         }
         DB::table('page_group_pages')->insert($addRows);
-        
+
         Schema::table('pages', function (Blueprint $table) {
             $table->dropColumn('in_group');
             $table->integer('group_container_url_priority')->after('group_container');

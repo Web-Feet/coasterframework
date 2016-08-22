@@ -37,6 +37,38 @@ if (empty($assetsVersions['app']) || version_compare($assetsVersions['app'], con
 if (empty($assetsVersions['bootstrap']) || version_compare($assetsVersions['bootstrap'], '3.3.6', '<')) {
 
     echo "Coaster Framework: Updating twitter bootstrap .";
+    $releaseFileName = 'v1.2.5.zip'
+    $zip = public_path('coaster/ace-'.$releaseFileName);
+    $response = $guzzleClient->request('GET', 'https://github.com/ajaxorg/ace/archive/'.$releaseFileName, [
+        'sink' => $bootstrapZip
+    ]);
+    echo ".";
+
+    $zip = new \CoasterCms\Helpers\Cms\File\Zip;
+    $zip->open($zip);
+    $zip->extractDir('/src', public_path('coaster/ace'));
+    $zip->close();
+    unlink($zip);
+
+    // Coopy html_blade syntax highlighter
+    \CoasterCms\Helpers\Cms\File\Directory::copy(realpath(__DIR__.'/../public/ace') , $coasterPublicFolder . '/ace/');
+    echo ".";
+
+
+    $assetsVersions['ace'] = '1.2.5';
+    file_put_contents($assetsFile, json_encode($assetsVersions));
+
+    echo " done\n";
+}
+
+
+/*
+ * ACE (HTML / Code Editor)
+ */
+
+if (empty($assetsVersions['bootstrap']) || version_compare($assetsVersions['bootstrap'], '3.3.6', '<')) {
+
+    echo "Coaster Framework: Updating ACE HTML/CSS/Code Editor.";
 
     $bootstrapZip = public_path('coaster/bootstrap-3.3.6-dist.zip');
     $response = $guzzleClient->request('GET', 'https://github.com/twbs/bootstrap/releases/download/v3.3.6/bootstrap-3.3.6-dist.zip', [

@@ -4,6 +4,7 @@ use Auth;
 use CoasterCms\Helpers\Cms\Theme\BlockUpdater;
 use CoasterCms\Helpers\Cms\BlockManager;
 use CoasterCms\Http\Controllers\AdminController as Controller;
+use CoasterCms\Libraries\Builder\AssetBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockBeacon;
 use CoasterCms\Models\BlockCategory;
@@ -247,6 +248,43 @@ class ThemesController extends Controller
             }
             $this->layoutData['content'] = View::make('coaster::pages.themes.forms', ['templates' => array_unique($formTemplates)]);
         }
+    }
+    public function postEdit(\Illuminate\Http\Request $request)
+    {
+      try {
+        $theme_id = $request->get('theme_id');
+        $theme = Theme::find($theme_id);
+        $file = $request->get('file');
+        $path = $request->get('path');
+        $f = fopen($path,"w");
+        fwrite($f, $file);
+        $log_id = AdminLog::new_log('Theme: \'' . $theme->theme . '\' updated (Page ID ' . $theme->id . ')');
+        return response(['success' => 1]);
+      } catch (Exception $e) {
+        return response(['success' => 0, 'error' => $e->getMessage()]);
+      }
+    }
+
+    public function loadTemplateFile(\Illuminate\Http\Request $request)
+    {
+      $tf = $request->get('template');
+      return response(['file' => file_get_contents($tf), 'path' => $tf]);
+    }
+
+    public function getEdit($themeId)
+    {
+      AssetBuilder::add('cms-main', ['/ace/ace.js']);
+      $theme = Theme::find($themeId);
+      $tvbp = base_path('resources/views/themes/'.$theme->theme);
+      $tcssbp = base_path('public/themes/'.$theme->theme.'/css');
+      $ret = Theme::getViewFolderTree($tvbp);
+      $filetree = View::make('coaster::partials.themes.filetree', ['directory' => $ret, 'theme' => $theme]);
+
+      $css_filetree_data = Theme::getViewFolderTree($tcssbp);
+      $css_filetree = View::make('coaster::partials.themes.filetree', ['directory' => $css_filetree_data, 'theme' => $theme]);
+
+      $this->layoutData['content'] = View::make('coaster::pages.themes.edit', ['theme' => $theme, 'filetree' => $filetree, 'css_filetree' => $css_filetree]);
+
     }
 
     public function postForms($template)
