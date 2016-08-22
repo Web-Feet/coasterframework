@@ -36,7 +36,7 @@ if (empty($assetsVersions['app']) || version_compare($assetsVersions['app'], con
 
 if (empty($assetsVersions['ace']) || version_compare($assetsVersions['ace'], '1.2.5', '<')) {
 
-    echo "Coaster Framework: Updating ACE HTML/CSS/Code Editor.";
+    echo "Coaster Framework: Updating ACE HTML/CSS/Code Editor .";
 
     $assetsVersions['ace'] = '1.2.5';
 
