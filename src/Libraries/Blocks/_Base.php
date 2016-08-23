@@ -1,6 +1,8 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
+use CoasterCms\Models\Block;
 use CoasterCms\Models\PageBlock;
+use Response;
 
 class _Base
 {
@@ -66,6 +68,16 @@ class _Base
     public static function save($block_content)
     {
         return $block_content;
+    }
+
+    /**
+     * @param Block $block
+     * @param array $formData
+     * @return false|Response
+     */
+    public static function submission($block, $formData)
+    {
+        return false;
     }
 
     /**

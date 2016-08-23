@@ -92,16 +92,16 @@ class CmsController extends Controller
             // check for form submissions
             if (!empty($_POST)) {
                 $formData = PageBuilder::getData('externalTemplate') ? Request::input(config('coaster::frontend.external_form_input')) : Request::all();
-                if (!empty($formData['block_id'])) {
-                    $block = Block::find($formData['block_id']);
-                    if (empty($block)) {
+                if (!empty($formData['block_id']) && empty($formData['coaster_check'])) { // honeypot option
+                    if (!($block = Block::find($formData['block_id']))) {
                         throw new CmsPageException('no block handler for this form data', 500);
                     } else {
+                        unset($formData['_token']);
+                        unset($formData['block_id']);
+                        unset($formData['coaster_check']);
                         $blockClass = $block->get_class();
-                        if (method_exists($blockClass, 'submission')) {
-                            if (($formSubmitResponse = $blockClass::submission($formData)) !== false) {
-                                throw new CmsPageException('form submission response', 0, null, $formSubmitResponse);
-                            }
+                        if ($formSubmitResponse = $blockClass::submission($block, $formData)) {
+                            throw new CmsPageException('form submission response', 0, null, $formSubmitResponse);
                         }
                     }
                 }
@@ -177,7 +177,7 @@ class CmsController extends Controller
      */
     protected function _setErrorContent($templatePathRoot, Exception $e)
     {
-        $this->responseCode = $e->getCode() ?: 500;
+        $this->responseCode = !empty(\Symfony\Component\HttpFoundation\Response::$statusTexts[$e->getCode()]) ? $e->getCode() : 500;
         $templatePath = $templatePathRoot . 'errors.' . $this->responseCode;
 
         // display error loading page

@@ -1,18 +1,26 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
+use Carbon\Carbon;
 use CoasterCms\Helpers\Cms\BlockManager;
+use CoasterCms\Helpers\Cms\Captcha\Securimage;
+use CoasterCms\Helpers\Cms\DateTimeHelper;
 use CoasterCms\Helpers\Cms\View\CmsBlockInput;
+use CoasterCms\Helpers\Cms\View\FormWrap;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
+use CoasterCms\Libraries\Builder\FormMessage;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\Block;
+use CoasterCms\Models\BlockFormRule;
 use CoasterCms\Models\BlockRepeater;
 use CoasterCms\Models\Language;
 use CoasterCms\Models\PageBlock;
 use CoasterCms\Models\PageBlockRepeaterData;
+use CoasterCms\Models\PageLang;
 use CoasterCms\Models\PageSearchData;
 use CoasterCms\Models\PageVersion;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Request;
+use Validator;
 use View;
 
 class Repeater extends _Base
@@ -24,17 +32,18 @@ class Repeater extends _Base
 
     public static function display($block, $block_data, $options = array())
     {
-        if (!empty($options['form'])) {
-
-        }
-
         $template = !empty($options['view']) ? $options['view'] : $block->name;
         $repeatersViews = 'themes.' . PageBuilder::getData('theme') . '.blocks.repeaters.';
+
+        if (!empty($options['form'])) {
+            $formView = $repeatersViews . $template . '-form';
+            return FormWrap::view($block, $options, $formView);
+        }
+
         if (View::exists($repeatersViews . $template)) {
-            $rep_blocks = BlockRepeater::where('block_id', '=', $block->id)->first();
-            if (!empty($rep_blocks)) {
+            $content = '';
+            if ($rep_blocks = BlockRepeater::where('block_id', '=', $block->id)->first()) {
                 $rep_blocks = explode(',', $rep_blocks->blocks);
-                $content = '';
 
                 $random = !empty($options['random']) ? $options['random'] : false;
                 $block_rows = PageBlockRepeaterData::load_by_repeater_id($block_data, $options['version'], $random);
@@ -83,20 +92,11 @@ class Repeater extends _Base
                     }
                     self::$_current_repeater = $previous;
                 }
-                return $content;
-            } else {
-                return null;
             }
+            return $content;
         } else {
             return "Repeater view does not exist in theme";
         }
-    }
-
-    protected static function display_form()
-    {
-
-
-
     }
 
     public static function edit($block, $block_data, $page_id = 0, $parent_repeater = null)
@@ -221,6 +221,46 @@ class Repeater extends _Base
             }
         }
 
+    }
+
+    public static function submission($block, $formData)
+    {
+
+        $formRules = BlockFormRule::get_rules($block->name.'-form');
+        $v = Validator::make($formData, $formRules);
+        if ($v->passes()) {
+
+            $pageId = !empty($formData['page_id']) ? $formData['page_id'] : 0;
+            $liveVersion = PageLang::preload($formData['page_id'])->live_version;
+
+            $repeaterInfo = new \stdClass;
+            $repeaterInfo->repeater_id = BlockManager::get_block($block->id, $pageId, null, $liveVersion);
+            $repeaterInfo->row_id = PageBlockRepeaterData::next_free_row_id($repeaterInfo->repeater_id);
+
+            unset($formData['page_id']);
+
+            $rows = PageBlockRepeaterData::load_by_repeater_id($repeaterInfo->repeater_id);
+            $rowOrders = array_map(function ($row) {return !empty($row[0])?$row[0]:0;}, $rows);
+
+            BlockManager::$to_version = PageVersion::add_new($pageId)->version_id;
+            BlockManager::update_block(0, max($rowOrders) + 1, $pageId, $repeaterInfo);
+            foreach ($formData as $field => $content) {
+                $block = Block::preload($field);
+                if ($block->exists) {
+                    if ($block->type == 'datetime' && empty($content)) {
+                        $content = new Carbon();
+                    }
+                    BlockManager::update_block($block->id, $content, $pageId, $repeaterInfo);
+                }
+            }
+
+            return \redirect(Request::url());
+
+        } else {
+            FormMessage::set($v->messages());
+        }
+
+        return false;
     }
 
     public static function search_text($repeater_id, $version = 0)

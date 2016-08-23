@@ -84,6 +84,8 @@ class PageVersion extends Eloquent
         $user = Auth::user();
         if (empty($options['system']) && !empty($user)) {
             $this->user_id = $user->id;
+        } else {
+            $this->user_id = 0;
         }
         return parent::save($options);
     }

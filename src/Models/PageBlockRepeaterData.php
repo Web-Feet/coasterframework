@@ -132,6 +132,12 @@ class PageBlockRepeaterData extends Eloquent
 
     private static function _order($a, $b)
     {
+        if (!isset($a[0])) {
+            return 1;
+        }
+        if (!isset($b[0])) {
+            return -1;
+        }
         if ($a[0] == $b[0]) {
             return 0;
         }
