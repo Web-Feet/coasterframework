@@ -877,6 +877,9 @@ class BlockUpdater
         if (strpos($typeFound, 'select') === false && !empty(self::$_selectBlocks[$block])) {
             $typeFound = 'select';
         }
+        if (!empty(self::$_repeaterBlocks[$block])) {
+            $typeFound = 'repeater';
+        }
         return $typeFound;
     }
 
