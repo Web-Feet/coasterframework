@@ -131,7 +131,7 @@ class Page extends Eloquent
                 self::$preloaded_pages[$page->id] = $page;
             }
         }
-        return !empty(self::$preloaded_pages[$pageId]) ? self::$preloaded_pages[$pageId] : null;
+        return !empty(self::$preloaded_pages[$pageId]) ? self::$preloaded_pages[$pageId] : new self;
     }
 
     // returns child page ids (parent only / no group)
@@ -188,7 +188,7 @@ class Page extends Eloquent
         }
         $pages = [];
         $page = self::preload($page_id);
-        if (!empty($page) && $page->group_container > 0) {
+        if ($page->exists && $page->group_container > 0) {
             $group = PageGroup::find($page->group_container);
             if (!empty($group)) {
                 $group_pages = $group->itemPageIdsFiltered($page_id, $check_live, true);

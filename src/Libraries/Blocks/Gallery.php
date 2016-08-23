@@ -70,14 +70,14 @@ class Gallery extends _Base
         if (empty($block_data) || $block_data->type != 'gallery')
             return null;
         else {
-            if (!empty($page)) {
+            if ($page->exists) {
                 $page_lang_data = PageLang::preload($page_id);
                 $name = $page_lang_data->name;
                 if ($page->groups) {
                     $name = $page->groupNames() . " / " . $name;
                 } elseif ($page->parent > 0) {
-                    $page = Page::preload($page->parent);
-                    $parent_lang_data = PageLang::preload($page->id);
+                    $parentPage = Page::preload($page->parent);
+                    $parent_lang_data = PageLang::preload($parentPage->id);
                     $name = $parent_lang_data->name . " / " . $name;
                 }
                 $name .= " - " . $block_data->label;

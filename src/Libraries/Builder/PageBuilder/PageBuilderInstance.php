@@ -550,7 +550,7 @@ class PageBuilderInstance
         if (($customBlockData = $this->_getCustomBlockData($blockName)) !== false) {
             // load custom block data for (is also used for repeater content)
             $blockData = $customBlockData;
-        } elseif (!empty($block)) {
+        } elseif ($block->exists) {
 
             // load block data
             $globalBlockData = PageBlockDefault::preload_block($block->id);
@@ -693,7 +693,7 @@ class PageBuilderInstance
         $groupPageContainerId = 0;
         if ($categoryPageId && !$options['canonicals']) {
             $categoryPage = Page::preload($categoryPageId);
-            $groupPageContainerId = ($categoryPage && $categoryPage->group_container > 0) ? $categoryPage->id : 0;
+            $groupPageContainerId = ($categoryPage->exists && $categoryPage->group_container > 0) ? $categoryPage->id : 0;
         }
 
         $pages = array_values($pages);

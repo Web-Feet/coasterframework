@@ -26,7 +26,8 @@ class GroupsController extends Controller
             $attributes = PageGroupAttribute::where('group_id', '=', $groupId)->get();
             $attributeBlocks = [];
             foreach ($attributes as $attribute) {
-                if ($block = Block::preload($attribute->item_block_id)) {
+                $block = Block::preload($attribute->item_block_id);
+                if ($block->exists) {
                     $attributeBlocks[$attribute->item_block_id] = $block;
                 }
             }

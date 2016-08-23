@@ -24,6 +24,10 @@ class Repeater extends _Base
 
     public static function display($block, $block_data, $options = array())
     {
+        if (!empty($options['form'])) {
+
+        }
+
         $template = !empty($options['view']) ? $options['view'] : $block->name;
         $repeatersViews = 'themes.' . PageBuilder::getData('theme') . '.blocks.repeaters.';
         if (View::exists($repeatersViews . $template)) {
@@ -62,7 +66,7 @@ class Repeater extends _Base
                             foreach ($rep_blocks as $rep_block) {
                                 // save block data for when view is being processed
                                 $block_info = Block::preload($rep_block);
-                                if (!empty($block_info)) {
+                                if ($block_info->exists) {
                                     if (!empty($row[$rep_block])) {
                                         self::$_preloaded_repeater_data[$block_data][$block_info->name] = $row[$rep_block];
                                     } else {
@@ -86,6 +90,13 @@ class Repeater extends _Base
         } else {
             return "Repeater view does not exist in theme";
         }
+    }
+
+    protected static function display_form()
+    {
+
+
+
     }
 
     public static function edit($block, $block_data, $page_id = 0, $parent_repeater = null)
@@ -219,7 +230,7 @@ class Repeater extends _Base
         if (!empty($repeaters_data)) {
             foreach ($repeaters_data as $repeater_data) {
                 $block = Block::preload($repeater_data->block_id);
-                if (!empty($block)) {
+                if ($block->exists) {
                     $block_model = __NAMESPACE__ . '\\' . ucwords($block->type);
                     if (method_exists($block_model, 'search_text') && $block_model != 'CoasterCms\Libraries\Blocks\Repeater') {
                         $block_search_text = $block_model::search_text($repeater_data->content);

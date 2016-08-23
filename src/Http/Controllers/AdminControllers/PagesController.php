@@ -159,7 +159,8 @@ class PagesController extends AdminController
             $changeUnderParentIds = [];
             
             foreach ($pages as $pageId => $parent) {
-                if ($currentPage = Page::preload($pageId)) {
+                $currentPage = Page::preload($pageId);
+                if ($currentPage->exists) {
 
                     $parent = (empty($parent) || $parent == 'null') ? 0 : $parent;
                     if ($currentPage->parent != $parent && $parent != 0 && (in_array($currentPage->id, $rootPageIds) || in_array($parent, $rootPageIds))) {

@@ -101,7 +101,7 @@ class MenuBuilder
             }
             $pageId = Path::unParsePageId($pageId);
             $page = Page::preload($pageId);
-            if (!$page || !$page->is_live()) {
+            if (!$page->exists || !$page->is_live()) {
                 unset($items[$k]);
             }
         }

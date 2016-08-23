@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Http\Controllers\AdminControllers;
 
 use Auth;
+use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\Block;
@@ -75,7 +76,7 @@ class FormsController extends Controller
                 }
                 $submission_data->sent = $submission->sent;
                 $submission_data->created_at = $submission->created_at;
-                $submission_data->from_page = !empty($submission->from_page_id) ? PageLang::full_name($submission->from_page_id) : '-';
+                $submission_data->from_page = !empty($submission->from_page_id) ? Path::getFullName($submission->from_page_id) : '-';
                 $submission_rows .= View::make('coaster::partials.forms.submissions', array('submission' => $submission_data))->render();
             }
             $this->layoutData['content'] = View::make(
@@ -105,7 +106,7 @@ class FormsController extends Controller
                 foreach ($submissions as $submission) {
                     $csv[$row] = array();
                     $csv[$row][0] = $submission->created_at;
-                    $csv[$row][1] = !empty($submission->from_page_id) ? PageLang::full_name($submission->from_page_id) : '-';
+                    $csv[$row][1] = !empty($submission->from_page_id) ? Path::getFullName($submission->from_page_id) : '-';
                     $form_data = @unserialize($submission->content);
                     if (!empty($form_data)) {
                         foreach ($form_data as $k => $v) {

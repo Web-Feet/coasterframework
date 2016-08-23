@@ -33,10 +33,7 @@ class Block extends Eloquent
                 self::$preloaded_blocks[$block->name] = $block;
             }
         }
-        if (!empty(self::$preloaded_blocks[$block_name]))
-            return self::$preloaded_blocks[$block_name];
-        else
-            return null;
+        return !empty(self::$preloaded_blocks[$block_name]) ? self::$preloaded_blocks[$block_name] : new self;
     }
 
     public static function get_repeater_blocks()

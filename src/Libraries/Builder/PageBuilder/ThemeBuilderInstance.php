@@ -5,6 +5,7 @@ use CoasterCms\Helpers\Cms\Theme\BlockUpdater;
 use CoasterCms\Helpers\Cms\BlockManager;
 use CoasterCms\Helpers\Cms\Page\PageLoader;
 use CoasterCms\Libraries\Builder\MenuBuilder;
+use CoasterCms\Libraries\Builder\ViewClasses\PageDetails;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\Menu;
@@ -177,8 +178,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
         } else {
             $block = Block::preload($block_name);
         }
-        if (empty($block)) {
-            $block = new Block;
+        if (!$block->type) {
             $block->type = BlockUpdater::typeGuess($block_name);
         }
         $block_class = $block->get_class();
@@ -286,12 +286,6 @@ class ThemeBuilderInstance extends PageBuilderInstance
      */
     protected function _renderCategoryWithoutPageData($options)
     {
-        $page_info = new \stdClass;
-        $page_info->id = 1;
-        $page_info->name = '';
-        $page_info->full_name = '';
-        $page_info->url = '';
-
         $view = !empty($options['view'])?$options['view']:'default';
 
         $catView = 'currentCategory=';
@@ -303,7 +297,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
 
             $list = View::make(
                 'themes.' . $this->theme . '.categories.' . $view . '.page',
-                ['page' => $page_info, 'category_id' => 1, 'is_first' => true, 'is_last' => true, 'count' => 1, 'total' => 1]
+                ['page' => new PageDetails(1), 'category_id' => 1, 'is_first' => true, 'is_last' => true, 'count' => 1, 'total' => 1]
             )->render();
 
             $output = View::make('themes.' . $this->theme . '.categories.' . $view . '.pages_wrap',

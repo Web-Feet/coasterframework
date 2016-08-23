@@ -38,7 +38,7 @@ class PageSearchData extends Eloquent
     public static function update_text($block_id, $block_content, $page_id, $language_id, $version = 0)
     {
         $block = Block::preload($block_id);
-        if (!empty($block)) {
+        if ($block->exists) {
             $block_type = $block->get_class();
             if (method_exists($block_type, 'search_text')) {
                 if (ucwords($block->type) == 'Repeater') {
