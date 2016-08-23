@@ -15,8 +15,6 @@ use Illuminate\Mail\Message;
 use Mail;
 use Request;
 use Session;
-use Symfony\Component\Debug\Exception\FatalErrorException;
-use Symfony\Component\Debug\Exception\FatalThrowableError;
 use Validator;
 use View;
 
