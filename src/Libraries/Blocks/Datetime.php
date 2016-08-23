@@ -35,7 +35,7 @@ class Datetime extends _Base
                 return $date->format("Y-m-d H:i:s");
             }
         }
-        return null;
+        return '';
     }
 
     public static function mysqlToJQuery($mysql_dt)
