@@ -769,10 +769,10 @@ class BlockUpdater
             $processedData['name'] = self::$_allBlocks[$block]->name;
             $processedData['type'] = self::$_allBlocks[$block]->type;
         } else {
-            $processedData['category_id'] = self::_categoryGuess($block);
             $processedData['label'] = ucwords(str_replace('_', ' ', $block));
             $processedData['name'] = $block;
             $processedData['type'] = !empty($details['type']) ? $details['type'] : self::typeGuess($block);
+            $processedData['category_id'] = self::_categoryGuess($block, $processedData['type']);
             $processedData['note'] = !empty($details['note']) ? $details['note'] : '';
         }
         if (!empty(self::$_databaseBlocks[$block])) {
@@ -792,7 +792,7 @@ class BlockUpdater
         return $processedData;
     }
 
-    private static function _categoryGuess($block)
+    private static function _categoryGuess($block, $type = '')
     {
         if (!isset(self::$_guessedCategoryIds)) {
             $findKeys = [
@@ -802,6 +802,11 @@ class BlockUpdater
                 'footer' => ['foot'],
                 'header' => ['head']
             ];
+            if ($type == 'repeater')
+            {
+              $rKey = str_plural(str_replace('_', ' ', $block));
+              $findKeys[$rKey] = [$rKey];
+            }
 
             self::$_guessedCategoryIds = [];
             $first = true;
@@ -833,12 +838,16 @@ class BlockUpdater
         }
 
         $categoryFound = self::$_guessedCategoryIds['main'];
-
+        if ($type == 'repeater')
+        {
+          $categoryFound = self::$_guessedCategoryIds[$rKey];
+        }
         $categoriesArr = [];
         $categoriesArr[self::$_guessedCategoryIds['seo']] = ['meta'];
         $categoriesArr[self::$_guessedCategoryIds['header']] = ['header_html', 'head', 'logo', 'phone'];
         $categoriesArr[self::$_guessedCategoryIds['footer']] = ['footer_html', 'foot', 'address', 'email', 'copyright'];
         $categoriesArr[self::$_guessedCategoryIds['banner']] = ['banner', 'carousel'];
+
         foreach ($categoriesArr as $_guessedCategoryIds => $matches) {
             foreach ($matches as $match) {
                 if (stristr($block, $match)) {
