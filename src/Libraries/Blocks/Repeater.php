@@ -2,8 +2,6 @@
 
 use Carbon\Carbon;
 use CoasterCms\Helpers\Cms\BlockManager;
-use CoasterCms\Helpers\Cms\Captcha\Securimage;
-use CoasterCms\Helpers\Cms\DateTimeHelper;
 use CoasterCms\Helpers\Cms\View\CmsBlockInput;
 use CoasterCms\Helpers\Cms\View\FormWrap;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
