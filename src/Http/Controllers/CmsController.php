@@ -9,9 +9,9 @@ use CoasterCms\Helpers\Cms\Html\DOMDocument;
 use CoasterCms\Helpers\Cms\Page\Feed;
 use CoasterCms\Helpers\Cms\Page\PageLoader;
 use CoasterCms\Helpers\Cms\Page\Search;
-use CoasterCms\Libraries\Blocks\Form;
 use CoasterCms\Libraries\Builder\PageBuilder\PageBuilderInstance;
 use CoasterCms\Libraries\Builder\PageBuilder;
+use CoasterCms\Models\Block;
 use CoasterCms\Models\PageRedirect;
 use Exception;
 use Illuminate\Routing\Controller;
@@ -90,8 +90,21 @@ class CmsController extends Controller
             }
 
             // check for form submissions
-            if (!empty($_POST) && ($formSubmitResponse = Form::submission(Request::all())) !== false) {
-                throw new CmsPageException('form submission response', 0, null, $formSubmitResponse);
+            if (!empty($_POST)) {
+                $formData = PageBuilder::getData('externalTemplate') ? Request::input(config('coaster::frontend.external_form_input')) : Request::all();
+                if (!empty($formData['block_id'])) {
+                    $block = Block::find($formData['block_id']);
+                    if (empty($block)) {
+                        throw new CmsPageException('no block handler for this form data', 500);
+                    } else {
+                        $blockClass = $block->get_class();
+                        if (method_exists($blockClass, 'submission')) {
+                            if (($formSubmitResponse = $blockClass::submission($formData)) !== false) {
+                                throw new CmsPageException('form submission response', 0, null, $formSubmitResponse);
+                            }
+                        }
+                    }
+                }
             }
 
             // set template
@@ -159,7 +172,7 @@ class CmsController extends Controller
     }
 
     /**
-     * @param strin $templatePathRoot
+     * @param string $templatePathRoot
      * @param Exception $e
      */
     protected function _setErrorContent($templatePathRoot, Exception $e)

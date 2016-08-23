@@ -10,10 +10,13 @@ use CoasterCms\Models\FormSubmission;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\Theme;
 use CoasterCms\Models\ThemeBlock;
-use Illuminate\Http\Response;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Mail\Message;
 use Mail;
 use Request;
 use Session;
+use Symfony\Component\Debug\Exception\FatalErrorException;
+use Symfony\Component\Debug\Exception\FatalThrowableError;
 use Validator;
 use View;
 
@@ -121,15 +124,11 @@ class Form extends _Base
 
     /**
      * @param array $form_data
-     * @return false|Response
+     * @return false|RedirectResponse
      * @throws CmsPageException
      */
     public static function submission($form_data)
     {
-        if (PageBuilder::getData('externalTemplate')) {
-            $form_data = $form_data[config('coaster::frontend.external_form_input')];
-        }
-
         $default_rules = array(
             'block_id' => 'required|integer',
             'page_id' => 'required|integer'
@@ -152,12 +151,11 @@ class Form extends _Base
                 $form_settings = unserialize($form_settings);
 
                 // load captcha
-                include_once public_path(config('coaster::admin.public').'/securimage/securimage.php');
-                $secure_image = new \Securimage();
-                if (empty($_POST['captcha_code'])) {
-                    $_POST['captcha_code'] = '';
+                $_POST['captcha_code'] = empty($_POST['captcha_code']) ? '' : $_POST['captcha_code'];
+                if (include(public_path(config('coaster::admin.public').'/securimage/securimage.php'))) {
+                    $secure_image = new \Securimage();
                 }
-                $captcha = $secure_image->check($_POST['captcha_code']);
+                $captcha = isset($secure_image) ? $secure_image->check($_POST['captcha_code']) : false;
 
                 $form_rules = BlockFormRule::get_rules($form_settings->template);
                 $v = Validator::make($form_data, $form_rules);
@@ -188,6 +186,7 @@ class Form extends _Base
                     $form_submission->form_block_id = $block->id;
                     $form_submission->content = serialize($form_data);
                     $form_submission->sent = 0;
+                    $form_submission->from_page_id = PageBuilder::pageId();
                     $form_submission->save();
 
                     foreach ($files as $field => $value) {
@@ -203,7 +202,6 @@ class Form extends _Base
                         }
                     }
 
-                    $form_submission->from_page_id = PageBuilder::pageId();
                     $form_submission->content = serialize($form_data);
                     $form_submission->save();
 
@@ -242,16 +240,25 @@ class Form extends _Base
                             }
                         }
 
-                        $emailsViews = 'themes.' . PageBuilder::getData('theme') . '.emails';
-                        $emailsViews = $emailsViews . (View::exists($emailsViews . '.' . $form_settings->template . '.default') ?  $form_settings->template : '');
+                        $emailsViews = ['themes.' . PageBuilder::getData('theme') . '.emails.'];
+                        $emailsViews[1] = $emailsViews[0] . $form_settings->template . '.';
 
-                        if (!View::exists($emailsViews)) {
-                            throw new CmsPageException('No default email template', 500);
+                        $sendTemplate = null;
+                        $replyTemplate = null;
+                        foreach ($emailsViews as $emailsView) {
+                            if (!$sendTemplate && View::exists($emailsView . 'default')) {
+                                $sendTemplate = $emailsView . 'default';
+                            }
+                            if (!$replyTemplate && View::exists($emailsView . 'reply')) {
+                                $replyTemplate =  $emailsView . 'reply';
+                            }
                         }
-                        $sendTemplate = $emailsViews . '.default';
-                        $replyTemplate = View::exists($emailsViews . 'reply') ? $emailsViews . 'reply' : $sendTemplate;
+                        if (!$sendTemplate) {
+                            throw new CmsPageException('No.default default email template', 500);
+                        }
+                        $replyTemplate = $replyTemplate ?: $sendTemplate;
 
-                        Mail::send($sendTemplate, array('body' => $body, 'form_data' => $form_data), function ($message) use ($email_details) {
+                        Mail::send($sendTemplate, array('body' => $body, 'form_data' => $form_data), function (Message $message) use ($email_details) {
                             if ($email_details['reply']) {
                                 $message->from($email_details['reply']);
                             } else {
@@ -262,7 +269,7 @@ class Form extends _Base
                         });
 
                         if ($email_details['reply']) {
-                            Mail::send($replyTemplate, array('body' => $body, 'form_data' => $form_data), function ($message) use ($email_details) {
+                            Mail::send($replyTemplate, array('body' => $body, 'form_data' => $form_data), function (Message $message) use ($email_details) {
                                 $message->to($email_details['reply']);
                                 $message->from($email_details['reply']);
                                 $message->subject($email_details['subject']);
