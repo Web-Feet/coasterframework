@@ -41,7 +41,7 @@ class PaginatorRender
                 $defaultPresenter = 'pagination::bootstrap-4';
                 break;
             default:
-                $defaultPresenter = 'pagination::bootstrap-3';
+                $defaultPresenter = '';
         }
         return $paginator->render($defaultPresenter);
     }
