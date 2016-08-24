@@ -49,7 +49,6 @@ class Selectuser extends _Base
                 BlockManager::update_block($blockId, $userId, $page_id, $repeater_info);
             }
         }
-
     }
 
 }
