@@ -1,4 +1,4 @@
-<?php namespace CoasterCms\Events\Cms;
+<?php namespace CoasterCms\Events\Cms\GeneratePage;
 
 use Symfony\Component\HttpFoundation\Response;
 

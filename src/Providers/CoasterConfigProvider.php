@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Providers;
 
-use CoasterCms\Events\LoadConfig;
-use CoasterCms\Events\LoadedConfig;
+use CoasterCms\Events\Cms\LoadConfig;
+use CoasterCms\Events\Cms\LoadedConfig;
 use CoasterCms\Helpers\Cms\Install;
 use CoasterCms\Models\Setting;
 use CoasterCms\Models\User;

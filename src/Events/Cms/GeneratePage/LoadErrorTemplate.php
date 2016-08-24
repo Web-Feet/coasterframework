@@ -1,4 +1,4 @@
-<?php namespace CoasterCms\Events\Cms;
+<?php namespace CoasterCms\Events\Cms\GeneratePage;
 
 class LoadErrorTemplate extends LoadPageTemplate
 {

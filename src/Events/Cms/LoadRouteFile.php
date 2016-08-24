@@ -1,4 +1,4 @@
-<?php namespace CoasterCms\Events;
+<?php namespace CoasterCms\Events\Cms;
 
 class LoadRouteFile
 {

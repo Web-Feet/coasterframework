@@ -1,9 +1,9 @@
 <?php namespace CoasterCms\Http\Controllers;
 
-use CoasterCms\Events\Cms\InitializePageBuilder;
-use CoasterCms\Events\Cms\LoadedPageResponse;
-use CoasterCms\Events\Cms\LoadErrorTemplate;
-use CoasterCms\Events\Cms\LoadPageTemplate;
+use CoasterCms\Events\Cms\GeneratePage\InitializePageBuilder;
+use CoasterCms\Events\Cms\GeneratePage\LoadedPageResponse;
+use CoasterCms\Events\Cms\GeneratePage\LoadErrorTemplate;
+use CoasterCms\Events\Cms\GeneratePage\LoadPageTemplate;
 use CoasterCms\Exceptions\CmsPageException;
 use CoasterCms\Helpers\Cms\Html\DOMDocument;
 use CoasterCms\Helpers\Cms\Page\Feed;

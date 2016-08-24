@@ -2,10 +2,10 @@
 
 use App;
 use Auth;
-use CoasterCms\Events\LoadAuth;
-use CoasterCms\Events\LoadMiddleware;
-use CoasterCms\Events\LoadRouteFile;
-use CoasterCms\Events\SetViewPaths;
+use CoasterCms\Events\Cms\LoadAuth;
+use CoasterCms\Events\Cms\LoadMiddleware;
+use CoasterCms\Events\Cms\LoadRouteFile;
+use CoasterCms\Events\Cms\SetViewPaths;
 use CoasterCms\Helpers\Cms\Install;
 use CoasterCms\Http\Middleware\AdminAuth;
 use CoasterCms\Http\Middleware\GuestAuth;
