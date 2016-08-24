@@ -50,7 +50,6 @@
                     </thead>
                     <tbody>
                         @foreach($group->groupAttributes as $attribute)
-
                             <tr id="groupAttribute_{!! $attribute->id !!}">
                                 <td>
                                     {!! Form::select('groupAttribute['.$attribute->id.'][item_block_id]', $blockList, $attribute->item_block_id, ['class' => 'form-control']) !!}
@@ -65,23 +64,21 @@
                                     <i class="glyphicon glyphicon-remove itemTooltip" title="Remove Attribute"></i>
                                 </td>
                             </tr>
-
-                            <tr id="groupAttribute_0" class="hidden">
-                                <td>
-                                    {!! Form::select('groupAttribute[0][item_block_id]', $blockList, 0, ['class' => 'form-control']) !!}
-                                </td>
-                                <td>
-                                    {!! Form::text('groupAttribute[0][item_block_order_priority]', 0, ['class' => 'form-control']) !!}
-                                </td>
-                                <td>
-                                    {!! Form::select('groupAttribute[0][item_block_order_dir]', ['asc' => 'Ascending', 'desc' => 'Descending'], 0, ['class' => 'form-control']) !!}
-                                </td>
-                                <td>
-                                    <i class="glyphicon glyphicon-remove itemTooltip" title="Remove Attribute"></i>
-                                </td>
-                            </tr>
-
                         @endforeach
+                        <tr id="groupAttribute_0" class="hidden">
+                            <td>
+                                {!! Form::select('groupAttribute[0][item_block_id]', $blockList, 0, ['class' => 'form-control']) !!}
+                            </td>
+                            <td>
+                                {!! Form::text('groupAttribute[0][item_block_order_priority]', 0, ['class' => 'form-control']) !!}
+                            </td>
+                            <td>
+                                {!! Form::select('groupAttribute[0][item_block_order_dir]', ['asc' => 'Ascending', 'desc' => 'Descending'], 0, ['class' => 'form-control']) !!}
+                            </td>
+                            <td>
+                                <i class="glyphicon glyphicon-remove itemTooltip" title="Remove Attribute"></i>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>

@@ -50,7 +50,7 @@ class GroupsController extends Controller
                             $showBlocks[] = implode(', ', unserialize($pageBlockContent));
                         } elseif ($attributeBlock->type == 'datetime'&& !empty($pageBlockContent)) {
                             // datetime
-                            $showBlocks[] = (new Carbon($pageBlockContent))->format(config('coaster::date.long'));
+                            $showBlocks[] = (new Carbon($pageBlockContent))->format(config('coaster::date.format.long'));
                         } else {
                             // text/string/select
                             $showBlocks[] = strip_tags(StringHelper::cutString($pageBlockContent, 50));
