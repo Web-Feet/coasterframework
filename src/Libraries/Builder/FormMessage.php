@@ -103,7 +103,7 @@ class FormMessage
      */
     public static function get_message($key)
     {
-        return self::getErrorClass($key);
+        return self::getErrorMessage($key);
     }
 
 }

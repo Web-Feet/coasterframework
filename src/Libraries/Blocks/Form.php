@@ -114,12 +114,12 @@ class Form extends _Base
     {
         // load form settings
         $live_version = PageBuilder::pageLiveVersionId();
-        $form_settings = BlockManager::get_block($form_data['block_id'], $form_data['page_id'], null, $live_version);
+        $form_settings = BlockManager::get_block($block->id, $form_data['page_id'], null, $live_version);
         if (empty($form_settings)) {
             // check if forms a global block
-            $in_theme = ThemeBlock::where('theme_id', '=', config('coaster::frontend.theme'))->where('block_id', '=', $form_data['block_id'])->first();
+            $in_theme = ThemeBlock::where('theme_id', '=', config('coaster::frontend.theme'))->where('block_id', '=', $block->id)->first();
             if (!empty($in_theme)) {
-                $form_settings = BlockManager::get_block($form_data['block_id']);
+                $form_settings = BlockManager::get_block($block->id);
             }
         }
         if (!empty($form_settings)) {
@@ -131,8 +131,6 @@ class Form extends _Base
             // check form rules
             if ($v->passes() && !($form_settings->captcha == true && !$captcha)) {
                 // delete blank and system fields
-                $block = Block::find($form_data['block_id']);
-                unset($form_data['block_id']);
                 unset($form_data['page_id']);
                 unset($form_data['captcha_code']);
 
@@ -172,9 +170,10 @@ class Form extends _Base
                 $form_submission->save();
 
                 $subject = config('coaster::site.name') . ' - ' . $block->label;
-                $failures = Email::sendFromFormData($form_settings->template, $form_data, $subject, $form_settings->email_to, $form_settings->email_from);
+                $template = $form_settings->template?:$block->name;
+                $sentEmail = Email::sendFromFormData([$template], $form_data, $subject, $form_settings->email_to, $form_settings->email_from);
 
-                if (empty($failures)) {
+                if ($sentEmail) {
                     $form_submission->sent = 1;
                     $form_submission->save();
                 }

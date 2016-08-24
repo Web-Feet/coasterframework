@@ -20,13 +20,14 @@ class Email
             'userEmail' => null
         ];
 
-        $emailCheck = Validator::make($emailDetails, ['to' => 'email|required', 'from' => 'email|required']);
-        if ($emailCheck->passes()) {
+        // split to addresses
+        if (strpos($emailDetails['to'], ',') !== false) {
+            $emailDetails['to'] = explode(',', $emailDetails['to']);
+        }
 
-            // split to addresses
-            if (strpos($emailDetails['to'], ',') !== false) {
-                $emailDetails['to'] = explode(',', $emailDetails['to']);
-            }
+        $emailCheck = Validator::make($emailDetails, ['from' => 'email|required']);
+        $emailCheck->each('to.*', 'required|email');
+        if ($emailCheck->passes()) {
 
             // get templates
             $emailsViews = ['themes.' . PageBuilder::getData('theme') . '.emails.'];
@@ -66,24 +67,27 @@ class Email
 
             Mail::send($sendTemplate, ['body' => $body, 'formData' => $formData, 'form_data' => $formData], function (Message $message) use ($emailDetails) {
                 if ($emailDetails['userEmail']) {
-                    $message->replyTo($emailDetails['reply']);
+                    $message->replyTo($emailDetails['userEmail']);
                 }
-                $message->from($emailDetails['from']);
                 $message->to($emailDetails['to']);
+                $message->from($emailDetails['from']);
                 $message->subject($emailDetails['subject']);
             });
 
             if ($emailDetails['userEmail']) {
                 Mail::send($replyTemplate, ['body' => $body, 'formData' => $formData, 'form_data' => $formData], function (Message $message) use ($emailDetails) {
-                    $message->to($emailDetails['from']);
-                    $message->from($emailDetails['userEmail']);
+                    $message->to($emailDetails['userEmail']);
+                    $message->from($emailDetails['from']);
                     $message->subject($emailDetails['subject']);
                 });
             }
 
+            return !Mail::failures();
+
+        } else {
+            return false;
         }
 
-        return Mail::failures();
     }
 
 }
