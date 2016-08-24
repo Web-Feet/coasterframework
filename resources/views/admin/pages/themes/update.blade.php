@@ -39,13 +39,13 @@
 
             <thead>
             <tr>
-                <th>{!! Form::checkbox('update_all', 1, false, ['id' => 'update-all']) !!} Update Templates</th>
+                <th><i class="glyphicon glyphicon-info-sign header_note" data-note="Blocks with the update template option checked will have their associated templates updated (untick on a red row to stop block being deleted)"></i>{!! Form::checkbox('update_all', 1, false, ['id' => 'update-all']) !!} Update Templates</th>
                 <th>Name</th>
                 <th>Label</th>
                 <th>Category/Tab</th>
                 <th>Type</th>
-                <th>Show in Site-wide Content</th>
-                <th>Show in Pages</th>
+                <th><i class="glyphicon glyphicon-info-sign header_note" data-note="A block with the show in site-wide content option checked will appear in the site-wide content section of the admin."></i>Show in Site-wide Content</th>
+                <th><i class="glyphicon glyphicon-info-sign header_note" data-note="If both the update and show in site-wide content boxes above are checked, the block will appear in both pages and site-wide content."></i>Show in Pages</th>
             </tr>
             </thead>
 
@@ -82,6 +82,20 @@
             $(this).parent().parent().find('.based-on-template-updates').attr('disabled', !$(this).is(':checked'));
         }
         $(document).ready(function () {
+            var notediv = null;
+            $('.header_note').hover(function(e){
+
+              var thEl = $(this);
+              var theEloffset = thEl.offset();
+              var x = theEloffset.left + thEl.width() + 10;
+              var y = theEloffset.top;
+              notediv = $('<div class="well well-sm fade in">' + $(this).data('note') + '</div>');
+              notediv.css({position:'absolute', top: y, left:x});
+              notediv.appendTo($('body'));
+            }, function(e)
+            {
+              notediv.remove();
+            });
             $('.block_note').click(function () {
                 $('#'+$(this).data('note')).toggleClass('hidden');
             });
