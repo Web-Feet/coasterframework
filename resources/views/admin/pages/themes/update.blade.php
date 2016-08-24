@@ -7,29 +7,30 @@
 
 @else
 
-    <p>Here is a list of all blocks found in the theme.</p>
-
-    <p>
-        Newly found blocks that aren't currently in the theme are highlighted green.<br />
-        Existing theme blocks that have template changes and repeater blocks with changes to their repeaters template are highlighted yellow.<br />
-        Blocks that are no longer found in the theme templates are highlighted red.<br />
-        For blocks that rely on a page_id or page data, the templates can't be determined exactly and they are highlighted blue.
-    </p>
-
-    <p>
-        Blocks with the "update template" option checked will have their associated templates updated<br />
-        A block with the "show in site-wide content" option checked will appear in the site-wide content section of the admin.<br/>
-        A block with the "show in pages" option checked will be created as a site-wide block but still be shown on any page templates it's in.<br />
-        If both the options above are checked, the block will appear in both pages and site-wide content.
-    </p>
-
-    <p>&nbsp;</p>
-
-    <p><b>Templates Found:</b> {{ $templateList }}</p>
-
-    <p><b>Number of blocks found:</b> {{ count($blocksData) }}</p>
-
-    <p>&nbsp;</p>
+    <h4>How to use the form:</h4>
+    <ul>
+        <li>Blocks with the "update template" option checked will have their associated templates updated</li>
+        <li>A block with the "show in site-wide content" option checked will appear in the site-wide content section of the admin.</li>
+        <li>A block with the "show in pages" option checked will be created as a site-wide block but still be shown on any page templates it's in.</li>
+        <li>If both the options above are checked, the block will appear in both pages and site-wide content.</li>
+    </ul>
+    <div class="row">
+      <div class="col-md-4 well-sm">
+        <h4>Summary:</h4>
+        <p><b>Templates Found:</b> {{ $templateList }}</p>
+        <p><b>Number of blocks found:</b> {{ count($blocksData) }}</p>
+      </div>
+      <div class="col-md-8 well-sm">
+      <h4>Key:</h4>
+        <ul>
+            <li class="well-sm bg-success">Newly found blocks that aren't currently in the theme are highlighted green.</li>
+            <li class="well-sm bg-warning">Existing theme blocks that have template changes and repeater blocks with changes to their repeaters template are highlighted yellow.</li>
+            <li class="well-sm bg-danger">Blocks that are no longer found in the theme templates are highlighted red.</li>
+            <li class="well-sm bg-info">For blocks that rely on a page_id or page data, the templates can't be determined exactly and they are highlighted blue.</li>
+            <li class="well well-sm">Blocks with no changes detected.</li>
+        </ul>
+      </div>
+    </div>
 
     {!! Form::open() !!}
 
