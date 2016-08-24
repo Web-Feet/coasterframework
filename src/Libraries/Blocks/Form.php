@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
 use CoasterCms\Exceptions\CmsPageException;
-use CoasterCms\Helpers\Cms\BlockManager;
+use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Helpers\Cms\Captcha\Securimage;
 use CoasterCms\Helpers\Cms\Email;
 use CoasterCms\Helpers\Cms\View\FormWrap;
@@ -105,6 +105,7 @@ class Form extends _Base
     }
 
     /**
+     * @param Block $block
      * @param array $form_data
      * @return false|RedirectResponse
      * @throws CmsPageException

@@ -2,7 +2,7 @@
 
 use CoasterCms\Helpers\Cms\File\Csv;
 use CoasterCms\Helpers\Cms\Theme\BlockUpdater;
-use CoasterCms\Helpers\Cms\BlockManager;
+use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Helpers\Cms\File\Directory;
 use CoasterCms\Helpers\Cms\File\Zip;
 use DB;

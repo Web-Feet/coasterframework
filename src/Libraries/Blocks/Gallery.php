@@ -1,13 +1,12 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
 use Auth;
-use CoasterCms\Helpers\Cms\BlockManager;
+use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Helpers\Admin\GalleryUploadHandler;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\Page;
-use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageLang;
 use Request;
 use URL;

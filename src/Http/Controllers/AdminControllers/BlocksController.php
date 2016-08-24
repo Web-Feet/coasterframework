@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Http\Controllers\AdminControllers;
 
-use CoasterCms\Helpers\Cms\BlockManager;
+use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\PageBlockDefault;

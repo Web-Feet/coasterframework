@@ -9,11 +9,8 @@ use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\Language;
 use CoasterCms\Models\Page;
-use CoasterCms\Models\PageBlockRepeaterData;
-use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageSearchData;
 use CoasterCms\Models\Setting;
-use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
 use DateTimeHelper;
 use DB;
@@ -238,6 +235,7 @@ class SystemController extends Controller
             return $messages['redirect'];
         }
         $this->layoutData['content'] = View::make('coaster::pages.system.validate-db', $messages);
+        return null;
     }
 
     public function getUpgrade($update = null)

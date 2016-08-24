@@ -82,6 +82,7 @@ class MenuBuilder
 
     /**
      * @param Page[]|MenuItem[] $items
+     * @param int $parentPageId
      * @param int $level
      * @param int $subLevels
      * @return string

@@ -2,7 +2,7 @@
 
 use CoasterCms\Exceptions\PageBuilderException;
 use CoasterCms\Helpers\Cms\Theme\BlockUpdater;
-use CoasterCms\Helpers\Cms\BlockManager;
+use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Helpers\Cms\Page\PageLoader;
 use CoasterCms\Libraries\Builder\MenuBuilder;
 use CoasterCms\Libraries\Builder\ViewClasses\PageDetails;

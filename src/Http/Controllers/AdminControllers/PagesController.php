@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Http\Controllers\AdminControllers;
 
 use Auth;
-use CoasterCms\Helpers\Cms\BlockManager;
+use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Libraries\Builder\FormMessage;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
@@ -24,7 +24,6 @@ use CoasterCms\Models\PageVersionSchedule;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
 use CoasterCms\Models\UserRole;
-use Illuminate\Database\Eloquent\Collection;
 use Request;
 use View;
 

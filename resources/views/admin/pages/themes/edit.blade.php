@@ -38,9 +38,9 @@
     <script type='text/javascript'>
         $(document).ready(function () {
           $('.tabtable a').click(function (e) {
-            e.preventDefault()
+            e.preventDefault();
             $(this).tab('show')
-          })
+          });
           var rte = route('coaster.admin.themes.edit.loadfile');
           var loadLinks = $('.load-template-file-link');
 
@@ -53,7 +53,7 @@
           var resizeEditor = function()
           {
             editobj.css({'height': $(window).height() - 280});
-          }
+          };
           resizeEditor();
           $(window).resize(resizeEditor);
 

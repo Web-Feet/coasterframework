@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Models;
 
-use CoasterCms\Helpers\Cms\BlockManager;
+use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use Auth;
 use Eloquent;
 use Illuminate\Database\Eloquent\Collection;

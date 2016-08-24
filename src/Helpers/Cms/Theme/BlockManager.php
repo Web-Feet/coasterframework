@@ -1,4 +1,4 @@
-<?php namespace CoasterCms\Helpers\Cms;
+<?php namespace CoasterCms\Helpers\Cms\Theme;
 
 use Auth;
 use CoasterCms\Helpers\Cms\Page\Path;

@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
 use Carbon\Carbon;
-use CoasterCms\Helpers\Cms\BlockManager;
+use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Helpers\Cms\View\CmsBlockInput;
 use CoasterCms\Helpers\Cms\View\FormWrap;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;

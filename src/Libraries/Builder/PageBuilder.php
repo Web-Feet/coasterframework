@@ -2,7 +2,6 @@
 
 use CoasterCms\Exceptions\PageBuilderException;
 use CoasterCms\Libraries\Builder\PageBuilder\PageBuilderInstance;
-use CoasterCms\Models\Page;
 
 /**
  * Class PageBuilder
