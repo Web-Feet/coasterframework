@@ -46,7 +46,7 @@
 
           var folderLinks = $('.tree-folder-link');
 
-          // Init edior
+          // Init editor
           var ta = $('#file_content_ta');
           var pathInp = $('#path-inp');
           var editobj = $('#editor');
