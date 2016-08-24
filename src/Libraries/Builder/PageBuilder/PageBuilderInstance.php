@@ -544,7 +544,7 @@ class PageBuilderInstance
             $pageVersionId = !empty($selectedPage) ? $selectedPage->live_version : 0;
         } else {
             $pageId = $this->pageId();
-            $pageVersionId = $pageId ? PageLang::preload($pageId)->page_version : 0;
+            $pageVersionId = $pageId ? PageLang::preload($pageId)->live_version : 0;
         }
 
         if (($customBlockData = $this->_getCustomBlockData($blockName)) !== false) {
