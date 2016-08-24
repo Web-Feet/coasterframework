@@ -50,6 +50,7 @@
           var ta = $('#file_content_ta');
           var pathInp = $('#path-inp');
           var editobj = $('#editor');
+          editobj.hide();
           var resizeEditor = function()
           {
             editobj.css({'height': $(window).height() - 280});
@@ -58,8 +59,11 @@
           $(window).resize(resizeEditor);
 
           var editor = ace.edit("editor");
-          editor.setTheme("ace/theme/dawn");
+          editor.setTheme("ace/theme/pastel_on_dark");
           editor.session.setMode("ace/mode/html_blade");
+          editor.setOptions({
+            enableBasicAutocompletion: true
+          });
 
           // Init link clicking
           folderLinks.bind('click', function(e)
@@ -85,6 +89,7 @@
               data: 'template=' + linkEl.attr('data-path'),
               success: function(r)
               {
+                editobj.show();
                 pathInp.val(r.path);
                 var pAr = r.path.split('.');
                 var fileExt = pAr[pAr.length - 1];
