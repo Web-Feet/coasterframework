@@ -331,7 +331,7 @@ i.glyphicon-white {
 #uploadThemeForm {display: inline-block;}
 
 .installThumbs {padding-bottom: 20px;}
-.installThumbs .thumbnail {height: 395px;}
+.installThumbs .thumbnail {height: 430px;}
 .installThumbs .img-container {height: 200px; position: relative; border-bottom: 1px solid #efefef;}
 .installThumbs .img-container img {
     position: absolute;
