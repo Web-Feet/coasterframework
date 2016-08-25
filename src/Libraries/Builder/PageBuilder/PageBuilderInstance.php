@@ -654,7 +654,7 @@ class PageBuilderInstance
             'per_page' => 20,
             'limit' => 0,
             'content' => '',
-            'canonicals' => false
+            'canonicals' => config('coaster::frontend.canonicals')
         ];
         $options = array_merge($defaultOptions, array_filter($options));
 
