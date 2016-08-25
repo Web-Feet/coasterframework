@@ -15,6 +15,8 @@ use CoasterCms\Models\Language;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageBlock;
 use CoasterCms\Models\PageBlockDefault;
+use CoasterCms\Models\PageGroup;
+use CoasterCms\Models\PageGroupPage;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\PageSearchData;
 use CoasterCms\Models\Setting;
@@ -505,6 +507,18 @@ class PageBuilderInstance
                         }
                     }
                 }
+                if (!empty($options['groups'])) {
+                    $pageIds = [];
+                    $pageGroupPages = PageGroupPage::whereIn('group_id', $options['groups'])->get();
+                    foreach ($pageGroupPages as $pageGroupPage) {
+                        $pageIds[] = $pageGroupPage->page_id;
+                    }
+                    foreach ($pages as $k => $page) {
+                        if (!in_array($page->id, $pageIds)) {
+                            unset($pages[$k]);
+                        }
+                    }
+                }
                 $results = count($pages);
                 $showing = "";
                 if ($results > 20) {
@@ -647,6 +661,9 @@ class PageBuilderInstance
      */
     protected function _renderCategory($categoryPageId, $pages, $options)
     {
+        if (array_key_exists('view', $options) && empty($options['view'])) {
+            unset($options['view']);
+        }
         $defaultOptions = [
             'renderIfEmpty' => true,
             'view' => 'default',
