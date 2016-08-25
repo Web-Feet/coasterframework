@@ -20,21 +20,23 @@ class Selectmultiplewnew extends Selectmultiple
 
         $selectOptions = Request::input($blocks_key . 'Custom') ?: [];
         foreach ($selectOptions as $blockId => $newOptions) {
-            $optionsArr = [];
-            $options = BlockSelectOption::where('block_id', '=', $blockId)->get();
-            if (!$options->isEmpty()) {
-                foreach ($options as $option) {
-                    $optionsArr[$option->value] = $option->option;
+            if ($newOptions) {
+                $newOptions = explode(',', $newOptions);
+                $optionsArr = [];
+                $options = BlockSelectOption::where('block_id', '=', $blockId)->get();
+                if (!$options->isEmpty()) {
+                    foreach ($options as $option) {
+                        $optionsArr[$option->value] = $option->option;
+                    }
                 }
-            }
-            $newOptions = explode(',', $newOptions);
-            foreach ($newOptions as $newOption) {
-                if ($newOption && empty($optionsArr[$newOption])) {
-                    $optionsArr[$newOption] = $newOption;
+                foreach ($newOptions as $newOption) {
+                    if ($newOption && empty($optionsArr[$newOption])) {
+                        $optionsArr[$newOption] = $newOption;
+                    }
                 }
+                BlockSelectOption::import($blockId, $optionsArr);
+                $selectedOptionsByBlockId[$blockId] = array_merge(!empty($selectedOptionsByBlockId[$blockId]) ? $selectedOptionsByBlockId[$blockId] : [], $newOptions);
             }
-            BlockSelectOption::import($blockId, $optionsArr);
-            $selectedOptionsByBlockId[$blockId] = array_merge(!empty($selectedOptionsByBlockId[$blockId]) ? $selectedOptionsByBlockId[$blockId] : [], $newOptions);
         }
 
         foreach ($selectedOptionsByBlockId as $blockId => $selectedOptions) {
