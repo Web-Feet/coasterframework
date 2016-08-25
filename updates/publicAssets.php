@@ -10,11 +10,20 @@ if (file_exists($assetsFile)) {
 }
 $guzzleClient = new \GuzzleHttp\Client;
 
+// force overwrite option
+$force = (bool) (!empty($argv[1]) && $argv[1] == '--force' ? true : false);
+if ($force && !empty($argv[2]) ) {
+    $force = false;
+    if (!empty($assetsVersions[$argv[2]])) {
+        $assetsVersions[$argv[2]] = 0;
+    }
+}
+
 /*
  * App Folder
  */
 
-if (empty($assetsVersions['app']) || version_compare($assetsVersions['app'], config('coaster::site.version'), '<')) {
+if (empty($assetsVersions['app']) || $force || version_compare($assetsVersions['app'], config('coaster::site.version'), '<')) {
 
     echo "Coaster Framework: Updating core coaster app assets .";
 
@@ -34,7 +43,7 @@ if (empty($assetsVersions['app']) || version_compare($assetsVersions['app'], con
   * ACE (HTML / Code Editor)
   */
 
-if (empty($assetsVersions['ace']) || version_compare($assetsVersions['ace'], '1.2.5', '<')) {
+if (empty($assetsVersions['ace']) || $force || version_compare($assetsVersions['ace'], '1.2.5', '<')) {
 
     echo "Coaster Framework: Updating ACE HTML/CSS/Code Editor .";
 
@@ -66,7 +75,7 @@ if (empty($assetsVersions['ace']) || version_compare($assetsVersions['ace'], '1.
 /*
  * Bootstrap
  */
-if (empty($assetsVersions['bootstrap']) || version_compare($assetsVersions['bootstrap'], '3.3.6', '<')) {
+if (empty($assetsVersions['bootstrap']) || $force || version_compare($assetsVersions['bootstrap'], '3.3.6', '<')) {
 
     echo "Coaster Framework: Updating twitter bootstrap .";
 
@@ -92,7 +101,7 @@ if (empty($assetsVersions['bootstrap']) || version_compare($assetsVersions['boot
  * File Manager
  */
 
-if (empty($assetsVersions['filemanager']) || version_compare($assetsVersions['filemanager'], 'v9.10.1', '<')) {
+if (empty($assetsVersions['filemanager']) || $force || version_compare($assetsVersions['filemanager'], 'v9.10.1', '<')) {
 
     echo "Coaster Framework: Updating responsive file manager .";
 
@@ -173,7 +182,7 @@ if (empty($assetsVersions['filemanager']) || version_compare($assetsVersions['fi
  * jQuery
  */
 
-if (empty($assetsVersions['jquery']) || version_compare($assetsVersions['jquery'], '1.12.0', '<')) {
+if (empty($assetsVersions['jquery']) || $force || version_compare($assetsVersions['jquery'], '1.12.0', '<')) {
 
     echo "Coaster Framework: Updating jQuery .";
 
@@ -304,7 +313,7 @@ if (empty($assetsVersions['jquery']) || version_compare($assetsVersions['jquery'
  * jQuery UI
  */
 
-if (empty($assetsVersions['jquery-ui']) || version_compare($assetsVersions['jquery-ui'], '1.11.3', '<')) {
+if (empty($assetsVersions['jquery-ui']) || $force || version_compare($assetsVersions['jquery-ui'], '1.11.3', '<')) {
 
     echo "Coaster Framework: Updating jQuery-ui .";
 
@@ -387,7 +396,7 @@ if (empty($assetsVersions['jquery-ui']) || version_compare($assetsVersions['jque
  * Securimage
  */
 
-if (empty($assetsVersions['securimage']) || version_compare($assetsVersions['securimage'], '3.6.3', '<')) {
+if (empty($assetsVersions['securimage']) || $force || version_compare($assetsVersions['securimage'], '3.6.3', '<')) {
 
     echo "Coaster Framework: Updating securimage captcha .";
 
