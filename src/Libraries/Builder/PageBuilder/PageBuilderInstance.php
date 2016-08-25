@@ -471,7 +471,6 @@ class PageBuilderInstance
             ];
             $options = array_merge($defaultOptions, $options);
 
-
             $block = Block::preload($blockName);
             $blockType = $block->get_class();
 
@@ -649,6 +648,7 @@ class PageBuilderInstance
     protected function _renderCategory($categoryPageId, $pages, $options)
     {
         $defaultOptions = [
+            'renderIfEmpty' => true,
             'view' => 'default',
             'type' => 'all',
             'per_page' => 20,
@@ -656,7 +656,7 @@ class PageBuilderInstance
             'content' => '',
             'canonicals' => config('coaster::frontend.canonicals')
         ];
-        $options = array_merge($defaultOptions, array_filter($options));
+        $options = array_merge($defaultOptions, $options);
 
         // select page of selected type
         $pagesOfSelectedType = [];
@@ -689,6 +689,10 @@ class PageBuilderInstance
 
         $list = '';
         $total = count($pages);
+
+        if (!$total && !$options['renderIfEmpty']) {
+            return '';
+        }
 
         $groupPageContainerId = 0;
         if ($categoryPageId && !$options['canonicals']) {
