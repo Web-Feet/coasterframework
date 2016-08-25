@@ -10,7 +10,7 @@
             {!! Form::radio('page_info_other[group_radio]', 0, $page->group_container ? 0 : 1) !!} No
         </label>
     </div>
-    <div class="col-sm-8 col-xs-12">
+    <div class="col-sm-7 col-xs-8 group-container-options">
         <select name="page_info[group_container]" class="form-control">
             <option value="-1">-- New Group --</option>
             <option value="0">-- Not Top Level Group Page --</option>
@@ -18,6 +18,9 @@
                 <option value="{{ $group->id }}" {{ $page->group_container == $group->id ? 'selected="selected"' : '' }}>{{ $group->name }}</option>
             @endforeach
         </select>
+    </div>
+    <div class="col-sm-1 col-xs-4 group-container-options header_note" data-note="The url priority for canonicals. Group pages will use the path from the top level group page with the highest priority by default.">
+        {!! Form::text('page_info[group_container_url_priority]', $page->group_container_url_priority ?: '', ['class' => 'form-control form-inline', 'placeholder' => $group->url_priority]) !!}
     </div>
 </div>
 

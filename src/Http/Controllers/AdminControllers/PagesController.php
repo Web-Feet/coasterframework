@@ -476,6 +476,7 @@ class PagesController extends AdminController
 
         $createNewGroup = ($page_info['group_container'] == -1);
         $page_info['group_container'] = $createNewGroup ? 0 : $page_info['group_container'];
+        $page_info['group_container_url_priority'] = !empty($page_info['group_container_url_priority']) ? $page_info['group_container_url_priority'] : 0;
         if ($page_info['group_container']) {
             $groupContainer = PageGroup::find($page_info['group_container']);
             if (!$groupContainer || !$groupContainer->canAddContainers()) {

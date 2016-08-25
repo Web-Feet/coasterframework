@@ -87,6 +87,7 @@
             updateListenLiveOptions();
             updateListenGroupFields();
             load_editor_js();
+            headerNote();
 
             page_id = parseInt({{ $page->id }});
             latest_version = '{{ $version['latest'] }}';

@@ -29,6 +29,7 @@
             updateListenGroupFields();
             updateListenLiveOptions();
             load_editor_js();
+            headerNote();
 
             var link_show, url_prefix;
             $('#page_info\\[link\\]').change(function () {

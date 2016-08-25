@@ -31,6 +31,7 @@ function updateListenGroupFields() {
     var groupContainer = $('#groupContainer'), inGroup = $('#inGroup');
     var inGroups = inGroup.find('input[type=checkbox]');
     var groupContainerSelect = groupContainer.find('select');
+    var groupContainerOptions = groupContainer.find('.group-container-options');
     var oldGroup = -1;
     groupContainerSelect.change(function () {
         if ($(this).val() != 0) {
@@ -56,13 +57,13 @@ function updateListenGroupFields() {
             if (groupContainerSelect.val() == 0) {
                 groupContainerSelect.val(oldGroup);
             }
-            groupContainerSelect.removeClass('hidden');
+            groupContainerOptions.removeClass('hidden');
             inGroup.addClass('hidden');
         } else {
             groupContainerSelect.find('option[value=0]').removeClass('hidden');
             oldGroup = groupContainerSelect.val();
             groupContainerSelect.val(0);
-            groupContainerSelect.addClass('hidden');
+            groupContainerOptions.addClass('hidden');
             inGroup.removeClass('hidden');
         }
     });
