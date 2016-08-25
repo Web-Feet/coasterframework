@@ -45,7 +45,7 @@ class GroupsController extends Controller
                     foreach ($attributeBlocks as $attributeBlock) {
                         $pageBlock = PageBlock::preload_block($pageId, $attributeBlock->id, $pageLang->live_version);
                         $pageBlockContent = !empty($pageBlock) ? $pageBlock[Language::current()]->content : '';
-                        if ($attributeBlock->type == 'selectmultiple' && !empty($pageBlockContent)) {
+                        if (strpos($attributeBlock->type, 'selectmultiple') === 0 && !empty($pageBlockContent)) {
                             // selectmultiple
                             $showBlocks[] = implode(', ', unserialize($pageBlockContent));
                         } elseif ($attributeBlock->type == 'datetime'&& !empty($pageBlockContent)) {
