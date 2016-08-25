@@ -47,4 +47,15 @@ Class BlockSelectOption extends Eloquent
         }
     }
 
+    public static function getOptionsArray($blockName)
+    {
+        $optionsArray = [];
+        $blockId = Block::preload($blockName)->id;
+        $options = self::where('block_id', '=', $blockId)->get();
+        foreach ($options as $option) {
+            $optionsArray[$option->value] = $option->option;
+        }
+        return $optionsArray;
+    }
+
 }
