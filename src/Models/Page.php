@@ -284,15 +284,17 @@ class Page extends Eloquent
                 if ($child_page->group_container > 0) {
                     $li_info->type = 'type_group';
                     $li_info->leaf = '';
+                    $li_info->group = PageGroup::find($child_page->group_container);
                 } else {
-                    $li_info->leaf = self::get_page_list_view($child_page->id, $level + 1, $li_info->preview_link);
                     if ($child_page->link == 1) {
                         $li_info->preview_link = $page_lang->url;
                         $li_info->type = 'type_link';
                     } else {
                         $li_info->type = 'type_normal';
                     }
+                    $li_info->group = '';
                 }
+                $li_info->leaf = self::get_page_list_view($child_page->id, $level + 1, $li_info->preview_link);
                 if (trim($li_info->preview_link, '/') != '' && trim($li_info->preview_link, '/') == trim(config('coaster::blog.url'), '/')) {
                     $li_info->blog = route('coaster.admin.system.wp-login');
                 } else {

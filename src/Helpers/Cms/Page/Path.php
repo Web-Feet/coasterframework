@@ -76,23 +76,21 @@ class Path
 
             if ($childPages = Page::getChildPages($pageId)) {
                 self::_loadSubPaths($childPages, $pagePathData);
-            } else {
-                if ($pageData->group_container > 0) {
-                    $group = PageGroup::find($pageData->group_container);
-                    if (!empty($group)) {
-                        foreach ($group->itemPageFiltered($pageId) as $groupPage) {
-                            $groupPagePathData = self::_getById($groupPage->id);
-                            $groupPagePathData->groupContainers[$pageId] = [
-                                'name' => $pagePathData->fullName,
-                                'url' => $pagePathData->fullUrl,
-                                'priority' => $pageData->group_container_url_priority ?: $group->url_priority,
-                                'canonical' => $groupPage->canonical_parent == $pageData->id
-                            ];
-                        }
+            }
+            if ($pageData->group_container > 0) {
+                $group = PageGroup::find($pageData->group_container);
+                if (!empty($group)) {
+                    foreach ($group->itemPageFiltered($pageId) as $groupPage) {
+                        $groupPagePathData = self::_getById($groupPage->id);
+                        $groupPagePathData->groupContainers[$pageId] = [
+                            'name' => $pagePathData->fullName,
+                            'url' => $pagePathData->fullUrl,
+                            'priority' => $pageData->group_container_url_priority ?: $group->url_priority,
+                            'canonical' => $groupPage->canonical_parent == $pageData->id
+                        ];
                     }
                 }
             }
-            
         }
     }
 

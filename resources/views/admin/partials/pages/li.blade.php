@@ -1,7 +1,7 @@
 <li id='list_{!! $page->id !!}'>
     <div class='{!! $li_info->type !!}'>
         <span class='disclose glyphicon glyphicon-plus-sign'></span>
-        {!! $page_lang->name !!}
+        {!! $page_lang->name !!} {{ $li_info->group ? ' &nbsp; (Group: ' . $li_info->group->name . ')' : '' }}
         <span class="pull-right">
             @if (!empty($li_info->blog) && $permissions['blog'])
                 {!! HTML::link($li_info->blog, '', ['class' => 'glyphicon glyphicon-share itemTooltip', 'title' => 'WordPress Admin', 'target' => '_blank']) !!}
