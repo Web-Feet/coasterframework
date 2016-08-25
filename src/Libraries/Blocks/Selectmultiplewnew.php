@@ -29,12 +29,12 @@ class Selectmultiplewnew extends Selectmultiple
             }
             $newOptions = explode(',', $newOptions);
             foreach ($newOptions as $newOption) {
-                if (empty($optionsArr[$newOption])) {
+                if ($newOption && empty($optionsArr[$newOption])) {
                     $optionsArr[$newOption] = $newOption;
                 }
             }
             BlockSelectOption::import($blockId, $optionsArr);
-            $selectedOptionsByBlockId[$blockId] = array_merge($selectedOptionsByBlockId[$blockId], $newOptions);
+            $selectedOptionsByBlockId[$blockId] = array_merge(!empty($selectedOptionsByBlockId[$blockId]) ? $selectedOptionsByBlockId[$blockId] : [], $newOptions);
         }
 
         foreach ($selectedOptionsByBlockId as $blockId => $selectedOptions) {
