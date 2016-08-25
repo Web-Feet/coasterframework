@@ -14,14 +14,16 @@
         <select name="page_info[group_container]" class="form-control">
             <option value="-1">-- New Group --</option>
             <option value="0">-- Not Top Level Group Page --</option>
-            @foreach($groups as $group)
-                <option value="{{ $group->id }}" {{ $page->group_container == $group->id ? 'selected="selected"' : '' }}>{{ $group->name }}</option>
+            @foreach($groups as $groupPage)
+                <option value="{{ $groupPage->id }}" {{ $page->group_container == $groupPage->id ? 'selected="selected"' : '' }}>{{ $groupPage->name }}</option>
             @endforeach
         </select>
     </div>
-    <div class="col-sm-1 col-xs-4 group-container-options header_note" data-note="The url priority for canonicals. Group pages will use the path from the top level group page with the highest priority by default.">
-        {!! Form::text('page_info[group_container_url_priority]', $page->group_container_url_priority ?: '', ['class' => 'form-control form-inline', 'placeholder' => $group->url_priority]) !!}
-    </div>
+    @if(isset($group))
+      <div class="col-sm-1 col-xs-4 group-container-options header_note" data-note="The url priority for canonicals. Group pages will use the path from the top level group page with the highest priority by default.">
+          {!! Form::text('page_info[group_container_url_priority]', $page->group_container_url_priority ?: '', ['class' => 'form-control form-inline', 'placeholder' => $group->url_priority]) !!}
+      </div>
+    @endif
 </div>
 
 @if (!$groups->isEmpty())
