@@ -19,11 +19,9 @@
             @endforeach
         </select>
     </div>
-    @if(isset($group))
-      <div class="col-sm-1 col-xs-4 group-container-options header_note" data-note="The url priority for canonicals. Group pages will use the path from the top level group page with the highest priority by default.">
-          {!! Form::text('page_info[group_container_url_priority]', $page->group_container_url_priority ?: '', ['class' => 'form-control form-inline', 'placeholder' => $group->url_priority]) !!}
-      </div>
-    @endif
+    <div class="col-sm-1 col-xs-4 group-container-options header_note" data-note="The url priority for canonicals. Group pages will use the path from the top level group page with the highest priority by default.">
+        {!! Form::text('page_info[group_container_url_priority]', $page->group_container_url_priority ?: '', ['class' => 'form-control form-inline', 'placeholder' => 50])  !!}
+    </div>
 </div>
 
 @if (!$groups->isEmpty())
