@@ -122,7 +122,7 @@ class PageLoader
                         if (empty($this->pageLevels[$i])) {
                             if (self::_isSearchPage($currentSegment, $parentPage)) {
                                 Search::setSearchBlockRequired();
-                                $this->searchQuery = implode('/', array_slice(Request::segments(), $i));
+                                $this->searchQuery = implode('/', array_slice(Request::segments(), $i-1));
                                 unset($this->pageLevels[$i]);
                                 $urlSegments = $i - 1;
                             }
@@ -140,7 +140,7 @@ class PageLoader
 
         }
 
-        if ($this->searchQuery === false & $query = Request::get('q')) {
+        if ($this->searchQuery === false && $query = Request::input('q')) {
             $this->searchQuery = $query;
         }
 
