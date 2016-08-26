@@ -676,7 +676,7 @@ class PageBuilderInstance
         ];
         $options = array_merge($defaultOptions, $options);
 
-        if ($options['render']) {
+        if (!$options['render']) {
             return $pages;
         }
 
