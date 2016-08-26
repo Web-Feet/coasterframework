@@ -673,8 +673,6 @@ class PagesController extends AdminController
             if (empty($page)) {
                 return 'Page Not Found';
             }
-            $page->live_start = Datetime::mysqlToJQuery($page->live_start);
-            $page->live_end = Datetime::mysqlToJQuery($page->live_end);
             $parent = Page::find($page->parent);
             PageVersionSchedule::checkPageVersionIds();
 
