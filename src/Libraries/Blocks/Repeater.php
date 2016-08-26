@@ -283,7 +283,7 @@ class Repeater extends _Base
     {
         $repeaterBlock = Block::preload($blockName);
         if ($repeaterBlock->type == 'repeater') {
-            $currentVersion = $pageId ? PageLang::preload($pageId)->live_version : 0;
+            $currentVersion = $pageId ? PageVersion::latest_version($pageId) : 0;
 
             $repeaterInfo = new \stdClass;
             $repeaterInfo->repeater_id = BlockManager::get_block($repeaterBlock->id, $pageId, null, $currentVersion);
