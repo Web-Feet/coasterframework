@@ -458,8 +458,8 @@ class PageBuilderInstance
     }
 
     /**
-     * @param string $blockName
-     * @param string $search
+     * @param array $blockNames
+     * @param array $searches
      * @param array $options
      * @return string
      */
@@ -711,7 +711,6 @@ class PageBuilderInstance
             unset($options['view']);
         }
         $defaultOptions = [
-            'render' => true,
             'renderIfEmpty' => true,
             'view' => 'default',
             'type' => 'all',
@@ -721,10 +720,6 @@ class PageBuilderInstance
             'canonicals' => config('coaster::frontend.canonicals')
         ];
         $options = array_merge($defaultOptions, $options);
-
-        if (!$options['render']) {
-            return $pages;
-        }
 
         // select page of selected type
         $pagesOfSelectedType = [];
