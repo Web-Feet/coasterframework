@@ -665,6 +665,7 @@ class PageBuilderInstance
             unset($options['view']);
         }
         $defaultOptions = [
+            'render' => false,
             'renderIfEmpty' => true,
             'view' => 'default',
             'type' => 'all',
@@ -674,6 +675,10 @@ class PageBuilderInstance
             'canonicals' => config('coaster::frontend.canonicals')
         ];
         $options = array_merge($defaultOptions, $options);
+
+        if ($options['render']) {
+            return $pages;
+        }
 
         // select page of selected type
         $pagesOfSelectedType = [];
