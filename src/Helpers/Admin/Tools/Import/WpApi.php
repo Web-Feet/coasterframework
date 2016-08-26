@@ -3,11 +3,14 @@
 use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Helpers\Cms\Html\DomDocument;
 use CoasterCms\Helpers\Cms\Page\Path;
+use CoasterCms\Libraries\Blocks\Repeater;
 use CoasterCms\Libraries\Blocks\Selectmultiplewnew;
 use CoasterCms\Models\Block;
+use CoasterCms\Models\BlockRepeater;
 use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Page;
+use CoasterCms\Models\PageBlockRepeaterData;
 use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\Language;
@@ -22,11 +25,23 @@ class WpApi
     protected $groupPage = null;
     protected $group = null;
     protected $ret = [];
+
     public function __construct($url)
     {
       $this->url = $url;
       $this->groupPage = $this->getBlogGroupPage();
       $this->group = PageGroup::where('id', '=', $this->groupPage->group_container)->first();
+      $this->setUpCommentsBlocks();
+    }
+
+    public function setUpCommentsBlocks()
+    {
+      $commentStatusBlock = Block::where('name', '=', 'comment_status')->first();
+      BlockSelectOption::unguard();
+      $this->commentApprovedId = BlockSelectOption::firstOrCreate(['block_id' => $commentStatusBlock->id, 'option' => 'Approved', 'value' => 'approved'])->id;
+      $this->commentNotApprovedId = BlockSelectOption::firstOrCreate(['block_id' => $commentStatusBlock->id, 'option' => 'Awaiting Approval', 'value' => 'awaiting approval'])->id;
+      BlockSelectOption::reguard();
+
     }
 
     public function featuredImage($data)
@@ -45,10 +60,11 @@ class WpApi
     }
 
 
-    public function getBlock($name)
+    public function getBlock($name, $type = 'selectmultiplewnew')
     {
+      $label = str_replace('_', ' ', $name);
       Block::unguard();
-      $block = Block::firstOrCreate(['name' => $name, 'label' => ucwords($name), 'note' => 'Select or add new '.$name, 'category_id' => 1, 'type' => 'selectmultiplewnew']);
+      $block = Block::firstOrCreate(['name' => $name, 'label' => ucwords($label), 'note' => 'Select or add new '.$name, 'category_id' => 1, 'type' => $type]);
       Block::reguard();
 
       return $block;
@@ -138,8 +154,38 @@ class WpApi
       return $content;
     }
 
+    public function getComments($data, $page)
+    {
+      $commentData = collect($this->getJson($this->url . '/wp-json/wp/v2/comments/?post='.$data->id ));
+      $idsInserted = [];
+      foreach ($commentData as $comment)
+      {
+        $check = PageBlockRepeaterData::where('content', '=', $comment->content->rendered)->first();
+        if ( ! $check)
+        {
+          $rowData['comment_author'] = $comment->author_name;
+          $rowData['comment_url'] = $comment->author_url;
+          $rowData['comment_message'] = $comment->content->rendered;
+          $rowData['comment_status'] = $comment->status;
+
+          $rowData['comment_parent'] = isset($idsInserted[$comment->parent]) ? $idsInserted[$comment->parent] : 0;
+
+          $rowData['comment_date'] = $this->carbonDate($comment->date)->format('Y-m-d H:i:s');
+          $rowInfo = Repeater::insertRow('comments', $page->id, $rowData);
+          $idsInserted[$comment->id] = $rowInfo->row_id;
+        }
+        else
+        {
+          $idsInserted[$comment->id] = $check->row_id;
+        }
+      }
+
+
+    }
+
     public function createPost($data)
     {
+      // dd($data);
       $pageLang = PageLang::where('name', '=', $data->title->rendered)->first();
       $uporc = 'updated';
       if (empty($pageLang))
@@ -151,6 +197,19 @@ class WpApi
       else
       {
         $page = Page::find($pageLang->page_id);
+        $comments  = $this->getComments($data, $page);
+        $latestVersion = PageVersion::latest_version($page->id, true);
+        if (!empty($latestVersion)) {
+            $latestVersion->publish();
+        }
+
+        $res = new \stdClass;
+        $res->message = 'Post '.$uporc.': '.$pageLang->name;
+        $res->oldLink = $data->link;
+        $res->newLink = Path::getFullUrl($page->id);
+        $res->categories = 'UPDATE RUN';
+        $res->tags = 'UPDATE RUN';
+        return;
       }
       $page->live = 2;
       $page->live_start = $this->carbonDate($data->date)->format("Y-m-d H:i:s");
@@ -160,7 +219,7 @@ class WpApi
       $page->template = $this->group->default_template;
       $page->save();
       $page->groups()->sync([$this->group->id]);
-
+      $comments  = $this->getComments($data, $page);
       $categories = $this->getCategory($data->_embedded->{"wp:term"}, $page->id);
       // Page Lang
 
@@ -186,8 +245,10 @@ class WpApi
       if (!empty($content_block)) {
           BlockManager::update_block($leadText_block->id, $data->excerpt->rendered, $page->id); // saves first page version
       }
-      $pageLang->live_version = PageVersion::latest_version($page->id);
-      $pageLang->save();
+      $latestVersion = PageVersion::latest_version($page->id, true);
+      if (!empty($latestVersion)) {
+          $latestVersion->publish();
+      }
 
       $res = new \stdClass;
       $res->message = 'Post '.$uporc.': '.$pageLang->name;
@@ -212,9 +273,9 @@ class WpApi
         foreach ($posts as $post) {
             $this->ret[] = $this->createPost($post);
         }
-        if (count($posts) == $this->per_page) {
-          $this->importPosts($page+1);
-        }
+        // if (count($posts) == $this->per_page) {
+        //   $this->importPosts($page+1);
+        // }
 
         return $this->ret;
     }

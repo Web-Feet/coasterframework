@@ -310,7 +310,10 @@ class Repeater extends _Base
                     BlockManager::update_block($block->id, $content, $pageId, $repeaterInfo);
                 }
             }
+
+            return $repeaterInfo;
         }
+        return false;
     }
 
     public static function new_row()
