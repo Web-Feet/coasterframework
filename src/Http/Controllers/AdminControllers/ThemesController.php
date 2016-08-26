@@ -245,6 +245,18 @@ class ThemesController extends Controller
                             }
                         }
 
+                        $repeaterForms = $themes . DIRECTORY_SEPARATOR . $theme . '/blocks/repeaters';
+                        if (is_dir($repeaterForms)) {
+                            foreach (scandir($repeaterForms) as $repeaterForm) {
+                                if (!is_dir($repeaterForms . DIRECTORY_SEPARATOR . $repeaterForm)) {
+                                    $form_file = explode(".", $repeaterForm);
+                                    if (!empty($form_file[0]) && substr($form_file[0], -5) ==  '-form') {
+                                        $formTemplates[] = $form_file[0];
+                                    }
+                                }
+                            }
+                        }
+
                     }
                 }
             }
