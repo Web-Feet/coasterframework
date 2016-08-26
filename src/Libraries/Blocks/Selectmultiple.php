@@ -13,7 +13,7 @@ class Selectmultiple extends _Base
         $ret = [];
         $opts = BlockSelectOption::where('block_id', '=', $block->id)->get();
         foreach ($opts as $o) {
-          $ret[$o->value] = $o->option;
+          $ret[$o->option] = $o->value;
         }
         return $ret;
       }
