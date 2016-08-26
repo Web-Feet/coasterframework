@@ -665,7 +665,7 @@ class PageBuilderInstance
             unset($options['view']);
         }
         $defaultOptions = [
-            'render' => false,
+            'render' => true,
             'renderIfEmpty' => true,
             'view' => 'default',
             'type' => 'all',
