@@ -468,11 +468,10 @@ class PagesController extends AdminController
         if ($page_info['live'] == 2) {
             if (!$page_info['live_start'] && !$page_info['live_end']) {
                 $page_info['live'] = 0;
-            } else {
-                $page_info['live_start'] = Datetime::jQueryToMysql($page_info['live_start']);
-                $page_info['live_end'] = Datetime::jQueryToMysql($page_info['live_end']);
             }
         }
+        $page_info['live_start'] = Datetime::jQueryToMysql($page_info['live_start']);
+        $page_info['live_end'] = Datetime::jQueryToMysql($page_info['live_end']);
 
         $createNewGroup = ($page_info['group_container'] == -1);
         $page_info['group_container'] = $createNewGroup ? 0 : $page_info['group_container'];

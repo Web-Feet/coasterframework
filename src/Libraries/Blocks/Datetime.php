@@ -53,16 +53,17 @@ class Datetime extends _Base
         $page_ids = array();
         if (!empty($live_blocks)) {
             $search = is_array($search) ? $search : [$search];
+            $search = array_map(function($searchValue) {return is_a($searchValue, Carbon::class) ? $searchValue : new Carbon($searchValue);}, $search);
             foreach ($live_blocks as $live_block) {
                 $current = (new Carbon($live_block->content));
                 switch ($type) {
                     case '=':
-                        if ($current->eq(new Carbon($search[0]))) {
+                        if ($current->eq($search[0])) {
                             $page_ids[] = $live_block->page_id;
                         }
                         break;
                     case 'in':
-                        if ($current->gte(new Carbon($search[0])) && $current->lt(new Carbon($search[1]))) {
+                        if ($current->gte($search[0]) && $current->lt($search[1])) {
                             $page_ids[] = $live_block->page_id;
                         }
                         break;
