@@ -229,28 +229,18 @@ class Repeater extends _Base
         if ($v->passes()) {
 
             $pageId = !empty($formData['page_id']) ? $formData['page_id'] : 0;
-            $liveVersion = PageLang::preload($formData['page_id'])->live_version;
-
-            $repeaterInfo = new \stdClass;
-            $repeaterInfo->repeater_id = BlockManager::get_block($block->id, $pageId, null, $liveVersion);
-            $repeaterInfo->row_id = PageBlockRepeaterData::next_free_row_id($repeaterInfo->repeater_id);
-
             unset($formData['page_id']);
 
-            $rows = PageBlockRepeaterData::load_by_repeater_id($repeaterInfo->repeater_id);
-            $rowOrders = array_map(function ($row) {return !empty($row[0])?$row[0]:0;}, $rows);
-
-            BlockManager::$to_version = PageVersion::add_new($pageId)->version_id;
-            BlockManager::update_block(0, max($rowOrders) + 1, $pageId, $repeaterInfo);
-            foreach ($formData as $field => $content) {
-                $block = Block::preload($field);
-                if ($block->exists) {
-                    if ($block->type == 'datetime' && empty($content)) {
+            foreach ($formData as $blockName => $content) {
+                $fieldBlock = Block::preload($blockName);
+                if ($fieldBlock->exists) {
+                    if ($fieldBlock->type == 'datetime' && empty($content)) {
                         $content = new Carbon();
                     }
-                    BlockManager::update_block($block->id, $content, $pageId, $repeaterInfo);
+                    $formData[$blockName] = $content;
                 }
             }
+            self::insertRow($block->id, $pageId, $formData);
 
             return \redirect(Request::url());
 
@@ -283,6 +273,39 @@ class Repeater extends _Base
     }
 
     // repeater specific functions below
+
+    /**
+     * @param int|string $blockName (id/name)
+     * @param int $pageId
+     * @param array $contentArr (block id/name => block content)
+     */
+    public static function insertRow($blockName, $pageId, $contentArr)
+    {
+        $repeaterBlock = Block::preload($blockName);
+        if ($repeaterBlock->type == 'repeater') {
+            $currentVersion = $pageId ? PageLang::preload($pageId)->live_version : 0;
+
+            $repeaterInfo = new \stdClass;
+            $repeaterInfo->repeater_id = BlockManager::get_block($repeaterBlock->id, $pageId, null, $currentVersion);
+            $repeaterInfo->row_id = PageBlockRepeaterData::next_free_row_id($repeaterInfo->repeater_id);
+
+            $rows = PageBlockRepeaterData::load_by_repeater_id($repeaterInfo->repeater_id);
+            $rowOrders = !$rows ? [0] : array_map(function ($row) {
+                return !empty($row[0]) ? $row[0] : 0;
+            }, $rows);
+
+            // set a version thar all block updates are done to
+            BlockManager::$to_version = BlockManager::$to_version ?: PageVersion::add_new($pageId)->version_id;
+
+            BlockManager::update_block(0, max($rowOrders) + 1, $pageId, $repeaterInfo);
+            foreach ($contentArr as $blockName => $content) {
+                $block = Block::preload($blockName);
+                if ($block->exists) {
+                    BlockManager::update_block($block->id, $content, $pageId, $repeaterInfo);
+                }
+            }
+        }
+    }
 
     public static function new_row()
     {
