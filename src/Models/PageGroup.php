@@ -135,13 +135,6 @@ class PageGroup extends Eloquent
         $sorted = $sort ? $sortedSuffix : '';
 
         if (empty(self::$groupPages[$this->id])) {
-            self::$groupPages[$this->id] = [
-                'all' => [],
-                'live' => [],
-            ];
-            foreach (self::$groupPages[$this->id] as $filter => $arr) {
-                self::$groupPages[$this->id][$filter.$sortedSuffix] = $arr;
-            }
             $groupPages = $this->pages;
             if (!$groupPages->isEmpty()) {
                 foreach ($groupPages as $groupPage) {
@@ -154,7 +147,7 @@ class PageGroup extends Eloquent
             }
         }
 
-        if ($sort && empty(self::$groupPages[$this->id][$filterType.$sorted])) {
+        if ($sort && !array_key_exists($filterType.$sorted, self::$groupPages[$this->id])) {
             if (!empty(self::$groupPages[$this->id][$filterType])) {
                 if ($sortByBlockIds = $this->orderAttributeBlocksIds()) {
 
@@ -222,45 +215,56 @@ class PageGroup extends Eloquent
      */
     public function itemPageIdsFiltered($pageId, $checkLive = false, $sort = false)
     {
-        $pageIds = $this->itemPageIds($checkLive, $sort);
+        $filterType = $checkLive ? 'all' : 'live';
+        $sortedSuffix = '-sorted';
+        $sorted = $sort ? $sortedSuffix : '';
 
-        if (!empty($pageIds)) {
+        self::$groupPagesFiltered[$this->id] = empty(self::$groupPagesFiltered[$this->id]) ? [] : self::$groupPagesFiltered[$this->id];
 
-            $pageLang = PageLang::preload($pageId);
+        if (!array_key_exists($filterType.$sorted, self::$groupPagesFiltered[$this->id])) {
 
-            foreach ($this->blockFilters as $blockFilter) {
+            if ($pageIds = $this->itemPageIds($checkLive, $sort)) {
 
-                // get data to filter by
-                $filterByBlock = Block::preload($blockFilter->filter_by_block_id);
-                $filterBy = PageBlock::preload_block($pageId, $blockFilter->filter_by_block_id, $pageLang->live_version);
-                $filterByContent = !empty($filterBy[Language::current()]) ? $filterBy[Language::current()]->content : null;
-                if ($filterByBlock->type == 'selectmultiple') {
-                    $filterByContentArr = unserialize($filterByContent);
-                    $filterByContentArr = is_array($filterByContentArr) ? $filterByContentArr : [];
-                } else {
-                    $filterByContentArr = [$filterByContent];
-                }
-                $filterByContentArr = array_filter($filterByContentArr, function($filterByContentEl) { return !is_null($filterByContentEl); });
+                $pageLang = PageLang::preload($pageId);
 
-                if (!empty($filterByContentArr)) {
-                    // get block data for block to filter on
-                    $itemBlock = Block::preload($blockFilter->item_block_id);
-                    $blockType = $itemBlock->get_class();
+                foreach ($this->blockFilters as $blockFilter) {
 
-                    // run filter with filterBy content
-                    $blockContentOnPageIds = [];
-                    foreach ($filterByContentArr as $filterByContentEl) {
-                        $newPageIds = $blockType::filter($itemBlock->id, $filterByContentEl, '=');
-                        $blockContentOnPageIds = array_unique(array_merge($blockContentOnPageIds, $newPageIds));
+                    // get data to filter by
+                    $filterByBlock = Block::preload($blockFilter->filter_by_block_id);
+                    $filterBy = PageBlock::preload_block($pageId, $blockFilter->filter_by_block_id, $pageLang->live_version);
+                    $filterByContent = !empty($filterBy[Language::current()]) ? $filterBy[Language::current()]->content : null;
+                    if ($filterByBlock->type == 'selectmultiple') {
+                        $filterByContentArr = unserialize($filterByContent);
+                        $filterByContentArr = is_array($filterByContentArr) ? $filterByContentArr : [];
+                    } else {
+                        $filterByContentArr = [$filterByContent];
                     }
-                    $pageIds = array_intersect($pageIds, $blockContentOnPageIds);
+                    $filterByContentArr = array_filter($filterByContentArr, function ($filterByContentEl) {
+                        return !is_null($filterByContentEl);
+                    });
+
+                    if (!empty($filterByContentArr)) {
+                        // get block data for block to filter on
+                        $itemBlock = Block::preload($blockFilter->item_block_id);
+                        $blockType = $itemBlock->get_class();
+
+                        // run filter with filterBy content
+                        $blockContentOnPageIds = [];
+                        foreach ($filterByContentArr as $filterByContentEl) {
+                            $newPageIds = $blockType::filter($itemBlock->id, $filterByContentEl, '=');
+                            $blockContentOnPageIds = array_unique(array_merge($blockContentOnPageIds, $newPageIds));
+                        }
+                        $pageIds = array_intersect($pageIds, $blockContentOnPageIds);
+                    }
+
                 }
 
             }
-            
+
+            self::$groupPagesFiltered[$this->id][$filterType.$sorted] = $pageIds;
         }
 
-        return $pageIds;
+        return self::$groupPagesFiltered[$this->id][$filterType.$sorted];
     }
 
     /**
