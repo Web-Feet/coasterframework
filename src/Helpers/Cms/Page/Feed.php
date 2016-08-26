@@ -20,7 +20,8 @@ class Feed
      */
     protected static function _getEnabledFeedExtensions()
     {
-        return isset(self::$_enabledExtensions) ? self::$_enabledExtensions : config('coaster::frontend.enabled_feed_extensions');
+        $extensions = isset(self::$_enabledExtensions) ? self::$_enabledExtensions : config('coaster::frontend.enabled_feed_extensions');
+        return $extensions ?: [];
     }
 
     /**
@@ -30,7 +31,7 @@ class Feed
     public static function getFeedExtensionFromPath($path)
     {
         $extension = pathinfo($path, PATHINFO_EXTENSION);
-        if (!empty(self::$_enabledExtensions) && $extension && in_array($extension, self::_getEnabledFeedExtensions())) {
+        if ($extension && in_array($extension, self::_getEnabledFeedExtensions())) {
             return $extension;
         }
         return false;
