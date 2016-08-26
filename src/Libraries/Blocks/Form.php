@@ -169,7 +169,7 @@ class Form extends _Base
                 $form_submission->content = serialize($form_data);
                 $form_submission->save();
 
-                $subject = config('coaster::site.name') . ' - ' . $block->label;
+                $subject = config('coaster::site.name') . ': New Form Submission - ' . $block->label;
                 $template = $form_settings->template?:$block->name;
                 $sentEmail = Email::sendFromFormData([$template], $form_data, $subject, $form_settings->email_to, $form_settings->email_from);
 

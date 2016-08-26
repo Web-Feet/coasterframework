@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
 use Carbon\Carbon;
+use CoasterCms\Helpers\Cms\Email;
 use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Helpers\Cms\View\CmsBlockInput;
 use CoasterCms\Helpers\Cms\View\FormWrap;
@@ -242,6 +243,8 @@ class Repeater extends _Base
             }
             self::insertRow($block->id, $pageId, $formData);
 
+            Email::sendFromFormData([$block->name.'-form'], $formData, config('coaster::site.name') . ': New Form Submission - ' . $block->label);
+
             return \redirect(Request::url());
 
         } else {
@@ -278,6 +281,7 @@ class Repeater extends _Base
      * @param int|string $blockName (id/name)
      * @param int $pageId
      * @param array $contentArr (block id/name => block content)
+     * @return \stdClass|false
      */
     public static function insertRow($blockName, $pageId, $contentArr)
     {
