@@ -475,20 +475,15 @@ class PageBuilderInstance
             $options = array_merge($defaultOptions, $options);
             $filteredPages = [];
             $filterPageIds = [];
-            foreach ($blockNames as $key => $blockName)
-            {
-              $block = Block::preload($blockName);
-              $blockType = $block->get_class();
-              if ($options['operand'] == 'OR' || empty($filterPageIds)) {
-                $filterPageIds = array_merge($filterPageIds, $blockType::filter($block->id, $searches[$key], $options['match']));
-              }
-              else
-              {
+            foreach ($blockNames as $key => $blockName) {
+                $block = Block::preload($blockName);
+                $blockType = $block->get_class();
                 $returnedIds = $blockType::filter($block->id, $searches[$key], $options['match']);
-
-                $filterPageIds = array_intersect($filterPageIds, $returnedIds);
-              }
-
+                if ($options['operand'] == 'OR' || empty($filterPageIds)) {
+                    $filterPageIds = array_merge($filterPageIds, $returnedIds);
+                } else {
+                    $filterPageIds = array_intersect($filterPageIds, $returnedIds);
+                }
             }
 
             $categoryPages = Page::category_pages($pageId, true);
@@ -711,6 +706,7 @@ class PageBuilderInstance
             unset($options['view']);
         }
         $defaultOptions = [
+            'render' => true,
             'renderIfEmpty' => true,
             'view' => 'default',
             'type' => 'all',
@@ -720,6 +716,10 @@ class PageBuilderInstance
             'canonicals' => config('coaster::frontend.canonicals')
         ];
         $options = array_merge($defaultOptions, $options);
+
+        if (!$options['render']) {
+            return $pages;
+        }
 
         // select page of selected type
         $pagesOfSelectedType = [];
