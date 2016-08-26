@@ -30,6 +30,7 @@ use CoasterCms\Libraries\Builder\PageBuilder\PageBuilderInstance;
  * @method static string categoryLink(string $direction = 'next')
  * @method static string filter(string $blockName, string $search, array $options = [])
  * @method static string categoryFilter(string $blockName, string $search, array $options = [])
+ * @method static string categoryFilters(array $blockNames, string $search, array $options = [])
  * @method static string search(array $options = [])
  * @method static string block(string $blockName, $options = [])
  * @method static \PDOStatement blogPosts(int $getPosts = 3, string $where = 'post_type = "post" AND post_status = "publish"')
