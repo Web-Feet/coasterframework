@@ -479,7 +479,7 @@ class PageBuilderInstance
             {
               $block = Block::preload($blockName);
               $blockType = $block->get_class();
-              if ($options['operand'] == 'OR' || $key == 0) {
+              if ($options['operand'] == 'OR' || empty($filterPageIds)) {
                 $filterPageIds = array_merge($filterPageIds, $blockType::filter($block->id, $searches[$key], $options['match']));
               }
               else
