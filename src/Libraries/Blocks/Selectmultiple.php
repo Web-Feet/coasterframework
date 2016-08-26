@@ -8,6 +8,15 @@ class Selectmultiple extends _Base
 
     public static function display($block, $block_data, $options = null)
     {
+      if (isset($options['returnAll']) && $options['returnAll'])
+      {
+        $ret = [];
+        $opts = BlockSelectOption::where('block_id', '=', $block->id)->get();
+        foreach ($opts as $o) {
+          $ret[$o->value] = $o->option;
+        }
+        return $ret;
+      }
         if (!empty($block_data)) {
             return unserialize($block_data);
         } else {
