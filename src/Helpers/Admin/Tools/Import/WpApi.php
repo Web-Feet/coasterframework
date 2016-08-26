@@ -209,7 +209,7 @@ class WpApi
         $res->newLink = Path::getFullUrl($page->id);
         $res->categories = 'UPDATE RUN';
         $res->tags = 'UPDATE RUN';
-        return;
+        return $res;
       }
       $page->live = 2;
       $page->live_start = $this->carbonDate($data->date)->format("Y-m-d H:i:s");
@@ -273,9 +273,9 @@ class WpApi
         foreach ($posts as $post) {
             $this->ret[] = $this->createPost($post);
         }
-        // if (count($posts) == $this->per_page) {
-        //   $this->importPosts($page+1);
-        // }
+        if (count($posts) == $this->per_page) {
+          $this->importPosts($page+1);
+        }
 
         return $this->ret;
     }
