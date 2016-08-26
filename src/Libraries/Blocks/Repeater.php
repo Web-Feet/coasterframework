@@ -290,7 +290,7 @@ class Repeater extends _Base
 
             if (!$repeaterInfo->repeater_id) {
                 $repeaterInfo->repeater_id = PageBlockRepeaterData::next_free_repeater_id();
-                BlockManager::update_block($repeaterBlock->id, $repeaterInfo->repeater_id, $pageId, null, $currentVersion);
+                BlockManager::update_block($repeaterBlock->id, $repeaterInfo->repeater_id, $pageId, null);
             }
 
             $repeaterInfo->row_id = PageBlockRepeaterData::next_free_row_id($repeaterInfo->repeater_id);
