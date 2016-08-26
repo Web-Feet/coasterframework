@@ -9,6 +9,7 @@ class PageBlock extends Eloquent
     protected $table = 'page_blocks';
     private static $page_blocks = [];
     private static $block = [];
+    protected static $loadedPagesBlocks = [];
 
     public static function restore($obj)
     {
@@ -122,15 +123,18 @@ class PageBlock extends Eloquent
         }
     }
 
-    public static function page_blocks_on_live_page_versions($block_id)
+    public static function page_blocks_on_live_page_versions($block_id, $reload = false)
     {
-        return BlockManager::get_data_for_version(
-            new self,
-            -1,
-            array('block_id', 'language_id'),
-            array($block_id, Language::current()),
-            'page_id'
-        );
+        if ($reload || !array_key_exists($block_id, self::$loadedPagesBlocks)) {
+            self::$loadedPagesBlocks[$block_id] = BlockManager::get_data_for_version(
+                new self,
+                -1,
+                array('block_id', 'language_id'),
+                array($block_id, Language::current()),
+                'page_id'
+            );
+        }
+        return self::$loadedPagesBlocks[$block_id];
     }
 
 }
