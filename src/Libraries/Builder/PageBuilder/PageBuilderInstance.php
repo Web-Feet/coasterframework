@@ -476,6 +476,10 @@ class PageBuilderInstance
             $filteredPages = [];
             $filterPageIds = [];
             foreach ($blockNames as $key => $blockName) {
+                if (empty($searches[$key]))
+                {
+                  continue;
+                }
                 $block = Block::preload($blockName);
                 $blockType = $block->get_class();
                 $returnedIds = $blockType::filter($block->id, $searches[$key], $options['match']);
