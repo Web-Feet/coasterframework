@@ -287,6 +287,12 @@ class Repeater extends _Base
 
             $repeaterInfo = new \stdClass;
             $repeaterInfo->repeater_id = BlockManager::get_block($repeaterBlock->id, $pageId, null, $currentVersion);
+
+            if (!$repeaterInfo->repeater_id) {
+                $repeaterInfo->repeater_id = PageBlockRepeaterData::next_free_repeater_id();
+                BlockManager::update_block($repeaterBlock->id, $repeaterInfo->repeater_id, null, $currentVersion);
+            }
+
             $repeaterInfo->row_id = PageBlockRepeaterData::next_free_row_id($repeaterInfo->repeater_id);
 
             $rows = PageBlockRepeaterData::load_by_repeater_id($repeaterInfo->repeater_id);
