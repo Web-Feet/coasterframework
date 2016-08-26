@@ -165,7 +165,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
      */
     public function block($block_name, $options = [])
     {
-        if (!empty($options['import_ignore'])) {
+        if ($this->_importIgnore($options)) {
             return '';
         }
 
@@ -280,12 +280,21 @@ class ThemeBuilderInstance extends PageBuilderInstance
         return MenuBuilder::customMenu([], 1, 0, $options);
     }
 
+    protected function _importIgnore($options)
+    {
+        return (!empty($options['import_ignore']) && $options['import_ignore']) || (!empty($options['importIgnore']) && $options['importIgnore']);
+    }
+
     /**
      * @param $options
      * @return string
      */
     protected function _renderCategoryWithoutPageData($options)
     {
+        if ($this->_importIgnore($options)) {
+            return '';
+        }
+
         $view = !empty($options['view'])?$options['view']:'default';
 
         $catView = 'currentCategory=';
