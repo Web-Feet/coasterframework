@@ -140,7 +140,7 @@ class PageBuilderInstance
     {
         $this->template = is_numeric($template) ? Template::name($template) : $template;
     }
-    
+
     /**
      * @param bool $noOverride
      * @return int
@@ -463,6 +463,52 @@ class PageBuilderInstance
      * @param array $options
      * @return string
      */
+    public function categoryFilters($blockNames, $searches, $options = [])
+    {
+        $pageId = !empty($options['page_id']) ? $options['page_id'] : $this->pageId();
+        if ($pageId) {
+
+            $defaultOptions = [
+                'match' => '=',
+                'operand' => 'AND'
+            ];
+            $options = array_merge($defaultOptions, $options);
+            $filteredPages = [];
+            $filterPageIds = [];
+            foreach ($blockNames as $key => $blockName)
+            {
+              $block = Block::preload($blockName);
+              $blockType = $block->get_class();
+              if ($options['operand'] == 'OR' || $key == 0) {
+                $filterPageIds = array_merge($filterPageIds, $blockType::filter($block->id, $searches[$key], $options['match']));
+              }
+              else
+              {
+                $returnedIds = $blockType::filter($block->id, $searches[$key], $options['match']);
+
+                $filterPageIds = array_intersect($filterPageIds, $returnedIds);
+              }
+
+            }
+
+            $categoryPages = Page::category_pages($pageId, true);
+            foreach ($categoryPages as $categoryPage) {
+                if (in_array($categoryPage->id, $filterPageIds)) {
+                    $filteredPages[] = $categoryPage;
+                }
+            }
+            return $this->_renderCategory($pageId, $filteredPages, $options);
+        }
+        return '';
+    }
+
+
+    /**
+     * @param string $blockName
+     * @param string $search
+     * @param array $options
+     * @return string
+     */
     public function categoryFilter($blockName, $search, $options = [])
     {
         $pageId = !empty($options['page_id']) ? $options['page_id'] : $this->pageId();
@@ -622,7 +668,7 @@ class PageBuilderInstance
             return new \PDOStatement;
         }
     }
-    
+
     protected function _getPage($noOverride = false)
     {
         return ($this->pageOverride && !$noOverride) ? $this->pageOverride : $this->page;
@@ -721,7 +767,7 @@ class PageBuilderInstance
         foreach ($pages as $count => $page) {
             $isFirst = ($count == 0);
             $isLast = ($count == $total -1);
-            
+
             $fullPageInfo = new PageDetails($page->id, $groupPageContainerId);
 
             $this->pageOverride = $page;
