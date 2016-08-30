@@ -13,7 +13,7 @@ class Selectuser extends _Base
     {
         if (is_numeric($block_data)) {
             $user = User::find($block_data);
-            $userName = $user->name ?: $user->email;
+            $userName = $user->getName();
         } else {
             $userName = $block_data;
         }
@@ -24,7 +24,7 @@ class Selectuser extends _Base
     {
         $users = [];
         foreach (User::all() as $user) {
-            $users[$user->id] = ($user->name ?: $user->email) . ' (#'.$user->id.')';
+            $users[$user->id] = $user->getName() . ' (#'.$user->id.')';
         }
         $blockData = new \stdClass;
         $blockData->custom = is_numeric($block_data) ? '' : $block_data;
