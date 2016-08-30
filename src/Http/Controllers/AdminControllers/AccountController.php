@@ -192,7 +192,21 @@ class AccountController extends Controller
     public function getIndex()
     {
         $account = View::make('coaster::partials.users.info', array('user' => Auth::user()));
-        $this->layoutData['content'] = View::make('coaster::pages.account', array('account' => $account, 'auto_blog_login' => (!empty(config('coaster::blog.url') && Auth::action('account.blog'))), 'change_password' => Auth::action('account.password')));
+        $this->layoutData['content'] = View::make('coaster::pages.account', array('account' => $account, 'auto_blog_login' => (!empty(config('coaster::blog.url') && Auth::action('account.blog'))), 'setAlias' => Auth::action('account.name'), 'change_password' => Auth::action('account.password')));
+    }
+
+    public function getName()
+    {
+        $form = View::make('coaster::partials.users.forms.name', array('user' => Auth::user()));
+        $this->layoutData['content'] = View::make('coaster::pages.account.name', array('form' => $form));
+    }
+
+    public function postName()
+    {
+        $user = Auth::user();
+        $user->name = Request::input('name');
+        $user->save();
+        return \redirect()->route('coaster.admin.account');
     }
 
 }

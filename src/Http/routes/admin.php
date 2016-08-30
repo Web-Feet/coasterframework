@@ -26,6 +26,8 @@ Route::group(['prefix' => $adminUrl, 'middleware' => ['web', 'coaster.admin'], '
     Route::get('account/language', ['uses' => 'AccountController@getLanguage', 'as' => $routeNamePrefix . 'account.language']);
     Route::post('account/language', ['uses' => 'AccountController@postLanguage', 'as' => $routeNamePrefix . 'account.language.post']);
     Route::post('account/page-state', ['uses' => 'AccountController@postPageState', 'as' => $routeNamePrefix . 'account.page-state']);
+    Route::get('account/name', ['uses' => 'AccountController@getName', 'as' => $routeNamePrefix . 'account.name']);
+    Route::post('account/name', ['uses' => 'AccountController@postName', 'as' => $routeNamePrefix . 'account.name.post']);
 
     Route::get('system', ['uses' => 'SystemController@getIndex', 'as' => $routeNamePrefix . 'system']);
     Route::post('system', ['uses' => 'SystemController@postIndex', 'as' => $routeNamePrefix . 'system.index.post']);

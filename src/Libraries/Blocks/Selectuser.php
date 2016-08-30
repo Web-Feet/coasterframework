@@ -24,7 +24,7 @@ class Selectuser extends _Base
     {
         $users = [];
         foreach (User::all() as $user) {
-            $users[$user->id] = $user->name ?: $user->email;
+            $users[$user->id] = ($user->name ?: $user->email) . ' (#'.$user->id.')';
         }
         $blockData = new \stdClass;
         $blockData->custom = is_numeric($block_data) ? '' : $block_data;
@@ -49,6 +49,17 @@ class Selectuser extends _Base
                 BlockManager::update_block($blockId, $userId, $page_id, $repeater_info);
             }
         }
+    }
+
+    public static function search_text($block_content, $version = 0)
+    {
+        if ($block_content) {
+            $userAliases = User::userAliases();
+            if (!empty($userAliases[$block_content])) {
+                return $userAliases[$block_content];
+            }
+        }
+        return null;
     }
 
 }

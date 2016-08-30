@@ -9,6 +9,10 @@
         <td>{!! $user->email !!}</td>
     </tr>
     <tr>
+        <td>Alias/Name</td>
+        <td>{!! $user->name?:'Not Set' !!}</td>
+    </tr>
+    <tr>
         <td>Password</td>
         <td>**********</td>
     </tr>

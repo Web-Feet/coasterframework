@@ -20,6 +20,7 @@ class User extends Eloquent implements AuthenticatableContract, AuthorizableCont
 
     protected $table = 'users';
     protected $hidden = ['password', 'remember_token'];
+    protected static $_aliases;
 
     public function getAuthIdentifier()
     {
@@ -107,6 +108,17 @@ class User extends Eloquent implements AuthenticatableContract, AuthorizableCont
     {
         $this->page_states = serialize($pageStates);
         $this->save();
+    }
+
+    public static function userAliases()
+    {
+        if (!isset(self::$_aliases)) {
+            self::$_aliases = [];
+            foreach (User::all() as $user) {
+                self::$_aliases[$user->id] = $user->name ?: $user->email;
+            }
+        }
+        return self::$_aliases;
     }
 
     public function delete()

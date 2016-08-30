@@ -37,6 +37,11 @@ class UsersController extends Controller
                     AdminLog::new_log('User \'' . $user->email . '\' updated, password changed');
                     $this->layoutData['content'] = View::make('coaster::pages.account.password', $data);
                     break;
+                case 'name':
+                    $user->name = Request::input('name');
+                    $user->save();
+                    return  redirect()->route('coaster.admin.users.edit', ['userId' => $userId]);
+                    break;
                 case 'role':
                     $user_role = UserRole::find(Request::input('role'));
                     if (!empty($user_role) && $user_role->admin <= $authUser->role->admin) {
@@ -83,6 +88,13 @@ class UsersController extends Controller
                     $data['level'] = 'admin';
                     $data['form'] = View::make('coaster::partials.users.forms.password', array('current_password' => ($authUser->id == $userId)));
                     $this->layoutData['content'] = View::make('coaster::pages.account.password', $data);
+                    break;
+                case 'name':
+                    $data = [];
+                    $data['user'] = $user;
+                    $data['level'] = 'admin';
+                    $data['form'] = View::make('coaster::partials.users.forms.name', array('user' => $user));
+                    $this->layoutData['content'] = View::make('coaster::pages.account.name', $data);
                     break;
                 case 'role':
                     $all_roles = UserRole::where('admin', '<=', $authUser->role->admin)->get();
