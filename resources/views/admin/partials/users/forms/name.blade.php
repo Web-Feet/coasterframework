@@ -6,6 +6,6 @@
     <span class="help-block">{!! FormMessage::getErrorMessage('name') !!}</span>
 </div>
 
-{!! Form::submit('Update Details', ['class' => 'btn btn-primary']) !!}
+{!! Form::submit('Update', ['class' => 'btn btn-primary']) !!}
 
 {!! Form::close() !!}
