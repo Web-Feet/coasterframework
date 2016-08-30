@@ -112,7 +112,7 @@ class WpApi
 
         // Page Lang
         $groupPageLang = new PageLang;
-        $groupPageLang->page_id = $page->id;
+        $groupPageLang->page_id = $groupPage->id;
         $groupPageLang->version = 1;
         $groupPageLang->language_id = Language::current();
         $groupPageLang->name = $this->blog_name;
