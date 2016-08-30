@@ -54,8 +54,8 @@ Route::group(['prefix' => $adminUrl, 'middleware' => ['web', 'coaster.admin'], '
     Route::post('pages/version-rename/{pageId}', ['uses' => 'PagesController@postVersionRename', 'as' => $routeNamePrefix . 'pages.version-rename']);
     Route::post('pages/version-publish/{pageId}', ['uses' => 'PagesController@postVersionPublish', 'as' => $routeNamePrefix . 'pages.version-publish']);
     Route::post('pages/requests/{pageId}', ['uses' => 'PagesController@postRequests', 'as' => $routeNamePrefix . 'pages.requests']);
-    Route::post('pages/request-publish/{pageId}', ['uses' => 'PagesController@postRequestPublish', 'as' => $routeNamePrefix . 'pages.requests-publish']);
-    Route::post('pages/request-publish-action/{pageId}', ['uses' => 'PagesController@postRequestPublishAction', 'as' => $routeNamePrefix . 'pages.requests-publish-action']);
+    Route::post('pages/request-publish/{pageId}', ['uses' => 'PagesController@postRequestPublish', 'as' => $routeNamePrefix . 'pages.request-publish']);
+    Route::post('pages/request-publish-action/{pageId}', ['uses' => 'PagesController@postRequestPublishAction', 'as' => $routeNamePrefix . 'pages.request-publish-action']);
     Route::get('pages/tinymce-page-list', ['uses' => 'PagesController@getTinymcePageList', 'as' => $routeNamePrefix . 'pages.tinymce-page-list']);
 
     Route::get('groups/pages/{groupId}', ['uses' => 'GroupsController@getPages', 'as' => $routeNamePrefix . 'groups.pages']);
