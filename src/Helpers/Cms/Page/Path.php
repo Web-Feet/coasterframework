@@ -113,7 +113,10 @@ class Path
                             return 1;
                         }
                         if ($a['priority'] == $b['priority']) {
-                            return 0;
+                            if ($a['url'] == $b['url']) {
+                                return 0;
+                            }
+                            return ($a['url'] < $b['url']) ? -1 : 1;
                         }
                         return ($a['priority'] > $b['priority']) ? -1 : 1;
                     });

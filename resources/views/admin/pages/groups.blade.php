@@ -5,7 +5,7 @@
     <div class="col-sm-6 text-right">
         @if ($can_edit)
             <a href="{{ route('coaster.admin.groups.edit', ['groupId' => $group->id]) }}" class="btn btn-warning addButton">
-                <i class="fa fa-pencil"></i> &nbsp; Edit {!! $group->name !!}</a> &nbsp;
+                <i class="fa fa-pencil"></i> &nbsp; Edit Group Settings</a> &nbsp;
         @endif
         @if ($can_add)
             <a href="{{ route('coaster.admin.pages.add', ['pageId' => 0, 'groupId' => $group->id]) }}" class="btn btn-warning addButton">
