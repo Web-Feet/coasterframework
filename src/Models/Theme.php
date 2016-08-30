@@ -764,6 +764,7 @@ Class Theme extends Eloquent
             DB::table((new PageVersion)->getTable())->truncate();
             DB::table((new PageGroup)->getTable())->truncate();
             DB::table((new PageGroupAttribute)->getTable())->truncate();
+            DB::table((new PageGroupPage)->getTable())->truncate();
             DB::table((new Menu)->getTable())->truncate();
             DB::table((new MenuItem)->getTable())->truncate();
             DB::table((new PageBlockDefault)->getTable())->truncate();
