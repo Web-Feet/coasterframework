@@ -431,7 +431,7 @@ Class Theme extends Eloquent
         $groupIds = [];
         $groups = PageGroup::all();
         foreach($groups as $group) {
-            $groupIds[] = $group->id;
+            $groupIds[$group->id] = $group->id;
         }
         $pagesData = [];
         $pages = Page::all();
@@ -489,7 +489,7 @@ Class Theme extends Eloquent
                     $page->live?1:0,
                     $page->sitemap,
                     ($page->group_container && !empty($groupIds[$page->group_container]))?$page->group_container:'',
-                    ($page->group_container && !empty($groupIds[$page->group_container]))?$page->group_container_url_priority:'',
+                    ($page->group_container_url_priority && !empty($groupIds[$page->group_container]))?$page->group_container_url_priority:'',
                     $page->canonical_parent,
                     implode(',', $page->groupIds())
                 ]);
