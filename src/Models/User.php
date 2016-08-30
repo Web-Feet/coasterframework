@@ -110,6 +110,11 @@ class User extends Eloquent implements AuthenticatableContract, AuthorizableCont
         $this->save();
     }
 
+    public function getName()
+    {
+        return $this->name ?: $this->email;
+    }
+
     public static function userAliases()
     {
         if (!isset(self::$_aliases)) {
