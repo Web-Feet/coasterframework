@@ -802,11 +802,6 @@ class BlockUpdater
                 'footer' => ['foot'],
                 'header' => ['head']
             ];
-            if ($type == 'repeater')
-            {
-              $rKey = str_plural(str_replace('_', ' ', $block));
-              $findKeys[$rKey] = [$rKey];
-            }
 
             self::$_guessedCategoryIds = [];
             $first = true;
@@ -823,7 +818,15 @@ class BlockUpdater
                     }
                 }
             }
+        } else {
+            $findKeys = [];
+        }
 
+        if ($type == 'repeater') {
+            $findKeys[str_plural(str_replace('_', ' ', $block))] = [$block];
+        }
+
+        if (!empty($findKeys)) {
             $order = 0;
             foreach ($findKeys as $key => $matches) {
                 $order += 10;
@@ -838,10 +841,7 @@ class BlockUpdater
         }
 
         $categoryFound = self::$_guessedCategoryIds['main'];
-        if ($type == 'repeater')
-        {
-          $categoryFound = self::$_guessedCategoryIds[$rKey];
-        }
+
         $categoriesArr = [];
         $categoriesArr[self::$_guessedCategoryIds['seo']] = ['meta'];
         $categoriesArr[self::$_guessedCategoryIds['header']] = ['header_html', 'head', 'logo', 'phone'];
