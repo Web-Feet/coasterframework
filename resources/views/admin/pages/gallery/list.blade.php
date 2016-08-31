@@ -3,7 +3,7 @@
 <ul>
     @foreach ($galleries as $gallery)
         <li>
-            <a href='{!! URL::to(config('coaster::admin.url')) !!}/gallery/edit/{!! $page_id !!}/{!! $gallery->id !!}'>{!! $gallery->label !!}</a>
+            <a href='{{ route('coaster.admin.gallery.edit', ['pageId' => $page_id, 'blockId' => $gallery->id]) }}'>{!! $gallery->label !!}</a>
         </li>
     @endforeach
 </ul>

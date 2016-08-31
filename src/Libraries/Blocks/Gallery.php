@@ -1,13 +1,12 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
 use Auth;
-use CoasterCms\Helpers\BlockManager;
-use CoasterCms\Helpers\GalleryUploadHandler;
+use CoasterCms\Helpers\Cms\Theme\BlockManager;
+use CoasterCms\Helpers\Admin\GalleryUploadHandler;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\Page;
-use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageLang;
 use Request;
 use URL;
@@ -16,12 +15,12 @@ use View;
 class Gallery extends _Base
 {
 
-    public static function display($block, $block_data, $options = array())
+    public static function display($block, $block_data, $options = [])
     {
         $images = array();
         $gallery_data = @unserialize($block_data);
         if (!empty($gallery_data)) {
-            uasort($gallery_data, array('\CoasterCms\Helpers\GalleryUploadHandler', 'order_items'));
+            uasort($gallery_data, array('\CoasterCms\Helpers\Admin\GAlleryUploadHandler', 'order_items'));
             foreach ($gallery_data as $image => $image_data) {
                 $data = new \stdClass;
                 $data->caption = $image_data->caption;
@@ -29,11 +28,14 @@ class Gallery extends _Base
                 array_push($images, $data);
             }
         }
-        $template = !empty($options['view']) ? $options['view'] : 'default';
-        if (empty($options['view']) && View::exists('themes.' . PageBuilder::$theme . '.blocks.gallery.' . $block->name)) {
-            return View::make('themes.' . PageBuilder::$theme . '.blocks.gallery.id_' . $block->id, array('images' => $images))->render();
-        } elseif (View::exists('themes.' . PageBuilder::$theme . '.blocks.gallery.' . $template)) {
-            return View::make('themes.' . PageBuilder::$theme . '.blocks.gallery.' . $template, array('images' => $images))->render();
+        $options['view'] = !empty($options['view']) ? $options['view'] : 'default';
+
+        $galleryViews = 'themes.' . PageBuilder::getData('theme') . '.blocks.gallery.';
+
+        if (empty($options['view']) && View::exists($galleryViews . $block->name)) {
+            return View::make($galleryViews . $block->name, ['images' => $images])->render();
+        } elseif (View::exists($galleryViews . $options['view'])) {
+            return View::make($galleryViews . $options['view'], ['images' => $images])->render();
         } else {
             return 'Gallery template not found';
         }
@@ -67,18 +69,14 @@ class Gallery extends _Base
         if (empty($block_data) || $block_data->type != 'gallery')
             return null;
         else {
-            if (!empty($page)) {
+            if ($page->exists) {
                 $page_lang_data = PageLang::preload($page_id);
                 $name = $page_lang_data->name;
-                if ($page->in_group > 0) {
-                    $parent_page = PageGroup::find($page->in_group);
-                    if (!empty($parent_page)) {
-                        $parent_lang_data = PageLang::preload($parent_page->default_parent);
-                        $name = $parent_lang_data->name . " / " . $name;
-                    }
+                if ($page->groups) {
+                    $name = $page->groupNames() . " / " . $name;
                 } elseif ($page->parent > 0) {
-                    $page = Page::preload($page->parent);
-                    $parent_lang_data = PageLang::preload($page->id);
+                    $parentPage = Page::preload($page->parent);
+                    $parent_lang_data = PageLang::preload($parentPage->id);
                     $name = $parent_lang_data->name . " / " . $name;
                 }
                 $name .= " - " . $block_data->label;

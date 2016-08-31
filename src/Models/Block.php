@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Models;
 
-use CoasterCms\Helpers\BlockManager;
+use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use Eloquent;
 
 class Block extends Eloquent
@@ -33,10 +33,7 @@ class Block extends Eloquent
                 self::$preloaded_blocks[$block->name] = $block;
             }
         }
-        if (!empty(self::$preloaded_blocks[$block_name]))
-            return self::$preloaded_blocks[$block_name];
-        else
-            return null;
+        return !empty(self::$preloaded_blocks[$block_name]) ? self::$preloaded_blocks[$block_name] : new self;
     }
 
     public static function get_repeater_blocks()
@@ -79,6 +76,15 @@ class Block extends Eloquent
         $array = [];
         foreach (self::all() as $block) {
             $array[$block->name] = $block->name;
+        }
+        return $array;
+    }
+
+    public static function idToLabelArray()
+    {
+        $array = [];
+        foreach (self::all() as $block) {
+            $array[$block->id] = $block->label;
         }
         return $array;
     }

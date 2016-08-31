@@ -1,5 +1,7 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
+use CoasterCms\Helpers\Cms\StringHelper;
+
 class Richtext extends _Base
 {
 
@@ -7,12 +9,7 @@ class Richtext extends _Base
     {
         if (!empty($options['length'])) {
             $block_data = strip_tags($block_data);
-            if (strlen($block_data) < $options['length']) {
-                return $block_data;
-            } else {
-                $str = str_random(15);
-                return substr($block_data, 0, strpos(wordwrap($block_data, (int)$options['length'], "\\$str\\"), "\\$str\\")) . ' ...';
-            }
+            return StringHelper::cutString($block_data, $options['length']);
         }
         return $block_data;
     }

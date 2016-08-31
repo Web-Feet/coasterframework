@@ -9,7 +9,7 @@ function version_pagination(e) {
 
 function update_version_table() {
     $.ajax({
-        url: get_admin_url()+'pages/versions/'+page_id,
+        url: route('coaster.admin.pages.versions', {pageId: page_id}),
         data: {
             page: version_table['page']
         },
@@ -34,7 +34,7 @@ function version_rename_modal() {
 
 function version_rename() {
     $.ajax({
-        url: get_admin_url() + 'pages/version-rename/'+page_id,
+        url: route('coaster.admin.pages.version-rename', {pageId: page_id}),
         type: 'POST',
         data: {
             version_name: $('#version_name').val(),
@@ -51,7 +51,7 @@ function version_rename() {
 function version_publish() {
     version_id = $(this).data('version');
     $.ajax({
-        url: get_admin_url()+'pages/version-publish/'+page_id,
+        url: route('coaster.admin.pages.version-publish', {pageId: page_id}),
         type: 'POST',
         data: {
             version_id: version_id
@@ -76,7 +76,7 @@ function version_publish_schedule() {
     var schedule_to = $('#version_schedule_to').val();
     var schedule_repeat = $('#version_schedule_repeat').val();
     $.ajax({
-        url: get_admin_url() + 'pages/version-schedule/' + page_id,
+        url: route('coaster.admin.pages.version-schedule', {pageId: page_id}),
         type: 'POST',
         data: {
             version_id: version_id,
@@ -101,7 +101,7 @@ function version_publish_schedule() {
 function version_schedule_remove() {
     var schedule_version_id = $(this).data('scheduled-version-id');
     $.ajax({
-        url: get_admin_url() + 'pages/version-schedule/' + page_id,
+        url: route('coaster.admin.pages.version-schedule', {pageId: page_id}),
         type: 'POST',
         data: {
             remove: schedule_version_id
@@ -141,7 +141,7 @@ function request_publish() {
         $('#editForm').submit();
     } else {
         $.ajax({
-            url: get_admin_url() + 'pages/request-publish/' + page_id,
+            url: route('coaster.admin.pages.request-publish', {pageId: page_id}),
             type: 'POST',
             data: {
                 version_id: version_id,
@@ -167,7 +167,7 @@ function request_publish_action() {
     var request = $(this);
     var action_cell = $(this).parent();
     $.ajax({
-        url: get_admin_url()+'pages/request-publish-action/'+request_page_id,
+        url: route('coaster.admin.pages.request-publish-action', {pageId: request_page_id}),
         type: 'POST',
         data: {
             request: request_id,
@@ -201,7 +201,7 @@ function update_request_table(page) {
         data['page'] = page;
     }
     $.ajax({
-        url: get_admin_url()+'pages/requests/'+page_id,
+        url: route('coaster.admin.pages.requests', {pageId: page_id}),
         data: data,
         type: 'POST',
         success: function(r) {

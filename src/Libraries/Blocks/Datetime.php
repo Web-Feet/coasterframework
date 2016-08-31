@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
 use Carbon\Carbon;
+use CoasterCms\Models\PageBlock;
 
 class Datetime extends _Base
 {
@@ -35,7 +36,7 @@ class Datetime extends _Base
                 return $date->format("Y-m-d H:i:s");
             }
         }
-        return null;
+        return '';
     }
 
     public static function mysqlToJQuery($mysql_dt)
@@ -44,6 +45,32 @@ class Datetime extends _Base
             return (new Carbon($mysql_dt))->format(config('coaster::date.format.jq_php'));
         }
         return '';
+    }
+
+    public static function filter($block_id, $search, $type)
+    {
+        $live_blocks = PageBlock::page_blocks_on_live_page_versions($block_id);
+        $page_ids = array();
+        if (!empty($live_blocks)) {
+            $search = is_array($search) ? $search : [$search];
+            $search = array_map(function($searchValue) {return is_a($searchValue, Carbon::class) ? $searchValue : new Carbon($searchValue);}, $search);
+            foreach ($live_blocks as $live_block) {
+                $current = (new Carbon($live_block->content));
+                switch ($type) {
+                    case '=':
+                        if ($current->eq($search[0])) {
+                            $page_ids[] = $live_block->page_id;
+                        }
+                        break;
+                    case 'in':
+                        if ($current->gte($search[0]) && $current->lt($search[1])) {
+                            $page_ids[] = $live_block->page_id;
+                        }
+                        break;
+                }
+            }
+        }
+        return $page_ids;
     }
 
 }

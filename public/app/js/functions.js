@@ -31,10 +31,6 @@ function get_url() {
     return pathArray[0] + '//' + pathArray[2] + '/';
 }
 
-function get_admin_url() {
-    return adminUrl;
-}
-
 function get_public_url() {
     return adminPublicUrl;
 }
@@ -142,7 +138,7 @@ function undo_log(log_id) {
         last_delete = {'item':'log',name:'ID '+log_id};
     }
     $.ajax({
-        url: get_admin_url()+'backups/undo/',
+        url: route('coaster.admin.backups.undo'),
         data: {'log_ids': log_ids},
         type: 'POST',
         success: function (r) {
@@ -160,4 +156,19 @@ function undo_log(log_id) {
 
 function restore_error() {
     cms_alert('danger', 'Error restoring ' + last_delete['item'].capitalize(), 'The ' + last_delete['item'] + ' was not restored (try refreshing the page, you may no longer be logged in)');
+}
+
+function headerNote() {
+    var notediv = null;
+    $('.header_note').hover(function (e) {
+        var thEl = $(this);
+        var theEloffset = thEl.offset();
+        var x = theEloffset.left + thEl.width() + 10;
+        var y = theEloffset.top;
+        notediv = $('<div class="well well-sm fade in">' + $(this).data('note') + '</div>');
+        notediv.css({position: 'absolute', top: y, left: x, 'max-width': '25%'});
+        notediv.appendTo($('body'));
+    }, function (e) {
+        notediv.remove();
+    });
 }

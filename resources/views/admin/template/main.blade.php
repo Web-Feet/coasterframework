@@ -27,25 +27,21 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="logo" href="#"><img src="{{ URL::to(config('coaster::admin.public')) }}/app/img/logo.png" alt="Coaster CMS"/></a>
+            <a class="logo" href="{{ route('coaster.admin') }}">
+                <img src="{{ URL::to(config('coaster::admin.public')) }}/app/img/logo.png" alt="Coaster CMS"/>
+            </a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
-            <?php $system_menu_icons += ['Logout' => 'fa fa-sign-out', 'Login' => 'fa fa-lock', 'Help' => 'fa fa-life-ring', 'My Account' => 'fa fa-lock', 'System Settings' => 'fa fa-cog', 'Open Frontend' => 'fa fa-tv'] ?>
-            @if (!empty($system_menu))
-                <ul class="nav navbar-nav navbar-right">
-                    @foreach($system_menu as $system_item_name => $system_item_link)
-                        <li><a href="{!! $system_item_link !!}"><i
-                                        class="{{ $system_menu_icons[$system_item_name] }}"></i> {{ $system_item_name }}
-                            </a></li>
-                    @endforeach
-                </ul>
-            @endif
-
+            <ul class="nav navbar-nav navbar-right">
+                @if (isset($system_menu))
+                    {!! $system_menu !!}
+                @endif
+            </ul>
         </div><!--/.nav-collapse -->
     </div><!--/.container-fluid -->
 </nav>
 
-@if (isset($menu))
+@if (!empty($sections_menu))
     <nav class="navbar navbar-inverse subnav navbar-fixedg-top">
         <div class="container">
             <div class="navbar-header">
@@ -59,36 +55,39 @@
             </div>
             <div id="navbar2" class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
-                    {!! $menu !!}
+                    {!! $sections_menu !!}
                 </ul>
             </div><!--/.nav-collapse -->
         </div><!--/.container-fluid -->
     </nav>
 @endif
 
-<div class="container{{ !isset($menu)?' loginpanel':'' }}" id="content-wrap">
+<div class="container{{ empty($sections_menu)?' loginpanel':'' }}" id="content-wrap">
     <div class="row">
-        <div class="{{ isset($menu)?'col-sm-12':'col-sm-4 col-sm-offset-4' }}">
+        <div class="{{ empty($sections_menu)?'col-sm-6 col-sm-offset-3':'col-sm-12' }}">
             <div class="alert alert-success" id="cms_notification" style="display: none;">
                 <button type="button" class="close" data-dismiss="alert">&times;</button>
                 <h4 class="note_header"></h4>
                 <p class="note_content"></p>
             </div>
             {!! $content !!}
-            <br/><br/>
+            <br /><br />
         </div>
     </div>
 </div>
 
 {!! $modals !!}
 
+<script src="{{ URL::to(config('coaster::admin.public')).'/app/js/router.js' }}"></script>
 <script type="text/javascript">
-    var adminUrl = '{{ URL::to(config('coaster::admin.url')).'/' }}';
-    var adminPublicUrl = '{{ URL::to(config('coaster::admin.public')).'/' }}';
     var dateFormat = '{{ config('coaster::date.format.jq_date') }}';
     var timeFormat = '{{ config('coaster::date.format.jq_time') }}';
     var ytBrowserKey = '{{ config('coaster::key.yt_browser') }}';
+    var adminPublicUrl = '{{ URL::to(config('coaster::admin.public')).'/' }}';
+    router.addRoutes({!! $coaster_routes !!});
+    router.setBase('{{ URL::to('/') }}');
 </script>
+
 {!! AssetBuilder::scripts() !!}
 @yield('scripts')
 @if (!empty($alert))

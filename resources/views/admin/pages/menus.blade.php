@@ -16,7 +16,7 @@
             $('#editMIModal option:lt(' + (max_sublevel + 1) + ')').show();
             selected_item = $(this).closest('li').attr('id');
             $.ajax({
-                url: '{!! URL::Current() !!}/get-levels',
+                url: route('coaster.admin.menus.get-levels'),
                 type: 'POST',
                 data: {id: selected_item},
                 success: function (r) {
@@ -34,7 +34,7 @@
         $('#editMIModal .change').click(function () {
             var sl = $('#sublevels').val();
             $.ajax({
-                url: '{!! URL::Current() !!}/save-levels',
+                url: route('coaster.admin.menus.save-levels'),
                 type: 'POST',
                 data: {id: selected_item, sub_level: sl},
                 success: function (r) {
@@ -51,7 +51,7 @@
         $('#renameMIModal .change').click(function () {
             var custom_name = $('#custom_name').val();
             $.ajax({
-                url: '{!! URL::Current() !!}/rename',
+                url: route('coaster.admin.menus.rename'),
                 type: 'POST',
                 data: {id: selected_item, custom_name: custom_name},
                 success: function (r) {
@@ -71,7 +71,7 @@
 
         $('#addMIModal .add').click(function () {
             $.ajax({
-                url: '{!! URL::Current() !!}/add',
+                url: route('coaster.admin.menus.add'),
                 type: 'POST',
                 data: {id: $('#menu_item').val(), menu: selected_menu},
                 success: function (r) {
@@ -118,7 +118,7 @@
             initialize_sort('sortable', sort_items_s, sort_items_f);
             watch_for_delete('.delete', 'menu item', function (el) {
                 return el.closest('li').attr('id');
-            });
+            }, route('coaster.admin.menus.delete', {itemId: ''}));
         });
 
     </script>

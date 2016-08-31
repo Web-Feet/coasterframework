@@ -7,6 +7,7 @@ class Template extends Eloquent
 {
 
     protected $table = 'templates';
+    protected static $_blocksOfType = [];
 
     public static function name($template_id)
     {
@@ -68,6 +69,18 @@ class Template extends Eloquent
             }
         }
         return $numb_type;
+    }
+
+    public static function preload_blocks_of_type($type, $templateId = null)
+    {
+        if (!isset(self::$_blocksOfType[$type])) {
+            self::$_blocksOfType[$type] = self::blocks_of_type($type);
+        }
+        if ($templateId) {
+            return !empty(self::$_blocksOfType[$type][$templateId])?self::$_blocksOfType[$type][$templateId]:0;
+        } else {
+            return self::$_blocksOfType[$type];
+        }
     }
 
 }

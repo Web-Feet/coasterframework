@@ -1,31 +1,25 @@
 <?php
+/**
+ * Load laravel framework with http kernel, decrypted cookies and sessions
+ */
 
-// load laravel framework (for filemanager)
 require __DIR__ . '/../../../../bootstrap/autoload.php';
-$laravel_app = require __DIR__ . '/../../../../bootstrap/app.php';
+$app = require __DIR__ . '/../../../../bootstrap/app.php';
+$app->instance('request', Illuminate\Http\Request::capture());
+$app->make(Illuminate\Contracts\Http\Kernel::class)->bootstrap();
 
-$kernel = $laravel_app->make(Illuminate\Contracts\Http\Kernel::class);
-
-$response = $kernel->handle(
-    $request = Illuminate\Http\Request::capture()
-);
-
-// start sessions for auth to work
-
-$session = $laravel_app['session']->driver();
-$encrypter = $laravel_app['encrypter'];
-$request_cookies = $laravel_app['request']->cookies;
-
-foreach ($request_cookies as $key => $cookie) {
+/** @var \Symfony\Component\HttpFoundation\ParameterBag $requestCookies */
+$requestCookies = $app->make('request')->cookies;
+foreach ($requestCookies->all() as $key => $cookie) {
     try {
-        $decrypted_cookie = is_array($cookie) ? array_map(array($encrypter, 'decrypt'), $cookie) : $encrypter->decrypt($cookie);
-        $request_cookies->set($key, $decrypted_cookie);
-        if ($key == $laravel_app['config']['session.cookie']) {
-            $session->setId($decrypted_cookie);
-        }
+        $cookie = $app->make('encrypter')->decrypt($cookie);
     } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
-        $request_cookies->set($key, null);
+        $cookie = null;
     }
+    $requestCookies->set($key, $cookie);
 }
 
+/** @var Illuminate\Session\SessionInterface $session */
+$session = $app->make('session')->driver();
+$session->setId($requestCookies->get($app->make('config')->get('session.cookie')));
 $session->start();

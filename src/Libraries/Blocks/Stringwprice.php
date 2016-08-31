@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Helpers\BlockManager;
+use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use Request;
 
 class Stringwprice extends _Base

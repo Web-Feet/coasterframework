@@ -2,7 +2,7 @@
 
 @if (!empty($template))
 
-    {!! Form::open(['url' => Request::fullUrl()]) !!}
+    {!! Form::open() !!}
 
     <div class="table-responsive">
         <table id="rules" class="table table-bordered table-striped">
@@ -79,7 +79,7 @@
 
         @foreach($templates as $template)
 
-            <li><a href="{{ URL::to(config('coaster::admin.url').'/themes/forms/'.$template) }}">{{ $template }}</a></li>
+            <li><a href="{{ route('coaster.admin.themes.forms', ['template' => $template]) }}">{{ $template }}</a></li>
 
         @endforeach
 

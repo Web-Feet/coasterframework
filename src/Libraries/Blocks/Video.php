@@ -18,13 +18,14 @@ class Video extends _Base
                 if (!empty($cached_vid_info)) {
                     self::$_db_cache[$cached_vid_info->videoId] = unserialize($cached_vid_info->videoInfo);
                 } else {
-                    return 'Video data not found (try saving the page content again in the backend)';
+                    return 'Video data not found (try saving the page content again in the admin)';
                 }
             }
             $video = self::$_db_cache[$block_data];
             $template = !empty($options['view']) ? $options['view'] : 'default';
-            if (View::exists('themes.' . PageBuilder::$theme . '.blocks.videos.' . $template)) {
-                return View::make('themes.' . PageBuilder::$theme . '.blocks.videos.' . $template, array('video' => $video))->render();
+            $videoViews = 'themes.' . PageBuilder::getData('theme') . '.blocks.videos.';
+            if (View::exists($videoViews . $template)) {
+                return View::make($videoViews . $template, array('video' => $video))->render();
             } else {
                 return 'Video template not found';
             }

@@ -6,7 +6,7 @@
     </div>
     <div class="col-sm-6 text-right">
         @if ($add_page)
-            <a href="{{ Request::url().'/add/' }}" class="btn btn-warning addButton" data-page="0"><i
+            <a href="{{ route('coaster.admin.pages.add') }}" class="btn btn-warning addButton" data-page="0"><i
                         class="fa fa-plus"></i> &nbsp; Add Page</a>
         @endif
     </div>
@@ -30,6 +30,8 @@
 
         var expanded = {!! json_encode($page_states) !!};
 
+        var rootPages = {!! json_encode($rootPageIds) !!};
+
         $(document).ready(function () {
 
             @if ($max)
@@ -50,11 +52,15 @@
                 tabSize: 25,
                 tolerance: 'pointer',
                 toleranceElement: '> div',
-                maxLevels: 5,
+                maxLevels: 10,
 
                 isTree: true,
                 expandOnHover: 700,
-                startCollapsed: true
+                startCollapsed: true,
+
+                isAllowed: function canMovePage(placeholder, placeholderParent, currentItem) {
+                    return !(placeholderParent && (rootPages.indexOf(placeholderParent.attr('id')) != -1 || rootPages.indexOf(currentItem.attr('id')) != -1));
+                }
             });
 
             $('.disclose').on('click', function (e) {
@@ -63,7 +69,7 @@
                 li.toggleClass('mjs-nestedSortable-collapsed').toggleClass('mjs-nestedSortable-expanded');
                 if (!e.isTrigger) {
                     $.ajax({
-                        url: get_admin_url() + 'account/page-state',
+                        url:  route('coaster.admin.account.page-state'),
                         type: 'POST',
                         data: {
                             page_id: li.attr('id').replace('list_', ''),
@@ -74,8 +80,7 @@
             });
 
             $.each(expanded, function(index, value) {
-                var li = $('#list_'+value);
-                $(li.find('> div > .disclose').get(0)).trigger('click');
+                $('#list_'+value+ '.mjs-nestedSortable-branch > .ui-sortable-handle > .disclose').trigger('click');
             });
 
             initialize_sort('nestedSortable');

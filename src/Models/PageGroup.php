@@ -1,60 +1,299 @@
 <?php namespace CoasterCms\Models;
 
-use CoasterCms\Helpers\BlockManager;
+use CoasterCms\Helpers\Cms\Theme\BlockManager;
+use Auth;
 use Eloquent;
+use Illuminate\Database\Eloquent\Collection;
 
 class PageGroup extends Eloquent
 {
+    /**
+     * @var string
+     */
     protected $table = 'page_group';
 
-    private static $group_pages = array();
+    /**
+     * @var array
+     */
+    protected static $groupPages = [];
 
-    public static function page_ids($group_id, $check_live = false, $sort = false)
+    /**
+     * @var array
+     */
+    protected static $groupPagesFiltered = [];
+
+    /**
+     * @return mixed
+     */
+    public function groupAttributes()
     {
-        if (empty(self::$group_pages[$group_id][$check_live]) || (!empty(self::$group_pages[$group_id][$check_live]) && (!self::$group_pages[$group_id][$check_live]->sort && $sort))) {
-            $pages = Page::where('in_group', '=', $group_id)->get();
-            $page_ids = array();
-            if (!empty($pages)) {
-                foreach ($pages as $page) {
-                    if (!$check_live || ($check_live && $page->is_live())) {
-                        $page_ids[] = $page->id;
+        return $this->hasMany('CoasterCms\Models\PageGroupAttribute', 'group_id')->orderBy('item_block_order_priority', 'desc');
+    }
+
+    /**
+     * @return mixed
+     */
+    public function blockFilters()
+    {
+        return $this->groupAttributes()->where('filter_by_block_id', '>', 0);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function pages()
+    {
+        return $this->belongsToMany('CoasterCms\Models\Page', 'page_group_pages', 'group_id', 'page_id');
+    }
+
+    /**
+     * @return bool
+     */
+    public function canAddItems()
+    {
+        $containers = $this->containerPages();
+        $canAddItems = false;
+        foreach ($containers as $container) {
+            if ($canAddItems = Auth::action('pages.add', ['page_id' => $container->id])) {
+                break;
+            }
+        }
+        return $canAddItems;
+    }
+
+    /**
+     * @return bool
+     */
+    public function canAddContainers()
+    {
+        $containers = $this->containerPages();
+        $canAddContainers = $containers->isEmpty();
+        foreach ($containers as $container) {
+            if ($canAddContainers = Auth::action('pages.edit', ['page_id' => $container->id])) {
+                break;
+            }
+        }
+        return $canAddContainers;
+    }
+
+    /**
+     * @return array
+     */
+    public function containerPageIds()
+    {
+        $containerIds = [];
+        $containers = $this->containerPages();
+        foreach ($containers as $container) {
+            $containerIds[] = $container->id;
+        }
+        return $containerIds;
+    }
+
+    /**
+     * @param int $pageId
+     * @return array
+     */
+    public function containerPageIdsFiltered($pageId)
+    {
+        $containerPageIds = [];
+        foreach($this->containerPageIds() as $containerPageId) {
+            if (in_array($pageId, $this->itemPageIdsFiltered($containerPageId))) {
+                $containerPageIds[] = $containerPageId;
+            }
+        }
+        return $containerPageIds;
+    }
+
+    /**
+     * @return Collection
+     */
+    public function containerPages()
+    {
+        return Page::where('group_container', '=', $this->id)->get();
+    }
+
+    /**
+     * @param int $pageId
+     * @return Collection
+     */
+    public function containerPagesFiltered($pageId)
+    {
+        $pageIds = $this->containerPageIdsFiltered($pageId);
+        return $pageIds ? Page::whereIn('id', $pageIds)->get() : new Collection;
+    }
+
+    /**
+     * Get all pageIds for this group, can filter by only live pages
+     * @param bool $checkLive
+     * @param bool $sort
+     * @return array
+     */
+    public function itemPageIds($checkLive = false, $sort = false)
+    {
+        $filterType = $checkLive ? 'all' : 'live';
+        $sortedSuffix = '-sorted';
+        $sorted = $sort ? $sortedSuffix : '';
+
+        if (empty(self::$groupPages[$this->id])) {
+            $groupPages = $this->pages;
+            if (!$groupPages->isEmpty()) {
+                foreach ($groupPages as $groupPage) {
+                    /** @var Page $groupPage */
+                    self::$groupPages[$this->id]['all'][] = $groupPage->id;
+                    if ($groupPage->is_live()) {
+                        self::$groupPages[$this->id]['live'][] = $groupPage->id;
                     }
                 }
-                if (!empty($page_ids) && $sort) {
-                    $group = self::find($group_id);
-                    if ($group->order_by_attribute_id > 0) {
-                        $sort_by_attribute = PageGroupAttribute::find($group->order_by_attribute_id);
-                        // sort via live version attributes
-                        $sorted_pages = BlockManager::get_data_for_version(
+            }
+        }
+
+        if ($sort && !array_key_exists($filterType.$sorted, self::$groupPages[$this->id])) {
+            if (!empty(self::$groupPages[$this->id][$filterType])) {
+                if ($sortByBlockIds = $this->orderAttributeBlocksIds()) {
+
+                    $orderPriority = 1;
+                    $sortedPageIds = [];
+                    foreach (self::$groupPages[$this->id][$filterType] as $pageId) {
+                        $sortedPageIds[$pageId] = [];
+                    }
+
+                    foreach ($sortByBlockIds as $sortByBlockId => $orderDir) {
+                        $sortedPages = BlockManager::get_data_for_version(
                             new PageBlock,
                             -1,
                             array('block_id', 'page_id'),
-                            array($sort_by_attribute->item_block_id, $page_ids),
-                            'content ' . $group->order_dir
+                            array($sortByBlockId, self::$groupPages[$this->id][$filterType]),
+                            'content ' . $orderDir
                         );
-                        $sorted_page_ids = array();
-                        foreach ($sorted_pages as $sorted_page) {
-                            $sorted_page_ids[] = $sorted_page->page_id;
+                        $sortOrder = 0;
+                        foreach ($sortedPages as $index => $sortedPage) {
+                            if (empty($sortedPages[$index-1]) || $sortedPages[$index-1]->content != $sortedPage->content) {
+                                $sortOrder++;
+                            }
+                            $sortedPageIds[$sortedPage->page_id][$orderPriority] = $sortOrder;
                         }
                         // if sort by block is empty for any page in the group, then add at top
-                        foreach ($pages as $page) {
-                            if (!in_array($page->id, $sorted_page_ids)) {
-                                array_unshift($sorted_page_ids, $page->id);
+                        foreach ($sortedPageIds as $pageId => $orderValues) {
+                            if (empty($sortedPageIds[$pageId][$orderPriority])) {
+                                $sortedPageIds[$pageId][$orderPriority] = 0;
                             }
                         }
-                        $page_ids = $sorted_page_ids;
+                        $orderPriority++;
                     }
+                    uasort($sortedPageIds, function($a, $b) {
+                        foreach ($a as $orderPriority => $orderValue) {
+                            if ($orderValue < $b[$orderPriority]) {
+                                return -1;
+                            } elseif ($orderValue > $b[$orderPriority]) {
+                                return 1;
+                            }
+                        }
+                        return 0;
+                    });
+
+                    self::$groupPages[$this->id][$filterType.$sorted] = array_keys($sortedPageIds);
+
+                } else {
+                    // if no sort by attribute
+                    self::$groupPages[$this->id][$filterType.$sorted] = self::$groupPages[$this->id][$filterType];
+                }
+            } else {
+                // if nothing to sort
+                self::$groupPages[$this->id][$filterType.$sorted] = [];
+            }
+        }
+
+        return self::$groupPages[$this->id][$filterType.$sorted];
+    }
+
+    /**
+     * Filter by container block content (filtered by group container content - pageId)
+     * @param int $pageId
+     * @param bool $checkLive
+     * @param bool $sort
+     * @return array
+     */
+    public function itemPageIdsFiltered($pageId, $checkLive = false, $sort = false)
+    {
+        $filterType = $checkLive ? 'all' : 'live';
+        $sortedSuffix = '-sorted';
+        $sorted = $sort ? $sortedSuffix : '';
+
+        self::$groupPagesFiltered[$this->id] = empty(self::$groupPagesFiltered[$this->id]) ? [] : self::$groupPagesFiltered[$this->id];
+
+        if (!array_key_exists($filterType.$sorted, self::$groupPagesFiltered[$this->id])) {
+
+            if ($pageIds = $this->itemPageIds($checkLive, $sort)) {
+
+                $pageLang = PageLang::preload($pageId);
+
+                foreach ($this->blockFilters as $blockFilter) {
+
+                    // get data to filter by
+                    $filterByBlock = Block::preload($blockFilter->filter_by_block_id);
+                    $filterBy = PageBlock::preload_block($pageId, $blockFilter->filter_by_block_id, $pageLang->live_version);
+                    $filterByContent = !empty($filterBy[Language::current()]) ? $filterBy[Language::current()]->content : null;
+                    if ($filterByBlock->type == 'selectmultiple') {
+                        $filterByContentArr = unserialize($filterByContent);
+                        $filterByContentArr = is_array($filterByContentArr) ? $filterByContentArr : [];
+                    } else {
+                        $filterByContentArr = [$filterByContent];
+                    }
+                    $filterByContentArr = array_filter($filterByContentArr, function ($filterByContentEl) {
+                        return !is_null($filterByContentEl);
+                    });
+
+                    if (!empty($filterByContentArr)) {
+                        // get block data for block to filter on
+                        $itemBlock = Block::preload($blockFilter->item_block_id);
+                        $blockType = $itemBlock->get_class();
+
+                        // run filter with filterBy content
+                        $blockContentOnPageIds = [];
+                        foreach ($filterByContentArr as $filterByContentEl) {
+                            $newPageIds = $blockType::filter($itemBlock->id, $filterByContentEl, '=');
+                            $blockContentOnPageIds = array_unique(array_merge($blockContentOnPageIds, $newPageIds));
+                        }
+                        $pageIds = array_intersect($pageIds, $blockContentOnPageIds);
+                    }
+
+                }
+
+            }
+
+            self::$groupPagesFiltered[$this->id][$filterType.$sorted] = $pageIds;
+        }
+
+        return self::$groupPagesFiltered[$this->id][$filterType.$sorted];
+    }
+
+    /**
+     * @param int $pageId
+     * @param bool $checkLive
+     * @param bool $sort
+     * @return Collection
+     */
+    public function itemPageFiltered($pageId, $checkLive = false, $sort = false)
+    {
+        $pages = new Collection;
+        if ($pageIds = $this->itemPageIdsFiltered($pageId, $checkLive, $sort)) {
+            foreach ($this->pages as $page) {
+                if (in_array($page->id, $pageIds)) {
+                    $pages->add($page);
                 }
             }
-            $save = new \stdClass;
-            $save->sort = $sort;
-            $save->page_ids = $page_ids;
-            if (!isset(self::$group_pages[$group_id])) {
-                self::$group_pages[$group_id] = array();
-            }
-            self::$group_pages[$group_id][$check_live] = $save;
         }
-        return self::$group_pages[$group_id][$check_live]->page_ids;
+        return $pages;
+    }
+
+    public function orderAttributeBlocksIds() {
+        $blockIds = [];
+        foreach ($this->groupAttributes as $attribute) {
+            if ($attribute->item_block_order_priority) {
+                $blockIds[$attribute->item_block_id] = $attribute->item_block_order_dir == 'desc' ? 'desc' : 'asc';
+            }
+        }
+        return $blockIds;
     }
 
 }

@@ -1,9 +1,10 @@
 <?php namespace CoasterCms\Models;
 
-use CoasterCms\Helpers\BlockManager;
-use CoasterCms\Helpers\File;
-use CoasterCms\Helpers\Zip;
-use CoasterCms\Libraries\Builder\ThemeBuilder;
+use CoasterCms\Helpers\Cms\File\Csv;
+use CoasterCms\Helpers\Cms\Theme\BlockUpdater;
+use CoasterCms\Helpers\Cms\Theme\BlockManager;
+use CoasterCms\Helpers\Cms\File\Directory;
+use CoasterCms\Helpers\Cms\File\Zip;
 use DB;
 use Eloquent;
 use Request;
@@ -40,10 +41,14 @@ Class Theme extends Eloquent
             $includeTemplateModel = Template::find($includeTemplate);
             if (empty($includeTemplateModel)) {
                 $templates[$includeTemplate] = 'Non existent template';
-            } elseif (!empty($templateFile[$includeTemplateModel->template])) {
-                $templates[$includeTemplate] = $templates[$templateFile[$includeTemplateModel->template]].' (using closest match in current theme)';
             } else {
-                $templates[$includeTemplate] = (!empty($includeTemplateModel->label) ? $includeTemplateModel->label : $includeTemplateModel->template).' (not found in current theme - frontend won\'t load)';
+                $altTheme = Theme::find($includeTemplateModel->theme_id);
+                $altThemeName = $altTheme ? $altTheme->theme : 'Non Existent';
+                if (!empty($templateFile[$includeTemplateModel->template])) {
+                    $templates[$includeTemplate] = $templates[$templateFile[$includeTemplateModel->template]] . ' (warning - from \''.$altThemeName.'\' theme, frontend will use template from \''.$theme->theme.'\' theme)';
+                } else {
+                    $templates[$includeTemplate] = (!empty($includeTemplateModel->label) ? $includeTemplateModel->label : $includeTemplateModel->template) . ' (error - from \''.$altThemeName.'\' theme, choose other template from current theme)';
+                }
             }
         }
         asort($templates);
@@ -174,7 +179,7 @@ Class Theme extends Eloquent
         return $error;
     }
 
-    public static function unzip($themeZip)
+    public static function unzip($themeZip, $errorOnExisting = true)
     {
         $filePathInfo = pathinfo($themeZip);
         $uploadTo = base_path() . '/resources/views/themes/';
@@ -192,8 +197,8 @@ Class Theme extends Eloquent
                 if (!empty($extractItems)) {
                     $zip->extractTo($uploadTo, $extractItems);
                     if (($uploadTo . $filePathInfo['filename']) != $themeDir) {
-                        File::copyDirectory($uploadTo . $filePathInfo['filename'], $themeDir);
-                        File::removeDirectory($uploadTo . $filePathInfo['filename']);
+                        Directory::copy($uploadTo . $filePathInfo['filename'], $themeDir);
+                        Directory::remove($uploadTo . $filePathInfo['filename']);
                     }
                 } else {
                     $zip->extractTo($themeDir);
@@ -203,7 +208,7 @@ Class Theme extends Eloquent
             } else {
                 $error = 'Error uploading zip file, file may bigger than the server upload limit.';
             }
-        } else {
+        } elseif ($errorOnExisting) {
             $error = 'Theme with the same name already exists';
         }
         return $error;
@@ -212,51 +217,53 @@ Class Theme extends Eloquent
     public static function install($themeName, $options)
     {
         $themePath = base_path() . '/resources/views/themes/'.$themeName;
-        $theme = self::where('theme', '=', $themeName)->first();
-
-        $unpacked = is_dir($themePath.'/templates') && is_dir(public_path().'/themes/'.$themeName);
         $packed = is_dir($themePath.'/views') && is_dir($themePath.'/public');
 
-        if (empty($theme) && is_dir($themePath) && ($unpacked || $packed)) {
+        if (!empty($options['check'])) {
+            $pagesImport = ($packed)?$themePath.'/views/import/pages':$themePath.'/import/pages';
+            return ['error' => 0, 'response' => is_dir($pagesImport)];
+        }
 
-            if (!empty($options['check'])) {
-                $pagesImport = ($packed)?$themePath.'/views/import/pages':$themePath.'/import/pages';
-                if (is_dir($pagesImport)) {
-                    return 2;
+        if ($packed) {
+
+            // extract public folder, extract uploads folder, and move views to themes root
+            Directory::copy($themePath . '/public', public_path() . '/themes/' . $themeName);
+            Directory::remove($themePath . '/public');
+
+            if (is_dir($themePath . '/uploads')) {
+                $securePaths = [];
+                $secureUploadPaths = explode(',', config('coaster::site.secure_folders'));
+                foreach ($secureUploadPaths as $secureUploadPath) {
+                    $securePaths[] = '/uploads/' . trim($secureUploadPath, '/');
                 }
-                return 1;
-            }
 
-            if ($packed) {
-
-                // extract public folder, extract uploads folder, and move views to themes root
-                File::copyDirectory($themePath . '/public', public_path() . '/themes/' . $themeName);
-                File::removeDirectory($themePath . '/public');
-
-                if (is_dir($themePath . '/uploads')) {
-                    $securePaths = [];
-                    $secureUploadPaths = explode(',', config('coaster::site.secure_folders'));
-                    foreach ($secureUploadPaths as $secureUploadPath) {
-                        $securePaths[] = '/uploads/' . trim($secureUploadPath, '/');
-                    }
-
-                    File::copyDirectory($themePath . '/uploads', public_path() . '/uploads', function ($addFrom, $addTo) use ($securePaths, $themePath) {
-                        $uploadPath = str_replace(public_path(), '', $addTo);
-                        foreach ($securePaths as $securePath) {
-                            if (strpos($uploadPath, $securePath) === 0) {
-                                $addTo = str_replace(public_path() . '/uploads', storage_path() . '/uploads', $addTo);
-                                break;
-                            }
+                Directory::copy($themePath . '/uploads', public_path() . '/uploads', function ($addFrom, $addTo) use ($securePaths, $themePath) {
+                    $uploadPath = str_replace(public_path(), '', $addTo);
+                    foreach ($securePaths as $securePath) {
+                        if (strpos($uploadPath, $securePath) === 0) {
+                            $addTo = str_replace(public_path() . '/uploads', storage_path() . '/uploads', $addTo);
+                            break;
                         }
-                        return [$addFrom, $addTo];
-                    });
-                }
-                File::removeDirectory($themePath . '/uploads');
-
-                File::copyDirectory($themePath . '/views', $themePath);
-                File::removeDirectory($themePath . '/views');
-
+                    }
+                    return [$addFrom, $addTo];
+                });
             }
+            Directory::remove($themePath . '/uploads');
+
+            Directory::copy($themePath . '/views', $themePath);
+            Directory::remove($themePath . '/views');
+
+        }
+
+        $unpacked = is_dir($themePath.'/templates') && is_dir(public_path().'/themes/'.$themeName);
+
+        if (!$unpacked) {
+            return ['error' => 1, 'response' => 'theme files not found for ' . $themeName];
+        }
+
+        $theme = self::where('theme', '=', $themeName)->first();
+
+        if (empty($theme)) {
 
             // add theme to database
             $newTheme = new self;
@@ -265,29 +272,31 @@ Class Theme extends Eloquent
 
             // install theme blocks and templates
             try {
-                ThemeBuilder::updateTheme($newTheme->id);
+                BlockUpdater::updateTheme($newTheme);
+                Directory::remove($themePath.'/import/blocks');
             } catch (\Exception $e) {
                 $newTheme->delete();
-                return $e->getMessage();
+                return ['error' => 1, 'response' => $e->getMessage()];
             }
 
             // install pages and page block data
             if (!empty($options['withPageData'])) {
-                self::_pageImportData($newTheme);
+                try {
+                    self::_pageImportData($newTheme);
+                    Directory::remove($themePath.'/import/pages');
+                    if (file_exists($themePath.'/import/pages.csv')) {
+                        unlink($themePath . '/import/pages.csv');
+                    }
+                } catch (\Exception $e) {
+                    return ['error' => 1, 'response' => $e->getMessage()];
+                }
             }
 
-            ThemeBuilder::cleanOverwriteFile($newTheme->id);
-
-            File::removeDirectory($themePath.'/import/blocks');
-            File::removeDirectory($themePath.'/import/pages');
-            if (file_exists($themePath.'/import/pages.csv')) {
-                unlink($themePath . '/import/pages.csv');
-            }
-
-            return 1;
+            return ['error' => 0, 'response' => ''];
+        } else {
+            return ['error' => 0, 'response' => 'theme ' . $themeName . ' already exists in database'];
         }
 
-        return 0;
     }
 
     public static function activate($themeName)
@@ -321,12 +330,34 @@ Class Theme extends Eloquent
             $theme->delete();
         }
         if (is_dir(base_path() . '/resources/views/themes/' . $themeName)) {
-            File::removeDirectory(base_path() . '/resources/views/themes/' . $themeName);
+            Directory::remove(base_path() . '/resources/views/themes/' . $themeName);
         }
         if (is_dir(base_path() . '/public/themes/' . $themeName)) {
-            File::removeDirectory(base_path() . '/public/themes/' . $themeName);
+            Directory::remove(base_path() . '/public/themes/' . $themeName);
         }
         return 1;
+    }
+
+    public static function getViewFolderTree($dir, $ret = array())
+    {
+      $tmp = new \stdClass;
+      $dirArr = explode('/', $dir);
+      $tmp->directory = end($dirArr);
+      $tmp->path = $dir;
+      $tmp->files = \File::files($dir);
+      foreach ($tmp->files as $fk => $file)
+      {
+        $filArr = explode('/', $file);
+        $tmp->files[$fk] = end($filArr);
+      }
+      $tmp->folders = \File::directories($dir);
+      foreach ($tmp->folders as $fk => $folder)
+      {
+        $tmp->folders[$fk] = static::getViewFolderTree($folder, $ret);
+      }
+      $ret = $tmp;
+
+      return $ret;
     }
 
     public static function export($themeId, $withPageData)
@@ -336,7 +367,7 @@ Class Theme extends Eloquent
             $themesDir = base_path() . '/resources/views/themes/';
             $zipFileName = $theme->theme.'.zip';
             // export blocks
-            ThemeBuilder::exportBlocks($theme);
+            BlockUpdater::exportBlocks($theme);
             if ($withPageData) {
                 // export page data
                 self::_pageExportData($theme);
@@ -380,7 +411,7 @@ Class Theme extends Eloquent
             header("Expires: 0");
             readfile($themesDir . $zipFileName);
             unlink($themesDir . $zipFileName);
-            File::removeDirectory($themesDir.$theme->theme.'/export');
+            Directory::remove($themesDir.$theme->theme.'/export');
             exit;
         }
         return 'error';
@@ -398,13 +429,14 @@ Class Theme extends Eloquent
         $allFilesUsed = [];
 
         $groupIds = [];
+        $groups = PageGroup::all();
+        foreach($groups as $group) {
+            $groupIds[$group->id] = $group->id;
+        }
         $pagesData = [];
         $pages = Page::all();
         foreach($pages as $page) {
             $pagesData[$page->id] = $page;
-            if ($page->group_container) {
-                $groupIds[] = $page->group_container;
-            }
         }
         $pageLangData = [];
         $pageLangs = PageLang::where('language_id', '=', Language::current())->orderBy('page_id')->get();
@@ -433,16 +465,14 @@ Class Theme extends Eloquent
             'Is Live (0 or 1)',
             'In Sitemap (0 or 1)',
             'Container for Group Id',
-            'Item in Group Id'
+            'Container Url Priority',
+            'Canonical Parent Page Id',
+            'Group Ids (Comma Separated)'
         ]);
 
         foreach ($pageLangs as $pageLang) {
             if (!empty($pagesData[$pageLang->page_id])) {
                 $page = $pagesData[$pageLang->page_id];
-                if (empty($groupIds)) {
-                    $page->group_container = 0;
-                    $page->in_group = 0;
-                }
                 if ($page->link && (strpos($pageLang->url, URL::to('/')) === 0 || strpos($pageLang->url, '/') === 0)) {
                     $filesUsed = [str_replace(URL::to('/'), '', $pageLang->url)];
                     $allFilesUsed = array_merge($filesUsed, $allFilesUsed);
@@ -458,8 +488,10 @@ Class Theme extends Eloquent
                     $page->link,
                     $page->live?1:0,
                     $page->sitemap,
-                    $page->group_container?:'',
-                    $page->in_group?:''
+                    ($page->group_container && !empty($groupIds[$page->group_container]))?$page->group_container:'',
+                    ($page->group_container_url_priority && !empty($groupIds[$page->group_container]))?$page->group_container_url_priority:'',
+                    $page->canonical_parent,
+                    implode(',', $page->groupIds())
                 ]);
             }
         }
@@ -516,66 +548,62 @@ Class Theme extends Eloquent
         }
 
         // export page groups
+        if (!$groups->isEmpty()) {
 
-        if (!empty($groupIds)) {
-            $pageGroups = PageGroup::whereIn('id', $groupIds)->orderBy('id')->get();
-            if (!$pageGroups->isEmpty()) {
+            $groupsCsv = fopen(base_path().'/resources/views/themes/'.$theme->theme.'/export/pages/groups.csv', 'w');
+            $groupAttributesCsv = fopen(base_path().'/resources/views/themes/'.$theme->theme.'/export/pages/group_attributes.csv', 'w');
 
-                $groupsCsv = fopen(base_path().'/resources/views/themes/'.$theme->theme.'/export/pages/groups.csv', 'w');
-                $groupAttributesCsv = fopen(base_path().'/resources/views/themes/'.$theme->theme.'/export/pages/group_attributes.csv', 'w');
+            fputcsv($groupsCsv, [
+                'Group Id',
+                'Group Name',
+                'Group Item Name',
+                'Url Priority (Default: 50)',
+                'Default Template'
+            ]);
+
+            fputcsv($groupAttributesCsv, [
+                'Attribute Id',
+                'Group Id',
+                'Block Name',
+                'Order Priority (0 for no ordering)',
+                'Order Dir (asc/desc)',
+                'Container Filter by Block Name'
+            ]);
+
+            $groupAttributesByGroupId = [];
+            $groupAttributes = PageGroupAttribute::orderBy('group_id')->get();
+            foreach ($groupAttributes as $groupAttribute) {
+                if (!isset($groupAttributesByGroupId[$groupAttribute->group_id])) {
+                    $groupAttributesByGroupId[$groupAttribute->group_id] = [];
+                }
+                $groupAttributesByGroupId[$groupAttribute->group_id][] = $groupAttribute;
+            }
+
+            foreach ($groups as $pageGroup) {
 
                 fputcsv($groupsCsv, [
-                    'Group Id',
-                    'Group Name',
-                    'Group Item Name',
-                    'Default Container Page Id',
-                    'Default Template',
-                    'Order By Attribute Id',
-                    'Order Direction (default: asc)'
+                    $pageGroup->id,
+                    $pageGroup->name,
+                    $pageGroup->item_name,
+                    $pageGroup->url_priority,
+                    !empty($templatesById[$pageGroup->default_template])?$templatesById[$pageGroup->default_template]:''
                 ]);
 
-                fputcsv($groupAttributesCsv, [
-                    'Attribute Id',
-                    'Group Id',
-                    'Block Name',
-                    'Container Filter by Block Name'
-                ]);
-
-                $groupAttributesByGroupId = [];
-                $groupAttributes = PageGroupAttribute::orderBy('group_id')->get();
-                foreach ($groupAttributes as $groupAttribute) {
-                    if (!isset($groupAttributesByGroupId[$groupAttribute->group_id])) {
-                        $groupAttributesByGroupId[$groupAttribute->group_id] = [];
-                    }
-                    $groupAttributesByGroupId[$groupAttribute->group_id][] = $groupAttribute;
-                }
-
-                foreach ($pageGroups as $pageGroup) {
-
-                    fputcsv($groupsCsv, [
-                        $pageGroup->id,
-                        $pageGroup->name,
-                        $pageGroup->item_name,
-                        $pageGroup->default_parent,
-                        !empty($templatesById[$pageGroup->default_template])?$templatesById[$pageGroup->default_template]:'',
-                        $pageGroup->order_by_attribute_id,
-                        $pageGroup->order_dir
-                    ]);
-
-                    foreach ($groupAttributesByGroupId as $groupId => $attributes) {
-                        foreach ($attributes as $attribute) {
-                            fputcsv($groupAttributesCsv, [
-                                $attribute->id,
-                                $groupId,
-                                Block::preload($attribute->item_block_id)->name,
-                                $attribute->filter_by_block_id?:''
-                            ]);
-                        }
+                foreach ($groupAttributesByGroupId as $groupId => $attributes) {
+                    foreach ($attributes as $attribute) {
+                        fputcsv($groupAttributesCsv, [
+                            $attribute->id,
+                            $groupId,
+                            Block::preload($attribute->item_block_id)->name,
+                            $attribute->item_block_order_priority,
+                            $attribute->item_block_order_dir,
+                            $attribute->filter_by_block_id?:''
+                        ]);
                     }
                 }
-                fclose($groupsCsv);
-                fclose($groupAttributesCsv);
             }
+            fclose($groupsCsv);
+            fclose($groupAttributesCsv);
         }
 
         // export page block data
@@ -590,7 +618,7 @@ Class Theme extends Eloquent
 
         $blocksById = [];
         $blocksByName = [];
-        foreach (ThemeBuilder::getDatabaseBlocks($theme->id) as $block) {
+        foreach (BlockUpdater::getDatabaseBlocks($theme->id) as $block) {
             $blocksById[$block->id] = $block;
             $blocksByName[$block->name] = $block;
         }
@@ -736,6 +764,7 @@ Class Theme extends Eloquent
             DB::table((new PageVersion)->getTable())->truncate();
             DB::table((new PageGroup)->getTable())->truncate();
             DB::table((new PageGroupAttribute)->getTable())->truncate();
+            DB::table((new PageGroupPage)->getTable())->truncate();
             DB::table((new Menu)->getTable())->truncate();
             DB::table((new MenuItem)->getTable())->truncate();
             DB::table((new PageBlockDefault)->getTable())->truncate();
@@ -755,24 +784,70 @@ Class Theme extends Eloquent
                 $blockIds[$block->name] = $block->id;
             }
 
-            // add pages
             $pagesCsv = $importPath . 'pages.csv';
-            if (file_exists($pagesCsv) && ($fileHandle = fopen($pagesCsv, 'r')) !== false) {
+            $groupsCsv = $importPath . 'pages/groups.csv';
+            $groupAttributesCsv = $importPath . 'pages/group_attributes.csv';
+            $menusCsv = $importPath . 'pages/menus.csv';
+            $menuItemsCsv = $importPath . 'pages/menu_items.csv';
+            $pageBlocksCsv = $importPath . 'pages/page_blocks.csv';
+            $repeaterBlocksCsv = $importPath . 'pages/repeater_blocks.csv';
+
+            // checks
+            $error = 'pages data not imported, invalid columns in: ';
+            if (!$pagesFileHandle = Csv::check($pagesCsv, 14)) {
+                if (file_exists($pagesCsv)) {
+                    throw new \Exception($error . $pagesCsv);
+                }
+            }
+            if (!$groupsHandle = Csv::check($groupsCsv, 5)) {
+                if (file_exists($groupsCsv)) {
+                    throw new \Exception($error . $groupsCsv);
+                }
+            }
+            if (!$groupAttributesHandle = Csv::check($groupAttributesCsv, 6)) {
+                if (file_exists($groupAttributesCsv)) {
+                    throw new \Exception($error . $groupAttributesCsv);
+                }
+            }
+            if (!$menusHandle = Csv::check($menusCsv, 3)) {
+                if (file_exists($menusCsv)) {
+                    throw new \Exception($error . $menusCsv);
+                }
+            }
+            if (!$menuItemsCsvHandle = Csv::check($menuItemsCsv, 5)) {
+                if (file_exists($menuItemsCsv)) {
+                    throw new \Exception($error . $menuItemsCsv);
+                }
+            }
+            if (!$pageBlocksCsvHandle = Csv::check($pageBlocksCsv, 3)) {
+                if (file_exists($pageBlocksCsv)) {
+                    throw new \Exception($error . $pageBlocksCsv);
+                }
+            }
+            if (!$repeaterBlocksCsvHandle = Csv::check($repeaterBlocksCsv, 4)) {
+                if (file_exists($repeaterBlocksCsv)) {
+                    throw new \Exception($error . $repeaterBlocksCsv);
+                }
+            }
+
+            // add pages
+            if ($pagesFileHandle) {
                 $row = 0;
-                while (($data = fgetcsv($fileHandle)) !== false) {
+                while (($data = fgetcsv($pagesFileHandle)) !== false) {
                     if ($row++ == 0 && $data[0] == 'Page Id') continue;
-                    list($pageId, $pageName, $pageUrl, $templateName, $parentId, $defaultChildTemplateName, $order, $link, $live, $sitemap, $groupContainer, $groupItem) = $data;
+                    list($pageId, $pageName, $pageUrl, $templateName, $parentId, $defaultChildTemplateName, $order, $link, $live, $sitemap, $groupContainer, $groupContainerUrlPriority, $canonicalParentPageId, $groupIds) = $data;
                     $newPage = new Page;
                     $newPage->id = $pageId;
                     $newPage->template = !empty($templateIds[$templateName]) ? $templateIds[$templateName] : 0;
-                    $newPage->parent = $parentId;
+                    $newPage->parent = $parentId ?: 0;
                     $newPage->child_template = !empty($templateIds[$defaultChildTemplateName]) ? $templateIds[$defaultChildTemplateName] : 0;
                     $newPage->order = $order;
                     $newPage->link = $link;
                     $newPage->live = $live;
                     $newPage->sitemap = $sitemap;
-                    $newPage->group_container = $groupContainer;
-                    $newPage->in_group = $groupItem;
+                    $newPage->group_container = $groupContainer ?: 0;
+                    $newPage->group_container_url_priority = $groupContainerUrlPriority ?: 0;
+                    $newPage->canonical_parent = $canonicalParentPageId ?: 0;
                     $newPage->save();
                     $newPageLang = new PageLang;
                     $newPageLang->page_id = $pageId;
@@ -782,48 +857,53 @@ Class Theme extends Eloquent
                     $newPageLang->live_version = 1;
                     $newPageLang->save();
                     PageVersion::add_new($pageId);
+                    $groupIds = trim($groupIds);
+                    $groupIds = $groupIds ? explode(',', $groupIds) : [];
+                    foreach ($groupIds as $groupId) {
+                        $newPageGroupPage = new PageGroupPage;
+                        $newPageGroupPage->page_id = $pageId;
+                        $newPageGroupPage->group_id = $groupId;
+                        $newPageGroupPage->save();
+                    }
                 }
             }
 
             // add page groups
-            $groupsCsv = $importPath . 'pages/groups.csv';
-            if (file_exists($groupsCsv) && ($fileHandle = fopen($groupsCsv, 'r')) !== false) {
+            if ($groupsHandle) {
                 $row = 0;
-                while (($data = fgetcsv($fileHandle)) !== false) {
+                while (($data = fgetcsv($groupsHandle)) !== false) {
                     if ($row++ == 0 && $data[0] == 'Group Id') continue;
-                    list($groupId, $groupName, $itemName, $defaultContainerPageId, $defaultTemplate, $orderAttributeId, $orderDirection) = $data;
+                    list($groupId, $groupName, $itemName, $defaultContainerPageId, $defaultTemplate) = $data;
                     $newGroup = new PageGroup;
                     $newGroup->id = $groupId;
                     $newGroup->name = $groupName;
                     $newGroup->item_name = $itemName;
-                    $newGroup->default_parent = $defaultContainerPageId;
+                    $newGroup->url_priority = $defaultContainerPageId;
                     $newGroup->default_template = !empty($templateIds[$defaultTemplate]) ? $templateIds[$defaultTemplate] : 0;
-                    $newGroup->order_by_attribute_id = $orderAttributeId;
-                    $newGroup->order_dir = $orderDirection;
                     $newGroup->save();
                 }
             }
-            $groupAttributesCsv = $importPath . 'pages/group_attributes.csv';
-            if (file_exists($groupAttributesCsv) && ($fileHandle = fopen($groupAttributesCsv, 'r')) !== false) {
+            if ($groupAttributesHandle) {
                 $row = 0;
-                while (($data = fgetcsv($fileHandle)) !== false) {
+                while (($data = fgetcsv($groupAttributesHandle)) !== false) {
                     if ($row++ == 0 && $data[0] == 'Attribute Id') continue;
-                    list($attributeId, $groupId, $blockName, $filerByBlockName) = $data;
+                    list($attributeId, $groupId, $blockName, $orderPriority, $orderDir, $filerByBlockName) = $data;
                     $newGroupAttribute = new PageGroupAttribute;
                     $newGroupAttribute->id = $attributeId;
                     $newGroupAttribute->group_id = $groupId;
                     $newGroupAttribute->item_block_id = !empty($blockIds[$blockName]) ? $blockIds[$blockName] : 0;
+                    $newGroupAttribute->item_block_order_priority = $orderPriority;
+                    $newGroupAttribute->item_block_order_dir = ($orderDir == 'desc' ? $orderDir : 'asc');
                     $newGroupAttribute->filter_by_block_id = !empty($blockIds[$filerByBlockName]) ? $blockIds[$filerByBlockName] : 0;
                     $newGroupAttribute->save();
                 }
             }
 
             // add menus
-            $menusCsv = $importPath . 'pages/menus.csv';
-            $menuIds = [];
-            if (file_exists($menusCsv) && ($fileHandle = fopen($menusCsv, 'r')) !== false) {
+            if ($menusHandle) {
+                $menuIds = [];
                 $row = 0;
-                while (($data = fgetcsv($fileHandle)) !== false) {
+                while (($data = fgetcsv($menusHandle)) !== false) {
                     if ($row++ == 0 && $data[0] == 'Menu Identifier') continue;
                     list($name, $label, $maxSublevel) = $data;
                     $newMenu = new Menu;
@@ -834,10 +914,9 @@ Class Theme extends Eloquent
                     $menuIds[$name] = $newMenu->id;
                 }
             }
-            $menuItemsCsv = $importPath . 'pages/menu_items.csv';
-            if (file_exists($menuItemsCsv) && ($fileHandle = fopen($menuItemsCsv, 'r')) !== false) {
+            if ($menuItemsCsvHandle) {
                 $row = 0;
-                while (($data = fgetcsv($fileHandle)) !== false) {
+                while (($data = fgetcsv($menuItemsCsvHandle)) !== false) {
                     if ($row++ == 0 && $data[0] == 'Menu Identifier') continue;
                     list($menuIdentifier, $pageId, $order, $subLevels, $customName) = $data;
                     if (!empty($menuIds[$menuIdentifier])) {
@@ -853,10 +932,9 @@ Class Theme extends Eloquent
             }
 
             // add page content
-            $pageBlocksCsv = $importPath . 'pages/page_blocks.csv';
-            if (file_exists($pageBlocksCsv) && ($fileHandle = fopen($pageBlocksCsv, 'r')) !== false) {
+            if ($pageBlocksCsvHandle) {
                 $row = 0;
-                while (($data = fgetcsv($fileHandle)) !== false) {
+                while (($data = fgetcsv($pageBlocksCsvHandle)) !== false) {
                     if ($row++ == 0 && $data[0] == 'Page Id') continue;
                     list($pageId, $blockName, $content) = $data;
                     if (!empty($blockIds[$blockName])) {
@@ -873,11 +951,10 @@ Class Theme extends Eloquent
                     }
                 }
             }
-            $repeaterBlocksCsv = $importPath . 'pages/repeater_blocks.csv';
-            if (file_exists($repeaterBlocksCsv) && ($fileHandle = fopen($repeaterBlocksCsv, 'r')) !== false) {
+            if ($repeaterBlocksCsvHandle) {
                 $row = 0;
                 $existingRepeaterRowKeys = [];
-                while (($data = fgetcsv($fileHandle)) !== false) {
+                while (($data = fgetcsv($repeaterBlocksCsvHandle)) !== false) {
                     if ($row++ == 0 && $data[0] == 'Repeater Id') continue;
                     list($repeaterId, $repeaterRowId, $blockName, $content) = $data;
                     if (!empty($blockIds[$blockName])) {
@@ -908,6 +985,8 @@ Class Theme extends Eloquent
                     }
                 }
             }
+
+            PageSearchData::update_search_data();
         }
     }
 

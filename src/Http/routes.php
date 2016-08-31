@@ -1,48 +1,12 @@
 <?php
 
-Route::group(['middleware' => ['web', 'guest']], function () {
-    // auth routes
-    Route::get(config('coaster::admin.url') . '/login', 'CoasterCms\Http\Controllers\Backend\AuthController@getLogin');
-    Route::post(config('coaster::admin.url') . '/login', 'CoasterCms\Http\Controllers\Backend\AuthController@postLogin');
+if (\CoasterCms\Helpers\Cms\Install::isComplete()) {
 
-    // user account routes
-    Route::any(config('coaster::admin.url') . '/forgotten_password', 'CoasterCms\Http\Controllers\Backend\AccountController@forgotten_password');
-    Route::any(config('coaster::admin.url') . '/change_password/{all}', 'CoasterCms\Http\Controllers\Backend\AccountController@change_password')->where('all', '.*');
-});
+    include __DIR__ . '/routes/admin.php';
+    include __DIR__ . '/routes/cms.php';
 
-Route::group(['middleware' => ['web', 'admin']], function () {
-    // admin root
-    Route::get(config('coaster::admin.url'), 'CoasterCms\Http\Controllers\Backend\HomeController@getIndex');
+} else {
 
-    // auth logout
-    Route::get(config('coaster::admin.url') . '/logout', 'CoasterCms\Http\Controllers\Backend\AuthController@getLogout');
+    include __DIR__ . '/routes/install.php';
 
-    // admin controllers
-    foreach (CoasterCms\Models\AdminController::preload_all() as $controller) {
-        if (!empty($controller->controller)) {
-            Route::controller(config('coaster::admin.url') . '/' . $controller->controller, 'CoasterCms\Http\Controllers\Backend\\' . ucwords($controller->controller) . 'Controller');
-        }
-    }
-});
-
-// Files override to enable hosting secure docs
-Route::get('uploads/{file_path}', ['middleware' => ['web', 'auth'], function($file_path)
-{
-    $file_full_path = storage_path().'/uploads/'.$file_path;
-
-    if (file_exists($file_full_path)) {
-        $size = filesize($file_full_path);
-        $type = \GuzzleHttp\Psr7\mimetype_from_filename($file_path);
-        return response()->download($file_full_path, null, ['size' => $size, 'Content-Type' => $type], null);
-    } else {
-        return response('upload not found', 404);
-    }
-}])->where('file_path', '.*');
-
-Route::group(['middleware' => 'web'], function () {
-    // catch invalid admin routes
-    Route::controller(config('coaster::admin.url'), 'CoasterCms\Http\Controllers\Backend\_Base');
-
-    // catch all (rest must be cms pages)
-    Route::any('{all}', 'CoasterCms\Http\Controllers\Frontend\PageLoaderController@index')->where('all', '.*');
-});
+}

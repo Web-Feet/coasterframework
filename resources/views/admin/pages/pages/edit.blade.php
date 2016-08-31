@@ -4,10 +4,10 @@
 
 <div class="row textbox">
     <div class="col-sm-6">
-        @if (!empty($page->in_group))
-            <p><a href="{!! URL::to(config('coaster::admin.url').'/groups/pages/'.$page->in_group) !!}">Back
-                    to {!! $group_name !!}</a></p>
-        @endif
+        @foreach($page->groups as $group)
+            <p><a href="{!! route('coaster.admin.groups.pages', ['groupId' => $group->id]) !!}">Back
+                    to {!! $group->name !!}</a></p>
+        @endforeach
         @if ($publishingOn && $page->link == 0)
             <p id="version-well" class="well">
                 Published Version: #<span class="live_version_id">{{ $version['live'] }}</span>
@@ -55,7 +55,7 @@
 
 <br/>
 
-{!! Form::open(['url' => Request::url(), 'class' => 'form-horizontal', 'id' => 'editForm', 'enctype' => 'multipart/form-data']) !!}
+{!! Form::open(['class' => 'form-horizontal', 'id' => 'editForm', 'enctype' => 'multipart/form-data']) !!}
 
 <div class="tabbable">
 
@@ -75,40 +75,23 @@
 
 @section('scripts')
     <script type='text/javascript'>
-        latest_version = '{{ $version['latest'] }}';
         function duplicate_page() {
             $('#duplicate_set').val(1);
             $('#editForm').trigger('submit');
         }
+
         $(document).ready(function () {
 
-            liveDateOptions();
-            $('#page_info\\[live\\]').change(liveDateOptions);
-
-            page_id = {{ $page->id }};
-
-            @if ($page->link == 1)
-            selected_tab('#editForm', 0);
-            @else
-            selected_tab('#editForm', 1);
-            @endif
-
-            $('#page_info_lang\\[name\\]').change(function () {
-                if ($('#page_info_url').val().substr($('#page_info_url').val().length - 10) == '-duplicate') {
-                    $('#page_info_url').val(
-                            $(this).val()
-                                    .toLowerCase()
-                                    .replace(/\s+/g, '-')
-                                    .replace(/[^\w-]/g, '-')
-                                    .replace(/-{2,}/g, '-')
-                                    .replace(/^-+/g, '')
-                                    .replace(/-+$/g, '')
-                    );
-                }
-            });
-
+            selected_tab('#editForm', {{ $page->link ? 0 : 1 }});
+            updateListenPageUrl(true);
+            updateListenLiveOptions();
+            updateListenGroupFields();
             load_editor_js();
+            headerNote();
+
+            page_id = parseInt({{ $page->id }});
+            latest_version = '{{ $version['latest'] }}';
 
         });
     </script>
-@stop
+@append

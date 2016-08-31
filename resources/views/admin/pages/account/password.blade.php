@@ -4,13 +4,13 @@
 
     @if ($level == 'admin')
         <p class="text-success">Password for {!! $user->email !!} has been successfully updated!</p>
-        <p>{!! HTML::link(URL::to(config('coaster::admin.url').'/users/edit/').$user->id, '&raquo; Return to user details page') !!}</p>
+        <p><a href="{{ route('coaster.admin.users.edit', ['userId' => $user->id]) }}">&raquo; Return to user details page</a></p>
     @elseif ($level == 'user')
         <p class="text-success">Your password has been successfully updated!</p>
-        <p>{!! HTML::link(URL::to(config('coaster::admin.url').'/account'), '&raquo; Return to account settings') !!}</p>
+        <p><a href="{{ route('coaster.admin.account') }}">&raquo; Return to account settings</a></p>
     @else
         <p class="text-success">Your password has been successfully updated!</p>
-        <p><a href="{!! URL::to(config('coaster::admin.url').'/login') !!}">&raquo; You can now login here</a></p>
+        <p><a href="{!! route('coaster.admin.login') !!}">&raquo; You can now login here</a></p>
     @endif
 
 @else

@@ -8,6 +8,7 @@ class PageVersion extends Eloquent
 {
 
     protected $table = 'page_versions';
+    protected static $_liveVersions = [];
 
     public function user()
     {
@@ -28,6 +29,21 @@ class PageVersion extends Eloquent
         return 0;
     }
 
+    public static function get_live_version($pageId)
+    {
+        if (empty(self::$_liveVersions)) {
+            $pageLangTable = (new PageLang)->getTable();
+            $pageVersionsTable = (new self)->getTable();
+            $pageVersions = self::join($pageLangTable, function ($join) use($pageLangTable, $pageVersionsTable) {
+                $join->on($pageLangTable.'.page_id', '=', $pageVersionsTable.'.page_id')->on($pageLangTable.'.live_version', '=', $pageVersionsTable.'.version_id');
+            })->where('language_id', '=', Language::current())->orderBy($pageLangTable.'.page_id')->get([$pageVersionsTable.'.*']);
+            foreach ($pageVersions as $pageVersion) {
+                self::$_liveVersions[$pageVersion->page_id] = $pageVersion;
+            }
+        }
+        return !empty(self::$_liveVersions[$pageId]) ? self::$_liveVersions[$pageId] : null;
+    }
+
     public static function add_new($page_id, $label = null)
     {
         $page_version = new self;
@@ -35,7 +51,7 @@ class PageVersion extends Eloquent
         $page_version->version_id = self::latest_version($page_id) + 1;
         $page_version->template = !empty($page_id) ? Page::find($page_id)->template : 0;
         $page_version->label = $label;
-        $page_version->preview_key = base_convert((rand(10, 99) . microtime(true) * 10000), 10, 36);
+        $page_version->preview_key = base_convert((rand(10, 99) . microtime(true)), 10, 36);
         $page_version->save();
         return $page_version;
     }
@@ -68,6 +84,8 @@ class PageVersion extends Eloquent
         $user = Auth::user();
         if (empty($options['system']) && !empty($user)) {
             $this->user_id = $user->id;
+        } else {
+            $this->user_id = 0;
         }
         return parent::save($options);
     }

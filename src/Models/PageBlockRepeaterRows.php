@@ -48,7 +48,7 @@ class PageBlockRepeaterRows extends Eloquent
 
     public static function get_row_objects($repeater_id, $randomLimit = false)
     {
-        self::_preload($repeater_id, $randomLimit);
+        self::_preload($repeater_id);
         $rows_data = [];
         if (!empty(self::$preloaded_repeaters[$repeater_id])) {
             if ($randomLimit !== false) {

@@ -1,8 +1,8 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Helpers\BlockManager;
+use CoasterCms\Helpers\Cms\Theme\BlockManager;
+use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Models\Page;
-use CoasterCms\Models\PageLang;
 use Request;
 use URL;
 
@@ -28,7 +28,7 @@ class Link extends _Base
         }
         $link = str_replace('internal://', '', $block_data['link'], $count);
         if ($count > 0) {
-            return PageLang::full_url($link) . $target;
+            return Path::getFullUrl($link) . $target;
         } else {
             return $link . $target;
         }

@@ -5,7 +5,7 @@
 @if (isset($success))
 
     <p class="text-success">Role for {!! $user->email !!} has been successfully updated!</p>
-    <p>{!! HTML::link(URL::to(config('coaster::admin.url').'/users/edit/'.$user->id), '&raquo; Return to user details page') !!}</p>
+    <p><a href="{{ route('coaster.admin.users.edit', ['userId' => $user->id]) }}">&raquo; Return to user details page</a></p>
 
     @else
 

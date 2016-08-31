@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Helpers\BlockManager;
+use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use Request;
 use URL;
@@ -14,12 +14,11 @@ class Image extends _Base
     public static function display($block, $block_data, $options = array())
     {
         if (!empty($block_data)) {
-            if (is_string($block_data)) {
-                $image_data = unserialize($block_data);
-            } else
-                $image_data = $block_data;
-        }
-        if (empty($block_data) || empty($image_data->file)) {
+            $image_data = is_string($block_data) ? unserialize($block_data) : $block_data;
+            if (empty($image_data->file)) {
+                return '';
+            }
+        } else {
             return '';
         }
         if (empty($image_data->title)) {
@@ -58,10 +57,11 @@ class Image extends _Base
             $image_data->file = $image_data->original;
         }
         $template = !empty($options['view']) ? $options['view'] : 'default';
-        if (!View::exists('themes.' . PageBuilder::$theme . '.blocks.images.' . $template)) {
-            return 'Image template not found';
+        $imageViews = 'themes.' . PageBuilder::getData('theme') . '.blocks.images.';
+        if (View::exists($imageViews . $template)) {
+            return View::make($imageViews . $template, array('image' => $image_data))->render();
         } else {
-            return View::make('themes.' . PageBuilder::$theme . '.blocks.images.' . $template, array('image' => $image_data))->render();
+            return 'Image template not found';
         }
     }
 

@@ -8,6 +8,9 @@ class Selectmultiple extends _Base
 
     public static function display($block, $block_data, $options = null)
     {
+        if (isset($options['returnAll']) && $options['returnAll']) {
+            return BlockSelectOption::getOptionsArray($block->id);
+        }
         if (!empty($block_data)) {
             return unserialize($block_data);
         } else {
@@ -45,7 +48,7 @@ class Selectmultiple extends _Base
     {
         $live_blocks = PageBlock::page_blocks_on_live_page_versions($block_id);
         $page_ids = array();
-        if (!empty($live_blocks)) {
+        if (!empty($live_blocks) && $search) {
             foreach ($live_blocks as $live_block) {
                 $items = !empty($live_block->content) ? unserialize($live_block->content) : array();
                 switch ($type) {

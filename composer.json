@@ -13,11 +13,12 @@
         }
     ],
     "require": {
-        "php": ">=5.5.9",
-        "laravelcollective/html": "5.2.*",
+        "php": ">=5.6.4",
+        "doctrine/dbal": "^2.5",
+        "laravelcollective/html": "5.3.*",
         "bkwld/croppa": "~4.0",
-        "guzzlehttp/guzzle": "6.*",
-        "blueimp/jQuery-File-Upload": "9.11.2"
+        "blueimp/jQuery-File-Upload": "9.11.2",
+        "guzzlehttp/guzzle": "6.*"
     },
     "autoload": {
         "psr-4": {

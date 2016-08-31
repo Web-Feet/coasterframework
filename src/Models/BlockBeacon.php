@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Models;
 
-use CoasterCms\Helpers\View\FormMessage;
+use CoasterCms\Helpers\Cms\Page\Path;
+use CoasterCms\Libraries\Builder\FormMessage;
 use Eloquent;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -147,7 +148,7 @@ Class BlockBeacon extends Eloquent
             $beaconUrlEncoded = '02' . bin2hex($beaconUrlParts['host']);
 
             if ($pageId) {
-                $pageUrl = PageLang::full_url($pageId);
+                $pageUrl = Path::getFullUrl($pageId);
                 $pageUrl = URL::to($pageUrl);
                 try {
                     $bitlyResponse = json_decode(self::_bitly()->request('GET', 'v3/shorten', [

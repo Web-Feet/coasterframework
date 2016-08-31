@@ -8,15 +8,15 @@
     </div>
 </div>
 
-{!! Form::open(['url' => Request::fullUrl(), 'id' => 'editForm', 'enctype' => 'multipart/form-data']) !!}
+{!! Form::open(['id' => 'editForm', 'enctype' => 'multipart/form-data']) !!}
 
 <div class="table-responsive">
     <table id="redirects" class="table table-bordered table-striped">
         <thead>
         <tr>
-            <th><a href="{!! Request::url().'?order=redirect' !!}">Redirect From</a></th>
-            <th><a href="{!! Request::url().'?order=to' !!}">Redirect To</a></th>
-            <th><a href="{!! Request::url().'?order=forced' !!}">Forced</a></th>
+            <th><a href="{!! route('coaster.admin.redirects').'?order=redirect' !!}">Redirect From</a></th>
+            <th><a href="{!! route('coaster.admin.redirects').'?order=to' !!}">Redirect To</a></th>
+            <th><a href="{!! route('coaster.admin.redirects').'?order=forced' !!}">Forced</a></th>
             @if ($can_edit)
                 <th>Remove</th>
             @endif
@@ -79,7 +79,7 @@
             var check_new = id.toString().substr(0, 3);
             if (check_new != 'new') {
                 $.ajax({
-                    url: get_admin_url() + 'redirects/edit',
+                    url: route('coaster.admin.redirects.edit'),
                     type: 'POST',
                     data: {delete_id: id},
                     success: function () {
@@ -98,7 +98,7 @@
         function add_redirect() {
             var id = 'new' + new_redirect;
             new_redirect++;
-            $("#redirects tbody").append('<tr id="redirect_' + id + '">' +
+            $("#redirects > tbody").append('<tr id="redirect_' + id + '">' +
                     '<td><input class="form-control" name="redirect[' + id + '][from]" type="text"></td>' +
                     '<td><input class="form-control" name="redirect[' + id + '][to]" type="text"></td>' +
                     '<td><input name="redirect[' + id + '][force]" class="form-control" type="checkbox" value="1"></td>' +

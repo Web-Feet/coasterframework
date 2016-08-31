@@ -117,6 +117,7 @@ class PagePublishRequests extends Eloquent
             $new_request->page_version_id = $page_version->id;
             $new_request->status = 'awaiting';
             $new_request->user_id = Auth::user()->id;
+            $new_request->mod_id = 0;
             $new_request->note = $note;
             $new_request->save();
             return 1;

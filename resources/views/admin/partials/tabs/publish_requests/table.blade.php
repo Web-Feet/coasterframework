@@ -9,6 +9,7 @@
 @if (is_string($requests))
 
     <p>{{ $requests }}</p>
+    <p>&nbsp;</p>
 
 @else
 
@@ -38,7 +39,7 @@
                 <tr>
                     <td>{!! $request->page_version->version_id !!}</td>
                     <td>{!! $request->page_version->name !!}</td>
-                    <?php $page_name = PageBuilder::page_full_name($request->page_version->page_id); ?>
+                    <?php $page_name = \CoasterCms\Helpers\Cms\Page\Path::getFullName($request->page_version->page_id); ?>
                     @if ($show['page'])
                         <td>{!! $page_name !!}</td>
                     @endif
@@ -50,9 +51,9 @@
                         <td>{!! $request->status !!}</td>
                     @endif
                     <td>
-                        <a href="{{ PageBuilder::page_url($request->page_version->page_id).'?preview='.$request->page_version->preview_key }}"
+                        <a href="{{ CoasterCms\Helpers\Cms\Page\Path::getFullUrl($request->page_version->page_id).'?preview='.$request->page_version->preview_key }}"
                            target="_blank"><i class="glyphicon glyphicon-eye-open itemTooltip" title="Preview"></i></a>
-                        <a href="{{ URL::to(config('coaster::admin.url').'/pages/edit/'.$request->page_version->page_id.'/'.$request->page_version->version_id) }}"><i
+                        <a href="{{ route('coaster.admin.pages.edit', ['pageId' => $request->page_version->page_id, 'version' => $request->page_version->version_id]) }}"><i
                                     class="delete glyphicon glyphicon-pencil itemTooltip" title="Edit"></i></a>
                         @if ($request->status == 'awaiting' && Auth::action('pages.version-publish', ['page_id' => $request->page_version->page_id]))
                             <i class="request_publish_action glyphicon glyphicon-ok-circle itemTooltip"

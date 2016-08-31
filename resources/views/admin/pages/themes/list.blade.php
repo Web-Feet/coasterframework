@@ -5,21 +5,21 @@
 {!! $themes_installed !!}
 
 @if ($can_upload)
-<div class="row">
+    <div class="row">
 
-    <div class="col-sm-12">
+        <div class="col-sm-12">
 
-        {!! Form::open(['url' => URL::to(config('coaster::admin.url').'/themes/manage'), 'id' => 'uploadThemeForm', 'enctype' => 'multipart/form-data']) !!}
-        <span class="btn btn-primary fileinput-nice">
+            {!! Form::open(['url' => route('coaster.admin.themes.manage'), 'id' => 'uploadThemeForm', 'enctype' => 'multipart/form-data']) !!}
+            <span class="btn btn-primary fileinput-nice">
             <i class="glyphicon glyphicon-upload glyphicon-white"></i>
             <span>Upload a new theme</span>
             <input type="file" name="newTheme" id="newTheme">
         </span>
-        {{ Form::close() }}
+            {{ Form::close() }}
+
+        </div>
 
     </div>
-
-</div>
 @endif
 
 @section('scripts')
@@ -31,7 +31,7 @@
             $('.activateTheme').click(function () {
                 themeSelected = $(this).data('theme');
                 $.ajax({
-                    url: get_admin_url() + 'themes/manage',
+                    url: route('coaster.admin.themes.manage'),
                     type: 'POST',
                     data: {
                         theme: themeSelected,
@@ -53,8 +53,9 @@
             function installTheme() {
                 $('#theme'+themeSelected+' .installTheme').html('Installing please wait ...');
                 $.ajax({
-                    url: get_admin_url() + 'themes/manage',
+                    url: route('coaster.admin.themes.manage'),
                     type: 'POST',
+                    dataType: 'json',
                     data: {
                         theme: themeSelected,
                         install: 1,
@@ -62,13 +63,13 @@
                         withPageData: wPageData
                     },
                     success: function (r) {
-                        if (r === '1') {
+                        if (typeof r == 'object' && r.error == 0) {
                             location.reload();
                         } else {
-                            cms_alert('danger', 'Error', 'An error occurred installing the theme: <br />'+ r.replace("\r\n", '<br />'));
+                            cms_alert('danger', 'Error', 'An error occurred installing the theme: <br />'+ r.response.replace("\r\n", '<br />'));
                         }
                     }, error: function() {
-                        cms_alert('danger', 'Error', 'An error occurred installing the theme: <br />'+r.replace("\r\n", '<br />'));
+                        cms_alert('danger', 'Error', 'An error occurred installing the theme: <br />'+r.response.replace("\r\n", '<br />'));
                     }
                 });
             }
@@ -77,17 +78,17 @@
                 wPageData = 0;
                 $('#installTheme .themeName').html(themeSelected);
                 $.ajax({
-                    url: get_admin_url() + 'themes/manage',
+                    url: route('coaster.admin.themes.manage'),
                     type: 'POST',
+                    dataType: 'json',
                     data: {
                         theme: themeSelected,
                         install: 1,
                         check: 1
                     },
                     success: function (r) {
-                        r = parseInt(r);
-                        if (r != 0) {
-                            if (r === 2) {
+                        if (typeof r == 'object' && r.error == 0) {
+                            if (r.response) {
                                 $('#installTheme .page-data').removeClass('hidden');
                             } else {
                                 $('#installTheme .page-data').addClass('hidden');
@@ -116,7 +117,7 @@
             });
             $('#deleteTheme .yes').click(function () {
                 $.ajax({
-                    url: get_admin_url() + 'themes/manage',
+                    url: route('coaster.admin.themes.manage'),
                     type: 'POST',
                     data: {
                         theme: themeSelected,
@@ -138,7 +139,7 @@
                 $('#exportTheme').modal('show');
             });
             $('#exportTheme .btn').click(function () {
-                window.location.href = '{{ URL::to(config('coaster::admin.url').'/themes/export') }}/'+themeIdSelected+'/'+$(this).data('option');
+                window.location.href = route('coaster.admin.themes.export', {themeId: themeIdSelected, withPageData: $(this).data('option')});
             });
 
             // new theme

@@ -2,24 +2,25 @@
 
 use Auth;
 use Carbon\Carbon;
-use CoasterCms\Helpers\View\FormMessage;
+use CoasterCms\Libraries\Builder\FormMessage;
 use Hash;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\Access\Authorizable;
+use Eloquent;
 use Request;
 use Validator;
 
-class User extends Model implements AuthenticatableContract, AuthorizableContract, CanResetPasswordContract
+class User extends Eloquent implements AuthenticatableContract, AuthorizableContract, CanResetPasswordContract
 {
     use Authenticatable, Authorizable, CanResetPassword;
 
     protected $table = 'users';
     protected $hidden = ['password', 'remember_token'];
+    protected static $_aliases;
 
     public function getAuthIdentifier()
     {
@@ -107,6 +108,22 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     {
         $this->page_states = serialize($pageStates);
         $this->save();
+    }
+
+    public function getName()
+    {
+        return $this->name ?: $this->email;
+    }
+
+    public static function userAliases()
+    {
+        if (!isset(self::$_aliases)) {
+            self::$_aliases = [];
+            foreach (User::all() as $user) {
+                self::$_aliases[$user->id] = $user->name ?: $user->email;
+            }
+        }
+        return self::$_aliases;
     }
 
     public function delete()

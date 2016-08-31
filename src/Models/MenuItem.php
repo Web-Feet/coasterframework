@@ -43,6 +43,7 @@ class MenuItem extends Eloquent
                     $new_item->page_id = $page_id;
                     $new_item->menu_id = $menu_id;
                     $new_item->order = $order;
+                    $new_item->custom_name = '';
                     $new_item->save();
                 } else {
                     unset($current[$menu_id]);

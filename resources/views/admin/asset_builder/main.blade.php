@@ -40,6 +40,7 @@ AssetBuilder::set('cms-editor', [
         '/jquery/select2/select2.min.css',
         '/jquery/tinymce/tinymce.jquery.min.js',
         '/app/js/functions.js',
+        '/app/js/pageInfo.js',
         '/app/js/editor.js'
 ], false, 5);
 
@@ -47,4 +48,4 @@ AssetBuilder::set('cms-versions', [
         '/app/js/versions.js'
 ], false, 10);
 
-FormMessage::set_class('error', 'has-error');
+FormMessage::setErrorClass('has-error');

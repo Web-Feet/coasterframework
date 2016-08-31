@@ -25,7 +25,7 @@ function load_editor_js(rerun) {
     else {
         if (!tinymce_fetched_cms_pages) {
             $.ajax({
-                url: get_admin_url()+'pages/tinymce-page-list',
+                url: route('coaster.admin.pages.tinymce-page-list'),
                 dataType: 'json',
                 success: function(r) {
                     tinymce_cnf['link_list'] = r;
@@ -89,7 +89,7 @@ function load_editor_js(rerun) {
         var page_id = $(this).attr("data-page");
         var block_id = $(this).attr("data-block");
         $.ajax({
-            url: get_admin_url()+'repeaters',
+            url: route('coaster.admin.repeaters'),
             type: 'POST',
             data: {repeater_id: repeater_id, block_id: block_id, page_id: page_id},
             success: function(r) {
@@ -192,12 +192,4 @@ function load_editor_js(rerun) {
 
 function repeater_delete(repeater_id, row_id) {
     $("#"+repeater_id+"_"+row_id).remove();
-}
-
-function liveDateOptions() {
-    if($('#page_info\\[live\\]').val() != 2) {
-        $('.live-date-options').addClass('hidden');
-    } else {
-        $('.live-date-options').removeClass('hidden');
-    }
 }
