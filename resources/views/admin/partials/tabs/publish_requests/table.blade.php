@@ -9,6 +9,7 @@
 @if (is_string($requests))
 
     <p>{{ $requests }}</p>
+    <p>&nbsp;</p>
 
 @else
 

@@ -8,6 +8,7 @@ use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\PagePublishRequests;
 use CoasterCms\Models\PageSearchLog;
 use CoasterCms\Models\Setting;
+use GuzzleHttp\Client;
 use View;
 
 class HomeController extends Controller
@@ -35,29 +36,39 @@ class HomeController extends Controller
 
         $logs = View::make('coaster::partials.logs.table', array('logs' => $logs_data));
 
-        $welcome_message = '';
+        $firstTimer = false;
         if (Install::getInstallState() == 'complete-welcome') {
             Install::setInstallState('complete');
-            $welcome_message = '<h2>Welcome to Coaster CMS, click on the pages link to start editing content</h2><p>&nbsp;</p>';
+            $firstTimer = true;
         }
+
+        $coasterBlog = 'https://www.coastercms.org/blog/';
+        $coasterBlogHttpClient = new Client(['base_uri' => $coasterBlog.'wp-json/wp/v2/']);
+        try {
+            $latestPosts = $coasterBlogHttpClient->request('GET', 'posts', ['query' => ['per_page' => 3]]);
+            $latestPosts = json_decode($latestPosts->getBody());
+        } catch (\Exception $e) {
+            $latestPosts = [];
+        }
+        $posts = collect($latestPosts);
 
         // Search data
 
-        $any_searches = PageSearchLog::hasSearchData();
-        if (Auth::action('search.index') && $any_searches)
-        {
-            $search_data = PageSearchLog::orderBy('count', 'DESC')->orderBy('updated_at', 'DESC')->limit(5)->get();
+        $numbSearches = PageSearchLog::count();
+        if (Auth::action('search.index') && $numbSearches) {
+            $search_data = PageSearchLog::orderBy('count', 'DESC')->orderBy('updated_at', 'DESC')->limit(6)->get();
+            $numbSearches = $search_data->count();
             $search_view = View::make('coaster::pages.search', array('search_data' => $search_data));
         }
-        else
-        {
-            $any_searches = false;
+        else {
             $search_view = '';
         }
-        $data = array('welcome_message' => $welcome_message, 'logs' => $logs, 'requests' => $requests_table, 'user_requests' => $user_requests_table, 'any_requests' => $any_requests, 'any_user_requests' => $any_user_requests);
+        $data = array('firstTimer' => $firstTimer, 'coasterPosts' => $posts, 'coasterBlog' => $coasterBlog, 'logs' => $logs, 'requests' => $requests_table, 'user_requests' => $user_requests_table, 'any_requests' => $any_requests, 'any_user_requests' => $any_user_requests);
 
-        $data['any_searches'] = $any_searches;
-        $data['search_logs'] = $search_view;
+        $data['searchLogNumber'] = $numbSearches;
+        $data['searchLogs'] = $search_view;
+
+        $data['canViewSettings'] = Auth::action('system');
 
         $upgrade = new \stdClass;
         $upgrade->from = config('coaster::site.version');
