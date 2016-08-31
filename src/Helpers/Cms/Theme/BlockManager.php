@@ -375,9 +375,10 @@ class BlockManager
         $max_live = '';
         $table_name = $model->getTable();
         $full_table_name = DB::getTablePrefix() . $table_name;
+        $pageLangTable = DB::getTablePrefix().(new PageLang)->getTable();
         switch ($table_name) {
             case 'page_blocks':
-                $max_live = ($version == -1) ? 'join page_lang pl on pl.page_id = inr.page_id and pl.language_id = inr.language_id and pl.live_version >= inr.version' : '';
+                $max_live = ($version == -1) ? 'join '.$pageLangTable.' pl on pl.page_id = inr.page_id and pl.language_id = inr.language_id and pl.live_version >= inr.version' : '';
                 $identifiers = array('block_id', 'language_id', 'page_id');
                 break;
             case 'page_blocks_default':
