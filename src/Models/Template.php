@@ -76,7 +76,7 @@ class Template extends Eloquent
         if (!isset(self::$_blocksOfType[$type])) {
             self::$_blocksOfType[$type] = self::blocks_of_type($type);
         }
-        if ($templateId) {
+        if ($templateId !== null) {
             return !empty(self::$_blocksOfType[$type][$templateId])?self::$_blocksOfType[$type][$templateId]:0;
         } else {
             return self::$_blocksOfType[$type];
