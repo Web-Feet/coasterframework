@@ -14,7 +14,7 @@ class CoasterGuard extends SessionGuard
     {
         /** @var User|null $user */
         $user = $this->user();
-        return ($this->check() && $user->role->admin > 0);
+        return ($this->check() && $user->role && $user->role->admin > 0);
     }
 
     /**
