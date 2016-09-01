@@ -15,7 +15,6 @@ use CoasterCms\Models\Language;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageBlock;
 use CoasterCms\Models\PageBlockDefault;
-use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageGroupPage;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\PageSearchData;
@@ -668,6 +667,10 @@ class PageBuilderInstance
         }
     }
 
+    /**
+     * @param bool $noOverride
+     * @return Page
+     */
     protected function _getPage($noOverride = false)
     {
         return ($this->pageOverride && !$noOverride) ? $this->pageOverride : $this->page;
@@ -700,7 +703,7 @@ class PageBuilderInstance
 
     /**
      * @param int $categoryPageId
-     * @param Page[]  $pages
+     * @param Page[]|Collection $pages
      * @param array $options
      * @return string
      */
