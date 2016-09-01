@@ -136,6 +136,12 @@ class PageGroup extends Eloquent
 
         if (empty(self::$groupPages[$this->id])) {
             $groupPages = $this->pages;
+
+            self::$groupPages[$this->id] = [
+                'all' => [],
+                'live' => [],
+            ];
+
             if (!$groupPages->isEmpty()) {
                 foreach ($groupPages as $groupPage) {
                     /** @var Page $groupPage */
