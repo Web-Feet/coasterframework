@@ -68,7 +68,7 @@ Class BlockBeacon extends Eloquent
                     }
                     $beacon->page_name = '';
                     if ($beacon->url == self::_getUrl($beacon->device) && !empty($beacon->page_id)) {
-                        $beacon->page_name = PageLang::full_name($beacon->page_id);
+                        $beacon->page_name = Path::getFullName($beacon->page_id);
                     } else {
                         $beacon->page_id = 0;
                     }
