@@ -233,17 +233,19 @@ class ThemeBuilderInstance extends PageBuilderInstance
             $this->templateBlocks[$template][] = $block_name;
         }
 
-        if (!empty($options['import_note'])) {
+        if (!empty($options['importNote'])) {
             if (!isset($this->blockSettings[$block_name])) {
                 $this->blockSettings[$block_name] = [];
             }
             if (!isset($this->blockSettings[$block_name]['note'])) {
-                $this->blockSettings[$block_name]['note'] = $options['import_note'];
+                $this->blockSettings[$block_name]['note'] = $options['importNote'];
             }
         }
 
-        if (!empty($options['import_return_value'])) {
-            $output = $options['import_return_value'];
+        foreach (['importReturnValue', 'import_return_value'] as $returnValueKey) {
+            if (!empty($options[$returnValueKey])) {
+                $output = $options[$returnValueKey];
+            }
         }
 
         return $output;
