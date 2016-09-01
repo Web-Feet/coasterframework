@@ -236,7 +236,10 @@ class WpApi
       $pageLang->save();
 
       $tags = $this->syncTags($page, $data->_embedded->{"wp:term"});
-
+      $date_block = Block::where('name', '=', 'post_date')->first();
+      if ( ! empty($date_block)) {
+        BlockManager::update_block($date_block->id, $this->carbonDate($data->date)->format("Y-m-d H:i:s"), $page->id);
+      }
       $title_block = Block::where('name', '=', config('coaster::admin.title_block'))->first();
       if (!empty($title_block)) {
           BlockManager::update_block($title_block->id, $pageLang->name, $page->id); // saves first page version
