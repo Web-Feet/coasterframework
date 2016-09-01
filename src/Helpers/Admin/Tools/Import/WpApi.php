@@ -138,17 +138,21 @@ class WpApi
          $fullFileName = end($imagePathArr);
 
          $newUrlPath = 'uploads/images/'.$fullFileName;
-          // Open the file to get existing content
-          $data = file_get_contents($image);
+         try {
+           // Open the file to get existing content
+           $data = file_get_contents($image);
 
-          // New file
-          $new = public_path($newUrlPath);
-          if ( ! file_exists($new)) {
-            // Write the contents back to a new file
-            file_put_contents($new, $data);
-          }
+           // New file
+           $new = public_path($newUrlPath);
+           if ( ! file_exists($new)) {
+             // Write the contents back to a new file
+             file_put_contents($new, $data);
+           }
 
-          $content = str_replace($image, url()->to($newUrlPath), $content);
+           $content = str_replace($image, url()->to($newUrlPath), $content);
+         } catch (Exception $e) {
+
+         }
 
       }
       return $content;
