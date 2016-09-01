@@ -257,15 +257,19 @@ class SystemController extends Controller
             }
 
             $logFile = storage_path(config('coaster::site.storage_path')).'/upgrade.log';
-            shell_exec('cd '.base_path().'; composer -n update 2>'.$logFile.';');
-            $upgradeLog = file_get_contents($logFile);
+            if (!is_writable($logFile)) {
+                shell_exec('cd ' . base_path() . '; composer -n update 2>' . $logFile . ';');
+                $upgradeLog = file_get_contents($logFile);
 
-            if (!empty($upgradeLog) && stripos($upgradeLog, 'Generating autoload files') !== false) {
-                Cache::put('coaster::site.version', Setting::latestTag(), 30);
-                $message = 'Successfully upgraded to version '. Setting::latestTag();
+                if (!empty($upgradeLog) && stripos($upgradeLog, 'Generating autoload files') !== false) {
+                    Cache::put('coaster::site.version', Setting::latestTag(), 30);
+                    $message = 'Successfully upgraded to version ' . Setting::latestTag();
+                } else {
+                    $error = 'Upgrade failed, composer might not be installed or there might have been an error: <br /><br />';
+                    $error .= '<pre>' . str_replace("\n", "<br />", $upgradeLog) . '</pre>';
+                }
             } else {
-                $error = 'Upgrade failed, composer might not be installed or there might have been an error: <br /><br />';
-                $error .= '<pre>'.str_replace("\n", "<br />", $upgradeLog).'</pre>';
+                $error = 'Can\'t create or write to log file :'.$logFile;
             }
 
         } else {
