@@ -208,7 +208,7 @@ class BlockManager
 
         return array(
             'headers' => View::make('coaster::partials.tabs.header', array('tabs' => $tab_headers))->render(),
-            'contents' => View::make('coaster::partials.tabs.content', array('tabs' => $tab_contents, 'item' => $item, 'new_page' => !$page_id,  'updateOnly' => $updateOnly,  'hideUpdate' => $hideUpdate, 'publishing' => $publishingOn, 'can_publish' => $canPublish))->render()
+            'contents' => View::make('coaster::partials.tabs.content', array('tabs' => $tab_contents, 'item' => $item, 'new_page' => !$page_id,  'updateOnly' => $updateOnly,  'hideUpdate' => $hideUpdate, 'publishing' => $publishingOn, 'can_publish' => $canPublish, 'page' => $page))->render()
         );
     }
 

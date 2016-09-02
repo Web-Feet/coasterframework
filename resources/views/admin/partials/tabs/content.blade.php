@@ -19,14 +19,14 @@
                 <div class="form-group">
                     <div class="col-sm-10 col-sm-offset-2">
                         <button class="btn btn-primary" type="submit"><i class="fa fa-floppy-o"></i> &nbsp;
-                            Save {{ $item }}</button>
+                            Save {{ $item }} Version</button>
                         &nbsp;
                         @if ($can_publish)
                             <button class="btn btn-primary" name="publish" type="submit" value="publish"><i class="fa fa-floppy-o"></i>
-                                &nbsp; Save & Publish {{ $item }}</button>
+                                &nbsp; Save {{ $page->is_live()?($item.' Version & Publish'):(' & Set As '.$item.' Version Ready To Go Live') }}</button>
                         @else
                             <button class="btn btn-primary request_publish"><i class="fa fa-paper-plane"></i> &nbsp;
-                                Save & Request Publish {{ $item }}</button>
+                                Save & Request Publish {{ $item }} Version</button>
                         @endif
                     </div>
                 </div>
