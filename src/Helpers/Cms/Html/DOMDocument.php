@@ -44,22 +44,28 @@ class DOMDocument extends \DOMDocument
         }
     }
 
-    public function saveHTML(DOMNode $node = NULL)
+    public function saveHTML(DOMNode $node = null)
     {
         $html = parent::saveHTML($node);
         return $this->_reInsertJs($html);
     }
 
+    public function saveInnerHTML(DOMNode $node = null)
+    {
+        $innerHTML = '';
+        foreach ($node->childNodes as $childNode) {
+            $innerHTML .= $this->saveHTML($childNode);
+        }
+        return $innerHTML;
+    }
+
     public function saveBodyHMTL($withTags = false)
     {
-        $bodyNode = $this->getElementsByTagName('body')->item(0);
-        if ($bodyNode) {
-            $htmlWithBodyTags = $this->saveHTML($bodyNode);
+        if ($bodyNode = $this->getElementsByTagName('body')->item(0)) {
+            return $withTags ? $this->saveHTML($bodyNode) : $this->saveInnerHTML($bodyNode);
         } else {
-            $htmlWithBodyTags = '';
+            return '';
         }
-        $htmlWithBodyTags = $this->_reInsertJs($htmlWithBodyTags);
-        return $withTags ? $htmlWithBodyTags : substr($htmlWithBodyTags, 6, -7);
     }
 
     public function addMetaTag($name, $value)
