@@ -62,34 +62,35 @@
 
     {!! Form::open(['url' => route('coaster.install.databaseSave')]) !!}
 
-    <p>Set up the database connection</p>
+    <p>Set up the database connection<br />
+        Will load current values if set in the .env file</p>
     <p>&nbsp;</p>
 
     <div class="form-group {!! FormMessage::getErrorClass('host') !!}">
         {!! Form::label('host', 'Database Host', ['class' => 'control-label']) !!}
-        {!! Form::text('host', Request::input('host'), ['class' => 'form-control']) !!}
+        {!! Form::text('host', Request::input('host')?:env('DB_HOST'), ['class' => 'form-control']) !!}
         <span class="help-block">{!! FormMessage::getErrorMessage('host') !!}</span>
     </div>
 
     <div class="form-group {!! FormMessage::getErrorClass('user') !!}">
         {!! Form::label('user', 'Database User', ['class' => 'control-label']) !!}
-        {!! Form::text('user', Request::input('user'), ['class' => 'form-control']) !!}
+        {!! Form::text('user', Request::input('user')?:env('DB_USERNAME'), ['class' => 'form-control']) !!}
         <span class="help-block">{!! FormMessage::getErrorMessage('user') !!}</span>
     </div>
     <div class="form-group {!! FormMessage::getErrorClass('password') !!}">
         {!! Form::label('password', 'Database User Password', ['class' => 'control-label']) !!}
-        {!! Form::password('password', ['class' => 'form-control']) !!}
+        {!! Form::input('password', 'password', env('DB_PASSWORD'), ['class' => 'form-control']) !!}
     </div>
 
     <div class="form-group {!! FormMessage::getErrorClass('name') !!}">
         {!! Form::label('name', 'Database Name', ['class' => 'control-label']) !!}
-        {!! Form::text('name', Request::input('name'), ['class' => 'form-control']) !!}
+        {!! Form::text('name', Request::input('name')?:env('DB_DATABASE'), ['class' => 'form-control']) !!}
         <span class="help-block">{!! FormMessage::getErrorMessage('name') !!}</span>
     </div>
     @if ($allowPrefix)
     <div class="form-group {!! FormMessage::getErrorClass('prefix') !!}">
         {!! Form::label('prefix', 'Database Prefix', ['class' => 'control-label']) !!}
-        {!! Form::text('prefix', Request::input('prefix'), ['class' => 'form-control']) !!}
+        {!! Form::text('prefix', Request::input('prefix')?:env('DB_PREFIX'), ['class' => 'form-control']) !!}
     </div>
     @endif
 
