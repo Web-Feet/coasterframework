@@ -54,7 +54,7 @@
     </div>
 
     <!-- submit button -->
-    {!! Form::submit('Create User', ['class' => 'btn btn-primary']) !!}
+    {!! Form::submit('Create User', ['class' => 'btn btn-primary']) !!} &nbsp; {!! $currentUsers > 0 ? Form::submit('Skip', ['name' => 'skip', 'class' => 'btn btn-default']) : ''  !!}
 
     {!! Form::close() !!}
 

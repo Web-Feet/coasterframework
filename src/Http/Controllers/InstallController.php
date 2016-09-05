@@ -8,6 +8,7 @@ use CoasterCms\Helpers\Cms\Install;
 use CoasterCms\Libraries\Builder\FormMessage;
 use CoasterCms\Models\Setting;
 use CoasterCms\Models\Theme;
+use CoasterCms\Models\User;
 use DB;
 use Dotenv\Dotenv;
 use Hash;
@@ -172,34 +173,37 @@ class InstallController extends Controller
     public function setupAdminUser()
     {
         $this->layoutData['title'] = 'Install User';
-        $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'adduser']);
+        $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'adduser', 'currentUsers' => User::count()]);
     }
-
 
     public function saveAdminUser()
     {
         $details = Request::all();
 
-        $v = Validator::make($details, array('email' => 'required|email', 'password' => 'required|confirmed|min:4'));
-        if (!$v->passes()) {
-            FormMessage::set($v->messages());
-            return $this->setupAdminUser();
-        }
+        if (User::count() == 0 || $details['skip'] != 'Skip') {
 
-        $date = new Carbon;
+            $v = Validator::make($details, array('email' => 'required|email', 'password' => 'required|confirmed|min:4'));
+            if (!$v->passes()) {
+                FormMessage::set($v->messages());
+                return $this->setupAdminUser();
+            }
 
-        DB::table('users')->insert(
-            array(
+            $date = new Carbon;
+
+            DB::table('users')->insert(
                 array(
-                    'active' => 1,
-                    'password' => Hash::make($details['password']),
-                    'email' => $details['email'],
-                    'role_id' => '1',
-                    'created_at' => $date,
-                    'updated_at' => $date
+                    array(
+                        'active' => 1,
+                        'password' => Hash::make($details['password']),
+                        'email' => $details['email'],
+                        'role_id' => '1',
+                        'created_at' => $date,
+                        'updated_at' => $date
+                    )
                 )
-            )
-        );
+            );
+
+        }
 
         Install::setInstallState('coaster.install.theme');
 
