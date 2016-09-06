@@ -251,13 +251,13 @@ class Page extends Eloquent
         return $list;
     }
 
-    public static function get_page_list_view($parent, $level, $cat_url = '')
+    public static function get_page_list_view($parent, $level, $cat_url = '', $pageIdsToInclude = [])
     {
         if ($childPages = self::getChildPages($parent)) {
             $pages_li = '';
             foreach ($childPages as $child_page) {
 
-                if (config('coaster::admin.advanced_permissions') && !Auth::action('pages', ['page_id' => $child_page->id])) {
+                if (( ! empty($pageIdsToInclude) && ! in_array($child_page->id, $pageIdsToInclude)) || (config('coaster::admin.advanced_permissions') && !Auth::action('pages', ['page_id' => $child_page->id]))) {
                     continue;
                 }
 
@@ -403,4 +403,12 @@ class Page extends Eloquent
         $obj->save();
     }
 
+
+    public static function adminSearch($q)
+    {
+      return Page::join('page_lang', 'page_lang.page_id', '=', 'pages.id')
+      ->where('page_lang.language_id', '=', Language::current())->where('link', '=', 0)
+      ->where('page_lang.name', 'like', '%'.$q.'%')
+      ->get(['pages.id']);
+    }
 }

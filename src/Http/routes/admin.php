@@ -132,6 +132,8 @@ Route::group(['prefix' => $adminUrl, 'middleware' => ['web', 'coaster.admin'], '
 
     Route::get('import/wp-blog', ['uses' => 'ImportWpController@getImport', 'as' => $routeNamePrefix . 'wpimport']);
 
+    Route::post('adminsearch', ['uses' => 'AdminSearchController@search', 'as' => $routeNamePrefix . 'adminsearch']);
+
 });
 
 // catch invalid admin routes

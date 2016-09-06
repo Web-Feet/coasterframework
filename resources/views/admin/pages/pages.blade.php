@@ -13,13 +13,19 @@
 </div>
 
 <div class="row textbox">
-    <div class="col-sm-12 pages_key">
+    <div class="col-sm-8 pages_key">
         Key: <span class="label type_normal_dark">Normal Page</span>
         <span class="label type_link">Link / Document</span>
         @if ($groups_exist)
         <span class="label type_group">Group Page</span>
         @endif
         <span class="label type_hidden">Not Live</span>
+    </div>
+    <div class="col-sm-12 col-md-4">
+      {!! Form::open() !!}
+        {!! Form::hidden('search_entity', CoasterCms\Models\Page::class) !!}
+        {!! Form::text('q', '', array('placeholder' => 'Search pages...', 'class' => 'form-control search-box')) !!}
+      {!! Form::close() !!}
     </div>
 </div>
 
@@ -41,27 +47,29 @@
             });
             @endif
 
-            $('#sortablePages').nestedSortable({
-                forcePlaceholderSize: true,
-                handle: 'div',
-                helper: 'clone',
-                items: 'li',
-                opacity: .6,
-                placeholder: 'placeholder',
-                revert: 250,
-                tabSize: 25,
-                tolerance: 'pointer',
-                toleranceElement: '> div',
-                maxLevels: 10,
+            var initList = function()
+            {
+              $('#sortablePages').nestedSortable({
+                  forcePlaceholderSize: true,
+                  handle: 'div',
+                  helper: 'clone',
+                  items: 'li',
+                  opacity: .6,
+                  placeholder: 'placeholder',
+                  revert: 250,
+                  tabSize: 25,
+                  tolerance: 'pointer',
+                  toleranceElement: '> div',
+                  maxLevels: 10,
 
-                isTree: true,
-                expandOnHover: 700,
-                startCollapsed: true,
+                  isTree: true,
+                  expandOnHover: 700,
+                  startCollapsed: true,
 
-                isAllowed: function canMovePage(placeholder, placeholderParent, currentItem) {
-                    return !(placeholderParent && (rootPages.indexOf(placeholderParent.attr('id')) != -1 || rootPages.indexOf(currentItem.attr('id')) != -1));
-                }
-            });
+                  isAllowed: function canMovePage(placeholder, placeholderParent, currentItem) {
+                      return !(placeholderParent && (rootPages.indexOf(placeholderParent.attr('id')) != -1 || rootPages.indexOf(currentItem.attr('id')) != -1));
+                  }
+              });
 
             $('.disclose').on('click', function (e) {
                 $(this).toggleClass('glyphicon-plus-sign').toggleClass('glyphicon-minus-sign');
@@ -88,6 +96,58 @@
                 return el.closest('li').attr('id');
             });
 
+          }
+          initList();
+          var search = {
+            searchEl: null,
+            searchQ: '',
+            searchFrm: null,
+            ajaxCall: null,
+            originalState: null,
+            init: function(el)
+            {
+              search.originalState = $('#sortablePages').clone();
+              search.searchEl = el;
+              search.searchFrm = search.searchEl.parents('form:eq(0)');
+              search.bindEvents();
+              search.searchQ = getURLParameter('q');
+            },
+            bindEvents: function()
+            {
+              search.searchEl.bind('keyup', function(e)
+              {
+                search.searchQ = search.searchEl.val();
+                if (search.searchQ.length > 2)
+                {
+                  search.doSearch();
+                }
+                else if(search.searchQ.length == 0){
+                  $('#sortablePages').replaceWith(search.originalState);
+                  initList();
+                }
+              });
+            },
+            doSearch: function()
+            {
+              if (search.ajaxCall !== null) {
+                search.ajaxCall.abort();
+              }
+              search.ajaxCall = $.ajax({
+                type: 'POST',
+                url: route('coaster.admin.adminsearch') + '?rnfd'+ Math.random(),
+                data: search.searchFrm.serialize(),
+                success: function(r)
+                {
+                  $('#sortablePages').replaceWith($(r));
+                  watch_for_delete('.delete', 'page', function (el) {
+                      return el.closest('li').attr('id');
+                  });
+                  search.ajaxCall = null;
+                }
+              });
+            }
+          };
+          search.init($('.search-box'));
         });
     </script>
 @stop

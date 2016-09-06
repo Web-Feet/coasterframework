@@ -156,7 +156,7 @@ class PagesController extends AdminController
             $rootPageIds = array_map(function($rootPage) {return $rootPage->id;}, $rootPages);
             $order = [];
             $changeUnderParentIds = [];
-            
+
             foreach ($pages as $pageId => $parent) {
                 $currentPage = Page::preload($pageId);
                 if ($currentPage->exists) {
@@ -195,7 +195,7 @@ class PagesController extends AdminController
                     return 0; // error, moved page no longer exists
                 }
             }
-            
+
         }
         return 1;
     }
