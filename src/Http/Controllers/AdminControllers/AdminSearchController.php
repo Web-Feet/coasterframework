@@ -21,7 +21,10 @@ class AdminSearchController extends Controller
 
     $searchres = $searchEntity::adminSearch($q);
     $searchResIds = [];
-
+    if ($searchres->count() == 0)
+    {
+      return '<p>No items match your search.</p>';
+    }
     foreach ($searchres as $pageRes)
     {
       $searchResIds[] = $pageRes->id;
