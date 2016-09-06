@@ -29,7 +29,9 @@
     </div>
 </div>
 
+<div id="sort-wrap">
 {!! $pages !!}
+</div>
 
 @section('scripts')
     <script type='text/javascript'>
@@ -122,7 +124,7 @@
                   search.doSearch();
                 }
                 else if(search.searchQ.length == 0){
-                  $('#sortablePages').replaceWith(search.originalState);
+                  $('#sort-wrap').html(search.originalState);
                   initList();
                 }
               });
