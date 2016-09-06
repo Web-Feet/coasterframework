@@ -2,11 +2,14 @@
 
 use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use Auth;
+use CoasterCms\Libraries\Traits\DataPreLoad;
 use Eloquent;
 use Illuminate\Database\Eloquent\Collection;
 
 class PageGroup extends Eloquent
 {
+    use DataPreLoad;
+
     /**
      * @var string
      */
@@ -283,11 +286,7 @@ class PageGroup extends Eloquent
     {
         $pages = new Collection;
         if ($pageIds = $this->itemPageIdsFiltered($pageId, $checkLive, $sort)) {
-            foreach ($this->pages as $page) {
-                if (in_array($page->id, $pageIds)) {
-                    $pages->add($page);
-                }
-            }
+            $pages->add(Page::preload($pageId));
         }
         return $pages;
     }

@@ -1,17 +1,23 @@
 <?php namespace CoasterCms\Models;
 
 use CoasterCms\Helpers\Cms\Theme\BlockManager;
+use CoasterCms\Libraries\Traits\DataPreLoad;
 use Eloquent;
 
 class Block extends Eloquent
 {
+    use DataPreLoad;
+
     protected $table = 'blocks';
-    private static $preloaded_blocks = array();
-    private static $repeater_block_ids = array();
 
     public function languages()
     {
         return $this->hasMany('CoasterCms\Models\PageBlockDefault');
+    }
+
+    protected static function _preloadByColumn()
+    {
+        return ['id', 'name'];
     }
 
     public static function get_block($block_name)
@@ -19,34 +25,14 @@ class Block extends Eloquent
         return self::where('name', '=', $block_name)->first();
     }
 
-    /**
-     * @param $block_name
-     * @param bool $force
-     * @return \CoasterCms\Models\Block|null
-     */
-    public static function preload($block_name, $force = false)
+    public static function getBlockIdsOfType($blockType)
     {
-        if (empty(self::$preloaded_blocks) || $force) {
-            $blocks = self::where('active', '=', 1)->get();
-            foreach ($blocks as $block) {
-                self::$preloaded_blocks[$block->id] = $block; // load by id as well as name
-                self::$preloaded_blocks[$block->name] = $block;
-            }
+        $key = 'type'. ucwords($blockType) .'Ids';
+        if (!static::_preloadIsset($key)) {
+            $data = static::where('type', '=', $blockType)->get();
+            static::_preloadOnce($data, $key, ['id'], 'id');
         }
-        return !empty(self::$preloaded_blocks[$block_name]) ? self::$preloaded_blocks[$block_name] : new self;
-    }
-
-    public static function get_repeater_blocks()
-    {
-        if (empty(self::$repeater_block_ids)) {
-            $repeater_blocks = self::where('type', '=', 'repeater')->get();
-            if (!$repeater_blocks->isEmpty()) {
-                foreach ($repeater_blocks as $repeater_block) {
-                    self::$repeater_block_ids[] = $repeater_block->id;
-                }
-            }
-        }
-        return self::$repeater_block_ids;
+        return static::_preloadGet($key);
     }
 
     public static function get_block_on_page($block_id, $page_id)
@@ -73,20 +59,14 @@ class Block extends Eloquent
 
     public static function nameToNameArray()
     {
-        $array = [];
-        foreach (self::all() as $block) {
-            $array[$block->name] = $block->name;
-        }
-        return $array;
+        static::_preloadOnce(null, 'nameToName', ['name'], 'name');
+        return static::_preloadGet('nameToName');
     }
 
     public static function idToLabelArray()
     {
-        $array = [];
-        foreach (self::all() as $block) {
-            $array[$block->id] = $block->label;
-        }
-        return $array;
+        static::_preloadOnce(null, 'idToLabel', ['id'], 'label');
+        return static::_preloadGet('idToLabel');
     }
 
     /**

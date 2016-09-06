@@ -205,7 +205,7 @@ class PageLoader
         if (!$page && $parentPage->group_container > 0) {
             $page = self::_pageQuery($paths, $languageId, false, $parentPage->group_container);
             if ($page) {
-                $group = PageGroup::find($parentPage->group_container);
+                $group = PageGroup::preload($parentPage->group_container);
                 $page = in_array($page->id, $group->itemPageIdsFiltered($parentPage->id)) ? $page : null;
             }
         }

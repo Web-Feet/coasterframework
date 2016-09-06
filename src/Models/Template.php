@@ -57,10 +57,7 @@ class Template extends Eloquent
     public static function blocks_of_type($type)
     {
         $numb_type = array();
-        $type_blocks = Block::where('type', '=', $type)->get();
-        foreach ($type_blocks as $block) {
-            $block_ids[] = $block->id;
-        }
+        $block_ids = Block::getBlockIdsOfType($type);
         if (!empty($block_ids)) {
             $sw = ThemeBlock::whereIn('block_id', $block_ids)->where('show_in_pages', '=', 1)->count();
             $templates = TemplateBlock::whereIn('block_id', $block_ids)->groupBy('template_id')->get(array('template_id', DB::raw('count(*) as type')));

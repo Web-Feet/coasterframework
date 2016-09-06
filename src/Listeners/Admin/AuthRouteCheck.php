@@ -25,8 +25,8 @@ class AuthRouteCheck
                 if ($event->action == 'add') {
                     $event->returnOptions['page_id'] = Request::input('page_info.parent') ?: $event->returnOptions['page_id'];
                     if (isset($event->parameters['groupId'])) {
-                        $pageGroup = PageGroup::find($event->parameters['groupId']);
-                        if (!$pageGroup || !$pageGroup->canAddItems()) {
+                        $pageGroup = PageGroup::preload($event->parameters['groupId']);
+                        if (!$pageGroup->exists || !$pageGroup->canAddItems()) {
                             $event->override = false;
                         }
                     }
@@ -37,8 +37,8 @@ class AuthRouteCheck
                 }
                 break;
             case 'groups':
-                $page_group = PageGroup::find(isset($event->parameters['groupId']) ? $event->parameters['groupId'] : 0);
-                $event->override = $page_group ? $page_group->canAddItems() : $event->override;
+                $page_group = PageGroup::preload(isset($event->parameters['groupId']) ? $event->parameters['groupId'] : 0);
+                $event->override = $page_group->exists ? $page_group->canAddItems() : $event->override;
         }
     }
 

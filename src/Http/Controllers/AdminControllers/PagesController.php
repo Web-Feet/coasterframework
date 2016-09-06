@@ -441,8 +441,8 @@ class PagesController extends AdminController
 
         $siblings = [];
         foreach ($page_groups as $pageGroupId => $checkedVal) {
-            $pageGroup = PageGroup::find($pageGroupId);
-            $siblings = array_merge($pageGroup ? $pageGroup->itemPageIds() : [], $siblings);
+            $pageGroup = PageGroup::preload($pageGroupId);
+            $siblings = array_merge($pageGroup->exists ? $pageGroup->itemPageIds() : [], $siblings);
         }
         if ($page_info['parent'] >= 0) {
             $siblings = array_merge(Page::getChildPageIds($page_info['parent']), $siblings);
@@ -477,8 +477,8 @@ class PagesController extends AdminController
         $page_info['group_container'] = $createNewGroup ? 0 : $page_info['group_container'];
         $page_info['group_container_url_priority'] = !empty($page_info['group_container_url_priority']) ? $page_info['group_container_url_priority'] : 0;
         if ($page_info['group_container']) {
-            $groupContainer = PageGroup::find($page_info['group_container']);
-            if (!$groupContainer || !$groupContainer->canAddContainers()) {
+            $groupContainer = PageGroup::preload($page_info['group_container']);
+            if (!$groupContainer->exists || !$groupContainer->canAddContainers()) {
                 $page_info['group_container'] = 0;
             }
         }

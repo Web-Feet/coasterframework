@@ -19,8 +19,8 @@ class GroupsController extends Controller
 
     public function getPages($groupId)
     {
-        $group = PageGroup::find($groupId);
-        if (!empty($group)) {
+        $group = PageGroup::preload($groupId);
+        if ($group->exists) {
             $pageIds = $group->itemPageIds(false, true);
 
             $attributes = PageGroupAttribute::where('group_id', '=', $groupId)->get();
@@ -70,20 +70,23 @@ class GroupsController extends Controller
 
     public function getEdit($groupId)
     {
-        $group = PageGroup::find($groupId);
+        $group = PageGroup::preload($groupId);
+        if ($group->exists) {
 
-        $templateSelectContent = new \stdClass;
-        $templateSelectContent->options = [0 => '-- No default --'] + Theme::get_template_list($group->default_template);
-        $templateSelectContent->selected = $group->default_template;
-        $blockList = Block::idToLabelArray();
-        
-        $this->layoutData['content'] = View::make('coaster::pages.groups.edit', ['group' => $group, 'templateSelectContent' => $templateSelectContent, 'blockList' => $blockList]);
+            $templateSelectContent = new \stdClass;
+            $templateSelectContent->options = [0 => '-- No default --'] + Theme::get_template_list($group->default_template);
+            $templateSelectContent->selected = $group->default_template;
+            $blockList = Block::idToLabelArray();
+
+            $this->layoutData['content'] = View::make('coaster::pages.groups.edit', ['group' => $group, 'templateSelectContent' => $templateSelectContent, 'blockList' => $blockList]);
+        }
     }
 
 
     public function postEdit($groupId)
     {
-        if ($group = PageGroup::find($groupId)) {
+        $group = PageGroup::preload($groupId);
+        if ($group->exists) {
             $groupInput = Request::input('group', []);
             foreach ($groupInput as $groupAttribute => $attributeValue) {
                 if ($group->$groupAttribute !== null && $groupAttribute != 'id') {

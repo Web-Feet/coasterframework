@@ -188,7 +188,7 @@ class PageBuilderInstance
     public function pageUrlSegment($pageId = 0, $noOverride = false)
     {
         $pageId = $pageId ?: $this->pageId($noOverride);
-        return $pageId ? PageLang::url($pageId): '';
+        return $pageId ? PageLang::getUrl($pageId): '';
     }
 
     /**
@@ -210,7 +210,7 @@ class PageBuilderInstance
     public function pageName($pageId = 0, $noOverride = false)
     {
         $pageId = $pageId ?: $this->pageId($noOverride);
-        return $pageId ? PageLang::name($pageId): '';
+        return $pageId ? PageLang::getName($pageId): '';
     }
 
     /**

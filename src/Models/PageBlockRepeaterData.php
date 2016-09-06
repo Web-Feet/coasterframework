@@ -53,7 +53,7 @@ class PageBlockRepeaterData extends Eloquent
         }
         $repeater_data = BlockManager::get_data_for_version(new self, $version, array('row_key'), array($row_keys));
         if (!empty($repeater_data)) {
-            $repeater_blocks = Block::get_repeater_blocks();
+            $repeater_blocks = Block::getBlockIdsOfType('repeater');
             foreach ($repeater_data as $repeater) {
                 $repeater->row_id = $row_key_data[$repeater->row_key]->row_id;
                 $repeater->repeater_id = $row_key_data[$repeater->row_key]->repeater_id;
@@ -69,7 +69,7 @@ class PageBlockRepeaterData extends Eloquent
     public static function get_page_repeater_data($page_id, $version = 0)
     {
         $organised_data = [];
-        $repeater_block_ids = Block::get_repeater_blocks();
+        $repeater_block_ids = Block::getBlockIdsOfType('repeater');
         if (!empty($repeater_block_ids)) {
             if (!empty($page_id)) {
                 $repeater_blocks = BlockManager::get_data_for_version(new PageBlock, $version, array('block_id', 'page_id'), array($repeater_block_ids, $page_id));

@@ -189,8 +189,8 @@ class Page extends Eloquent
         $pages = [];
         $page = self::preload($page_id);
         if ($page->exists && $page->group_container > 0) {
-            $group = PageGroup::find($page->group_container);
-            if (!empty($group)) {
+            $group = PageGroup::preload($page->group_container);
+            if ($group->exists) {
                 $group_pages = $group->itemPageIdsFiltered($page_id, $check_live, true);
                 foreach ($group_pages as $group_page) {
                     $pages[] = self::preload($group_page);
@@ -217,8 +217,8 @@ class Page extends Eloquent
 
         if ($parent = !empty($options['parent']) ? self::find($options['parent']) : null) {
             if ($parent->group_container > 0) {
-                $group = PageGroup::find($parent->group_container);
-                $pages = $group->itemPagesFiltered($parent->id);
+                $group = PageGroup::preload($parent->group_container);
+                $pages = $group->itemPageFiltered($parent->id);
             } else {
                 $pages = self::where('parent', '=', $options['parent'])->get();
             }
@@ -284,7 +284,8 @@ class Page extends Eloquent
                 if ($child_page->group_container > 0) {
                     $li_info->type = 'type_group';
                     $li_info->leaf = '';
-                    $li_info->group = PageGroup::find($child_page->group_container);
+                    $li_info->group = PageGroup::preload($child_page->group_container);
+                    $li_info->group = $li_info->group->exists ? $li_info->group : '';
                 } else {
                     if ($child_page->link == 1) {
                         $li_info->preview_link = $page_lang->url;
@@ -317,7 +318,7 @@ class Page extends Eloquent
 
     public function delete()
     {
-        $page_name = PageLang::preload($this->id)->name;
+        $page_name = PageLang::getName($this->id);
         $log_id = AdminLog::new_log('Page \'' . $page_name . '\' deleted (Page ID ' . $this->id . ')');
 
         // make backups
@@ -349,7 +350,7 @@ class Page extends Eloquent
         }
 
         // repeater data
-        $repeater_block_ids = Block::get_repeater_blocks();
+        $repeater_block_ids = Block::getBlockIdsOfType('repeater');
         if (!empty($repeater_block_ids)) {
             $repeater_blocks = PageBlock::whereIn('block_id', $repeater_block_ids)->where('page_id', $this->id)->get();
             if (!$repeater_blocks->isEmpty()) {

@@ -78,8 +78,8 @@ class Path
                 self::_loadSubPaths($childPages, $pagePathData);
             }
             if ($pageData->group_container > 0) {
-                $group = PageGroup::find($pageData->group_container);
-                if (!empty($group)) {
+                $group = PageGroup::preload($pageData->group_container);
+                if ($group->exists) {
                     foreach ($group->itemPageFiltered($pageId) as $groupPage) {
                         $groupPagePathData = self::_getById($groupPage->id);
                         $groupPagePathData->groupContainers[$pageId] = [
