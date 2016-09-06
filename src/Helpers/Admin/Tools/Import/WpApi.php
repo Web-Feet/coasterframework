@@ -15,6 +15,7 @@ use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\Language;
 use Carbon\Carbon;
+
 class WpApi
 {
     protected $url = '';
@@ -140,7 +141,7 @@ class WpApi
          $newUrlPath = 'uploads/images/'.$fullFileName;
          try {
            // Open the file to get existing content
-           $data = file_get_contents($image);
+           $data = @file_get_contents($image);
 
            // New file
            $new = public_path($newUrlPath);
@@ -183,13 +184,35 @@ class WpApi
           $idsInserted[$comment->id] = $check->row_id;
         }
       }
+    }
+
+    public function getMetas($yoastData, $data, $page_id)
+    {
+      $meta_title = (empty($yoastData->title)) ? $data->title->rendered : $yoastData->title;
+      $meta_description = (empty($yoastData->metadesc)) ? substr(strip_tags($data->content->rendered), 0, 140).'...' : $yoastData->metadesc;
+      $meta_keywords = (empty($yoastData->metakeywords)) ? $data->title->rendered : $yoastData->metakeywords;
+      try {
+        $meta_title_block = Block::where('name', '=', 'meta_title')->first();
+        if (!empty($title_block)) {
+            BlockManager::$meta_title_block($meta_title_block->id, $meta_title, $page_id); // saves first page version
+        }
+        $meta_desc_block = Block::where('name', '=', 'meta_description')->first();
+        if (!empty($meta_desc_block)) {
+            BlockManager::update_block($meta_desc_block->id, $meta_description, $page_id); // saves first page version
+        }
+        $meta_keywords_block = Block::where('name', '=', 'meta_keywords')->first();
+        if (!empty($meta_keywords_block)) {
+          BlockManager::update_block($meta_keywords_block->id, $meta_keywords, $page_id); // saves first page version
+        }
+      } catch (Exception $e) {
+
+      }
 
 
     }
 
     public function createPost($data)
     {
-      // dd($data);
       $pageLang = PageLang::where('name', '=', $data->title->rendered)->first();
       $uporc = 'updated';
       if (empty($pageLang))
@@ -206,7 +229,10 @@ class WpApi
         if (!empty($latestVersion)) {
             $latestVersion->publish();
         }
-
+        if ( ! empty($data->yoast))
+        {
+          $this->getMetas($data->yoast, $data, $page->id);
+        }
         $res = new \stdClass;
         $res->message = 'Post '.$uporc.': '.$pageLang->name;
         $res->oldLink = $data->link;
@@ -226,7 +252,7 @@ class WpApi
       $comments  = $this->getComments($data, $page);
       $categories = $this->getCategory($data->_embedded->{"wp:term"}, $page->id);
       // Page Lang
-
+      $pageLang->live_version = 0;
       $pageLang->page_id = $page->id;
 
       $pageLang->language_id = Language::current();
@@ -256,7 +282,10 @@ class WpApi
       if (!empty($latestVersion)) {
           $latestVersion->publish();
       }
-
+      if ( ! empty($data->yoast))
+      {
+        $this->getMetas($data->yoast, $data, $page->id);
+      }
       $res = new \stdClass;
       $res->message = 'Post '.$uporc.': '.$pageLang->name;
       $res->oldLink = $data->link;
