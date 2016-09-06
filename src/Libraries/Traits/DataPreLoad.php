@@ -23,17 +23,23 @@ trait DataPreLoad
     public static function preload($key, $force = false)
     {
         if (!static::_preloadIsset() || $force) {
-            $data = null;
-            if ($whereQueries = static::_preloadWhereQueries()) {
-                $dataModel = new static;
-                foreach ($whereQueries as $whereQuery) {
-                    $dataModel->where(...$whereQuery);
-                }
-                $data = $dataModel->get();
-            }
+            $data = static::_preloadCollection();
             static::_preload($data);
         }
         return !empty(static::$_preLoadedData[$key]) ? static::$_preLoadedData[$key] : new static;
+    }
+
+    /**
+     * @param bool $force
+     * @return array
+     */
+    public static function preloadArray($force = false)
+    {
+        if (!static::_preloadIsset() || $force) {
+            $data = static::_preloadCollection();
+            static::_preload($data);
+        }
+        return static::$_preLoadedData;
     }
 
     /**
@@ -75,7 +81,7 @@ trait DataPreLoad
      */
     protected static function _preload($data = null, $customDataSetKey = 'default', $identifiers = [], $storeSingleColumn = null)
     {
-        $data = $data ?: static::all();
+        $data = $data ?: static::_preloadCollection();
         static::$_preLoadedCustomData[$customDataSetKey] = static::_preloadIsset($customDataSetKey) ? static::$_preLoadedCustomData[$customDataSetKey] : [];
         $identifiers = $identifiers ?: static::_preloadByColumn();
         foreach ($data as $row) {
@@ -112,11 +118,11 @@ trait DataPreLoad
     }
 
     /**
-     * @return array
+     * @return null|Collection
      */
-    protected static function _preloadWhereQueries()
+    protected static function _preloadCollection()
     {
-        return [];
+        return self::all();
     }
 
 }

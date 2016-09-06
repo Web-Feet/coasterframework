@@ -1,10 +1,12 @@
 <?php namespace CoasterCms\Models;
 
+use CoasterCms\Libraries\Traits\DataPreLoad;
 use Eloquent;
 use Session;
 
 class Language extends Eloquent
 {
+    use DataPreLoad;
 
     protected $table = 'languages';
 
@@ -25,11 +27,8 @@ class Language extends Eloquent
 
     public static function selectArray()
     {
-        $array = [];
-        foreach (self::all() as $language) {
-            $array[$language->id] = $language->language;
-        }
-        return $array;
+        static::_preloadOnce(null, 'idToLanguage', ['id'], 'language');
+        return static::_preloadGet('idToLanguage');
     }
 
 }
