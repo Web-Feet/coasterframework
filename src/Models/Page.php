@@ -2,14 +2,15 @@
 
 use Auth;
 use CoasterCms\Helpers\Cms\Page\Path;
+use CoasterCms\Libraries\Traits\DataPreLoad;
 use Eloquent;
 use View;
 
 class Page extends Eloquent
 {
+    use DataPreLoad;
 
     protected $table = 'pages';
-    protected static $preloaded_pages = array();
     protected static $preloaded_page_children = array();
     protected static $preloaded_catpages = array();
 
@@ -123,23 +124,11 @@ class Page extends Eloquent
         return $limit === '0' ? false : (self::get_total($for_group) >= $limit);
     }
 
-    public static function preload($pageId)
-    {
-        if (empty(self::$preloaded_pages)) {
-            $pages = self::all();
-            foreach ($pages as $page) {
-                self::$preloaded_pages[$page->id] = $page;
-            }
-        }
-        return !empty(self::$preloaded_pages[$pageId]) ? self::$preloaded_pages[$pageId] : new self;
-    }
-
     // returns child page ids (parent only / no group)
     public static function getChildPageIds($pageId)
     {
         if (empty(self::$preloaded_page_children)) {
-            self::preload(-1);
-            foreach (self::$preloaded_pages as $key => $page) {
+            foreach (static::preloadArray() as $key => $page) {
                 if (!isset(self::$preloaded_page_children[$page->parent])) {
                     self::$preloaded_page_children[$page->parent] = [];
                 }
@@ -158,10 +147,9 @@ class Page extends Eloquent
     // returns ordered pages
     public static function getOrderedPages($pageIds)
     {
-        self::preload(-1);
         $pages = [];
         foreach ($pageIds as $pageId) {
-            $pages[$pageId] = self::$preloaded_pages[$pageId];
+            $pages[$pageId] = static::preload($pageId);
         }
         uasort($pages, ['self', '_orderAsc']);
         return $pages;

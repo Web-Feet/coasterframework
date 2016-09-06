@@ -1,24 +1,18 @@
 <?php namespace CoasterCms\Models;
 
+use CoasterCms\Libraries\Traits\DataPreLoad;
 use Eloquent;
 
 class AdminAction extends Eloquent
 {
+    use DataPreLoad;
+
     protected $table = 'admin_actions';
-
-    private static $_actions;
-
-    public static function preload($action_id)
-    {
-        self::_preload();
-        return self::$_actions[$action_id];
-    }
 
     public static function inherited()
     {
-        self::_preload();
         $actions = [];
-        foreach (self::$_actions as $action) {
+        foreach (static::preloadArray() as $action) {
             if ($action->inherit) {
                 $actions[] = $action;
             }
@@ -28,26 +22,13 @@ class AdminAction extends Eloquent
 
     public static function edit_based()
     {
-        self::_preload();
         $actions = [];
-        foreach (self::$_actions as $action) {
+        foreach (static::preloadArray() as $action) {
             if ($action->edit_based) {
                 $actions[] = $action;
             }
         }
         return $actions;
-    }
-
-    private static function _preload()
-    {
-        if (!isset(self::$_actions)) {
-            self::$_actions = [];
-            if ($actions = self::all()) {
-                foreach ($actions as $action) {
-                    self::$_actions[$action->id] = $action;
-                }
-            }
-        }
     }
 
 }
