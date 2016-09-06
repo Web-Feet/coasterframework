@@ -23,8 +23,7 @@ trait DataPreLoad
     public static function preload($key, $force = false)
     {
         if (!static::_preloadIsset() || $force) {
-            $data = static::_preloadCollection();
-            static::_preload($data);
+            static::_preload();
         }
         return !empty(static::$_preLoadedData[$key]) ? static::$_preLoadedData[$key] : new static;
     }
@@ -36,8 +35,7 @@ trait DataPreLoad
     public static function preloadArray($force = false)
     {
         if (!static::_preloadIsset() || $force) {
-            $data = static::_preloadCollection();
-            static::_preload($data);
+            static::_preload();
         }
         return static::$_preLoadedData;
     }
@@ -118,7 +116,7 @@ trait DataPreLoad
     }
 
     /**
-     * @return null|Collection
+     * @return Collection
      */
     protected static function _preloadCollection()
     {
