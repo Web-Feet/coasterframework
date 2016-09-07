@@ -32,7 +32,7 @@ class Block extends Eloquent
             $data = static::where('type', '=', $blockType)->get();
             static::_preloadOnce($data, $key, ['id'], 'id');
         }
-        return static::_preloadGet($key);
+        return static::_preloadGetArray($key);
     }
 
     public static function get_block_on_page($block_id, $page_id)
@@ -60,13 +60,13 @@ class Block extends Eloquent
     public static function nameToNameArray()
     {
         static::_preloadOnce(null, 'nameToName', ['name'], 'name');
-        return static::_preloadGet('nameToName');
+        return static::_preloadGetArray('nameToName');
     }
 
     public static function idToLabelArray()
     {
         static::_preloadOnce(null, 'idToLabel', ['id'], 'label');
-        return static::_preloadGet('idToLabel');
+        return static::_preloadGetArray('idToLabel');
     }
 
     /**

@@ -28,7 +28,7 @@ class Language extends Eloquent
     public static function selectArray()
     {
         static::_preloadOnce(null, 'idToLanguage', ['id'], 'language');
-        return static::_preloadGet('idToLanguage');
+        return static::_preloadGetArray('idToLanguage');
     }
 
 }

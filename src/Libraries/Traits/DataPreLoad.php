@@ -51,9 +51,19 @@ trait DataPreLoad
 
     /**
      * @param string $customDataSetKey
+     * @param string $key
+     * @return mixed|null
+     */
+    protected static function _preloadGet($customDataSetKey = 'default', $key = '')
+    {
+        return static::_preloadIsset($customDataSetKey) && array_key_exists($key, static::$_preLoadedCustomData[$customDataSetKey]) ? static::$_preLoadedCustomData[$customDataSetKey][$key] : null;
+    }
+
+    /**
+     * @param string $customDataSetKey
      * @return array
      */
-    protected static function _preloadGet($customDataSetKey = 'default')
+    protected static function _preloadGetArray($customDataSetKey = 'default')
     {
         return static::_preloadIsset($customDataSetKey) ? static::$_preLoadedCustomData[$customDataSetKey] : [];
     }
@@ -76,16 +86,23 @@ trait DataPreLoad
      * @param string $customDataSetKey
      * @param array $identifiers
      * @param string $storeSingleColumn
+     * @param bool $allowMultiple
      */
-    protected static function _preload($data = null, $customDataSetKey = 'default', $identifiers = [], $storeSingleColumn = null)
+    protected static function _preload($data = null, $customDataSetKey = 'default', $identifiers = [], $storeSingleColumn = null, $allowMultiple = false)
     {
         $data = $data ?: static::_preloadCollection();
         static::$_preLoadedCustomData[$customDataSetKey] = static::_preloadIsset($customDataSetKey) ? static::$_preLoadedCustomData[$customDataSetKey] : [];
         $identifiers = $identifiers ?: static::_preloadByColumn();
         foreach ($data as $row) {
             foreach ($identifiers as $identifierColumn) {
-                if (!array_key_exists($identifierColumn, static::$_preLoadedCustomData[$customDataSetKey])) {
-                    static::$_preLoadedCustomData[$customDataSetKey][$row->$identifierColumn] = $storeSingleColumn ? $row->$storeSingleColumn : $row;
+                $isNew = !array_key_exists($identifierColumn, static::$_preLoadedCustomData[$customDataSetKey]);
+                if ($allowMultiple || $isNew) {
+                    $storeValue = $storeSingleColumn ? $row->$storeSingleColumn : $row;
+                    if ($isNew) {
+                        static::$_preLoadedCustomData[$customDataSetKey][$row->$identifierColumn] = $allowMultiple ? [$storeValue] : $storeValue;
+                    } else {
+                        static::$_preLoadedCustomData[$customDataSetKey][$row->$identifierColumn][] = $storeValue;
+                    }
                 }
             }
         }
@@ -99,11 +116,12 @@ trait DataPreLoad
      * @param string $customDataSetKey
      * @param array $identifiers
      * @param null $storeSingleColumn
+     * @param bool $allowMultiple
      */
-    protected static function _preloadOnce($data = null, $customDataSetKey = 'default', $identifiers = [], $storeSingleColumn = null)
+    protected static function _preloadOnce($data = null, $customDataSetKey = 'default', $identifiers = [], $storeSingleColumn = null, $allowMultiple = false)
     {
         if (!static::_preloadIsset($customDataSetKey)) {
-            static::_preload($data, $customDataSetKey, $identifiers, $storeSingleColumn);
+            static::_preload($data, $customDataSetKey, $identifiers, $storeSingleColumn, $allowMultiple);
         }
     }
 
