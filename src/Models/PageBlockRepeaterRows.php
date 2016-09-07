@@ -16,7 +16,7 @@ class PageBlockRepeaterRows extends Eloquent
             $data = static::where('repeater_id', '=', $repeaterId)->get();
             static::_preloadOnce($data, $key, ['row_id']);
         }
-        return static::_preloadGet($key);
+        return static::_preloadGetArray($key);
     }
 
     public static function add_row_key($repeater_id, $row_id)
