@@ -285,8 +285,10 @@ class PageGroup extends Eloquent
     public function itemPageFiltered($pageId, $checkLive = false, $sort = false)
     {
         $pages = new Collection;
-        if ($pageIds = $this->itemPageIdsFiltered($pageId, $checkLive, $sort)) {
-            $pages->add(Page::preload($pageId));
+        if ($groupPageIds = $this->itemPageIdsFiltered($pageId, $checkLive, $sort)) {
+            foreach ($groupPageIds as $groupPageId) {
+                $pages->add(Page::preload($groupPageId));
+            }
         }
         return $pages;
     }
