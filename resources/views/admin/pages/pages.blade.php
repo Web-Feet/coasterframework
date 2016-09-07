@@ -89,17 +89,16 @@
                 }
             });
 
-            $.each(expanded, function(index, value) {
-                $('#list_'+value+ '.mjs-nestedSortable-branch > .ui-sortable-handle > .disclose').trigger('click');
-            });
-
             initialize_sort('nestedSortable');
             watch_for_delete('.delete', 'page', function (el) {
                 return el.closest('li').attr('id');
             });
 
-          }
+          };
           initList();
+          $.each(expanded, function(index, value) {
+              $('#list_'+value+ '.mjs-nestedSortable-branch > .ui-sortable-handle > .disclose').trigger('click');
+          });
           var search = {
             searchEl: null,
             searchQ: '',
@@ -121,7 +120,7 @@
               search.searchEl.bind('keyup', function(e)
               {
                 search.searchQ = search.searchEl.val();
-                if (search.searchQ.length > 2)
+                if (search.searchQ.length > 1)
                 {
                   search.doSearch();
                 }
@@ -142,7 +141,7 @@
                 data: search.searchFrm.serialize(),
                 success: function(r)
                 {
-                  $('#' + search.sortableTableListId).replaceWith($(r));
+                  $('#sort-wrap').html(r);
                   watch_for_delete('.delete', 'page', function (el) {
                       return el.closest('li').attr('id');
                   });
