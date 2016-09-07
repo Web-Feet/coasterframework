@@ -254,7 +254,7 @@ class Page extends Eloquent
                 }
 
                 $permissions = [];
-                $permissions['add'] = Auth::action('pages.add', ['page_id' => $page->id]);
+                $permissions['add'] = Auth::action('pages.add', ['page_id' => $page->id]) && $page->parent != -1;
                 $permissions['edit'] = Auth::action('pages.edit', ['page_id' => $page->id]);
                 $permissions['delete'] = Auth::action('pages.delete', ['page_id' => $page->id]);
                 $permissions['group'] = Auth::action('groups.pages', ['page_id' => $page->id]);
