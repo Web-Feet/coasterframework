@@ -20,16 +20,11 @@ class AdminSearchController extends Controller
     $searchEntity = $request->get('search_entity');
 
     $searchres = $searchEntity::adminSearch($q);
-    $searchResIds = [];
     if ($searchres->count() == 0)
     {
       return '<p>No items match your search.</p>';
     }
-    foreach ($searchres as $pageRes)
-    {
-      $searchResIds[] = $pageRes->id;
-    }
 
-    return Page::get_page_list_view(0, 1, '', $searchResIds);
+    return Page::getPageListView($searchres);
   }
 }

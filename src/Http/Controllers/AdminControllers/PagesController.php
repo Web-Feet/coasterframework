@@ -37,7 +37,7 @@ class PagesController extends AdminController
         })->where('page_lang.language_id', '=', Language::current())->where('link', '=', 0)->get(['pages.*'])->all();
         $rootPageIds = array_map(function($rootPage) {return 'list_'.$rootPage->id;}, $rootPages);
 
-        $this->layoutData['content'] = View::make('coaster::pages.pages', array('pages' => Page::get_page_list_view(0, 1), 'add_page' => Auth::action('pages.add'), 'page_states' => Auth::user()->getPageStates(), 'max' => Page::at_limit(), 'rootPageIds' => $rootPageIds, 'groups_exist' => PageGroup::count()));
+        $this->layoutData['content'] = View::make('coaster::pages.pages', array('pages' => Page::getPageTreeView(0), 'add_page' => Auth::action('pages.add'), 'page_states' => Auth::user()->getPageStates(), 'max' => Page::at_limit(), 'rootPageIds' => $rootPageIds, 'groups_exist' => PageGroup::count()));
         $this->layoutData['modals'] = View::make('coaster::modals.general.delete_item');
     }
 
