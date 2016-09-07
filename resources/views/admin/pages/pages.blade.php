@@ -106,9 +106,11 @@
             searchFrm: null,
             ajaxCall: null,
             originalState: null,
-            init: function(el)
+            sortableTableListId: '',
+            init: function(el, sortableTableListId)
             {
-              search.originalState = $('#sortablePages').clone();
+              search.sortableTableListId = sortableTableListId;
+              search.originalState = $('#' + search.sortableTableListId).clone();
               search.searchEl = el;
               search.searchFrm = search.searchEl.parents('form:eq(0)');
               search.bindEvents();
@@ -140,7 +142,7 @@
                 data: search.searchFrm.serialize(),
                 success: function(r)
                 {
-                  $('#sortablePages').replaceWith($(r));
+                  $('#' + search.sortableTableListId).replaceWith($(r));
                   watch_for_delete('.delete', 'page', function (el) {
                       return el.closest('li').attr('id');
                   });
@@ -149,7 +151,7 @@
               });
             }
           };
-          search.init($('.search-box'));
+          search.init($('.search-box'), 'sortablePages');
         });
     </script>
 @stop
