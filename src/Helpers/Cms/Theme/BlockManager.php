@@ -327,7 +327,16 @@ class BlockManager
         return self::$_blockClasses;
     }
 
-    public static function get_data_for_version($model, $version, $filter_on = array(), $filter_values = array(), $order_by = null)
+    /**
+     * @param \Eloquent $model
+     * @param int $version (select specific version or alternatively -1 for live version 0 & for latest version)
+     * @param array $filter_on
+     * @param array $filter_values
+     * @param string $order_by
+     * @return array
+     * @throws \Exception
+     */
+    public static function get_data_for_version($model, $version, $filter_on = array(), $filter_values = array(), $order_by = '')
     {
         $parameters = [];
         $where_qs['j'] = [];
