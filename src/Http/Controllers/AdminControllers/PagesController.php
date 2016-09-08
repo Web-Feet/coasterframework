@@ -435,7 +435,7 @@ class PagesController extends AdminController
         if ($page_info['parent'] > 0 && !$parent) {
             return false;
         }
-        if ($page->parent == -1 || ($page_info['parent'] != -1 && Page::at_limit())) {
+        if (($page_info['parent'] > 0 && $parent->parent == -1) || Page::at_limit($page_info['parent'] == -1)) {
             return false;
         }
 
