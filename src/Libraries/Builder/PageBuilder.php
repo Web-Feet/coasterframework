@@ -89,7 +89,7 @@ class PageBuilder
     public static function getData($varName = '')
     {
         if ($varName) {
-            return static::getInstance()->$varName;
+            return property_exists(static::getInstance(), $varName) ? static::getInstance()->$varName : null;
         } else {
             return get_object_vars(static::getInstance());
         }

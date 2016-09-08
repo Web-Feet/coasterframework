@@ -18,6 +18,7 @@ use CoasterCms\Models\PageBlockDefault;
 use CoasterCms\Models\PageGroupPage;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\PageSearchData;
+use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\Setting;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
@@ -62,9 +63,9 @@ class PageBuilderInstance
     public $is404;
 
     /**
-     * @var bool
+     * @var PageVersion
      */
-    public $isPreview;
+    public $previewVersion;
 
     /**
      * @var bool
@@ -109,10 +110,11 @@ class PageBuilderInstance
         $this->page = !empty($pageLoader->pageLevels) ? end($pageLoader->pageLevels) : null;
         $this->pageLevels = $pageLoader->pageLevels;
 
-        $this->template = $this->page ? Template::name($this->page->template) : '';
+        $templateId = $pageLoader->previewVersion ? $pageLoader->previewVersion->template : ($this->page ? $this->page->template : 0);
+        $this->template = Template::name($templateId);
 
         $this->is404 = $pageLoader->is404;
-        $this->isPreview = $pageLoader->isPreview;
+        $this->previewVersion = $pageLoader->previewVersion;
         $this->isLive = $pageLoader->isLive;
         $this->externalTemplate = $pageLoader->externalTemplate;
         $this->feedExtension = $pageLoader->feedExtension;
@@ -223,6 +225,21 @@ class PageBuilderInstance
     {
         $pageId = $pageId ?: $this->pageId($noOverride);
         return $pageId ? Path::getFullName($pageId, $sep): '';
+    }
+
+    /**
+     * @param int $pageId
+     * @param bool $noOverride
+     * @return int
+     */
+    public function pageVersion($pageId = 0, $noOverride = false)
+    {
+        $pageId = $pageId ?: $this->pageId($noOverride);
+        if ($this->previewVersion && $pageId == $this->pageId(true)) {
+            return $this->previewVersion->version_id;
+        } else {
+            return PageLang::preload($pageId)->live_version;
+        }
     }
 
     /**
@@ -591,18 +608,10 @@ class PageBuilderInstance
     {
         // force query available if block details changed in current request
         $block = Block::preload($blockName, isset($options['force_query']));
+        $pageId = !empty($options['page_id']) ? Path::unParsePageId($options['page_id']) : $this->pageId();
 
         $usingGlobalContent = false;
         $blockData = null;
-
-        if (!empty($options['page_id'])) {
-            $pageId = Path::unParsePageId($options['page_id']);
-            $selectedPage = PageLang::preload($pageId);
-            $pageVersionId = !empty($selectedPage) ? $selectedPage->live_version : 0;
-        } else {
-            $pageId = $this->pageId();
-            $pageVersionId = $pageId ? PageLang::preload($pageId)->live_version : 0;
-        }
 
         if (($customBlockData = $this->_getCustomBlockData($blockName)) !== false) {
             // load custom block data for (is also used for repeater content)
@@ -611,7 +620,7 @@ class PageBuilderInstance
 
             // load block data
             $globalBlockData = PageBlockDefault::preload_block($block->id);
-            $pageBlockData = PageBlock::preload_block($pageId, $block->id, $pageVersionId, 'page_id');
+            $pageBlockData = PageBlock::preload_block($pageId, $block->id, $this->pageVersion($pageId), 'page_id');
 
             // get languages
             $loadForLanguages = [Language::current()];
@@ -642,7 +651,7 @@ class PageBuilderInstance
 
         // set version that data has been grabbed for (0 = latest)
         if(empty($options['version'])) {
-            $options['version'] = $usingGlobalContent ? 0 : $pageVersionId;
+            $options['version'] = $usingGlobalContent ? 0 : $this->pageVersion($pageId);
         }
 
         // pass block details and data to display class

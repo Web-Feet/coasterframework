@@ -21,9 +21,9 @@ class PageLoader
     public $is404;
 
     /**
-     * @var bool
+     * @var PageVersion
      */
-    public $isPreview;
+    public $previewVersion;
 
     /**
      * @var bool
@@ -52,7 +52,7 @@ class PageLoader
     {
         $this->pageLevels = [];
         $this->is404 = true;
-        $this->isPreview = false;
+        $this->previewVersion = false;
         $this->isLive = true;
         $this->externalTemplate = false;
         $this->feedExtension = false;
@@ -166,9 +166,7 @@ class PageLoader
                 if (!empty($previewKey)) {
                     $pageVersion = PageVersion::where('page_id', '=', $lowestLevelPage->id)->where('preview_key', '=', $previewKey)->first();
                     if (!empty($pageVersion)) {
-                        $lowestLevelPage->page_lang[0]->live_version = $pageVersion->version_id;
-                        $lowestLevelPage->template = $pageVersion->template;
-                        $this->isPreview = true;
+                        $this->previewVersion = $pageVersion;
                     }
                 }
             }

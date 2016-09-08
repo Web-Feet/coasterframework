@@ -12,6 +12,7 @@ use CoasterCms\Helpers\Cms\Page\Search;
 use CoasterCms\Libraries\Builder\PageBuilder\PageBuilderInstance;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\Block;
+use CoasterCms\Models\PageBlock;
 use CoasterCms\Models\PageRedirect;
 use Exception;
 use Illuminate\Routing\Controller;
@@ -85,7 +86,7 @@ class CmsController extends Controller
             }
 
             // 404, hidden page
-            if (!PageBuilder::getData('isPreview') && !PageBuilder::getData('isLive')) {
+            if (!PageBuilder::getData('previewVersion') && !PageBuilder::getData('isLive')) {
                 throw new CmsPageException('cms page not live', 404);
             }
 
