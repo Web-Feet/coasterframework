@@ -90,6 +90,9 @@ class BlockManager
             if (empty($page_id)) {
                 $pageSelect = new \stdClass;
                 $pageSelect->options = [-1 => '-- None --', 0 => '-- Top Level Page --'] + Page::get_page_list(['links' => false, 'exclude_home' => true, 'group_pages' => false]);
+                if (!array_key_exists($page->parent, $pageSelect->options)) {
+                    $page->parent = -1;
+                }
                 $pageSelect->selected = $page->parent;
             } else {
                 $pageSelect = null;
@@ -104,7 +107,7 @@ class BlockManager
             }
 
             // page name, url
-            $fullUrls = [-1 => '???', 0 => '/'];
+            $fullUrls = [-1 => '?', 0 => '/'];
             foreach (Path::all() as $pageId => $details) {
                 $fullUrls[$pageId] = rtrim($details->fullUrl, '/') . '/';
             }
