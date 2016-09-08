@@ -611,7 +611,7 @@ class PageBuilderInstance
 
             // load block data
             $globalBlockData = PageBlockDefault::preload_block($block->id);
-            $pageBlockData = PageBlock::preload_page_block($pageId, $block->id, $pageVersionId);
+            $pageBlockData = PageBlock::preload_block($pageId, $block->id, $pageVersionId, 'page_id');
 
             // get languages
             $loadForLanguages = [Language::current()];

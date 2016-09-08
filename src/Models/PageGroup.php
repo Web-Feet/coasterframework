@@ -234,13 +234,11 @@ class PageGroup extends Eloquent
 
             if ($pageIds = $this->itemPageIds($checkLive, $sort)) {
 
-                $pageLang = PageLang::preload($pageId);
-
                 foreach ($this->blockFilters as $blockFilter) {
 
                     // get data to filter by
                     $filterByBlock = Block::preload($blockFilter->filter_by_block_id);
-                    $filterBy = PageBlock::preload_block($pageId, $blockFilter->filter_by_block_id, $pageLang->live_version);
+                    $filterBy = PageBlock::preload_block($pageId, $blockFilter->filter_by_block_id, -1);
                     $filterByContent = !empty($filterBy[Language::current()]) ? $filterBy[Language::current()]->content : null;
                     if ($filterByBlock->type == 'selectmultiple') {
                         $filterByContentArr = unserialize($filterByContent);

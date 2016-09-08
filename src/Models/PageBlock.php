@@ -1,15 +1,15 @@
 <?php namespace CoasterCms\Models;
 
 use CoasterCms\Helpers\Cms\Theme\BlockManager;
+use CoasterCms\Libraries\Traits\DataPreLoad;
 use Eloquent;
 
 class PageBlock extends Eloquent
 {
+    use DataPreLoad;
 
     protected $table = 'page_blocks';
-    private static $page_blocks = [];
-    private static $block = [];
-    protected static $loadedPagesBlocks = [];
+    protected static $_preloadDone = [];
 
     public static function update_block($block_id, $content, $page_id, $repeater_info = null)
     {
@@ -34,102 +34,62 @@ class PageBlock extends Eloquent
 
     public static function get_block($block_id, $page_id, $repeater_info, $version)
     {
-        $selected_block = self::where('block_id', '=', $block_id)->where('page_id', '=', $page_id)->where('language_id', '=', Language::current());
-        if (empty($version)) {
-            $selected_block = $selected_block->orderBy('version', 'desc')->first();
-        } else {
-            $selected_block = $selected_block->where('version', '<=', $version)->orderBy('version', 'desc')->first();
+        $selectedBlockQuery = static::where('block_id', '=', $block_id)->where('page_id', '=', $page_id)->where('language_id', '=', Language::current());
+        if (!empty($version)) {
+            $selectedBlockQuery = $selectedBlockQuery->where('version', '<=', $version);
         }
-        if (!empty($selected_block)) {
-            return $selected_block->content;
-        } else {
-            return null;
-        }
+        $selectedBlock = $selectedBlockQuery->orderBy('version', 'desc')->first();
+        return !empty($selectedBlock) ? $selectedBlock->content : null;
     }
 
-    // load all page block content for a page
     public static function preload_page($page_id, $version = 0)
     {
-        self::_preload_page($page_id, $version);
-        if (!empty(self::$page_blocks[$version][$page_id]))
-            return self::$page_blocks[$version][$page_id];
-        else
-            return [];
+        self::_preloadDataByPage($page_id, $version);
+        return static::_preloadGet('byVersionPage', [$version, $page_id]) ?: [];
     }
 
-    // load page block content (pre-load & cache all data for block id)
-    public static function preload_block($page_id, $block_id, $version = 0)
+    public static function preload_block($page_id, $block_id, $version = 0, $preloadBy = 'block_id')
     {
-        self::_preload_block($block_id, $version);
-        if (!empty(self::$page_blocks[$version][$page_id][$block_id]))
-            return self::$page_blocks[$version][$page_id][$block_id];
-        else
-            return [];
-    }
-
-    // load page block content (pre-load & cache all data for page id)
-    public static function preload_page_block($page_id, $block_id, $version = 0)
-    {
-        self::_preload_page($page_id, $version);
-        if (!empty(self::$page_blocks[$version][$page_id][$block_id]))
-            return self::$page_blocks[$version][$page_id][$block_id];
-        else
-            return [];
-    }
-
-    private static function _preload_page($page_id, $version)
-    {
-        if (!isset(self::$page_blocks[$version])) {
-            self::$page_blocks[$version] = [];
+        if ($preloadBy == 'block_id') {
+            self::_preloadDataByBlock($block_id, $version);
+        } else {
+            self::_preloadDataByPage($page_id, $version);
         }
-        if (!isset(self::$page_blocks[$version][$page_id])) {
-            self::$page_blocks[$version][$page_id] = [];
-            $page_blocks = BlockManager::get_data_for_version(new self, $version, array('page_id'), array($page_id), 'block_id');
-            if (!empty($page_blocks)) {
-                foreach ($page_blocks as $page_block) {
-                    if (!isset(self::$page_blocks[$version][$page_block->page_id][$page_block->block_id])) {
-                        self::$page_blocks[$version][$page_block->page_id][$page_block->block_id] = [];
-                    }
-                    self::$page_blocks[$version][$page_block->page_id][$page_block->block_id][$page_block->language_id] = $page_block;
-                }
-            }
+        return static::_preloadGet('byVersionPage', [$version, $page_id, $block_id]) ?: [];
+    }
+
+    protected static function _preloadDataByPage($page_id, $version)
+    {
+        $doneKey = 'v'.$version.'p'.$page_id;
+        if (empty(static::$_preloadDone[$doneKey])) {
+            static::$_preloadDone[$doneKey] = true;
+            $page_blocks = BlockManager::get_data_for_version(new static, $version, ['page_id'], [$page_id], 'block_id');
+
+            static::_preload($page_blocks, 'byVersionPage', [['@'.$version, 'page_id', 'block_id', 'language_id']]);
+
         }
     }
 
-    private static function _preload_block($block_id, $version)
+    protected static function _preloadDataByBlock($block_id, $version)
     {
-        if (!isset(self::$page_blocks[$version])) {
-            self::$page_blocks[$version] = [];
-        }
-        if (!isset(self::$block[$version][$block_id])) {
-            self::$block[$version][$block_id] = true;
-            $page_blocks = BlockManager::get_data_for_version(new self, $version, array('block_id'), array($block_id), 'page_id');
-            if (!empty($page_blocks)) {
-                foreach ($page_blocks as $page_block) {
-                    if (!isset(self::$page_blocks[$version][$page_block->page_id])) {
-                        self::$page_blocks[$version][$page_block->page_id] = [];
-                    }
-                    if (!isset(self::$page_blocks[$version][$page_block->page_id][$page_block->block_id])) {
-                        self::$page_blocks[$version][$page_block->page_id][$page_block->block_id] = [];
-                    }
-                    self::$page_blocks[$version][$page_block->page_id][$page_block->block_id][$page_block->language_id] = $page_block;
-                }
-            }
+        $doneKey = 'v'.$version.'b'.$block_id;
+        if (empty(static::$_preloadDone[$doneKey])) {
+            static::$_preloadDone[$doneKey] = true;
+            $page_blocks = BlockManager::get_data_for_version(new static, $version, ['block_id'], [$block_id], 'block_id');
+            static::_preload($page_blocks, 'byVersionPage', [['@'.$version, 'page_id', 'block_id', 'language_id']]);
         }
     }
 
     public static function page_blocks_on_live_page_versions($block_id, $reload = false)
     {
-        if ($reload || !array_key_exists($block_id, self::$loadedPagesBlocks)) {
-            self::$loadedPagesBlocks[$block_id] = BlockManager::get_data_for_version(
-                new self,
-                -1,
-                array('block_id', 'language_id'),
-                array($block_id, Language::current()),
-                'page_id'
-            );
+        if ($reload) {
+            static::_preloadClear('liveBlocks');
         }
-        return self::$loadedPagesBlocks[$block_id];
+        if (!static::_preloadIsset('liveBlocks')) {
+            $page_blocks = BlockManager::get_data_for_version(new static, -1, ['block_id', 'language_id'], [$block_id, Language::current()], 'block_id');
+            static::_preload($page_blocks, 'liveBlocks', [['block_id']], null, true);
+        }
+        return static::_preloadGet('liveBlocks', $block_id) ?: [];
     }
 
 }

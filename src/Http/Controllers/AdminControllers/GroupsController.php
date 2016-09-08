@@ -43,7 +43,7 @@ class GroupsController extends Controller
                     $canDelete = Auth::action('pages.delete', ['page_id' => $pageId]);
 
                     foreach ($attributeBlocks as $attributeBlock) {
-                        $pageBlock = PageBlock::preload_block($pageId, $attributeBlock->id, $pageLang->live_version);
+                        $pageBlock = PageBlock::preload_block($pageId, $attributeBlock->id, -1);
                         $pageBlockContent = !empty($pageBlock) ? $pageBlock[Language::current()]->content : '';
                         if (strpos($attributeBlock->type, 'selectmultiple') === 0 && !empty($pageBlockContent)) {
                             // selectmultiple
