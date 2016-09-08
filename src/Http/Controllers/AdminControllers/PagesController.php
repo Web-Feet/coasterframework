@@ -48,19 +48,13 @@ class PagesController extends AdminController
 
     public function postAdd($pageId = 0, $groupId = 0)
     {
-        $input = Request::all();
-        $page_info = $input['page_info'];
-        if (empty($page_info['link']) && Page::at_limit($page_info['parent'] == -1)) {
-            $this->layoutData['content'] = 'Page Limit Reached';
+        $new_page_id = $this->_save_page_info();
+        if ($new_page_id === false) {
+            $this->getAdd($pageId);
+            return null;
         } else {
-            $new_page_id = $this->_save_page_info();
-            if ($new_page_id === false) {
-                $this->getAdd($pageId);
-            } else {
-                return \redirect()->route('coaster.admin.pages.edit', ['pageId' => $new_page_id]);
-            }
+            return \redirect()->route('coaster.admin.pages.edit', ['pageId' => $new_page_id]);
         }
-        return null;
     }
 
     public function getEdit($pageId, $versionId = 0)
@@ -428,14 +422,16 @@ class PagesController extends AdminController
         $page_info_other = !empty($input['page_info_other'])?$input['page_info_other']:[];
         $page_groups = !empty($input['page_groups'])?$input['page_groups']:[];
 
+        // page limit check
+        if (!empty($page_info['link']) && Page::at_limit($page_info['parent'] == -1)) {
+            return false;
+        }
+
         /*
          * Save Page
          */
         $parent = Page::find($page_info['parent']);
-        if ($page_info['parent'] > 0 && !$parent) {
-            return false;
-        }
-        if (($page_info['parent'] > 0 && $parent->parent == -1) || Page::at_limit($page_info['parent'] == -1)) {
+        if ($page_info['parent'] > 0 && (!$parent || $parent->parent == -1)) {
             return false;
         }
 
