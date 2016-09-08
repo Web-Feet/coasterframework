@@ -90,11 +90,6 @@ class PageVersion extends Eloquent
         return parent::save($options);
     }
 
-    public static function restore($obj)
-    {
-        $obj->save();
-    }
-
     public function __get($key)
     {
         if ($key == 'name') {

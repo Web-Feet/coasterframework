@@ -12,11 +12,6 @@ class MenuItem extends Eloquent
         return $this->belongsTo('CoasterCms\Models\Page');
     }
 
-    public static function restore($obj)
-    {
-        $obj->save();
-    }
-
     public static function get_page_menus($page_id)
     {
         $menus = array();

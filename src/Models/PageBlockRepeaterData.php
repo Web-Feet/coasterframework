@@ -170,9 +170,4 @@ class PageBlockRepeaterData extends Eloquent
         }
     }
 
-    public static function restore($obj)
-    {
-        $obj->save();
-    }
-
 }

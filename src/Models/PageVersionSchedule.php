@@ -177,9 +177,4 @@ class PageVersionSchedule extends Eloquent
         }
     }
 
-    public static function restore($obj)
-    {
-        $obj->save();
-    }
-
 }

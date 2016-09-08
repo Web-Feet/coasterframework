@@ -49,9 +49,4 @@ class PageBlockRepeaterRows extends Eloquent
         return $repeaterRows;
     }
 
-    public static function restore($obj)
-    {
-        $obj->save();
-    }
-
 }

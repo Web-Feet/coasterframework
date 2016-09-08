@@ -125,9 +125,4 @@ class PagePublishRequests extends Eloquent
         return 0;
     }
 
-    public static function restore($obj)
-    {
-        $obj->save();
-    }
-
 }

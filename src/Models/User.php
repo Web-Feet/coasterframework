@@ -137,9 +137,4 @@ class User extends Eloquent implements AuthenticatableContract, AuthorizableCont
         return json_encode($log_id);
     }
 
-    public static function restore($obj)
-    {
-        $obj->save();
-    }
-
 }

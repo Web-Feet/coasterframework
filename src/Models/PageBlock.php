@@ -11,11 +11,6 @@ class PageBlock extends Eloquent
     private static $block = [];
     protected static $loadedPagesBlocks = [];
 
-    public static function restore($obj)
-    {
-        $obj->save();
-    }
-
     public static function update_block($block_id, $content, $page_id, $repeater_info = null)
     {
         $updated_block = self::where('block_id', '=', $block_id)->where('page_id', '=', $page_id)->where('language_id', '=', Language::current())->orderBy('version', 'desc')->first();

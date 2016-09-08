@@ -21,14 +21,6 @@ class PageLang extends Eloquent
     }
 
     /**
-     * @param PageLang $obj
-     */
-    public static function restore(self $obj)
-    {
-        $obj->save();
-    }
-
-    /**
      * @param string|int $key
      * @param bool $force
      * @return static

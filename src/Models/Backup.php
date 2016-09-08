@@ -48,7 +48,12 @@ class Backup extends Eloquent
             $if_exists->delete();
         }
         $obj->exists = false;
-        $model::restore($obj);
+        if (method_exists($obj, 'restore')) {
+            $model::restore($obj);
+        } else {
+            $obj->save();
+        }
+
     }
 
 }

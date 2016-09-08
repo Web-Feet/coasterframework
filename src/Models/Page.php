@@ -339,7 +339,7 @@ class Page extends Eloquent
         Backup::new_backup($log_id, '\CoasterCms\Models\PageBlock', $page_blocks->get());
         Backup::new_backup($log_id, '\CoasterCms\Models\MenuItem', $menu_items->get());
         Backup::new_backup($log_id, '\CoasterCms\Models\UserRolePageAction', $user_role_page_actions->get());
-        Backup::new_backup($log_id, '\CoasterCms\Models\PageGroupPages', $page_groups->get());
+        Backup::new_backup($log_id, '\CoasterCms\Models\PageGroupPage', $page_groups->get());
 
         // publish requests
         if (!empty($publish_request_ids)) {
@@ -396,12 +396,6 @@ class Page extends Eloquent
         sort($return_log_ids);
         return $return_log_ids;
     }
-
-    public static function restore($obj)
-    {
-        $obj->save();
-    }
-
 
     public static function adminSearch($q)
     {

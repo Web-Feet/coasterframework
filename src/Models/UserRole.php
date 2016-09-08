@@ -175,9 +175,4 @@ class UserRole extends Eloquent
         return json_encode($log_id);
     }
 
-    public static function restore($obj)
-    {
-        $obj->save();
-    }
-
 }
