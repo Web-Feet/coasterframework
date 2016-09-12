@@ -115,6 +115,12 @@ class InstallController extends Controller
             return $this->setupDatabase();
         }
 
+        $hostPort = explode(':', $details['host']);
+        if (count($hostPort) === 2 && (int) $hostPort[1]) {
+            list($host, $port) = $hostPort;
+            $details['host'] = $host .';port='. $port;
+        }
+
         try {
             new \PDO('mysql:dbname='.$details['name'].';host='.$details['host'], $details['user'], $details['password']);
         } catch (\PDOException $e) {
@@ -132,12 +138,16 @@ class InstallController extends Controller
         }
 
         $updateEnv = [
-            'DB_HOST' => $details['host'],
+            'DB_HOST' => isset($host) ? $host : $details['host'],
             'DB_DATABASE' => $details['name'],
             'DB_PREFIX' => !empty($details['prefix']) ? $details['prefix'] : '',
             'DB_USERNAME' => $details['user'],
             'DB_PASSWORD' => $details['password']
         ];
+
+        if (isset($port)) {
+            $updateEnv['DB_PORT'] = $port;
+        }
 
         try {
             $envFileContents = File::getEnvContents();
