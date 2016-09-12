@@ -20,8 +20,6 @@ use CoasterCms\Models\PageLang;
 use CoasterCms\Models\PageSearchData;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\Setting;
-use CoasterCms\Models\Template;
-use CoasterCms\Models\Theme;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -58,19 +56,24 @@ class PageBuilderInstance
     public $theme;
 
     /**
+     * @var string
+     */
+    public $contentType;
+
+    /**
      * @var bool
      */
     public $is404;
 
     /**
-     * @var PageVersion
-     */
-    public $previewVersion;
-
-    /**
      * @var bool
      */
     public $isLive;
+
+    /**
+     * @var PageVersion|null
+     */
+    public $previewVersion;
 
     /**
      * @var string|false
@@ -110,36 +113,38 @@ class PageBuilderInstance
         $this->page = !empty($pageLoader->pageLevels) ? end($pageLoader->pageLevels) : null;
         $this->pageLevels = $pageLoader->pageLevels;
 
-        $templateId = $pageLoader->previewVersion ? $pageLoader->previewVersion->template : ($this->page ? $this->page->template : 0);
-        $this->template = Template::name($templateId);
-
         $this->is404 = $pageLoader->is404;
-        $this->previewVersion = $pageLoader->previewVersion;
         $this->isLive = $pageLoader->isLive;
+        $this->previewVersion = $pageLoader->previewVersion;
         $this->externalTemplate = $pageLoader->externalTemplate;
         $this->feedExtension = $pageLoader->feedExtension;
         $this->searchQuery = $pageLoader->searchQuery;
+
+        $this->theme = $pageLoader->theme;
+        $this->template = $pageLoader->template;
+        $this->contentType = $pageLoader->contentType;
     }
 
     /**
-     * @param int $themeId
+     * @return string
      */
-    public function setTheme($themeId)
+    public function themePath()
     {
-        $theme = Theme::find($themeId);
-        if (!empty($theme) && is_dir(base_path('/resources/views/themes/' . $theme->theme))) {
-            $this->theme = $theme->theme;
+        return 'themes.' . $this->theme . '.';
+    }
+
+    /**
+     * @return string
+     */
+    public function templatePath()
+    {
+        if ($this->externalTemplate) {
+            return $this->themePath() . 'externals.' . $this->externalTemplate;
+        } elseif ($this->feedExtension) {
+            return $this->themePath() . 'feed.' . $this->feedExtension . '.' . $this->template;
         } else {
-            $this->theme = 'default';
+            return $this->themePath() . 'templates.' . $this->template;
         }
-    }
-
-    /**
-     * @param int|string $template
-     */
-    public function setTemplate($template)
-    {
-        $this->template = is_numeric($template) ? Template::name($template) : $template;
     }
 
     /**

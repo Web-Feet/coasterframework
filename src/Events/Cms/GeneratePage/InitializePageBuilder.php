@@ -3,7 +3,7 @@
 class InitializePageBuilder
 {
     /**
-     * @var string
+     * @var array
      */
     public $pageLoader;
 

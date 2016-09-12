@@ -6,8 +6,8 @@ use CoasterCms\Libraries\Builder\PageBuilder\PageBuilderInstance;
 /**
  * Class PageBuilder
  * @package CoasterCms\Libraries\Builder
- * @method static void setTheme(int $themeId)
- * @method static void setTemplate(int|string $template)
+ * @method static string themePath()
+ * @method static string templatePath()
  * @method static int pageId(bool $noOverride = false)
  * @method static int parentPageId(bool $noOverride = false)
  * @method static int pageTemplateId(bool $noOverride = false)
@@ -16,6 +16,7 @@ use CoasterCms\Libraries\Builder\PageBuilder\PageBuilderInstance;
  * @method static string pageUrl(int $pageId = 0, bool $noOverride = false)
  * @method static string pageName(int $pageId = 0, bool $noOverride = false)
  * @method static string pageFullName(int $pageId = 0, bool $noOverride = false, string $sep = ' &raquo; ')
+ * @method static string pageVersion(int $pageId = 0, bool $noOverride = false)
  * @method static string img(string $fileName, array $options = [])
  * @method static string css(string $fileName)
  * @method static string js(string $fileName)
@@ -47,6 +48,11 @@ class PageBuilder
      * @var string
      */
     protected static $_instanceClass;
+
+    /**
+     * @var array
+     */
+    protected static $_instanceArgs;
     
     /**
      * @var string
@@ -56,7 +62,7 @@ class PageBuilder
     /**
      * @var array
      */
-    protected static $_extraArgs;
+    protected static $_loaderArgs;
 
     /**
      * @return PageBuilderInstance
@@ -64,21 +70,23 @@ class PageBuilder
     protected static function getInstance()
     {
         if (!isset(static::$_instance)) {
-            static::$_instance = new static::$_instanceClass(new static::$_loaderClass, ...static::$_extraArgs);
+            static::$_instance = new static::$_instanceClass(new static::$_loaderClass(...static::$_loaderArgs), ...static::$_instanceArgs);
         }
         return static::$_instance;
     }
 
     /**
      * @param string $instanceClass
+     * @param string $instanceArgs
      * @param string $loaderClass
-     * @param array ...$extraArgs
+     * @param array $loaderArgs
      */
-    public static function setClass($instanceClass, $loaderClass, ...$extraArgs)
+    public static function setClass($instanceClass, $instanceArgs, $loaderClass, $loaderArgs)
     {
         static::$_instanceClass = $instanceClass;
+        static::$_instanceArgs = $instanceArgs;
         static::$_loaderClass = $loaderClass;
-        static::$_extraArgs = $extraArgs;
+        static::$_loaderArgs = $loaderArgs;
         static::$_instance = null;
     }
 
@@ -92,6 +100,17 @@ class PageBuilder
             return property_exists(static::getInstance(), $varName) ? static::getInstance()->$varName : null;
         } else {
             return get_object_vars(static::getInstance());
+        }
+    }
+
+    /**
+     * @param string $varName
+     * @param mixed $value
+     */
+    public static function setData($varName, $value)
+    {
+        if ($varName && property_exists(static::getInstance(), $varName)) {
+            static::getInstance()->$varName = $value;
         }
     }
 

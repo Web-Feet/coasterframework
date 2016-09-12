@@ -6,14 +6,13 @@ use CoasterCms\Events\Cms\GeneratePage\LoadErrorTemplate;
 use CoasterCms\Events\Cms\GeneratePage\LoadPageTemplate;
 use CoasterCms\Exceptions\CmsPageException;
 use CoasterCms\Helpers\Cms\Html\DOMDocument;
-use CoasterCms\Helpers\Cms\Page\Feed;
 use CoasterCms\Helpers\Cms\Page\PageLoader;
 use CoasterCms\Helpers\Cms\Page\Search;
 use CoasterCms\Libraries\Builder\PageBuilder\PageBuilderInstance;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\Block;
-use CoasterCms\Models\PageBlock;
 use CoasterCms\Models\PageRedirect;
+use CoasterCms\Models\PageVersionSchedule;
 use Exception;
 use Illuminate\Routing\Controller;
 use Request;
@@ -53,7 +52,13 @@ class CmsController extends Controller
      */
     public function generatePage()
     {
-        $pageLoader = PageLoader::class;
+        // update scheduled versions
+        PageVersionSchedule::checkPageVersionIds();
+
+        $pageLoader = [
+            'class' => PageLoader::class,
+            'args' => []
+        ];
         $pageBuilder = [
             'class' => PageBuilderInstance::class,
             'args' => []
@@ -61,16 +66,12 @@ class CmsController extends Controller
 
         // try to load cms page for current request
         event(new InitializePageBuilder($pageLoader, $pageBuilder));
-        PageBuilder::setClass($pageBuilder['class'], $pageLoader, $pageBuilder['args']);
-        PageBuilder::setTheme(config('coaster::frontend.theme'));
-        
-        $templatePathRoot = 'themes.' . PageBuilder::getData('theme') . '.';
-        $currentUri = trim(Request::getRequestUri(), '/');
+        PageBuilder::setClass($pageBuilder['class'], $pageBuilder['args'], $pageLoader['class'], $pageLoader['args']);
 
         try {
 
             // check for forced redirects
-            $redirect = PageRedirect::uriHasRedirect($currentUri);
+            $redirect = PageRedirect::uriHasRedirect();
             if (!empty($redirect) && $redirect->force == 1) {
                 throw new CmsPageException('forced redirect', 0, null, redirect($redirect->to, $redirect->type));
             }
@@ -82,12 +83,12 @@ class CmsController extends Controller
 
             // 404, no cms page for current request
             if (PageBuilder::getData('is404')) {
-                throw new CmsPageException('cms page not found', 404);
+                throw new Exception('cms page not found', 404);
             }
 
             // 404, hidden page
             if (!PageBuilder::getData('previewVersion') && !PageBuilder::getData('isLive')) {
-                throw new CmsPageException('cms page not live', 404);
+                throw new Exception('cms page not live', 404);
             }
 
             // check for form submissions
@@ -95,7 +96,7 @@ class CmsController extends Controller
                 $formData = PageBuilder::getData('externalTemplate') ? Request::input(config('coaster::frontend.external_form_input')) : Request::all();
                 if (!empty($formData['block_id']) && empty($formData['coaster_check'])) { // honeypot option
                     if (!($block = Block::find($formData['block_id']))) {
-                        throw new CmsPageException('no block handler for this form data', 500);
+                        throw new Exception('no block handler for this form data', 500);
                     } else {
                         unset($formData['_token']);
                         unset($formData['block_id']);
@@ -108,47 +109,35 @@ class CmsController extends Controller
                 }
             }
 
-            // set template
-            if (PageBuilder::getData('externalTemplate')) {
-                $this->_setHtmlContentType();
-                $templatePath = $templatePathRoot . 'externals.' . PageBuilder::getData('externalTemplate');
-            } elseif ($extension = PageBuilder::getData('feedExtension')) {
-                $this->_setHeader('Content-Type', Feed::getMimeType($extension));
-                $templatePath = $templatePathRoot . 'feed.' . PageBuilder::getData('feedExtension') . '.' . PageBuilder::getData('template');
-            } else {
-                $this->_setHtmlContentType();
-                $templatePath = $templatePathRoot . 'templates.' . PageBuilder::getData('template');
-            }
-
             // load page with template
+            $templatePath = PageBuilder::templatePath();
             event(new LoadPageTemplate($templatePath));
             if (View::exists($templatePath)) {
+                $this->_setHeader('Content-Type', PageBuilder::getData('contentType'));
                 $this->responseContent = View::make($templatePath)->render();
             } else {
-                throw new CmsPageException('cms page found with non existent template - '.$templatePath, 500);
+                throw new Exception('cms page found with non existent template - '.$templatePath, 500);
             }
 
             // if declared as a search page, must have search block
             if (Search::searchBlockRequired() && !Search::searchBlockExists()) {
-                throw new CmsPageException('cms page found without search function', 404);
+                throw new Exception('cms page found without search function', 404);
             }
 
         } catch (CmsPageException $e) {
 
-            if (!($this->responseContent = $e->getAlternateResponse())) {
-                $this->_setErrorContent($templatePathRoot, $e);
-            }
+            $this->responseContent = $e->getAlternateResponse();
 
         } catch (Exception $e) {
 
-            $this->_setErrorContent($templatePathRoot, $e);
+            $this->_setErrorContent($e);
 
         }
 
         $response = $this->_createResponse();
         event(new LoadedPageResponse($response));
 
-        // if response content is html string, run modifications
+        // if response content is html, run modifications
         if (!empty($response->headers->get('content-type')) && stripos($response->headers->get('content-type'), 'html') !== false) {
             $domDocument = new DOMDocument;
             $domDocument->loadHTML($response->getContent());
@@ -173,13 +162,12 @@ class CmsController extends Controller
     }
 
     /**
-     * @param string $templatePathRoot
      * @param Exception $e
      */
-    protected function _setErrorContent($templatePathRoot, Exception $e)
+    protected function _setErrorContent(Exception $e)
     {
         $this->responseCode = !empty(\Symfony\Component\HttpFoundation\Response::$statusTexts[$e->getCode()]) ? $e->getCode() : 500;
-        $templatePath = $templatePathRoot . 'errors.' . $this->responseCode;
+        $templatePath = PageBuilder::themePath() . 'errors.' . $this->responseCode;
 
         // display error loading page
         event(new LoadErrorTemplate($templatePath));

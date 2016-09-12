@@ -1,14 +1,16 @@
 <?php namespace CoasterCms\Models;
 
 use Eloquent;
+use Request;
 
 class PageRedirect extends Eloquent
 {
 
     protected $table = 'page_redirects';
 
-    public static function uriHasRedirect($redirect_url_encoded)
+    public static function uriHasRedirect($redirect_url_encoded = '')
     {
+        $redirect_url_encoded = $redirect_url_encoded ?: trim(Request::getRequestUri(), '/');
         $redirect_url = urldecode($redirect_url_encoded); // decode foreign chars
         $redirect = self::where('redirect', '=', $redirect_url)
             ->orWhere('redirect', '=', $redirect_url_encoded)

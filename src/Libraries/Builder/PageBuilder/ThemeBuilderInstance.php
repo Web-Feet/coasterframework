@@ -85,14 +85,6 @@ class ThemeBuilderInstance extends PageBuilderInstance
         $this->categoryView = '';
         $this->repeaterView = '';
         $this->errors = [];
-    }
-
-    /**
-     * @param int $themeId
-     */
-    public function setTheme($themeId)
-    {
-        parent::setTheme($themeId);
 
         $this->templateBlocks = [];
         $this->coreTemplates = ['__core_category', '__core_otherPage', '__core_repeater'];
@@ -167,6 +159,10 @@ class ThemeBuilderInstance extends PageBuilderInstance
     {
         if ($this->_importIgnore($options)) {
             return '';
+        }
+
+        if(empty($options['version'])) {
+            $options['version'] = 0;
         }
 
         $block_name = strtolower($block_name);
@@ -331,6 +327,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
     {
         $this->repeaterView = '';
         $this->repeaterTemplates = [];
+        $this->repeaterBlocks = [];
 
         $repeaterPath = base_path('resources/views/themes/' . $this->theme . '/blocks/repeaters');
         if (is_dir($repeaterPath)) {

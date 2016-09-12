@@ -2,9 +2,20 @@
 
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageLang;
+use CoasterCms\Models\Theme;
 
 class PageLoaderDummy extends PageLoader
 {
+
+    /**
+     * PageLoaderDummy constructor.
+     * @param string $themeName
+     */
+    public function __construct($themeName = '')
+    {
+        parent::__construct();
+        $this->theme = $this->theme ?: $themeName;
+    }
 
     /**
      * 

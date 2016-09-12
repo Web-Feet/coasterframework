@@ -141,14 +141,13 @@ class BlockUpdater
 
             $themePath = base_path('resources/views/themes/' . $theme->theme . '/templates');
 
-            PageBuilder::setClass(ThemeBuilderInstance::class, PageLoaderDummy::class, $overwriteFile);
-            PageBuilder::setTheme($theme->id);
+            PageBuilder::setClass(ThemeBuilderInstance::class, [$overwriteFile], PageLoaderDummy::class, [$theme->theme]);
 
             if (is_dir($themePath)) {
 
                 foreach (scandir($themePath) as $templateFile) {
                     if (($templateName = explode('.', $templateFile)[0]) && !is_dir($themePath.'/'.$templateFile)) {
-                        PageBuilder::setTemplate($templateName);
+                        PageBuilder::setData('template', $templateName);
                         View::make('themes.' . $theme->theme . '.templates.' . $templateName)->render();
                     }
                 }
@@ -354,7 +353,7 @@ class BlockUpdater
                         foreach (self::$_fileTemplateBlocks as $template => $blocks) {
                             if (!in_array($block, self::$_fileTemplateBlocks[$template]) && strpos($template, '__core_') !== 0) {
                                 self::$_fileTemplateBlocks[$template][] = $block;
-                                PageBuilder::setTemplate($template);
+                                PageBuilder::setData('template', $template);
                                 PageBuilder::block($block);
                             }
                         }
@@ -365,7 +364,7 @@ class BlockUpdater
                                 if (isset(self::$_fileTemplateBlocks[$template])) {
                                     if (!in_array($block, self::$_fileTemplateBlocks[$template])) {
                                         self::$_fileTemplateBlocks[$template][] = $block;
-                                        PageBuilder::setTemplate($template);
+                                        PageBuilder::setData('template', $template);
                                         PageBuilder::block($block);
                                     }
                                 }

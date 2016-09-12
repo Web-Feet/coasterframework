@@ -4,7 +4,8 @@ use CoasterCms\Models\Language;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageVersion;
-use CoasterCms\Models\PageVersionSchedule;
+use CoasterCms\Models\Template;
+use CoasterCms\Models\Theme;
 use Illuminate\Database\Eloquent\Builder;
 use Request;
 
@@ -21,14 +22,14 @@ class PageLoader
     public $is404;
 
     /**
-     * @var PageVersion
-     */
-    public $previewVersion;
-
-    /**
      * @var bool
      */
     public $isLive;
+
+    /**
+     * @var null|PageVersion
+     */
+    public $previewVersion;
 
     /**
      * @var false|string
@@ -46,14 +47,29 @@ class PageLoader
     public $searchQuery;
 
     /**
+     * @var string
+     */
+    public $theme;
+
+    /**
+     * @var string
+     */
+    public $template;
+
+    /**
+     * @var string
+     */
+    public $contentType;
+
+    /**
      * PageLoader constructor.
      */
     public function __construct()
     {
         $this->pageLevels = [];
         $this->is404 = true;
-        $this->previewVersion = false;
         $this->isLive = true;
+        $this->previewVersion = false;
         $this->externalTemplate = false;
         $this->feedExtension = false;
         $this->searchQuery = false;
@@ -65,9 +81,9 @@ class PageLoader
      */
     protected function _load()
     {
-        PageVersionSchedule::checkPageVersionIds();
         $this->_loadPageLevels();
         $this->_loadPageStatus();
+        $this->_loadPageTemplate();
     }
 
     /**
@@ -162,12 +178,8 @@ class PageLoader
             $this->isLive = $lowestLevelPage->is_live();
 
             if (!$this->is404) {
-                $previewKey = Request::input('preview');
-                if (!empty($previewKey)) {
-                    $pageVersion = PageVersion::where('page_id', '=', $lowestLevelPage->id)->where('preview_key', '=', $previewKey)->first();
-                    if (!empty($pageVersion)) {
-                        $this->previewVersion = $pageVersion;
-                    }
+                if ($previewKey = Request::input('preview')) {
+                    $this->previewVersion = PageVersion::where('page_id', '=', $lowestLevelPage->id)->where('preview_key', '=', $previewKey)->first() ?: null;
                 }
             }
 
@@ -177,6 +189,19 @@ class PageLoader
             $this->externalTemplate = $externalTemplate;
         }
 
+    }
+
+    /**
+     * Load theme name, template name and content type to return
+     */
+    public function _loadPageTemplate()
+    {
+        $theme = Theme::find(config('coaster::frontend.theme'));
+        $lowestLevelPage = count($this->pageLevels) > 0 ? end($this->pageLevels) : null;
+
+        $this->theme = !empty($theme) && is_dir(base_path('/resources/views/themes/' . $theme->theme)) ? $theme->theme : 'default';
+        $this->template = $lowestLevelPage ? Template::name($this->previewVersion ? $this->previewVersion->template : $lowestLevelPage->template) : '';
+        $this->contentType = $this->feedExtension ? Feed::getMimeType($this->feedExtension) : 'text/html; charset=UTF-8';
     }
 
     /**
