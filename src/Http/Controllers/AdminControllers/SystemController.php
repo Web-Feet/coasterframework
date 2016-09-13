@@ -256,8 +256,12 @@ class SystemController extends Controller
                 putenv("COMPOSER_HOME=".exec('pwd')."/.composer");
             }
 
-            $logFile = storage_path(config('coaster::site.storage_path')).'/upgrade.log';
-            if (!is_writable($logFile)) {
+            $coasterStorage = storage_path(config('coaster::site.storage_path'));
+            $logFile = $coasterStorage . '/upgrade.log';
+            if (!file_exists($logFile) && is_writable($coasterStorage)) {
+                file_put_contents('', $logFile);
+            }
+            if (is_writable($logFile)) {
                 shell_exec('cd ' . base_path() . '; composer -n update 2>' . $logFile . ';');
                 $upgradeLog = file_get_contents($logFile);
 
