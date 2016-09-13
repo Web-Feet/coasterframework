@@ -92,7 +92,7 @@ class PageSearchData extends Eloquent
 
             // run search functions
             foreach ($keywordsArray as $i => $keyword) {
-                $keywordAdditionalWeight = (($numberOfKeywords - $i) * 0.1) + ($i == 0 ? 1 : 0);
+                $keywordAdditionalWeight = (($numberOfKeywords - $i) * 0.1) + (($i == 0 && $numberOfKeywords > 1) ? 5 : 0);
                 foreach ($searchObjects as $searchObject) {
                     $searchObject->run($keyword, $keywordAdditionalWeight);
                 }
