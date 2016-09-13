@@ -159,6 +159,7 @@ class PageLoader
         if ($this->searchQuery === false && $query = Request::input('q')) {
             $this->searchQuery = $query;
         }
+        $this->searchQuery = $this->searchQuery !== false ? urldecode($this->searchQuery) : false;
 
         $this->pageLevels = array_filter($this->pageLevels);
 

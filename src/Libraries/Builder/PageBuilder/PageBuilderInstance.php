@@ -103,7 +103,7 @@ class PageBuilderInstance
     /**
      * @var int
      */
-    protected static $_customBlockDataKey;
+    protected $_customBlockDataKey;
 
     /**
      * @param PageLoader $pageLoader
@@ -123,6 +123,9 @@ class PageBuilderInstance
         $this->theme = $pageLoader->theme;
         $this->template = $pageLoader->template;
         $this->contentType = $pageLoader->contentType;
+
+        $this->_customBlockData = [];
+        $this->_customBlockDataKey = 0;
     }
 
     /**
@@ -284,10 +287,6 @@ class PageBuilderInstance
      */
     public function setCustomBlockData($blockName, $content, $key = 0)
     {
-        if (!isset($this->_customBlockData)) {
-            $this->_customBlockData = [];
-            $this->_customBlockDataKey = 0;
-        }
         if (!isset($this->_customBlockData[$key])) {
             $this->_customBlockData[$key] = [];
         }
@@ -789,7 +788,17 @@ class PageBuilderInstance
             $isFirst = ($count == 0);
             $isLast = ($count == $total -1);
 
-            $fullPageInfo = new PageDetails($page->id, $groupPageContainerId);
+            $alt = null;
+            if (is_string($page->id)) {
+                foreach ($page as $blockName => $content) {
+                    $this->setCustomBlockData($blockName, $content);
+                }
+                $tmpCustomBlockKey = $this->_customBlockDataKey;
+                $this->_customBlockDataKey = 'customPage:'.$page->id;
+                $alt = $page;
+            }
+
+            $fullPageInfo = new PageDetails($page->id, $groupPageContainerId, $alt);
 
             $this->pageOverride = $page;
 
@@ -797,6 +806,11 @@ class PageBuilderInstance
                 'categories.' . $options['view'] . '.page',
                 ['page' => $fullPageInfo, 'category_id' => $categoryPageId, 'is_first' => $isFirst, 'is_last' => $isLast, 'count' => $count + 1, 'total' => $total]
             );
+
+            if (isset($tmpCustomBlockKey)) {
+                $this->_customBlockDataKey = $tmpCustomBlockKey;
+                $tmpCustomBlockKey = null;
+            }
 
             $this->pageOverride = null;
         }

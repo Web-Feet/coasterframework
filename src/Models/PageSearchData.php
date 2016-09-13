@@ -1,5 +1,8 @@
 <?php namespace CoasterCms\Models;
 
+use CoasterCms\Events\Cms\Page\Search;
+use CoasterCms\Helpers\Cms\Page\Search\Cms;
+use CoasterCms\Helpers\Cms\Page\Search\WordPress;
 use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use Eloquent;
 
@@ -7,8 +10,6 @@ class PageSearchData extends Eloquent
 {
 
     protected $table = 'page_search_data';
-
-    private static $_page_weights;
 
     public function block()
     {
@@ -70,109 +71,58 @@ class PageSearchData extends Eloquent
         }
     }
 
-    private static function _page_weights($page_id, $weight)
+    public static function lookup($keywords, $onlyLive = 1, $limit = 100)
     {
-        if (!empty(self::$_page_weights[$page_id])) {
-            self::$_page_weights[$page_id] += $weight;
-        } else {
-            self::$_page_weights[$page_id] = $weight;
-        }
-    }
+        $foundPages = [];
 
-    public static function lookup($keywords, $live = 1, $limit = 100)
-    {
         if (!empty($keywords)) {
             PageSearchLog::add_term($keywords);
 
-            // load pages and blog connection
-            $blog_pages = [];
-            if (config('coaster::blog.url')) {
-                $blog_db = Setting::blogConnection();
-            }
-            if ($live) {
-                $cms_pages_tmp = Page::where('live', '>', 0)->get();
-            } else {
-                $cms_pages_tmp = Page::all();
-            }
-            $cms_pages = [];
-            foreach ($cms_pages_tmp as $cms_page) {
-                if (!$live || $cms_page->is_live()) {
-                    $cms_pages[$cms_page->id] = $cms_page;
+            // create array containing, whole term then each individual word (or just whole term if one word)
+            $keywordsArray = array_merge([$keywords], explode(' ', $keywords));
+            $keywordsArray = count($keywordsArray) == 2 ? [$keywordsArray[0]] : $keywordsArray;
+            $numberOfKeywords = count($keywordsArray);
+
+            // load search objects
+            $searchObjects = [
+                new Cms($onlyLive),
+                new WordPress($onlyLive, config('coaster::blog.url') ? Setting::blogConnection() : false)
+            ];
+            event(new Search($searchObjects, $onlyLive));
+
+            // run search functions
+            foreach ($keywordsArray as $i => $keyword) {
+                $keywordAdditionalWeight = (($numberOfKeywords - $i) * 0.1) + ($i == 0 ? 1 : 0);
+                foreach ($searchObjects as $searchObject) {
+                    $searchObject->run($keyword, $keywordAdditionalWeight);
                 }
             }
 
-            // get search weights for cms & blog pages
-            $keywords_array = array_merge(array($keywords), explode(' ', $keywords));
-            $keywords_total = count($keywords_array);
-
-            foreach ($keywords_array as $i => $keyword) {
-
-                $first_word_priority = ($keywords_total - ($i + 1)) * 0.1;
-
-                // cms search
-                $page_matches = self::with('block')->where('search_text', 'LIKE', '%' . $keyword . '%')->get();
-                foreach ($page_matches as $page) {
-                    if (!empty($cms_pages[$page->page_id])) {
-                        self::_page_weights($page->page_id, (($b = $page->block) ? (int)$b->search_weight : 2) + $first_word_priority);
-                    }
-                }
-
-                // blog search
-                if (!empty($blog_db)) {
-                    $prefix = config('coaster::blog.prefix');
-                    $blog_posts = $blog_db->query("
-                    SELECT ID, post_title, post_name, post_content, sum(search_weight) as search_weight
-                    FROM (
-                        SELECT ID, post_title, post_name, post_content, 4 AS search_weight FROM {$prefix}posts WHERE post_type = 'post' AND post_status = 'publish' AND post_title like '%" . $keyword . "%'
-                        UNION
-                        SELECT ID, post_title, post_name, post_content, 2 AS search_weight FROM {$prefix}posts WHERE post_type = 'post' AND post_status = 'publish' AND post_content like '%" . $keyword . "%'
-                    ) results
-                    GROUP BY ID, post_title, post_name, post_content
-                    ORDER BY search_weight;
-                    ");
-                    foreach ($blog_posts as $blog_post) {
-                        self::_page_weights('b' . $blog_post['ID'], ((int)$blog_post['search_weight']) + $first_word_priority);
-                        $post_data = new Page;
-                        $post_data->id = -1;
-                        $post_data->template = 0;
-                        $post_data->page_lang = new PageLang;
-                        $post_data->page_lang->name = $blog_post['post_title'];
-                        $post_data->page_lang->url = config('coaster::blog.url') . $blog_post['post_name'];
-                        $post_data->blog_content = $blog_post['post_content'];
-                        $blog_pages['b' . $blog_post['ID']] = $post_data;
-                    }
-                }
-
+            // get search results
+            $weights = [];
+            $pages = [];
+            foreach ($searchObjects as $i => $searchObject) {
+                $weights = $weights + $searchObject->getWeights();
+                $pages = $pages + $searchObject->getPages();
             }
 
-            if (!empty(self::$_page_weights)) {
-                // order & remove low weighted results
-                asort(self::$_page_weights);
-                self::$_page_weights = array_reverse(self::$_page_weights, true);
-                if (count(self::$_page_weights) > $limit) {
-                    $weights = array_values(self::$_page_weights);
-                    foreach (self::$_page_weights as $page_id => $weight) {
-                        if ($weight <= $weights[$limit]) {
-                            unset(self::$_page_weights[$page_id]);
-                        }
+            // order, limit and create page data array
+            if ($weights) {
+                arsort($weights);
+                if (count($weights) > $limit) {
+                    $weights = array_slice($weights, 0, 100, true);
+                }
+                $pageIds = array_keys($weights);
+                foreach ($pageIds as $pageId) {
+                    if (array_key_exists($pageId, $pages)) {
+                        $foundPages[] = $pages[$pageId];
                     }
                 }
-
-                // return with data
-                $pages_data = [];
-                $matched_page_ids = array_keys(self::$_page_weights);
-                foreach ($matched_page_ids as $page_id) {
-                    if (strpos($page_id, 'b') === false) {
-                        $pages_data[] = $cms_pages[$page_id];
-                    } else {
-                        $pages_data[] = $blog_pages[$page_id];
-                    }
-                }
-                return $pages_data;
             }
 
         }
-        return [];
+
+        return $foundPages;
     }
 
 }
