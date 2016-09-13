@@ -788,17 +788,21 @@ class PageBuilderInstance
             $isFirst = ($count == 0);
             $isLast = ($count == $total -1);
 
-            $alt = null;
             if (is_string($page->id)) {
-                foreach ($page as $blockName => $content) {
-                    $this->setCustomBlockData($blockName, $content);
-                }
                 $tmpCustomBlockKey = $this->_customBlockDataKey;
                 $this->_customBlockDataKey = 'customPage:'.$page->id;
-                $alt = $page;
+                $pageDetails = new \stdClass;
+                foreach ($page as $blockName => $content) {
+                    if (in_array($blockName, ['fullUrl', 'fullName'])) {
+                        $pageDetails->$blockName = $content;
+                    } else {
+                        $this->setCustomBlockData($blockName, $content, $this->_customBlockDataKey);
+                    }
+                }
+                Path::addCustomPagePath($page->id, $pageDetails);
             }
 
-            $fullPageInfo = new PageDetails($page->id, $groupPageContainerId, $alt);
+            $fullPageInfo = new PageDetails($page->id, $groupPageContainerId);
 
             $this->pageOverride = $page;
 

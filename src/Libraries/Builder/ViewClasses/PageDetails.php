@@ -52,25 +52,18 @@ class PageDetails
      * PageDetails constructor.
      * @param int $pageId
      * @param int $groupContainerPageId
-     * @param \stdClass $alt
      */
-    public function __construct($pageId, $groupContainerPageId = 0, $alt = null)
+    public function __construct($pageId, $groupContainerPageId = 0)
     {
-        if (!$alt) {
-            $alt = new \stdClass;
-            $alt->fullUrl = '';
-            $alt->fullName = '';
-        }
-
         $fullPaths = Path::getFullPath($pageId . ($groupContainerPageId ? ',' . $groupContainerPageId : ''));
         $page = Page::preload($pageId);
         $pageLang = PageLang::preload($pageId);
         
         $this->urlSegment = $pageLang->url;
-        $this->url = $fullPaths->fullUrl ?: $alt->fullUrl;
+        $this->url = $fullPaths->fullUrl;
 
         $this->name = $pageLang->name;
-        $this->fullName = $fullPaths->fullName ?: $alt->fullName;
+        $this->fullName = $fullPaths->fullName;
 
         $this->full_name = $this->fullName;
         $this->full_url = $this->url;

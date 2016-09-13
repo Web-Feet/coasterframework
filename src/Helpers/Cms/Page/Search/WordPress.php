@@ -1,5 +1,7 @@
 <?php namespace CoasterCms\Helpers\Cms\Page\Search;
 
+use CoasterCms\Helpers\Cms\Page\Path;
+
 class WordPress extends Cms
 {
 
@@ -38,19 +40,22 @@ class WordPress extends Cms
                         ) results
                         GROUP BY ID
                     ) weights
-                ON weights.ID = wp_posts.ID;
+                ON weights.ID = wp.ID;
                 ");
-            foreach ($blogPosts as $blogPost) {
-                $postData = new \stdClass;
-                $postData->id = 'WP' . $blogPost['ID'];
-                unset($postData['ID']);
-                foreach ($blogPost as $field => $value) {
-                    $postData->$field = $value;
+            if ($blogPosts) {
+                $defaultSeparator = new Path;
+                foreach ($blogPosts as $blogPost) {
+                    $postData = new \stdClass;
+                    $postData->id = 'WP' . $blogPost['ID'];
+                    unset($blogPost['ID']);
+                    foreach ($blogPost as $field => $value) {
+                        $postData->$field = $value;
+                    }
+                    $postData->content = $blogPost['post_content'];
+                    $postData->fullName = ucwords(str_replace('/', ' ', config('coaster::blog.url'))) . $defaultSeparator->separator . $blogPost['post_title'];
+                    $postData->fullUrl = config('coaster::blog.url') . $blogPost['post_name'];
+                    self::_addWeight($postData, $blogPost['search_weight'] + $keywordAdditionalWeight);
                 }
-                $postData->content = $blogPost['post_content'];
-                $postData->fullName = $blogPost['post_title'];
-                $postData->fullUrl = config('coaster::blog.url') . $blogPost['post_name'];
-                self::_addWeight($postData, $blogPost['search_weight'] + $keywordAdditionalWeight);
             }
         }
     }

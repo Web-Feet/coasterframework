@@ -174,6 +174,18 @@ class Path
     }
 
     /**
+     * @param string $pageId
+     * @param \stdClass $data
+     */
+    public static function addCustomPagePath($pageId, $data)
+    {
+        $customPagePath = self::_getById($pageId);
+        foreach ($data as $property => $value) {
+            $customPagePath->$property = $value;
+        }
+    }
+
+    /**
      * @param int|string $pageId
      * @return string
      */
