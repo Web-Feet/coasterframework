@@ -1,7 +1,7 @@
 <h4>Page Details</h4>
 
-@if ($pageSelect && !$page->id)
-    {!! CmsBlockInput::make('select', ['name' => 'page_info[parent]', 'label' => 'Parent Page', 'content' => $pageSelect]) !!}
+@if ($parentPages && !$page->id)
+    {!! CmsBlockInput::make('select', ['name' => 'page_info[parent]', 'label' => 'Parent Page', 'content' => $page->parent, 'selectOptions' => $parentPages]) !!}
 @else
     {!! Form::hidden('page_info[parent]', $page->parent, ['id' => 'page_info[parent]']) !!}
 @endif
@@ -11,7 +11,7 @@
 @endif
 
 @if ($beacon_select)
-    {!! CmsBlockInput::make('selectmultiple', array('name' => 'page_info_other[beacons]', 'label' => 'Page Beacons', 'content' => $beacon_select)) !!}
+    {!! CmsBlockInput::make('selectmultiple', array('name' => 'page_info_other[beacons]', 'label' => 'Page Beacons', 'content' => $beacon_select->selected, 'selectOptions' => $beacon_select->options)) !!}
 @endif
 
 {!! CmsBlockInput::make('string', ['name' => 'page_info_lang[name]', 'label' => 'Page Name', 'content' => $page_lang->name, 'disabled' => !$can_publish && $page->id ]) !!}

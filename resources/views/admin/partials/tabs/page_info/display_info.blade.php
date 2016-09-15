@@ -4,10 +4,10 @@
 
 @if (!$page->id || $page->link == 0)
     <div id="template_select">
-        @if (!$template_select->hidden)
-            {!! CmsBlockInput::make('select', ['name' => 'page_info[template]', 'label' => 'Page Template', 'content' => $template_select]) !!}
+        @if (!$templateSelectHidden)
+            {!! CmsBlockInput::make('select', ['name' => 'page_info[template]', 'label' => 'Page Template', 'content' => $template, 'selectOptions' => $templates]) !!}
         @else
-            {!! Form::hidden('page_info[template]', $template_select->selected) !!}
+            {!! Form::hidden('page_info[template]', $template) !!}
         @endif
     </div>
 @endif

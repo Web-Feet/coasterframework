@@ -1,88 +1,58 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Models\Page;
 use Request;
 use URL;
 
-class Link extends _Base
+class Link extends String_
 {
-    public static $blocks_key = 'link';
 
-    public static function display($block, $block_data, $options = array())
+    public function display($content, $options = [])
     {
-        if (!empty($block_data)) {
-            try {
-                $block_data = unserialize($block_data);
-            } catch (\Exception $e) {
-                $block_data = array('link' => '', 'target' => '');
-            }
-        } else {
-            $block_data = array('link' => '', 'target' => '');
-        }
-        if (!empty($block_data['target'])) {
-            $target = "\" target=\"{$block_data['target']}";
-        } else {
-            $target = "";
-        }
-        $link = str_replace('internal://', '', $block_data['link'], $count);
-        if ($count > 0) {
-            return Path::getFullUrl($link) . $target;
-        } else {
-            return $link . $target;
-        }
+        $content = $this->_defaultData($content);
+        $target = $content['target'] ? ' target=\"'.$content['target'].'"' : '';
+        $link = str_replace('internal://', '', $content['link'], $count);
+        return (($count > 0) ? Path::getFullUrl($link) : $link) . $target;
     }
 
-    public static function edit($block, $block_data, $page_id = 0, $parent_repeater = null)
+    public function edit($content)
     {
-        $content = new \stdClass;
-        if (!empty($block_data)) {
-            try {
-                $block_data = unserialize($block_data);
-            } catch (\Exception $e) {
-                $block_data = array('link' => '', 'target' => '');
-            }
-        } else {
-            $block_data = array('link' => '', 'target' => '');
-        }
-        $link = str_replace('internal://', '', $block_data['link'], $count);
-        if ($count > 0) {
-            $content->internal = $link;
-            $content->external = '';
-        } else {
-            $content->internal = 0;
-            $content->external = $link;
-        }
-        $content->target = !empty($block_data['target']) ? $block_data['target'] : 0;
-        $content->target_options = array(0 => 'Target: Same Tab', '_blank' => 'Target: New Tab');
-        $content->options = array(0 => 'Custom Link: ') + Page::get_page_list();
-        self::$edit_id = array($block->id);
-        return $content;
+        $content = $this->_defaultData($content);
+        $link = str_replace('internal://', '', $content['link'], $count);
+        $content['link'] = ($count > 0) ? '' : $content['link'];
+        $this->_editExtraViewData['targetOptions'] = [0 => 'Target: Same Tab', '_blank' => 'Target: New Tab'];
+        $this->_editExtraViewData['selectedPage'] = ($count > 0) ? $link : 0;
+        $this->_editExtraViewData['pageList'] = [0 => 'Custom Link: '] + Page::get_page_list();
+        return parent::edit($content);
     }
 
-    public static function submit($page_id, $blocks_key, $repeater_info = null)
+    public function submit($postDataKey = '')
     {
-        $link_blocks = Request::input($blocks_key);
-        if (!empty($link_blocks)) {
-            foreach ($link_blocks as $block_id => $link) {
-                $data = [];
-                if (!empty($link['internal'])) {
-                    $data['link'] = 'internal://' . $link['internal'];
-                } elseif (!empty($link['custom'])) {
-                    $data['link'] = $link['custom'];
-                }
-                if (!empty($link['target'])) {
-                    $data['target'] = $link['target'];
-                }
-                if (!empty($data)) {
-                    $block_content = serialize($data);
+        if ($linkBlocks = Request::input($postDataKey . $this->_editClass)) {
+            foreach ($linkBlocks as $blockId => $linkData) {
+                $content = [];
+                if (!empty($linkData['internal'])) {
+                    $content['link'] = 'internal://' . $linkData['internal'];
+                } elseif (!empty($linkData['custom'])) {
+                    $content['link'] = $linkData['custom'];
                 } else {
-                    $block_content = '';
+                    $content['link'] = '';
                 }
-                BlockManager::update_block($block_id, $block_content, $page_id, $repeater_info);
+                $content['target'] = !empty($content['target']) ? $content['target'] : '';
+                $this->save(empty($content['link']) ? '' : serialize($content));
             }
         }
+    }
+
+    protected function _defaultData($content)
+    {
+        try {
+            $content = unserialize($content);
+        } catch (\Exception $e) {}
+        $content = is_array($content) ? $content : [];
+        $content = $content + ['link' => '', 'target' => ''];
+        return $content;
     }
 
     public static function exportFiles($block, $block_data)

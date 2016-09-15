@@ -1,37 +1,41 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Models\BlockSelectOption;
 use Request;
 
-class Select extends _Base
+class Select extends String_
 {
 
-    public static function edit($block, $block_data, $page_id = 0, $parent_repeater = null)
+    public function display($content, $options = [])
     {
-        $options = array();
-        $select_opts = BlockSelectOption::where('block_id', '=', $block->id)->get();
-        foreach ($select_opts as $opts) {
-            $options[$opts->value] = $opts->option;
+        if (isset($options['returnAll']) && $options['returnAll']) {
+            return BlockSelectOption::getOptionsArray($this->_block->id);
         }
-        $field_data = new \stdClass;
-        $field_data->options = $options;
-        $field_data->selected = $block_data;
-        if (preg_match('/^#[a-f0-9]{6}$/i', key($options))) {
-            $field_data->class = "select_colour";
-        }
-        self::$edit_id = array($block->id);
-        return $field_data;
+        return $content;
     }
 
-    public static function submit($page_id, $blocks_key, $repeater_info = null)
+    public function edit($content)
     {
-        // check for empty selects using a block_exists field
-        $check_for_empty_selects = Request::input($blocks_key . '_exists');
-        if (!empty($check_for_empty_selects)) {
-            foreach ($check_for_empty_selects as $block_id => $v) {
-                if (Request::input($blocks_key . '.' . $block_id) == null) {
-                    BlockManager::update_block($block_id, '', $page_id, $repeater_info);
+        $this->_editExtraViewData['selectOptions'] = [];
+        $selectOptions = BlockSelectOption::where('block_id', '=', $this->_block->id)->get();
+        foreach ($selectOptions as $selectOption) {
+            $this->_editExtraViewData['selectOptions'][$selectOption->value] = $selectOption->option;
+        }
+        if (preg_match('/^#[a-f0-9]{6}$/i', key($options))) {
+            $this->_editExtraViewData['class'] = "select_colour";
+        }
+        return parent::edit($content);
+    }
+
+    public function submit($postDataKey = '')
+    {
+        $this->submit($postDataKey);
+        if ($submittedSelects = Request::input($postDataKey . $this->_editClass . '_exists')) {
+            $selectsWithValues = Request::input($postDataKey . $this->_editClass);
+            foreach ($submittedSelects as $blockId => $value) {
+                if (array_key_exists($blockId, $selectsWithValues)) {
+                    $this->_block->id = $blockId;
+                    $this->save('');
                 }
             }
         }

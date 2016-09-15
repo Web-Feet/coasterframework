@@ -1,15 +1,23 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
+use CoasterCms\Helpers\Cms\StringHelper;
+
 class Text extends String_
 {
 
-    public static function display($block, $block_data, $options = null)
+    public function display($content, $options = [])
     {
-        $block_data = parent::display($block, $block_data, $options);
-        if (empty($options['meta']) && empty($options['source'])) {
-            $block_data = nl2br($block_data);
+        $content = parent::display($content);
+        if (!empty($options['source'])) {
+            return $content;
         }
-        return $block_data;
+        if (empty($options['meta'])) {
+            $content = nl2br($content);
+        }
+        if (!empty($options['length'])) {
+            $content = StringHelper::cutString(strip_tags($content), $options['length']);
+        }
+        return $content;
     }
 
 }

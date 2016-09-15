@@ -1,125 +1,42 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Exceptions\CmsPageException;
 use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Helpers\Cms\Captcha\Securimage;
 use CoasterCms\Helpers\Cms\Email;
 use CoasterCms\Helpers\Cms\View\FormWrap;
 use CoasterCms\Libraries\Builder\FormMessage;
 use CoasterCms\Libraries\Builder\PageBuilder;
-use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockFormRule;
 use CoasterCms\Models\FormSubmission;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\Theme;
 use CoasterCms\Models\ThemeBlock;
-use Illuminate\Http\RedirectResponse;
 use Request;
 use Session;
 use Validator;
 
-class Form extends _Base
+class Form extends String_
 {
-    public static $blocks_key = 'form';
 
-    public static function display($block, $block_data, $options = array())
+    public function display($content, $options = [])
     {
-        $form_data = new \stdClass;
-        $template = !empty($options['view']) ? $options['view'] : $block->name;
-        if (!empty($block_data)) {
-            $form_data = unserialize($block_data);
-            if (!empty($form_data->template)) {
-                $template = $form_data->template;
-            }
-        } else {
-            $form_data->captcha = false;
-            $form_data->email_from = '';
-            $form_data->email_to = '';
-            $form_data->template = '';
-            $form_data->page_to = '';
-            $form_data->template = '';
-        }
-        $template = 'themes.' . PageBuilder::getData('theme') . '.blocks.forms.' . $template;
-        return FormWrap::view($block, $options, $template, ['form_data' => $form_data]);
+        $formData = $this->_defaultData($content);
+        $template = !empty($formData->template) ? $formData->template : '';
+        $template = $template ?: (!empty($options['view']) ? $options['view'] : $this->_block->name);
+        $templatePath = 'themes.' . PageBuilder::getData('theme') . '.blocks.forms.' . $template;
+        return FormWrap::view($this->_block, $options, $templatePath, ['form_data' => $formData]);
     }
 
-    public static function edit($block, $block_data, $page_id = 0, $parent_repeater = null)
-    {
-        if (empty($block_data) || !($form_data = @unserialize($block_data))) {
-            $form_data = new \stdClass;
-            $form_data->email_from = '';
-            $form_data->email_to = '';
-            $form_data->template = 0;
-            $form_data->page_to = '';
-        } else {
-            $form_data->template = $form_data->template == $block->name ? 0 : $form_data->template;
-        }
-        $form_data->captcha_hide = '';
-        if (!isset($form_data->captcha)) {
-            $form_data->captcha = false;
-        }
-        $form_data->pages_array = Page::get_page_list();
-        $form_data->template_array = [0 => '-- Use view from template --'];
-        $theme = Theme::find(config('coaster::frontend.theme'));
-        if (!empty($theme)) {
-            $forms = base_path('/resources/views/themes/' . $theme->theme . '/blocks/forms');
-            if (is_dir($forms)) {
-                foreach (scandir($forms) as $form) {
-                    if (!is_dir($forms . DIRECTORY_SEPARATOR . $form)) {
-                        $form_file = explode(".", $form);
-                        if (!empty($form_file[0])) {
-                            if (strpos(file_get_contents($forms . DIRECTORY_SEPARATOR . $form), 'captcha')) {
-                                $captcha = " (supports captcha)";
-                            } else {
-                                $captcha = " (does not support captcha)";
-                                if ($form_data->template == $form_file[0]) {
-                                    $form_data->captcha_hide = 'hide';
-                                }
-                            }
-                            $form_data->template_array[$form_file[0]] = $form_file[0] . $captcha;
-                        }
-                    }
-                }
-            }
-        }
-        self::$extra_data['page_id'] = $page_id;
-        self::$edit_id = array($block->id);
-        return $form_data;
-    }
-
-    public static function submit($page_id, $blocks_key, $repeater_info = null)
-    {
-        $updated_form_blocks = Request::input($blocks_key);
-        if (!empty($updated_form_blocks)) {
-            foreach ($updated_form_blocks as $block_id => $updated_form_data) {
-                $form_data = new \stdClass;
-                $form_data->email_from = $updated_form_data['from'];
-                $form_data->email_to = $updated_form_data['to'];
-                $form_data->template = !empty($updated_form_data['template'])?$updated_form_data['template']:0;
-                $form_data->page_to = $updated_form_data['page'];
-                $form_data->captcha = !empty($updated_form_data['captcha']) ? true : false;
-                $block_content = serialize($form_data);
-                BlockManager::update_block($block_id, $block_content, $page_id);
-            }
-        }
-    }
-
-    /**
-     * @param Block $block
-     * @param array $form_data
-     * @return false|RedirectResponse
-     * @throws CmsPageException
-     */
-    public static function submission($block, $form_data)
+    public function submission($form_data)
     {
         // load form settings
         $live_version = PageBuilder::pageLiveVersionId();
-        $form_settings = BlockManager::get_block($block->id, $form_data['page_id'], null, $live_version);
+        $form_settings = BlockManager::get_block($this->_block->id, $form_data['page_id'], null, $live_version);
         if (empty($form_settings)) {
             // check if forms a global block
-            $in_theme = ThemeBlock::where('theme_id', '=', config('coaster::frontend.theme'))->where('block_id', '=', $block->id)->first();
+            $in_theme = ThemeBlock::where('theme_id', '=', config('coaster::frontend.theme'))->where('block_id', '=', $this->_block->id)->first();
             if (!empty($in_theme)) {
-                $form_settings = BlockManager::get_block($block->id);
+                $form_settings = BlockManager::get_block($this->_block->id);
             }
         }
         if (!empty($form_settings)) {
@@ -147,7 +64,7 @@ class Form extends _Base
 
                 // save form submission
                 $form_submission = new FormSubmission;
-                $form_submission->form_block_id = $block->id;
+                $form_submission->form_block_id = $this->_block->id;
                 $form_submission->content = serialize($form_data);
                 $form_submission->sent = 0;
                 $form_submission->from_page_id = PageBuilder::pageId();
@@ -155,7 +72,7 @@ class Form extends _Base
 
                 foreach ($files as $field => $value) {
                     if (Request::hasFile($field)) {
-                        $upload_folder = '/uploads/system/forms/' . $block->id;
+                        $upload_folder = '/uploads/system/forms/' . $this->_block->id;
                         $full_upload_path = public_path() . $upload_folder;
                         if (!file_exists($full_upload_path)) {
                             mkdir($full_upload_path, 0755, true);
@@ -169,8 +86,8 @@ class Form extends _Base
                 $form_submission->content = serialize($form_data);
                 $form_submission->save();
 
-                $subject = config('coaster::site.name') . ': New Form Submission - ' . $block->label;
-                $template = $form_settings->template?:$block->name;
+                $subject = config('coaster::site.name') . ': New Form Submission - ' . $this->_block->label;
+                $template = $form_settings->template?:$this->_block->name;
                 $sentEmail = Email::sendFromFormData([$template], $form_data, $subject, $form_settings->email_to, $form_settings->email_from);
 
                 if ($sentEmail) {
@@ -190,6 +107,60 @@ class Form extends _Base
         }
 
         return false;
+    }
+
+    public function edit($content)
+    {
+        $formData = $this->_defaultData($content);
+        $formData->template = $formData->template == $this->_block->name ? 0 : $formData->template;
+
+        $this->_editExtraViewData['pageList'] = Page::get_page_list();
+        $this->_editExtraViewData['formTemplates'] = [0 => '-- Use view from template --'];
+        $theme = Theme::find(config('coaster::frontend.theme'));
+        if (!empty($theme)) {
+            $forms = base_path('/resources/views/themes/' . $theme->theme . '/blocks/forms');
+            if (is_dir($forms)) {
+                foreach (scandir($forms) as $form) {
+                    if (!is_dir($forms . DIRECTORY_SEPARATOR . $form)) {
+                        $form_file = explode('.', $form);
+                        if (!empty($form_file[0])) {
+                            $this->_editExtraViewData['formTemplates'][$form_file[0]] = $form_file[0] . (strpos(file_get_contents($forms . DIRECTORY_SEPARATOR . $form), 'captcha') ? ' (supports captcha)' : ' (does not support captcha)');
+                        }
+                    }
+                }
+            }
+        }
+
+        return parent::edit($formData);
+    }
+
+    protected function _defaultData($content)
+    {
+        if (empty($content) || !($formData = @unserialize($content))) {
+            $formData = new \stdClass;
+            $formData->captcha = false;
+            $formData->email_from = '';
+            $formData->email_to = '';
+            $formData->template = '';
+            $formData->page_to = '';
+        }
+        return $formData;
+    }
+
+    public function submit($postDataKey = '')
+    {
+        if ($updatedFormBlocks = Request::input($postDataKey . $this->_editClass)) {
+            foreach ($updatedFormBlocks as $blockId => $updatedFormBlock) {
+                $formData = new \stdClass;
+                $formData->captcha = !empty($updatedFormBlock['captcha']) ? true : false;
+                $formData->email_from = $updatedFormBlock['from'];
+                $formData->email_to = $updatedFormBlock['to'];
+                $formData->template = !empty($updatedFormBlock['template'])? $updatedFormBlock['template'] : 0;
+                $formData->page_to = $updatedFormBlock['page'];
+                $this->_block->id = $blockId;
+                $this->_save(serialize($formData));
+            }
+        }
     }
 
     public static function block_settings_action()

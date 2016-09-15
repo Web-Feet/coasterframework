@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Http\Controllers\AdminControllers;
 
 use Auth;
+use CoasterCms\Helpers\Cms\DateTimeHelper;
 use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Libraries\Builder\FormMessage;
@@ -228,8 +229,8 @@ class PagesController extends AdminController
             }
         }
 
-        $scheduleFrom = Datetime::jQueryToMysql(Request::input('schedule_from'));
-        $scheduleTo = Datetime::jQueryToMysql(Request::input('schedule_to'));
+        $scheduleFrom = DateTimeHelper::jQueryToMysql(Request::input('schedule_from'));
+        $scheduleTo = DateTimeHelper::jQueryToMysql(Request::input('schedule_to'));
         $scheduleToVersion = Request::input('schedule_to_version');
         $scheduleRepeat = Request::input('schedule_repeat')?:0;
         $versionId = Request::input('version_id');
@@ -466,8 +467,8 @@ class PagesController extends AdminController
                 $page_info['live'] = 0;
             }
         }
-        $page_info['live_start'] = Datetime::jQueryToMysql($page_info['live_start']);
-        $page_info['live_end'] = Datetime::jQueryToMysql($page_info['live_end']);
+        $page_info['live_start'] = DateTimeHelper::jQueryToMysql($page_info['live_start']);
+        $page_info['live_end'] = DateTimeHelper::jQueryToMysql($page_info['live_end']);
 
         $createNewGroup = ($page_info['group_container'] == -1);
         $page_info['group_container'] = $createNewGroup ? 0 : $page_info['group_container'];

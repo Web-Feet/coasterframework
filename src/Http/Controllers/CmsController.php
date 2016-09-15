@@ -101,8 +101,7 @@ class CmsController extends Controller
                         unset($formData['_token']);
                         unset($formData['block_id']);
                         unset($formData['coaster_check']);
-                        $blockClass = $block->get_class();
-                        if ($formSubmitResponse = $blockClass::submission($block, $formData)) {
+                        if ($formSubmitResponse = $block->getTypeObject()->submission($formData)) {
                             throw new CmsPageException('form submission response', 0, null, $formSubmitResponse);
                         }
                     }

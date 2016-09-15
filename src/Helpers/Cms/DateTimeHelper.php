@@ -37,4 +37,22 @@ class DateTimeHelper
         return $timeStr;
     }
 
+    public static function jQueryToMysql($jqueryDt)
+    {
+        if ($jqueryDt) {
+            if ($date = Carbon::createFromFormat(config('coaster::date.format.jq_php'), $jqueryDt)) {
+                return $date->format("Y-m-d H:i:s");
+            }
+        }
+        return '';
+    }
+
+    public static function mysqlToJQuery($mysqlDt)
+    {
+        if ($mysqlDt && strtotime($mysqlDt)) {
+            return (new Carbon($mysqlDt))->format(config('coaster::date.format.jq_php'));
+        }
+        return '';
+    }
+
 }

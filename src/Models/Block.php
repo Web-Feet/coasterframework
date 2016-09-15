@@ -70,12 +70,21 @@ class Block extends Eloquent
     }
 
     /**
-     * @return \CoasterCms\Libraries\Blocks\_Base
+     * @return string
      */
     public function get_class()
     {
         $blockClasses = BlockManager::getBlockClasses();
         return !empty($blockClasses[$this->type])?$blockClasses[$this->type]:$blockClasses['string'];
+    }
+
+    /**
+     * @return \CoasterCms\Libraries\Blocks\String_
+     */
+    public function getTypeObject()
+    {
+        $typeClass = $this->get_class();
+        return new $typeClass($this);
     }
 
 }

@@ -11,12 +11,12 @@
         </div>
         <div class="row">
             <div class="col-sm-3">Submit Page:</div>
-            <div class="col-sm-9">{!! Form::select($name.'[page]', $content->pages_array, $content->page_to, ['class' => 'form-control']) !!}</div>
+            <div class="col-sm-9">{!! Form::select($name.'[page]', $pageList, $content->page_to, ['class' => 'form-control']) !!}</div>
         </div>
         @if ($content->template)
         <div class="row">
             <div class="col-sm-3">Form Template:</div>
-            <div class="col-sm-9">{!! Form::select($name.'[template]', $content->template_array, $content->template, ['class' => 'form-control form-template']) !!}</div>
+            <div class="col-sm-9">{!! Form::select($name.'[template]', $formTemplates, $content->template, ['class' => 'form-control form-template']) !!}</div>
         </div>
         @endif
         <div class="row">
@@ -25,7 +25,7 @@
         </div>
         <div class="row">
             <div class="col-sm-3">Form Submissions:</div>
-            <div class="col-sm-9"><a href="{{ route('coaster.admin.forms.submissions', ['blockId' => $block_id, 'pageId' => $extra_data['page_id']]) }}" class="btn btn-default">View</a></div>
+            <div class="col-sm-9"><a href="{{ route('coaster.admin.forms.submissions', ['blockId' => $_blockId, 'pageId' => $_pageId]) }}" class="btn btn-default">View</a></div>
         </div>
     </div>
 </div>

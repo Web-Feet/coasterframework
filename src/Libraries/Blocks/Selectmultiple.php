@@ -1,52 +1,30 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\PageBlock;
 
-class Selectmultiple extends _Base
+class Selectmultiple extends Select
 {
 
-    public static function display($block, $block_data, $options = null)
+    public function display($content, $options = [])
     {
-        if (isset($options['returnAll']) && $options['returnAll']) {
-            return BlockSelectOption::getOptionsArray($block->id);
-        }
-        if (!empty($block_data)) {
-            return unserialize($block_data);
-        } else {
-            return [];
-        }
+        $content = $content ? unserialize($content) : [];
+        return $this->display($content, $options);
     }
 
-    public static function edit($block, $block_data, $page_id = 0, $parent_repeater = null)
+    public function edit($content)
     {
-        $options = array();
-        $select_opts = BlockSelectOption::where('block_id', '=', $block->id)->get();
-        foreach ($select_opts as $opts) {
-            $options[$opts->value] = $opts->option;
-        }
-        $field_data = new \stdClass;
-        $field_data->options = $options;
-        $field_data->selected = @unserialize($block_data);
-        if (preg_match('/^#[a-f0-9]{6}$/i', key($options))) {
-            $field_data->class = "select_colour";
-        }
-        self::$edit_id = array($block->id);
-        return $field_data;
+        $content = @unserialize($content);
+        return parent::edit($content);
     }
 
-    public static function save($block_content)
+    public function save($content)
     {
-        if (!empty($block_content)) {
-            return serialize($block_content);
-        } else {
-            return '';
-        }
+        $this->_save($content ? serialize($content) : '');
     }
 
-    public static function filter($block_id, $search, $type)
+    public function filter($search, $type)
     {
-        $live_blocks = PageBlock::page_blocks_on_live_page_versions($block_id);
+        $live_blocks = PageBlock::page_blocks_on_live_page_versions($this->_block->id);
         $page_ids = array();
         if (!empty($live_blocks) && $search) {
             foreach ($live_blocks as $live_block) {
