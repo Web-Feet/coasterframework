@@ -1,7 +1,6 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
 use CoasterCms\Models\BlockSelectOption;
-use Request;
 
 class Select extends String_
 {
@@ -16,29 +15,20 @@ class Select extends String_
 
     public function edit($content)
     {
-        $this->_editExtraViewData['selectOptions'] = [];
+        $this->_editViewData['selectOptions'] = [];
         $selectOptions = BlockSelectOption::where('block_id', '=', $this->_block->id)->get();
         foreach ($selectOptions as $selectOption) {
-            $this->_editExtraViewData['selectOptions'][$selectOption->value] = $selectOption->option;
+            $this->_editViewData['selectOptions'][$selectOption->value] = $selectOption->option;
         }
-        if (preg_match('/^#[a-f0-9]{6}$/i', key($options))) {
-            $this->_editExtraViewData['class'] = "select_colour";
+        if (preg_match('/^#[a-f0-9]{6}$/i', key($selectOptions))) {
+            $this->_editViewData['class'] = 'select_colour';
         }
         return parent::edit($content);
     }
 
-    public function submit($postDataKey = '')
+    public function save($content)
     {
-        $this->submit($postDataKey);
-        if ($submittedSelects = Request::input($postDataKey . $this->_editClass . '_exists')) {
-            $selectsWithValues = Request::input($postDataKey . $this->_editClass);
-            foreach ($submittedSelects as $blockId => $value) {
-                if (array_key_exists($blockId, $selectsWithValues)) {
-                    $this->_block->id = $blockId;
-                    $this->save('');
-                }
-            }
-        }
+        return parent::save(!empty($content['select']) ? $content['select'] : '');
     }
 
     public static function block_settings_action()

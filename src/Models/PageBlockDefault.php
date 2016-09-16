@@ -29,6 +29,22 @@ class PageBlockDefault extends Eloquent
         }
     }
 
+    public static function updateBlockData($content, $blockId, $versionId)
+    {
+        $previousData = static::where('block_id', '=', $blockId)->where('language_id', '=', Language::current())->orderBy('version', 'desc')->first();
+        if (!empty($previousData) && $previousData->version > $versionId) {
+            throw new \Exception('VersionId ('.$versionId.') for the new data must be higher than the previous versionId ('.$previousData->version.')!');
+        }
+        if (empty($previousData) || (!empty($previousData) && $previousData->content !== $content)) {
+            $block = new static;
+            $block->block_id = $blockId;
+            $block->language_id = Language::current();
+            $block->content = $content;
+            $block->version = $versionId;
+            $block->save();
+        }
+    }
+
     public static function get_block($block_id, $page_id, $repeater_info, $version)
     {
         $selected_block = self::where('block_id', '=', $block_id)->where('language_id', '=', Language::current());

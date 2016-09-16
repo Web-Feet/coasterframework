@@ -1,10 +1,10 @@
 <div class="row">
     <h4 class="col-sm-2 text-right">{{ $label }}</h4>
 
-    <div class="col-sm-12 {!! $content?'':' hide' !!}">
-        <table id="repeater_{!! $input_id[0] !!}" class="table table-bordered repeater-table">
+    <div class="col-sm-12 {!! $renderedRows ? '' : ' hide' !!}">
+        <table id="repeater_{!! $content !!}" class="table table-bordered repeater-table">
             <tbody>
-            {!! $content !!}
+                {!! $renderedRows !!}
             </tbody>
         </table>
     </div>
@@ -13,11 +13,11 @@
         <div class="form-group">
             <div class="row">
                 <div class="col-sm-12">
-                    {!! Form::hidden('repeater_id['.$input_id[0].'][page_id]', $page_id) !!}
-                    {!! Form::hidden('repeater_id['.$input_id[0].'][block_id]', $block_id) !!}
-                    {!! Form::hidden('repeater_id['.$input_id[0].'][parent_repeater]', $parent_repeater) !!}
-                    <button type="button" class="btn repeater_button" data-repeater="{{ $input_id[0] }}"
-                            data-block="{{ $block_id }}" data-page="{{ $page_id }}">Add Another Repeater Block
+                    {!! Form::hidden($name . '[repeater_id]', $content) !!}
+                    {!! Form::hidden($name . '[parent_repeater_id]', $_repeaterId) !!}
+                    {!! Form::hidden($name . '[parent_repeater_row_id]', $_repeaterRowId) !!}
+                    <button type="button" class="btn repeater_button" data-repeater="{{ $content }}" data-block="{{ $_block->id }}" data-page="{{ $_pageId }}">
+                        Add Another Repeater Block
                     </button>
                 </div>
             </div>

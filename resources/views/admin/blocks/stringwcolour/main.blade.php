@@ -5,6 +5,6 @@
         <span class="help-block">{!! FormMessage::getErrorMessage($name) !!}</span>
     </div>
     <div class="col-sm-4">
-        {!! Form::select(str_replace('blockc', 'blockc_colour', $name), $content->options, $content->colour, ['class' => 'form-control ' . $content->class]) !!}
+        {!! Form::select(str_replace('blockc', 'blockc_colour', $name), $selectOptions, $content->colour, ['class' => 'form-control ' . $selectClass]) !!}
     </div>
 </div>

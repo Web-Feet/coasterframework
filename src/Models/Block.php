@@ -3,6 +3,7 @@
 use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Libraries\Traits\DataPreLoad;
 use Eloquent;
+use Request;
 
 class Block extends Eloquent
 {
@@ -83,8 +84,80 @@ class Block extends Eloquent
      */
     public function getTypeObject()
     {
-        $typeClass = $this->get_class();
+        $typeClass = $this->getClass();
         return new $typeClass($this);
+    }
+
+    /**
+     * @return string
+     */
+    public function getClass()
+    {
+        return static::getBlockClass($this->type);
+    }
+
+    /**
+     * @param string $type
+     * @param bool $reload
+     * @return string
+     */
+    public static function getBlockClass($type, $reload = false)
+    {
+        static::_loadClasses($reload);
+        return static::_preloadGet('blockClass', $type) ?: static::_preloadGet('blockClass', 'string');
+    }
+
+    /**
+     * @param bool $reload
+     * @return array
+     */
+    public static function getBlockClasses($reload = false)
+    {
+        static::_loadClasses($reload);
+        return static::_preloadGetArray('blockClass');
+    }
+
+    /**
+     * @param bool $reload
+     */
+    protected static function _loadClasses($reload = false)
+    {
+        if (!static::_preloadIsset('blockClass') || $reload) {
+            $paths = [
+                'CoasterCms\\Libraries\\Blocks\\' => base_path('vendor/web-feet/coasterframework/src/Libraries/Blocks'),
+                'App\\Blocks\\' => base_path('app/Blocks')
+            ];
+
+            foreach ($paths as $classPath => $dirPath) {
+                if (is_dir($dirPath)) {
+                    foreach (scandir($dirPath) as $file) {
+                        if ($className = explode('.', $file)[0]) {
+                            static::_preloadAdd('blockClass', trim(strtolower($className), '_'), $classPath . $className);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * @param int $pageId
+     * @param int $versionId
+     * @param bool $publish
+     */
+    public static function submit($pageId, $versionId, $publish = true)
+    {
+        $submittedBlocks = Request::input('block') ?: [];
+        foreach ($submittedBlocks as $blockId => $submittedData) {
+            $block = static::preload($blockId);
+            //if ($blockId == 27) {dd();}
+            if ($block->exists) {
+                $blockTypeObject = $block->getTypeObject()->setPageId($pageId)->setVersionId($versionId)->save($submittedData);
+                if ($publish) {
+                    $blockTypeObject->publish();
+                }
+            }
+        }
     }
 
 }

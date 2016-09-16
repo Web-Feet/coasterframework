@@ -55,7 +55,7 @@ class Selectpages extends Selectmultiple
     {
         $parent = BlockSelectOption::where('block_id', '=', $this->_block->id)->where('option', '=', 'parent')->first();
         $parentPageId = !empty($parent) ? $parent->value : 0;
-        $this->_editExtraViewData['selectOptions'] = Page::get_page_list(['parent' => $parentPageId]);
+        $this->_editViewData['selectOptions'] = Page::get_page_list(['parent' => $parentPageId]);
         return parent::edit($content);
     }
 

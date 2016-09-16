@@ -30,6 +30,25 @@ class PageBlockRepeaterData extends Eloquent
         }
     }
 
+    public static function updateBlockData($content, $blockId, $versionId, $repeaterId, $repeaterRowId)
+    {
+        if (!($repeaterRowKey = PageBlockRepeaterRows::get_row_key($repeaterId, $repeaterRowId))) {
+            $repeaterRowKey = PageBlockRepeaterRows::add_row_key($repeaterId, $repeaterRowId)->id;
+        }
+        $previousData = static::where('row_key', '=', $repeaterRowKey)->where('block_id', '=', $blockId)->orderBy('version', 'desc')->first();
+        if (!empty($previousData) && $previousData->version > $versionId) {
+            throw new \Exception('VersionId ('.$versionId.') for the new data must be higher than the previous versionId ('.$previousData->version.')!');
+        }
+        if (empty($previousData) || (!empty($previousData) && $previousData->content !== $content)) {
+            $block = new static;
+            $block->block_id = $blockId;
+            $block->row_key = $repeaterRowKey;
+            $block->content = $content;
+            $block->version = $versionId;
+            $block->save();
+        }
+    }
+
     public static function get_block($block_id, $repeater_id, $repeater_info, $version)
     {
         $row_key = PageBlockRepeaterRows::get_row_key($repeater_info->repeater_id, $repeater_info->row_id);
@@ -128,6 +147,29 @@ class PageBlockRepeaterData extends Eloquent
             uasort($repeater_rows, array('self', '_order'));
         }
         return $repeater_rows;
+    }
+
+    public static function loadRepeaterData($repeaterId, $version = 0, $randomOrder = false)
+    {
+        $repeaterRowsById = [];
+        if ($rowKeysObjects = PageBlockRepeaterRows::get_row_objects($repeaterId, $randomOrder)) {
+            $rowKeyToId = [];
+            foreach ($rowKeysObjects as $rowId => $rowKeysObject) {
+                $rowKeyToId[$rowKeysObject->id] = $rowId;
+            }
+            $repeaterRowsData = BlockManager::get_data_for_version(new static, $version, ['row_key'], [array_keys($rowKeyToId)]) ?: [];
+            foreach ($repeaterRowsData as $repeaterRowData) {
+                $repeaterRowId = $rowKeyToId[$repeaterRowData->row_key];
+                if (!isset($rowsByRowKey[$repeaterRowId])) {
+                    $repeaterRowsById[$repeaterRowId] = [];
+                }
+                $repeaterRowsById[$repeaterRowId][$repeaterRowData->block_id] = $repeaterRowData;
+            }
+            if ($randomOrder === false) {
+                uasort($repeaterRowsById, ['self', '_order']);
+            }
+        }
+        return $repeaterRowsById;
     }
 
     private static function _order($a, $b)

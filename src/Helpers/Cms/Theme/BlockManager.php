@@ -190,7 +190,7 @@ class BlockManager
                         } else {
                             $block_content = '';
                         }
-                        $tab_contents[$tab_index] .= $block->getTypeObject()->setPageId($page_id)->display($block_content);
+                        $tab_contents[$tab_index] .= $block->getTypeObject()->setPageId($page_id)->edit($block_content);
                     }
                     $tab_index++;
                 }
@@ -220,45 +220,6 @@ class BlockManager
         $can_publish = Auth::action('pages.version-publish', ['page_id' => $page_id]);
 
         return View::make('coaster::partials.tabs.versions.table', array('versions' => $versions, 'pagination' => $pagination, 'live_version' => $live_version, 'can_publish' => $can_publish))->render();
-    }
-
-    public static function get_field(Block $block, $block_content, $page_id, $repeater_info = null)
-    {
-        $block_class = $block->get_class();
-        $field_content = $block_class::edit($block, $block_content, $page_id, $repeater_info);
-
-        if ($block_class::$edit_display_raw) {
-
-            return $field_content;
-
-        } else {
-
-            $field_key = self::_get_input_key($block_class, $repeater_info);
-            $parent_repeater = !empty($repeater_info) ? serialize($repeater_info) : null;
-
-            return CmsBlockInput::make($block->type, array('name' => $field_key, 'content' => $field_content, 'note' => $block->note, 'block_id' => $block->id, 'label' => $block->label, 'page_id' => $page_id, 'parent_repeater' => $parent_repeater, 'input_id' => $block_class::$edit_id, 'extra_data' => $block_class::$extra_data));
-        }
-    }
-
-    private static function _get_input_key($block_class, $repeater_info)
-    {
-        $field_key = '';
-        if (!empty($block_class::$edit_id)) {
-
-            foreach ($block_class::$edit_id as $segment) {
-                $field_key .= '[' . $segment . ']';
-            }
-
-            if (!empty($repeater_info)) {
-                $block_key = Blocks\Repeater::$blocks_key . '[' . $repeater_info->repeater_id . '][' . $repeater_info->row_id . '][' . $block_class::$blocks_key . ']';
-            } else {
-                $block_key = $block_class::$blocks_key;
-            }
-
-            $field_key = $block_key . $field_key;
-
-        }
-        return $field_key;
     }
 
     public static function process_submission($page_id = 0)

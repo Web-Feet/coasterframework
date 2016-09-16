@@ -62,31 +62,27 @@ class Image extends String_
         return parent::edit($imageData);
     }
 
-    public function submit($postDataKey = '')
+    public function save($content)
     {
-        if ($imageBlocks = Request::input($postDataKey . $this->_editClass)) {
-            foreach ($imageBlocks as $block_id => $imageBlock) {
-                if (!empty($imageBlock['alt']) || !empty($imageBlock['source'])) {
-                    $imageData = new \stdClass;
-                    $imageData->title = !empty($imageBlock['alt']) ? $imageBlock['alt'] : '';
-                    $imageData->file = !empty($imageBlock['source']) ? $imageBlock['source'] : '';
-                } else {
-                    $imageData = '';
-                }
-                $this->save($imageData ? serialize($imageData) : '');
-            }
+        if (!empty($content['alt']) || !empty($content['source'])) {
+            $imageData = new \stdClass;
+            $imageData->title = !empty($content['alt']) ? $content['alt'] : '';
+            $imageData->file = !empty($content['source']) ? $content['source'] : '';
+        } else {
+            $imageData = '';
         }
+        return parent::save($imageData ? serialize($imageData) : '');
     }
 
     protected function _defaultData($content)
     {
-        try {
-            $content = unserialize($content);
-        } catch (\Exception $e) {}
-        $imageData = is_a($content, \stdClass::class) ? $content : new \stdClass;
-        $imageData->file = $content->file ?: '';
-        $imageData->title = $content->title ?: '';
-        return $imageData;
+        $content = @unserialize($content);
+        if (empty($content) || !is_a($content, \stdClass::class)) {
+            $content = new \stdClass;
+        }
+        $content->file = empty($content->file) ? '' : $content->file;
+        $content->title = empty($content->title) ? '' : $content->title;
+        return $content;
     }
 
     public static function exportFiles($block, $block_data)

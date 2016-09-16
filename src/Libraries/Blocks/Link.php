@@ -21,36 +21,32 @@ class Link extends String_
         $content = $this->_defaultData($content);
         $link = str_replace('internal://', '', $content['link'], $count);
         $content['link'] = ($count > 0) ? '' : $content['link'];
-        $this->_editExtraViewData['targetOptions'] = [0 => 'Target: Same Tab', '_blank' => 'Target: New Tab'];
-        $this->_editExtraViewData['selectedPage'] = ($count > 0) ? $link : 0;
-        $this->_editExtraViewData['pageList'] = [0 => 'Custom Link: '] + Page::get_page_list();
+        $this->_editViewData['targetOptions'] = [0 => 'Target: Same Tab', '_blank' => 'Target: New Tab'];
+        $this->_editViewData['selectedPage'] = ($count > 0) ? $link : 0;
+        $this->_editViewData['pageList'] = [0 => 'Custom Link: '] + Page::get_page_list();
         return parent::edit($content);
     }
 
-    public function submit($postDataKey = '')
+    public function save($content)
     {
-        if ($linkBlocks = Request::input($postDataKey . $this->_editClass)) {
-            foreach ($linkBlocks as $blockId => $linkData) {
-                $content = [];
-                if (!empty($linkData['internal'])) {
-                    $content['link'] = 'internal://' . $linkData['internal'];
-                } elseif (!empty($linkData['custom'])) {
-                    $content['link'] = $linkData['custom'];
-                } else {
-                    $content['link'] = '';
-                }
-                $content['target'] = !empty($content['target']) ? $content['target'] : '';
-                $this->save(empty($content['link']) ? '' : serialize($content));
-            }
+        $linkData = [];
+        if (!empty($content['internal'])) {
+            $linkData['link'] = 'internal://' . $content['internal'];
+        } elseif (!empty($content['custom'])) {
+            $linkData['link'] = $content['custom'];
+        } else {
+            $linkData['link'] = '';
         }
+        $linkData['target'] = !empty($linkData['target']) ? $linkData['target'] : '';
+        return parent::save(empty($linkData['link']) ? '' : serialize($linkData));
     }
 
     protected function _defaultData($content)
     {
-        try {
-            $content = unserialize($content);
-        } catch (\Exception $e) {}
-        $content = is_array($content) ? $content : [];
+        $content = @unserialize($content);
+        if (empty($content) || !is_array($content)) {
+            $content = [];
+        }
         $content = $content + ['link' => '', 'target' => ''];
         return $content;
     }

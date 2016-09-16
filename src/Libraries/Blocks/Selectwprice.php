@@ -1,73 +1,65 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Models\BlockSelectOption;
 use Request;
 
-class Selectwprice extends _Base
+class Selectwprice extends String_
 {
-    public static $blocks_key = 'blocksp';
 
-    public static function display($block, $block_data, $options = null)
+    public function display($content, $options = [])
     {
-        if (!empty($block_data)) {
-            return unserialize($block_data);
-        } else {
-            $text = new \stdClass;
-            $text->selected = 0;
-            $text->price = 0;
-            return $text;
-        }
+        return $this->_defaultData($content);
     }
 
-    public static function edit($block, $block_data, $page_id = 0, $parent_repeater = null)
+    public function edit($content)
     {
-        $block_data = unserialize($block_data);
-        $field_data = new \stdClass;
-        $field_data->price = empty($block_data->price) ? '' : $block_data->price;
-
-        $field_data->selected = empty($block_data->selected) ? '' : $block_data->selected;
-        $options = array();
-        $select_opts = BlockSelectOption::where('block_id', '=', $block->id)->get();
-        foreach ($select_opts as $opts) {
-            $options[$opts->value] = $opts->option;
+        $this->_editViewData['selectOptions'] = [];
+        $selectOptions = BlockSelectOption::where('block_id', '=', $this->_block->id)->get();
+        foreach ($selectOptions as $selectOption) {
+            $this->_editViewData['selectOptions'][$selectOption->value] = $selectOption->option;
         }
-        $field_data->options = $options;
-        if (preg_match('/^#[a-f0-9]{6}$/i', key($options))) {
-            $field_data->class = 'select_colour';
+        if (preg_match('/^#[a-f0-9]{6}$/i', key($selectOptions))) {
+            $this->_editViewData['class'] = 'select_colour';
         }
-
-        self::$edit_id = array($block->id);
-        return $field_data;
+        return parent::edit($this->_defaultData($content));
     }
 
-    public static function submit($page_id, $blocks_key, $repeater_info = null)
+    public function submit($postDataKey = '')
     {
-        $text_blocks = Request::input($blocks_key . '_price');
-        if (!empty($text_blocks)) {
-            foreach ($text_blocks as $block_id => $block_content) {
-                $text = new \stdClass;
-                $text->selected = Request::input($blocks_key . $block_id);
-                $text->price = $block_content;
-                if (empty($text->selected) && empty($text->price)) {
-                    $text = '';
-                } else {
-                    $text = serialize($text);
-                }
-                BlockManager::update_block($block_id, $text, $page_id, $repeater_info);
+        $selectBlocks = Request::input($postDataKey . $this->_editClass);
+        if ($priceBlocks = Request::input($postDataKey . $this->_editClass . '_price')) {
+            foreach ($priceBlocks as $blockId => $priceBlock) {
+                $content = new \stdClass;
+                $content->selected = !empty($selectBlocks[$blockId]) ? $selectBlocks[$blockId] : '';
+                $content->price = $priceBlock;
+                $this->_block->id = $blockId;
+                $this->save($content);
             }
         }
-
     }
 
-    public static function search_text($block_content, $version = 0)
+    public function save($content)
     {
-        $block_content = unserialize($block_content);
-        if (!empty($block_content->text)) {
-            return strip_tags($block_content->text);
-        } else {
-            return null;
+        $content = (!$content || (empty($content->selected) && empty($content->price))) ? '' : serialize($content);
+        return parent::save($content);
+    }
+
+    protected function _defaultData($content)
+    {
+        $content = @unserialize($content);
+        if (empty($content) || !is_a($content, \stdClass::class)) {
+            $content = new \stdClass;
         }
+        $content->selected = !empty($content->selected) ? $content->selected : 0;
+        $content->price = !empty($content->price) ? $content->price : 0;
+        return $content;
+    }
+
+    public function search_text($content)
+    {
+        $content = $this->_defaultData($content);
+        $searchText = ($content->selected ?: '') . ($content->price ?: '');
+        return !empty($searchText) ? strip_tags($searchText) : null;
     }
 
 }

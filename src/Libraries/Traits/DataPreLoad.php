@@ -95,7 +95,11 @@ trait DataPreLoad
         if (!static::_preloadIsset($customDataSetKey)) {
             static::$_preLoadedCustomData[$customDataSetKey] = [];
         }
-        static::$_preLoadedCustomData[$customDataSetKey][$identifier] = $value;
+        if (is_null($identifier)) {
+            static::$_preLoadedCustomData[$customDataSetKey][] = $value;
+        } else {
+            static::$_preLoadedCustomData[$customDataSetKey][$identifier] = $value;
+        }
     }
 
     /**

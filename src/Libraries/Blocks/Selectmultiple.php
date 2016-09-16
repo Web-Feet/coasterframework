@@ -19,7 +19,7 @@ class Selectmultiple extends Select
 
     public function save($content)
     {
-        $this->_save($content ? serialize($content) : '');
+        return String_::save(!empty($content['select']) ? serialize($content['select']) : '');
     }
 
     public function filter($search, $type)

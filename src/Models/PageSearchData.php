@@ -36,6 +36,20 @@ class PageSearchData extends Eloquent
         }
     }
 
+    public static function updateText($content, $blockId, $pageId)
+    {
+        $searchData = static::where('block_id', '=', $blockId)->where('page_id', '=', $pageId)->where('language_id', '=', Language::current())->first() ?: new static;
+        if ($content) {
+            $searchData->block_id = $blockId;
+            $searchData->page_id = $pageId;
+            $searchData->language_id = Language::current();
+            $searchData->search_text = $content;
+            $searchData->save();
+        } elseif ($searchData->exists) {
+            $searchData->delete();
+        }
+    }
+
     public static function update_text($block_id, $block_content, $page_id, $language_id, $version = 0)
     {
         $block = Block::preload($block_id);

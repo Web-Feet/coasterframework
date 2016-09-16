@@ -114,8 +114,8 @@ class Form extends String_
         $formData = $this->_defaultData($content);
         $formData->template = $formData->template == $this->_block->name ? 0 : $formData->template;
 
-        $this->_editExtraViewData['pageList'] = Page::get_page_list();
-        $this->_editExtraViewData['formTemplates'] = [0 => '-- Use view from template --'];
+        $this->_editViewData['pageList'] = Page::get_page_list();
+        $this->_editViewData['formTemplates'] = [0 => '-- Use view from template --'];
         $theme = Theme::find(config('coaster::frontend.theme'));
         if (!empty($theme)) {
             $forms = base_path('/resources/views/themes/' . $theme->theme . '/blocks/forms');
@@ -124,7 +124,7 @@ class Form extends String_
                     if (!is_dir($forms . DIRECTORY_SEPARATOR . $form)) {
                         $form_file = explode('.', $form);
                         if (!empty($form_file[0])) {
-                            $this->_editExtraViewData['formTemplates'][$form_file[0]] = $form_file[0] . (strpos(file_get_contents($forms . DIRECTORY_SEPARATOR . $form), 'captcha') ? ' (supports captcha)' : ' (does not support captcha)');
+                            $this->_editViewData['formTemplates'][$form_file[0]] = $form_file[0] . (strpos(file_get_contents($forms . DIRECTORY_SEPARATOR . $form), 'captcha') ? ' (supports captcha)' : ' (does not support captcha)');
                         }
                     }
                 }
@@ -134,33 +134,29 @@ class Form extends String_
         return parent::edit($formData);
     }
 
-    protected function _defaultData($content)
+    public function save($content)
     {
-        if (empty($content) || !($formData = @unserialize($content))) {
-            $formData = new \stdClass;
-            $formData->captcha = false;
-            $formData->email_from = '';
-            $formData->email_to = '';
-            $formData->template = '';
-            $formData->page_to = '';
-        }
-        return $formData;
+        $formData = new \stdClass;
+        $formData->captcha = !empty($content['captcha']) ? true : false;
+        $formData->email_from = $content['from'];
+        $formData->email_to = $content['to'];
+        $formData->template = !empty($content['template'])? $content['template'] : 0;
+        $formData->page_to = $content['page'];
+        $this->_save($formData ? serialize($formData) : '');
     }
 
-    public function submit($postDataKey = '')
+    protected function _defaultData($content)
     {
-        if ($updatedFormBlocks = Request::input($postDataKey . $this->_editClass)) {
-            foreach ($updatedFormBlocks as $blockId => $updatedFormBlock) {
-                $formData = new \stdClass;
-                $formData->captcha = !empty($updatedFormBlock['captcha']) ? true : false;
-                $formData->email_from = $updatedFormBlock['from'];
-                $formData->email_to = $updatedFormBlock['to'];
-                $formData->template = !empty($updatedFormBlock['template'])? $updatedFormBlock['template'] : 0;
-                $formData->page_to = $updatedFormBlock['page'];
-                $this->_block->id = $blockId;
-                $this->_save(serialize($formData));
-            }
+        $content = @unserialize($content);
+        if (empty($content) || !is_a($content, \stdClass::class)) {
+            $content = new \stdClass;
         }
+        $content->captcha = !empty($content->captcha) ? $content->captcha : false;
+        $content->email_from = !empty($content->email_from) ? $content->email_from : '';
+        $content->email_to = !empty($content->email_to) ? $content->email_to : '';
+        $content->template = !empty($content->template) ? $content->template : '';
+        $content->page_to = !empty($content->page_to) ? $content->page_to : '';
+        return $content;
     }
 
     public static function block_settings_action()

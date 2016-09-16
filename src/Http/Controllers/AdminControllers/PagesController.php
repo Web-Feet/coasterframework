@@ -92,16 +92,15 @@ class PagesController extends AdminController
             }
         }
 
-        $new_version = PageVersion::add_new($pageId);
-        BlockManager::$to_version = $new_version->version_id;
+        $version = PageVersion::add_new($pageId);
+        $publish = false;
 
         $publishing = config('coaster::admin.publishing') ? true : false;
         $canPublish = Auth::action('pages.version-publish', ['page_id' => $pageId]);
         if ($publishing && $existingPage->link == 0) {
             // check if publish
             if (Request::input('publish') != '' && $canPublish) {
-                BlockManager::$publish = true;
-                $new_version->publish();
+                $publish = true;
                 // check if there were requests to publish the version being edited
                 if (Request::input('overwriting_version_id')) {
                     $overwriting_page_version = PageVersion::where('version_id', '=', Request::input('overwriting_version_id'))->where('page_id', '=', $pageId)->first();
@@ -117,15 +116,17 @@ class PagesController extends AdminController
             }
             // check if publish request
             if (Request::input('publish_request') != '') {
-                PagePublishRequests::add($pageId, $new_version->version_id, Request::input('request_note'));
+                PagePublishRequests::add($pageId, $version->version_id, Request::input('request_note'));
             }
         } elseif (!$publishing || ($existingPage->link == 1 && $canPublish)) {
-            BlockManager::$publish = true;
-            $new_version->publish();
+            $publish = true;
         }
 
         // update blocks
-        BlockManager::process_submission($pageId);
+        Block::submit($pageId, $version->version_id, $publish);
+        if ($publish) {
+            $version->publish();
+        }
 
         // save page info
         if ($this->_save_page_info($pageId) === false) {
@@ -388,6 +389,8 @@ class PagesController extends AdminController
                     $input['page_info'][$attribute] = $page->$attribute;
                 }
             }
+            $input['page_info']['live'] = !empty($input['page_info']['live']['select']) ? $input['page_info']['live']['select'] : 0;
+            $input['page_info']['sitemap'] = !empty($input['page_info']['sitemap']['select']) ? $input['page_info']['sitemap']['select'] : 0;
             $page_info = $input['page_info'];
             $page_lang = PageLang::preload($page->id);
             foreach ($page_lang->getAttributes() as $attribute => $value) {
@@ -546,9 +549,8 @@ class PagesController extends AdminController
         }
 
         if (!$pageId) {
-            $title_block = Block::where('name', '=', config('coaster::admin.title_block'))->first();
-            if (!empty($title_block)) {
-                BlockManager::update_block($title_block->id, $page_lang->name, $page->id); // saves first page version
+            if ($title_block = Block::where('name', '=', config('coaster::admin.title_block'))->first()) {
+                $title_block->getTypeObject()->setPageId($page->id)->save($page_lang->name); // saves first page version
             }
         }
         PageSearchData::update_processed_text(0, strip_tags($page_lang->name), $page->id, Language::current());
