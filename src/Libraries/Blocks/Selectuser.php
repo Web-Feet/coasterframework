@@ -31,12 +31,11 @@ class Selectuser extends Select
         return String_::save($content['custom'] ?: (!empty($content['select']) ? $content['select'] : ''));
     }
 
-    protected function _generateSearchText($content)
+    public function generateSearchText($content)
     {
-        if ($content) {
-            $userAliases = User::userAliases();
-        }
-        return !empty($userAliases[$content]) ? $userAliases[$content] : null;
+        $userAliases = $content ? User::userAliases() : [];
+        $userName = (is_numeric($content) && !empty($userAliases[$content])) ? $userAliases[$content] : $content;
+        return $this->_generateSearchText($userName);
     }
 
 }

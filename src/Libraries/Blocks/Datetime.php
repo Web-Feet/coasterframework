@@ -26,7 +26,13 @@ class Datetime extends String_
 
     public function save($content)
     {
-        $this->_save(DateTimeHelper::jQueryToMysql($content));
+        $content = DateTimeHelper::jQueryToMysql($content);
+        return parent::save($content);
+    }
+
+    public function generateSearchText($content)
+    {
+        return $content ? (new Carbon($content))->format('d/m/Y l dS F') : null;
     }
 
     public function filter($search, $type)

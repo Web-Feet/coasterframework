@@ -1,5 +1,5 @@
 <?php
-$input_id = str_replace(array('[', ']'), array('_', ''), $name);
+$input_id = str_replace(['[', ']'], ['_', ''], $name);
 $placeHolderData = [];
 $content = $submitted_data?:$content;
 if ($content) {
@@ -11,8 +11,8 @@ if ($content) {
 <div class="form-group {{ $field_class }}">
     {!! Form::label($name, $label, ['class' => 'control-label col-sm-2']) !!}
     <div class="col-sm-10">
-        {!! Form::hidden(CmsBlockInput::appendName($name, '_exists'), '') !!}
-        {!! Form::select($name, $placeHolderData, $content, ['class' => 'form-control video-search', 'id' => $input_id, 'style' => 'width:100%;']) !!}
+        {!! Form::hidden($name . '[exists]', 1) !!}
+        {!! Form::select($name . '[select]', $placeHolderData, $content, ['class' => 'form-control video-search', 'id' => $input_id, 'style' => 'width:100%;']) !!}
         <a href="javascript:$('#{!! $input_id !!}').select2('val', ''); $('#{!! $input_id !!}_preview').css('display', 'none');">
             Clear selection</a>
         <div style="padding-top: 10px;">

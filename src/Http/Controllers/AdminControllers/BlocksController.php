@@ -3,6 +3,7 @@
 use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminLog;
+use CoasterCms\Models\Block;
 use CoasterCms\Models\PageBlockDefault;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\Theme;
@@ -33,14 +34,10 @@ class BlocksController extends Controller
         // update blocks
         AdminLog::new_log('Updated Site-wide Content');
 
-        BlockManager::$to_version = PageVersion::add_new(0)->version_id;
-        BlockManager::process_submission();
+        $versionId = PageVersion::add_new(0)->version_id;
+        Block::submit(0, $versionId);
 
-        $alert = new \stdClass;
-        $alert->type = 'success';
-        $alert->header = 'Site-wide Content Updated';
-        $alert->content = '';
-        $this->layoutData['alert'] = $alert;
+        $this->setAlert('success', 'Site-wide Content Updated');
 
         return \redirect()->route('coaster.admin.blocks');
     }

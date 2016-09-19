@@ -27,7 +27,7 @@ class Selectmultiplewnew extends Selectmultiple
             $content['select'] = array_merge($content['select'], $newOptions);
         }
 
-        $this->save($content['select']);
+        return parent::save($content);
     }
 
 }

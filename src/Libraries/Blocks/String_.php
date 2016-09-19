@@ -107,18 +107,36 @@ class String_
         return $this;
     }
 
+    public function getSavedContent()
+    {
+        return $this->_contentSaved;
+    }
+
     public function publish()
     {
         if ($this->_pageId && $this->_isSaved) {
-            $searchText = $this->_generateSearchText($this->_contentSaved);
+            $searchText = $this->generateSearchText($this->_contentSaved);
             PageSearchData::updateText($searchText, $this->_block->id, $this->_pageId);
         }
         return $this;
     }
 
-    public function getSavedContent()
+    public function generateSearchText($content)
     {
-        return $this->_contentSaved;
+        return $this->_generateSearchText($content);
+    }
+
+    protected function _generateSearchText(...$contentParts)
+    {
+        $searchText = '';
+        foreach ($contentParts as $contentPart) {
+            $contentPart = (string) $contentPart;
+            if ($contentPart !== '') {
+                $searchText .= $contentPart;
+            }
+        }
+        $searchText = trim(strip_tags($searchText));
+        return ($searchText !== '') ? $searchText : null;
     }
 
     protected function _save($content)
@@ -142,12 +160,6 @@ class String_
             $inputHMTLKey = 'block';
         }
         return $inputHMTLKey . '[' . $this->_block->id . ']' . ($altKey ? '[' . $altKey . ']' : '');
-    }
-
-
-    protected function _generateSearchText($content)
-    {
-        return strip_tags($content);
     }
 
     public function filter($search, $type)

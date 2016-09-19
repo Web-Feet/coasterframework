@@ -377,6 +377,7 @@ class PagesController extends AdminController
                     $input['page_info'][$attribute] = $page->$attribute;
                 }
             }
+            $input['page_info']['template'] = !empty($input['page_info']['template']['select']) ? $input['page_info']['template']['select'] : 0;
             $input['page_info']['live'] = !empty($input['page_info']['live']['select']) ? $input['page_info']['live']['select'] : 0;
             $input['page_info']['sitemap'] = !empty($input['page_info']['sitemap']['select']) ? $input['page_info']['sitemap']['select'] : 0;
             $page_info = $input['page_info'];

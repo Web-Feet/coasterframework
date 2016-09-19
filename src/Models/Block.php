@@ -89,6 +89,17 @@ class Block extends Eloquent
     }
 
     /**
+     * @param string $blockClass
+     * @param bool $reload
+     * @return string
+     */
+    public static function getBlockType($blockClass, $reload = false)
+    {
+        static::_loadClasses($reload);
+        return array_search($blockClass, static::_preloadGetArray('blockClass')) ?: 'string';
+    }
+
+    /**
      * @return string
      */
     public function getClass()
@@ -150,7 +161,6 @@ class Block extends Eloquent
         $submittedBlocks = Request::input('block') ?: [];
         foreach ($submittedBlocks as $blockId => $submittedData) {
             $block = static::preload($blockId);
-            //if ($blockId == 27) {dd();}
             if ($block->exists) {
                 $blockTypeObject = $block->getTypeObject()->setPageId($pageId)->setVersionId($versionId)->save($submittedData);
                 if ($publish) {

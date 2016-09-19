@@ -2,7 +2,6 @@
 
 use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Models\Page;
-use Request;
 use URL;
 
 class Link extends String_
@@ -39,6 +38,17 @@ class Link extends String_
         }
         $linkData['target'] = !empty($linkData['target']) ? $linkData['target'] : '';
         return parent::save(empty($linkData['link']) ? '' : serialize($linkData));
+    }
+
+    public function generateSearchText($content)
+    {
+        $content = $this->_defaultData($content);
+        $content['link'] = str_replace('internal://', '', $content['link'], $count);
+        if ($count > 0) {
+            $paths = Path::getById($content['link']);
+            $content['link'] = $paths->exists ? $paths->name : '';
+        }
+        return $this->_generateSearchText($content['link']);
     }
 
     protected function _defaultData($content)

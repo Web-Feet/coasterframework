@@ -1,28 +1,37 @@
 <?php namespace CoasterCms\Helpers\Cms\View;
 
 use CoasterCms\Libraries\Builder\FormMessage;
+use CoasterCms\Models\Block;
 use Request;
 use View;
 
 class CmsBlockInput
 {
 
-    public static function exists($type)
+    public static function getView($type)
     {
-        if (strpos($type, '.') === false) {
-            $type = $type . '.main';
-        }
-        $type = strtolower($type);
+        $typeParts = explode('.', $type);
+        $typeExtension = '.' . ((count($typeParts) > 1) ? implode('.', array_slice($typeParts, 1)) : 'main');
 
-        $locations = array(
-            'coaster.blocks.',
-            'coaster::blocks.',
-        );
+        $typeClassName = Block::getBlockClass($typeParts[0]);
+        $typeClasses = array_merge([$typeClassName], class_parents($typeClassName));
 
-        foreach ($locations as $location) {
-            if (View::exists($location . $type)) {
-                return $location;
+        foreach ($typeClasses as $typeClass) {
+
+            $blockTypeView = Block::getBlockType($typeClass) . $typeExtension;
+            $blockTypeView = strtolower($blockTypeView);
+
+            $locations = [
+                'coaster.blocks.',
+                'coaster::blocks.',
+            ];
+
+            foreach ($locations as $location) {
+                if (View::exists($location . $blockTypeView)) {
+                    return $location . $blockTypeView;
+                }
             }
+
         }
 
         return null;
@@ -39,11 +48,8 @@ class CmsBlockInput
 
     public static function make($type, $options = array())
     {
-        if (!($location = self::exists($type))) {
+        if (!($view = self::getView($type))) {
             return null;
-        }
-        if (strpos($type, '.') === false) {
-            $type = $type . '.main';
         }
 
         if (!empty($options['name'])) {
@@ -71,7 +77,7 @@ class CmsBlockInput
 
         $options['content'] = $options['content'] ?: (empty($options['value']) ? '' : $options['value']);
 
-        return View::make($location . strtolower($type), $options)->render();
+        return View::make($view, $options)->render();
     }
 
 }

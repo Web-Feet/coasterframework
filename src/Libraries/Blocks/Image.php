@@ -1,7 +1,6 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
 use CoasterCms\Libraries\Builder\PageBuilder;
-use Request;
 use URL;
 use View;
 
@@ -72,6 +71,12 @@ class Image extends String_
             $imageData = '';
         }
         return parent::save($imageData ? serialize($imageData) : '');
+    }
+
+    public function generateSearchText($content)
+    {
+        $content = $this->_defaultData($content);
+        return $this->_generateSearchText($content->title, basename($content->file));
     }
 
     protected function _defaultData($content)

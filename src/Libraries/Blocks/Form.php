@@ -142,7 +142,12 @@ class Form extends String_
         $formData->email_to = $content['to'];
         $formData->template = !empty($content['template'])? $content['template'] : 0;
         $formData->page_to = $content['page'];
-        $this->_save($formData ? serialize($formData) : '');
+        return parent::save($formData ? serialize($formData) : '');
+    }
+
+    public function generateSearchText($content)
+    {
+        return null;
     }
 
     protected function _defaultData($content)

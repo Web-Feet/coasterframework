@@ -23,14 +23,6 @@ class Repeater extends String_
     private static $_preloaded_repeater_data;
     private static $_current_repeater = null;
 
-    protected $_newRow;
-
-    public function __construct(Block $block)
-    {
-        parent::__construct($block);
-        $this->_newRow = false;
-    }
-
     public function display($repeaterId, $options = [])
     {
         $template = !empty($options['view']) ? $options['view'] : $this->_block->name;
@@ -128,7 +120,7 @@ class Repeater extends String_
         return false;
     }
 
-    public function edit($content)
+    public function edit($content, $newRow = false)
     {
         // if no current repeater id, reserve next new repeater id for use on save
         $repeaterId = $content ?: PageBlockRepeaterData::next_free_repeater_id();
@@ -142,7 +134,7 @@ class Repeater extends String_
             }
 
             // check if new or existing row needs displaying
-            if ($this->_newRow) {
+            if ($newRow) {
                 $renderedRow = '';
                 $repeaterRowId = PageBlockRepeaterData::next_free_row_id($repeaterId);
                 foreach ($repeaterBlocks as $repeaterBlock) {
@@ -174,7 +166,7 @@ class Repeater extends String_
 
         // load current and submitted data
         $existingRepeaterRows = PageBlockRepeaterData::loadRepeaterData($content['repeater_id'], $this->_versionId);
-        $submittedRepeaterRows = Request::input('repeater' . $content['repeater_id']) ?: [];
+        $submittedRepeaterRows = Request::input('repeater.' . $content['repeater_id']) ?: [];
 
         // if row missing, overwrite all data with blanks in new version
         if ($existingRepeaterRows) {
@@ -197,23 +189,23 @@ class Repeater extends String_
             $rowOrderNumber++;
             foreach ($submittedRepeaterRow as $submittedBlockId => $submittedBlockData) {
                 $block = Block::preload($submittedBlockId);
-                $submittedBlockData = $submittedBlockId ? $submittedBlockData : $rowOrderNumber;
-                if ($block->exists || $submittedBlockId == 0) {
+                if (!$submittedBlockId) {
+                    $block->id = 0;
+                    $submittedBlockData = $rowOrderNumber;
+                }
+                if ($block->exists || $block->id == 0) {
                     $blockTypeObject = $block->getTypeObject()->setVersionId($this->_versionId)->setRepeaterData($content['repeater_id'], $rowId)->setPageId($this->_pageId)->save($submittedBlockData);
-                    $this->_contentSaved .= $blockTypeObject->getSavedContent();
+                    if ($block->exists) {
+                        if (($savedContent = $blockTypeObject->generateSearchText($blockTypeObject->getSavedContent())) !== null) {
+                            $this->_contentSaved .= $savedContent . "\n";
+                        }
+                    }
                 }
             }
         }
 
         return $return;
     }
-
-    public function setNewRow()
-    {
-        $this->_newRow = true;
-        return $this;
-    }
-
 
     // repeater specific functions below
 
@@ -265,7 +257,7 @@ class Repeater extends String_
         $block = Block::find(Request::input('block_id'));
         $repeaterId = Request::input('repeater_id');
         if  ($repeaterId && $block && $block->type == 'repeater') {
-            return $block->getTypeObject()->setPageId(Request::input('page_id'))->setNewRow()->edit($repeaterId);
+            return $block->getTypeObject()->setPageId(Request::input('page_id'))->edit($repeaterId, true);
         }
         return 0;
     }

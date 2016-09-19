@@ -5,71 +5,60 @@ use CoasterCms\Models\BlockVideoCache;
 use GuzzleHttp\Client;
 use View;
 
-class Video extends _Base
+class Video extends String_
 {
+    protected static $_cachedVideoData = [];
 
-    private static $_db_cache = [];
-
-    public static function display($block, $block_data, $options = null)
+    public function display($content, $options = [])
     {
-        if (!empty($block_data)) {
-            if (empty(self::$_db_cache[$block_data])) {
-                $cached_vid_info = BlockVideoCache::where('videoId', '=', $block_data)->first();
-                if (!empty($cached_vid_info)) {
-                    self::$_db_cache[$cached_vid_info->videoId] = unserialize($cached_vid_info->videoInfo);
-                } else {
-                    return 'Video data not found (try saving the page content again in the admin)';
-                }
-            }
-            $video = self::$_db_cache[$block_data];
+        if (!empty($content)) {
             $template = !empty($options['view']) ? $options['view'] : 'default';
             $videoViews = 'themes.' . PageBuilder::getData('theme') . '.blocks.videos.';
-            if (View::exists($videoViews . $template)) {
-                return View::make($videoViews . $template, array('video' => $video))->render();
-            } else {
+            if (!View::exists($videoViews . $template)) {
                 return 'Video template not found';
             }
+            if (!($videoInfo = $this->_cache($content))) {
+                return 'Video does not exist, it may have been removed from youtube';
+            }
+            return View::make($videoViews . $template, ['video' => $videoInfo])->render();
         } else {
             return '';
         }
     }
 
-    public static function save($block_content)
+    public function save($content)
     {
-        if (!empty($block_content)) {
-            $videoData = self::dl('videos', array('id' => $block_content, 'part' => 'id,snippet'));
-            if (!empty($videoData)) {
-                $cached_video = BlockVideoCache::where('videoId', '=', $block_content)->first();
-                if (empty($cached_video)) {
-                    $new_video = new BlockVideoCache;
-                    $new_video->videoId = $block_content;
-                    $new_video->videoInfo = serialize($videoData);
-                    $new_video->save();
-                } else {
-                    $cached_video->videoInfo = serialize($videoData);
-                    $cached_video->save();
-                }
+        if (!empty($content['select'])) {
+            if ($videoData = $this->_dl('videos', ['id' => $content, 'part' => 'id,snippet'])) {
+                $cachedVideoData = BlockVideoCache::where('videoId', '=', $content)->first() ?: new BlockVideoCache;
+                $cachedVideoData->videoId = $content;
+                $cachedVideoData->videoInfo = serialize($videoData);
+                $cachedVideoData->save();
             }
         }
-        return $block_content;
+        return parent::save($content);
     }
 
-    public static function dl($request, $params = array())
+    protected function _cache($videoId)
     {
-        // youtube api address and key
-        try {
-            $youTube = new Client(
-                [
-                    'base_uri' => 'https://www.googleapis.com/youtube/v3/'
-                ]
-            );
-            $response = $youTube->request('GET', $request, ['query' => array_merge(array('key' => config('coaster::key.yt_server')), $params)]);
-            $data = json_decode($response->getBody());
-            if (!empty($data) && !empty($data->items[0])) {
-                return $data->items[0];
+        if (!array_key_exists($videoId, static::$_cachedVideoData)) {
+            if ($videoData = BlockVideoCache::where('videoId', '=', $videoId)->first()) {
+                static::$_cachedVideoData[$videoId] = unserialize($videoData->videoInfo);
             } else {
-                return null;
+                static::$_cachedVideoData[$videoId] = $this->_dl('videos', ['id' => $videoId, 'part' => 'id,snippet']);
             }
+        }
+        return static::$_cachedVideoData[$videoId];
+    }
+
+    protected function _dl($request, $params = [])
+    {
+        try {
+            $youTube = new Client(['base_uri' => 'https://www.googleapis.com/youtube/v3/']);
+            $params =  $params + ['key' => config('coaster::key.yt_server')];
+            $response = $youTube->request('GET', $request, ['query' => $params]);
+            $data = json_decode($response->getBody());
+            return !empty($data) && !empty($data->items[0]) ? $data->items[0] : null;
         } catch (\Exception $e) {
             return null;
         }
