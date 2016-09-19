@@ -44,6 +44,19 @@ class AdminController extends Controller
     }
 
     /**
+     * @param string $type
+     * @param string $header
+     * @param string $details
+     */
+    public function setAlert($type, $header, $details = '')
+    {
+        $this->layoutData['alert'] = new \stdClass;
+        $this->layoutData['alert']->type = $type;
+        $this->layoutData['alert']->header = $header;
+        $this->layoutData['alert']->content = $details;
+    }
+
+    /**
      * @return RedirectResponse
      */
     public function catchAll()

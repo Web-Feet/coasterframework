@@ -7,7 +7,6 @@ use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Libraries\Builder\FormMessage;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
 use CoasterCms\Http\Controllers\AdminController;
-use CoasterCms\Libraries\Blocks\Datetime;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockBeacon;
@@ -66,36 +65,10 @@ class PagesController extends AdminController
 
     public function postEdit($pageId)
     {
-        // notify user
-        $alert = new \stdClass;
-        $alert->type = 'success';
-        $alert->header = 'Page Content Updated';
-        $alert->content = '';
-
         $existingPage = Page::find($pageId);
 
-        // run if duplicate button was hit
-        if (Request::input('duplicate') == 1) {
-            if ($existingPage->canDuplicate()) {
-                $new_page_id = $this->_save_page_info(0, $existingPage);
-                if ($new_page_id === false) {
-                    $alert->type = 'danger';
-                    $alert->header = 'Error: Duplication failed';
-                    $this->layoutData['alert'] = $alert;
-                    return $this->getEdit($pageId, BlockManager::$to_version);
-                } else {
-                    BlockManager::process_submission($new_page_id);
-                    return \redirect()->route('coaster.admin.pages.edit', ['pageId' => $new_page_id]);
-                }
-            } else {
-                return abort(403, 'Action not permitted');
-            }
-        }
-
-        $version = PageVersion::add_new($pageId);
         $publish = false;
-
-        $publishing = config('coaster::admin.publishing') ? true : false;
+        $publishing = (bool) config('coaster::admin.publishing');
         $canPublish = Auth::action('pages.version-publish', ['page_id' => $pageId]);
         if ($publishing && $existingPage->link == 0) {
             // check if publish
@@ -114,31 +87,46 @@ class PagesController extends AdminController
                     }
                 }
             }
-            // check if publish request
-            if (Request::input('publish_request') != '') {
-                PagePublishRequests::add($pageId, $version->version_id, Request::input('request_note'));
-            }
         } elseif (!$publishing || ($existingPage->link == 1 && $canPublish)) {
             $publish = true;
         }
 
+        // run if duplicate button was hit
+        if (Request::input('duplicate') == 1) {
+            if ($existingPage->canDuplicate()) {
+                $new_page_id = $this->_save_page_info(0, 1, $existingPage);
+                if ($new_page_id === false) {
+                    $this->setAlert('danger', 'Error: Duplication failed');
+                    return $this->getEdit($pageId);
+                } else {
+                    Block::submit($new_page_id, 1, $publish);
+                    return \redirect()->route('coaster.admin.pages.edit', ['pageId' => $new_page_id]);
+                }
+            } else {
+                return abort(403, 'Action not permitted');
+            }
+        }
+
+        $version = PageVersion::add_new($pageId);
+
         // update blocks
         Block::submit($pageId, $version->version_id, $publish);
         if ($publish) {
+            if (Request::input('publish_request') != '') {
+                PagePublishRequests::add($pageId, $version->version_id, Request::input('request_note'));
+            }
             $version->publish();
         }
 
         // save page info
-        if ($this->_save_page_info($pageId) === false) {
-            $alert->type = 'warning';
-            $alert->content .= 'Error: "Page Info" not updated (check tab for errors)';
+        if ($this->_save_page_info($pageId, $version->version_id) === false) {
+            $this->setAlert('warning', 'Error: "Page Info" not updated (check tab for errors)');
+        } else {
+            $this->setAlert('success', 'Page Content Updated');
         }
 
-        //send alert
-        $this->layoutData['alert'] = $alert;
-
         // display page edit form
-        return $this->getEdit($pageId, BlockManager::$to_version);
+        return $this->getEdit($pageId, $version->version_id);
     }
 
     public function postSort()
@@ -366,7 +354,7 @@ class PagesController extends AdminController
         return json_encode($json_array);
     }
 
-    private function _save_page_info($pageId = 0, $existingPage = null)
+    private function _save_page_info($pageId = 0, $versionId = 0, $existingPage = null)
     {
         $input = Request::all();
         $canPublish = (config('coaster::admin.publishing') > 0 && Auth::action('pages.version-publish', ['page_id' => $pageId])) || config('coaster::admin.publishing') == 0;
@@ -457,7 +445,7 @@ class PagesController extends AdminController
         }
         $siblings = array_unique($siblings);
 
-        $versionTemplate = $page_info['template'];
+        $versionTemplate = !empty($page_info['template']['select']) ? $page_info['template']['select'] : $page_info['template'];
         if (empty($input['publish']) && $page->id) {
             $page_info['template'] = $page->template;
         }
@@ -570,7 +558,7 @@ class PagesController extends AdminController
          */
         if ($pageId) {
             // save page versions template
-            $page_version = PageVersion::where('page_id', '=', $page->id)->where('version_id', '=', BlockManager::$to_version)->first();
+            $page_version = PageVersion::where('page_id', '=', $page->id)->where('version_id', '=', $versionId)->first();
             $page_version->template = $versionTemplate;
             $page_version->save();
         } elseif ($existingPage) {
