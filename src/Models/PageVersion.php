@@ -1,8 +1,10 @@
 <?php namespace CoasterCms\Models;
 
 use Auth;
+use CoasterCms\Helpers\Cms\View\PaginatorRender;
 use DateTimeHelper;
 use Eloquent;
+use View;
 
 class PageVersion extends Eloquent
 {
@@ -77,6 +79,21 @@ class PageVersion extends Eloquent
             return 1;
         }
         return 0;
+    }
+
+    public static function version_table($page_id)
+    {
+        $versionsQuery = static::with(['user', 'scheduled_versions'])->where('page_id', '=', $page_id)->orderBy('version_id', 'desc');
+        $versions = $versionsQuery->paginate(15);
+        $pagination = PaginatorRender::admin($versions);
+
+        $page_lang = PageLang::where('page_id', '=', $page_id)->where('language_id', '=', Language::current())->first();
+        $live_version = static::where('page_id', '=', $page_id)->where('version_id', '=', $page_lang ? $page_lang->live_version : 0)->first();
+        $live_version = $live_version ?: new static;
+
+        $can_publish = Auth::action('pages.version-publish', ['page_id' => $page_id]);
+
+        return View::make('coaster::partials.tabs.versions.table', ['versions' => $versions, 'pagination' => $pagination, 'live_version' => $live_version, 'can_publish' => $can_publish])->render();
     }
 
     public function save(array $options = array())

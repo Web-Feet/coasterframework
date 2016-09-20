@@ -197,7 +197,7 @@ class PagesController extends AdminController
 
     public function postVersions($pageId)
     {
-        return BlockManager::version_table($pageId);
+        return PageVersion::version_table($pageId);
     }
 
     public function postVersionSchedule($pageId)
@@ -539,7 +539,7 @@ class PagesController extends AdminController
 
         if (!$pageId) {
             if ($title_block = Block::where('name', '=', config('coaster::admin.title_block'))->first()) {
-                $title_block->getTypeObject()->setPageId($page->id)->save($page_lang->name); // saves first page version
+                $title_block->setPageId($page->id)->getTypeObject()->save($page_lang->name); // saves first page version
             }
         }
         PageSearchData::update_processed_text(0, strip_tags($page_lang->name), $page->id, Language::current());
@@ -708,7 +708,6 @@ class PagesController extends AdminController
                 } else {
                     return 'active theme not found';
                 }
-                BlockManager::$current_version = $versionData['editing']; // used for repeater data
                 $blocks_content = PageBlock::preload_page($pageId, $versionData['editing']);
             }
 

@@ -2,10 +2,7 @@
 
 use Auth;
 use CoasterCms\Helpers\Cms\Page\Path;
-use CoasterCms\Helpers\Cms\View\CmsBlockInput;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
-use CoasterCms\Libraries\Blocks;
-use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockBeacon;
 use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\Language;
@@ -15,12 +12,9 @@ use CoasterCms\Models\Page;
 use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\PagePublishRequests;
-use CoasterCms\Models\PageSearchData;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
-use DB;
-use Request;
 use View;
 
 class BlockManager
@@ -29,48 +23,6 @@ class BlockManager
     public static $to_version = 0;
     public static $current_version = 0;
     public static $publish = false;
-
-    private static $_blockClasses;
-
-    private static function get_model($page_id, $repeater_info = null)
-    {
-        // model depends on global or page content
-        if (!empty($repeater_info->row_id))
-            return '\CoasterCms\Models\PageBlockRepeaterData';
-        else if (empty($page_id))
-            return '\CoasterCms\Models\PageBlockDefault';
-        else
-            return '\CoasterCms\Models\PageBlock';
-    }
-
-    // get individual block data (latest version default)
-    public static function get_block($block_id, $page_id = 0, $repeater_info = null, $version = 0)
-    {
-        $model = self::get_model($page_id, $repeater_info);
-        return $model::get_block($block_id, $page_id, $repeater_info, $version);
-    }
-
-    // all block updates go through here
-    public static function update_block($block_id, $content, $page_id = 0, $repeater_info = null, $publish = 0)
-    {
-        // repeater stuff if else
-        $model = self::get_model($page_id, $repeater_info);
-        $model::update_block($block_id, $content, $page_id, $repeater_info);
-        if (($publish || self::$publish) && $model == '\CoasterCms\Models\PageBlock') {
-            $version = !empty(self::$to_version) ? self::$to_version : PageVersion::latest_version($page_id);
-            PageSearchData::update_text($block_id, $content, $page_id, Language::current(), $version);
-        }
-        // can force page publish on individual block updates
-        // 0 = do not publish
-        // 1 = always publish
-        // 2 = do not publish (unless publishing is off)
-        if (($publish == 1) || ($publish == 2 && !config('coaster::admin.publishing'))) {
-            $latestVersion = PageVersion::latest_version($page_id, true);
-            if (!empty($latestVersion)) {
-                $latestVersion->publish();
-            }
-        }
-    }
 
     public static function tab_contents($blocks, $block_contents, $item, $page = null, $page_lang = null)
     {
@@ -151,7 +103,7 @@ class BlockManager
 
             if (config('coaster::admin.publishing') && !empty($page_id) && !empty($blocks)) {
 
-                $versions_table = self::version_table($page_id);
+                $versions_table = PageVersion::version_table($page_id);
 
                 $tab_headers[-1] = 'Versions';
                 $tab_contents[-1] = View::make('coaster::partials.tabs.versions.main', ['content' => $versions_table])->render();
@@ -190,7 +142,7 @@ class BlockManager
                         } else {
                             $block_content = '';
                         }
-                        $tab_contents[$tab_index] .= $block->getTypeObject()->setPageId($page_id)->edit($block_content);
+                        $tab_contents[$tab_index] .= $block->setPageId($page_id)->getTypeObject()->edit($block_content);
                     }
                     $tab_index++;
                 }
@@ -205,170 +157,6 @@ class BlockManager
             'headers' => View::make('coaster::partials.tabs.header', array('tabs' => $tab_headers))->render(),
             'contents' => View::make('coaster::partials.tabs.content', array('tabs' => $tab_contents, 'item' => $item, 'new_page' => !$page_id,  'updateOnly' => $updateOnly,  'hideUpdate' => $hideUpdate, 'publishing' => $publishingOn, 'can_publish' => $canPublish, 'page' => $page))->render()
         );
-    }
-
-    public static function version_table($page_id)
-    {
-        $versionsQuery = PageVersion::with(['user', 'scheduled_versions'])->where('page_id', '=', $page_id)->orderBy('version_id', 'desc');
-        $versions = $versionsQuery->paginate(15);
-        $pagination = PaginatorRender::admin($versions);
-
-        $page_lang = PageLang::where('page_id', '=', $page_id)->where('language_id', '=', Language::current())->first();
-        $live_version = PageVersion::where('page_id', '=', $page_id)->where('version_id', '=', $page_lang ? $page_lang->live_version : 0)->first();
-        $live_version = $live_version ?: new PageVersion;
-
-        $can_publish = Auth::action('pages.version-publish', ['page_id' => $page_id]);
-
-        return View::make('coaster::partials.tabs.versions.table', array('versions' => $versions, 'pagination' => $pagination, 'live_version' => $live_version, 'can_publish' => $can_publish))->render();
-    }
-
-    public static function process_submission($page_id = 0)
-    {
-        // update all text inputs
-        self::submit_text($page_id);
-        // update custom data (block submit functions)
-        self::submit_custom_block_data($page_id);
-        // update repeater inputs (not in custom submit as to only run once)
-        Blocks\Repeater::submit($page_id, Blocks\Repeater::$blocks_key);
-    }
-
-    public static function submit_text($page_id, $repeater_key = null, $repeater_info = null)
-    {
-        $updated_text_blocks = Request::input($repeater_key . Blocks\_Base::$blocks_key);
-
-        if (!empty($updated_text_blocks)) {
-            foreach ($updated_text_blocks as $block_id => $block_content) {
-                $block_class = Block::preload($block_id)->get_class();
-                if ($block_class::$blocks_key == 'block') {
-                    $block_content = $block_class::save($block_content);
-                    self::update_block($block_id, $block_content, $page_id, $repeater_info);
-                }
-            }
-        }
-    }
-
-    public static function submit_custom_block_data($page_id, $repeater_key = null, $repeater_info = null)
-    {
-        foreach (self::getBlockClasses() as $blockName => $blockClass) {
-            if ($blockName != 'repeater') {
-                $blockClass::submit($page_id, $repeater_key . $blockClass::$blocks_key, $repeater_info);
-            }
-        }
-    }
-
-    public static function getBlockClasses($reload = false)
-    {
-        if (!isset(self::$_blockClasses) || $reload) {
-            $paths = [
-                'CoasterCms\\Libraries\\Blocks\\' => base_path('vendor/web-feet/coasterframework/src/Libraries/Blocks'),
-                'App\\Blocks\\' => base_path('app/Blocks')
-            ];
-
-            self::$_blockClasses = [];
-            foreach ($paths as $classPath => $dirPath) {
-                if (is_dir($dirPath)) {
-                    foreach (scandir($dirPath) as $file) {
-                        $className = explode('.', $file)[0];
-                        if (!empty($className) && $className != '_Base') {
-                            self::$_blockClasses[trim(strtolower($className), '_')] = $classPath . $className;
-                        }
-                    }
-                }
-            }
-        }
-
-        return self::$_blockClasses;
-    }
-
-    /**
-     * @param \Eloquent $model
-     * @param int $version (select specific version or alternatively -1 for live version 0 & for latest version)
-     * @param array $filter_on
-     * @param array $filter_values
-     * @param string $order_by
-     * @return array
-     * @throws \Exception
-     */
-    public static function get_data_for_version($model, $version, $filter_on = array(), $filter_values = array(), $order_by = '')
-    {
-        $parameters = [];
-        $where_qs['j'] = [];
-        $where_qs['main'] = array('main.content != ""');
-        if (!empty($filter_on) && !empty($filter_values)) {
-            $parameters = array();
-            foreach ($filter_values as $k => $filter_value) {
-                if (!empty($filter_value)) {
-                    if (is_array($filter_value)) {
-                        $i = 1;
-                        $vars1 = array();
-                        $vars2 = array();
-                        foreach ($filter_value as $value) {
-                            $parameters['fid1_' . $k . $i] = $value;
-                            $vars1[] = ':fid1_' . $k . $i;
-                            $parameters['fid2_' . $k . $i] = $value;
-                            $vars2[] = ':fid2_' . $k . $i;
-                            $i++;
-                        }
-                        $eq1 = "IN (" . implode(", ", $vars1) . ")";
-                        $eq2 = "IN (" . implode(", ", $vars2) . ")";
-
-                    } else {
-                        $parameters['fid1' . $k] = $filter_value;
-                        $parameters['fid2' . $k] = $filter_value;
-                        $eq1 = '= :fid1' . $k;
-                        $eq2 = '= :fid2' . $k;
-                    }
-                    $where_qs['j'][] = 'inr.' . $filter_on[$k] . ' ' . $eq1;
-                    $where_qs['main'][] = 'main.' . $filter_on[$k] . ' ' . $eq2;
-                } else {
-                    return null;
-                }
-            }
-        }
-        if (!empty($version) && $version > 0) {
-            $where_qs['j'][] = 'version <= :version';
-            $parameters['version'] = $version;
-        }
-        foreach ($where_qs as $k => $where_q) {
-            if (!empty($where_q)) {
-                $where_qs[$k] = 'where ' . implode(' and ', $where_q);
-            } else {
-                $where_qs[$k] = '';
-            }
-        }
-        $on_clause = 'main.version = j.version';
-        $max_live = '';
-        $table_name = $model->getTable();
-        $full_table_name = DB::getTablePrefix() . $table_name;
-        $pageLangTable = DB::getTablePrefix().(new PageLang)->getTable();
-        switch ($table_name) {
-            case 'page_blocks':
-                $max_live = ($version == -1) ? 'join '.$pageLangTable.' pl on pl.page_id = inr.page_id and pl.language_id = inr.language_id and pl.live_version >= inr.version' : '';
-                $identifiers = array('block_id', 'language_id', 'page_id');
-                break;
-            case 'page_blocks_default':
-                $identifiers = array('block_id', 'language_id');
-                break;
-            case 'page_blocks_repeater_data':
-                $identifiers = array('block_id', 'row_key');
-                break;
-            default:
-                throw new \Exception('unknown blocks data table: ' . $full_table_name);
-        }
-        foreach ($identifiers as $identifier) {
-            $on_clause .= ' and main.' . $identifier . ' = j.' . $identifier;
-        }
-        $select_identifiers = 'inr.' . implode(', inr.', $identifiers);
-        $order_by = !empty($order_by) ? ' order by main.' . $order_by : '';
-        $correct_versions_query = "
-            select main.* from " . $full_table_name . " main
-            inner join(
-                select " . $select_identifiers . ", max(inr.version) version from " . $full_table_name . " inr " . $max_live . "
-                " . $where_qs['j'] . "
-                group by " . $select_identifiers . "
-            ) j on " . $on_clause . "
-            " . $where_qs['main'] . $order_by;
-        return DB::select(DB::raw($correct_versions_query), $parameters);
     }
 
 }

@@ -36,7 +36,7 @@ class PageBlockRepeaterRows extends Eloquent
     public static function get_row_key($repeater_id, $row_id)
     {
         $repeaterRows = static::preloadRepeater($repeater_id);
-        return empty($repeaterRows[$row_id]) ? null : $repeaterRows[$row_id]->id;
+        return empty($repeaterRows[$row_id]) ? 0 : $repeaterRows[$row_id]->id;
     }
 
     public static function get_row_objects($repeater_id, $randomLimit = false)

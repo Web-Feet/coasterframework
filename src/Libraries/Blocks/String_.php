@@ -13,50 +13,17 @@ use Request;
 
 class String_
 {
-
     protected $_block;
-
-    protected $_pageId;
-    protected $_repeaterId;
-    protected $_repeaterRowId;
-    protected $_versionId;
-
     protected $_editViewData;
-
     protected $_isSaved;
     protected $_contentSaved;
 
     public function __construct(Block $block)
     {
         $this->_block = $block;
-
-        $this->_pageId = 0;
-        $this->_repeaterId = 0;
-        $this->_repeaterRowId = 0;
-        $this->_versionId = 0;
-
         $this->_editViewData = [];
         $this->_isSaved = false;
         $this->_contentSaved = '';
-    }
-
-    public function setVersionId($versionId)
-    {
-        $this->_versionId = $versionId;
-        return $this;
-    }
-
-    public function setPageId($pageId)
-    {
-        $this->_pageId = $pageId;
-        return $this;
-    }
-
-    public function setRepeaterData($repeaterId, $rowId)
-    {
-        $this->_repeaterId = $repeaterId;
-        $this->_repeaterRowId = $rowId;
-        return $this;
     }
 
     public function display($content, $options = [])
@@ -93,17 +60,25 @@ class String_
                 'name' => $this->_getInputHTMLKey(),
                 'content' => $content,
                 'note' => $this->_block->note,
-                '_block' => $this->_block,
-                '_versionId' => $this->_versionId,
-                '_pageId' => $this->_pageId,
-                '_repeaterId' => $this->_repeaterId,
-                '_repeaterRowId' => $this->_repeaterRowId,
+                '_block' => $this->_block
             ]);
     }
 
     public function save($content)
     {
-        $this->_save($content ?: '');
+        return $this->_save((string) $content);
+    }
+
+    public function saveRaw($content)
+    {
+        return $this->_save((string) $content);
+    }
+
+    protected function _save($content)
+    {
+        $this->_isSaved = true;
+        $this->_contentSaved = $content;
+        $this->_block->updateContent($content);
         return $this;
     }
 
@@ -114,9 +89,9 @@ class String_
 
     public function publish()
     {
-        if ($this->_pageId && $this->_isSaved) {
+        if ($this->_block->getPageId() && $this->_isSaved) {
             $searchText = $this->generateSearchText($this->_contentSaved);
-            PageSearchData::updateText($searchText, $this->_block->id, $this->_pageId);
+            $this->_block->publishContent($searchText);
         }
         return $this;
     }
@@ -139,23 +114,10 @@ class String_
         return ($searchText !== '') ? $searchText : null;
     }
 
-    protected function _save($content)
-    {
-        if ($this->_repeaterId && $this->_repeaterRowId) {
-            PageBlockRepeaterData::updateBlockData($content, $this->_block->id, $this->_versionId, $this->_repeaterId, $this->_repeaterRowId);
-        } elseif ($this->_pageId) {
-            PageBlock::updateBlockData($content, $this->_block->id, $this->_versionId, $this->_pageId);
-        } else {
-            PageBlockDefault::updateBlockData($content, $this->_block->id, $this->_versionId);
-        }
-        $this->_isSaved = true;
-        $this->_contentSaved = $content;
-    }
-
     protected function _getInputHTMLKey($altKey = '')
     {
-        if ($this->_repeaterId && $this->_repeaterRowId) {
-            $inputHMTLKey = 'repeater[' . $this->_repeaterId . '][' . $this->_repeaterRowId . ']';
+        if ($this->_block->getRepeaterId() && $this->_block->getRepeaterRowId()) {
+            $inputHMTLKey = 'repeater[' . $this->_block->getRepeaterId() . '][' . $this->_block->getRepeaterRowId() . ']';
         } else {
             $inputHMTLKey = 'block';
         }

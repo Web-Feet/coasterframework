@@ -1,6 +1,5 @@
 <?php namespace CoasterCms\Models;
 
-use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use Auth;
 use CoasterCms\Libraries\Traits\DataPreLoad;
 use Eloquent;
@@ -167,11 +166,11 @@ class PageGroup extends Eloquent
                     }
 
                     foreach ($sortByBlockIds as $sortByBlockId => $orderDir) {
-                        $sortedPages = BlockManager::get_data_for_version(
+                        $sortedPages = Block::getDataForVersion(
                             new PageBlock,
                             -1,
-                            array('block_id', 'page_id'),
-                            array($sortByBlockId, self::$groupPages[$this->id][$filterType]),
+                            ['block_id', 'page_id'],
+                            [$sortByBlockId, self::$groupPages[$this->id][$filterType]],
                             'content ' . $orderDir
                         );
                         $sortOrder = 0;
@@ -253,7 +252,7 @@ class PageGroup extends Eloquent
                     if (!empty($filterByContentArr)) {
                         // get block data for block to filter on
                         $itemBlock = Block::preload($blockFilter->item_block_id);
-                        $blockType = $itemBlock->get_class();
+                        $blockType = $itemBlock->getClass();
 
                         // run filter with filterBy content
                         $blockContentOnPageIds = [];

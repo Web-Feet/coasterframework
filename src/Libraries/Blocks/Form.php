@@ -1,6 +1,5 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Helpers\Cms\Captcha\Securimage;
 use CoasterCms\Helpers\Cms\Email;
 use CoasterCms\Helpers\Cms\View\FormWrap;
@@ -10,7 +9,6 @@ use CoasterCms\Models\BlockFormRule;
 use CoasterCms\Models\FormSubmission;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\Theme;
-use CoasterCms\Models\ThemeBlock;
 use Request;
 use Session;
 use Validator;
@@ -29,17 +27,7 @@ class Form extends String_
 
     public function submission($form_data)
     {
-        // load form settings
-        $live_version = PageBuilder::pageLiveVersionId();
-        $form_settings = BlockManager::get_block($this->_block->id, $form_data['page_id'], null, $live_version);
-        if (empty($form_settings)) {
-            // check if forms a global block
-            $in_theme = ThemeBlock::where('theme_id', '=', config('coaster::frontend.theme'))->where('block_id', '=', $this->_block->id)->first();
-            if (!empty($in_theme)) {
-                $form_settings = BlockManager::get_block($this->_block->id);
-            }
-        }
-        if (!empty($form_settings)) {
+        if ($form_settings = $this->_block->getContent()) {
             $form_settings = unserialize($form_settings);
             $form_rules = BlockFormRule::get_rules($form_settings->template);
             $v = Validator::make($form_data, $form_rules);

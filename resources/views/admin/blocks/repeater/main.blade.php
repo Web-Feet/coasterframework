@@ -14,9 +14,9 @@
             <div class="row">
                 <div class="col-sm-12">
                     {!! Form::hidden($name . '[repeater_id]', $content) !!}
-                    {!! Form::hidden($name . '[parent_repeater_id]', $_repeaterId) !!}
-                    {!! Form::hidden($name . '[parent_repeater_row_id]', $_repeaterRowId) !!}
-                    <button type="button" class="btn repeater_button" data-repeater="{{ $content }}" data-block="{{ $_block->id }}" data-page="{{ $_pageId }}">
+                    {!! Form::hidden($name . '[parent_repeater_id]', $_block->getRepeaterId()) !!}
+                    {!! Form::hidden($name . '[parent_repeater_row_id]', $_block->getRepeaterRowId()) !!}
+                    <button type="button" class="btn repeater_button" data-repeater="{{ $content }}" data-block="{{ $_block->id }}" data-page="{{ $_block->getPageId() }}">
                         Add Another Repeater Block
                     </button>
                 </div>

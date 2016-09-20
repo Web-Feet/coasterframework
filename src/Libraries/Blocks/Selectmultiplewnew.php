@@ -19,6 +19,7 @@ class Selectmultiplewnew extends Selectmultiple
                 }
             }
             foreach ($newOptions as $newOption) {
+                $newOption = trim($newOption);
                 if ($newOption && empty($optionsArr[$newOption])) {
                     $optionsArr[$newOption] = $newOption;
                 }

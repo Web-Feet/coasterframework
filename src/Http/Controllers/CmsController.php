@@ -98,10 +98,12 @@ class CmsController extends Controller
                     if (!($block = Block::find($formData['block_id']))) {
                         throw new Exception('no block handler for this form data', 500);
                     } else {
+                        $pageId = !empty($formData['page_id']) ? $formData['page_id'] : 0;
                         unset($formData['_token']);
                         unset($formData['block_id']);
+                        unset($formData['page_id']);
                         unset($formData['coaster_check']);
-                        if ($formSubmitResponse = $block->getTypeObject()->submission($formData)) {
+                        if ($formSubmitResponse = $block->setPageId($pageId)->setVersionId(PageBuilder::pageLiveVersionId())->getTypeObject()->submission($formData)) {
                             throw new CmsPageException('form submission response', 0, null, $formSubmitResponse);
                         }
                     }

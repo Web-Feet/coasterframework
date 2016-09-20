@@ -2,7 +2,6 @@
 
 use CoasterCms\Helpers\Cms\File\Csv;
 use CoasterCms\Helpers\Cms\Theme\BlockUpdater;
-use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Helpers\Cms\File\Directory;
 use CoasterCms\Helpers\Cms\File\Zip;
 use DB;
@@ -614,7 +613,7 @@ Class Theme extends Eloquent
             'Content'
         ]);
 
-        $blockClasses = BlockManager::getBlockClasses();
+        $blockClasses = Block::getBlockClasses();
 
         $blocksById = [];
         $blocksByName = [];
@@ -649,7 +648,7 @@ Class Theme extends Eloquent
             }
         }
 
-        $pageBlocks = array_merge(BlockManager::get_data_for_version(new PageBlock, 0), BlockManager::get_data_for_version(new PageBlockDefault, 0));
+        $pageBlocks = array_merge(Block::getDataForVersion(new PageBlock, 0), Block::getDataForVersion(new PageBlockDefault, 0));
         $repeaterBlocks = [];
 
         $pageBlockArr = [];

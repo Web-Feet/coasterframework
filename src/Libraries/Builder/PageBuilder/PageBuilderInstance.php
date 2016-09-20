@@ -465,7 +465,7 @@ class PageBuilderInstance
         $options = array_merge($defaultOptions, $options);
 
         $block = Block::preload($blockName);
-        $blockType = $block->get_class();
+        $blockType = $block->getClass();
 
         $filteredPages = [];
         $filterPageIds = $blockType::filter($block->id, $search, $options['match']);
@@ -501,7 +501,7 @@ class PageBuilderInstance
                   continue;
                 }
                 $block = Block::preload($blockName);
-                $blockType = $block->get_class();
+                $blockType = $block->getClass();
                 $returnedIds = $blockType::filter($block->id, $searches[$key], $options['match']);
                 if ($options['operand'] == 'OR' || empty($filterPageIds)) {
                     $filterPageIds = array_merge($filterPageIds, $returnedIds);
@@ -539,7 +539,7 @@ class PageBuilderInstance
             $options = array_merge($defaultOptions, $options);
 
             $block = Block::preload($blockName);
-            $blockType = $block->get_class();
+            $blockType = $block->getClass();
 
             $filteredPages = [];
             $filterPageIds = $blockType::filter($block->id, $search, $options['match']);
@@ -659,7 +659,7 @@ class PageBuilderInstance
         }
 
         // pass block details and data to display class
-        $blockType = $block->get_class();
+        $blockType = $block->getClass();
         return $blockType::display($block, $blockData, $options);
     }
 

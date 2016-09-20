@@ -2,7 +2,6 @@
 
 use Auth;
 use CoasterCms\Helpers\Cms\Theme\BlockUpdater;
-use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Libraries\Builder\AssetBuilder;
 use CoasterCms\Models\Block;
@@ -42,7 +41,7 @@ class ThemesController extends Controller
         }
 
         $blockSettings = [];
-        foreach (BlockManager::getBlockClasses() as $blockName => $blockClass) {
+        foreach (Block::getBlockClasses() as $blockName => $blockClass) {
             $blockSettingsAction = $blockClass::block_settings_action();
             if (!empty($blockSettingsAction['action']) && Auth::action(str_replace('/', '.', $blockSettingsAction['action']))) {
                 $blockSettings[$blockSettingsAction['name']] = $blockSettingsAction['action'];
@@ -436,7 +435,7 @@ class ThemesController extends Controller
     private function _typeList()
     {
         $selectArray = [];
-        foreach (BlockManager::getBlockClasses() as $blockName => $blockClass) {
+        foreach (Block::getBlockClasses() as $blockName => $blockClass) {
             $selectArray[$blockName] = $blockName;
         }
         return $selectArray;

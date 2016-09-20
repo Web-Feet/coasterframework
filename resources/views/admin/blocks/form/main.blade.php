@@ -25,7 +25,7 @@
         </div>
         <div class="row">
             <div class="col-sm-3">Form Submissions:</div>
-            <div class="col-sm-9"><a href="{{ route('coaster.admin.forms.submissions', ['blockId' => $_blockId, 'pageId' => $_pageId]) }}" class="btn btn-default">View</a></div>
+            <div class="col-sm-9"><a href="{{ route('coaster.admin.forms.submissions', ['blockId' => $_block->id, 'pageId' => $_block->getPageId()]) }}" class="btn btn-default">View</a></div>
         </div>
     </div>
 </div>

@@ -3,7 +3,6 @@
 use CoasterCms\Events\Cms\Page\Search;
 use CoasterCms\Helpers\Cms\Page\Search\Cms;
 use CoasterCms\Helpers\Cms\Page\Search\WordPress;
-use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use Eloquent;
 
 class PageSearchData extends Eloquent
@@ -54,7 +53,7 @@ class PageSearchData extends Eloquent
     {
         $block = Block::preload($block_id);
         if ($block->exists) {
-            $block_type = $block->get_class();
+            $block_type = $block->getClass();
             if (method_exists($block_type, 'search_text')) {
                 if (ucwords($block->type) == 'Repeater') {
                     $search_text = $block_type::search_text($block_content, $version);
@@ -76,7 +75,7 @@ class PageSearchData extends Eloquent
         foreach ($page_langs as $page_lang) {
             self::update_processed_text(0, strip_tags($page_lang->name), $page_lang->page_id, $page_lang->language_id);
 
-            $page_blocks = BlockManager::get_data_for_version(new PageBlock, $page_lang->live_version, array('language_id', 'page_id',), array($page_lang->language_id, $page_lang->page_id));
+            $page_blocks = Block::getDataForVersion(new PageBlock, $page_lang->live_version, ['language_id', 'page_id'], [$page_lang->language_id, $page_lang->page_id]);
             if (!empty($page_blocks)) {
                 foreach ($page_blocks as $page_block) {
                     self::update_text($page_block->block_id, $page_block->content, $page_block->page_id, $page_block->language_id, $page_lang->live_version);
