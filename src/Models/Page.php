@@ -303,7 +303,7 @@ class Page extends Eloquent
                 if (!$page->is_live()) {
                     $li_info->type = 'type_hidden';
                     if ($page->link == 0) {
-                        if ($liveVersion = PageVersion::get_live_version($page->id)) {
+                        if ($liveVersion = PageVersion::getLiveVersion($page->id)) {
                             $li_info->preview_link .= '?preview=' . $liveVersion->preview_key;
                         }
                     }

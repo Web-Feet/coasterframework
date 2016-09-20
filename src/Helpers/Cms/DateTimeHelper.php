@@ -7,7 +7,7 @@ class DateTimeHelper
 
     public static function display($dateTime, $format = 'long')
     {
-        if (is_string($dateTime) || is_int($dateTime)) {
+        if (!is_a($dateTime, Carbon::class)) {
             $dateTime = new Carbon($dateTime);
         }
         return $dateTime->format(config('coaster::date.format.'.$format));

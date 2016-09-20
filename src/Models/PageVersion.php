@@ -2,15 +2,16 @@
 
 use Auth;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
+use CoasterCms\Libraries\Traits\DataPreLoad;
 use DateTimeHelper;
 use Eloquent;
 use View;
 
 class PageVersion extends Eloquent
 {
+    use DataPreLoad;
 
     protected $table = 'page_versions';
-    protected static $_liveVersions = [];
 
     public function user()
     {
@@ -31,19 +32,17 @@ class PageVersion extends Eloquent
         return 0;
     }
 
-    public static function get_live_version($pageId)
+    public static function getLiveVersion($pageId)
     {
-        if (empty(self::$_liveVersions)) {
+        if (!static::_preloadIsset('liveVersions') ) {
             $pageLangTable = (new PageLang)->getTable();
-            $pageVersionsTable = (new self)->getTable();
+            $pageVersionsTable = (new static)->getTable();
             $pageVersions = self::join($pageLangTable, function ($join) use($pageLangTable, $pageVersionsTable) {
                 $join->on($pageLangTable.'.page_id', '=', $pageVersionsTable.'.page_id')->on($pageLangTable.'.live_version', '=', $pageVersionsTable.'.version_id');
             })->where('language_id', '=', Language::current())->orderBy($pageLangTable.'.page_id')->get([$pageVersionsTable.'.*']);
-            foreach ($pageVersions as $pageVersion) {
-                self::$_liveVersions[$pageVersion->page_id] = $pageVersion;
-            }
+            static::_preload($pageVersions, 'liveVersions', ['page_id']);
         }
-        return !empty(self::$_liveVersions[$pageId]) ? self::$_liveVersions[$pageId] : null;
+        return static::_preloadGet('liveVersions', $pageId);
     }
 
     public static function add_new($page_id, $label = null)
@@ -107,13 +106,9 @@ class PageVersion extends Eloquent
         return parent::save($options);
     }
 
-    public function __get($key)
+    public function getName()
     {
-        if ($key == 'name') {
-            return parent::__get('label') ?: 'version '.DateTimeHelper::display($this->created_at, 'short');
-        } else {
-            return parent::__get($key);
-        }
+        return $this->label ?: ('version ' . DateTimeHelper::display($this->created_at, 'short'));
     }
 
 }

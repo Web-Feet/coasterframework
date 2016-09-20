@@ -38,7 +38,7 @@
             @foreach($requests as $request)
                 <tr>
                     <td>{!! $request->page_version->version_id !!}</td>
-                    <td>{!! $request->page_version->name !!}</td>
+                    <td>{!! $request->page_version->getName() !!}</td>
                     <?php $page_name = \CoasterCms\Helpers\Cms\Page\Path::getFullName($request->page_version->page_id); ?>
                     @if ($show['page'])
                         <td>{!! $page_name !!}</td>
