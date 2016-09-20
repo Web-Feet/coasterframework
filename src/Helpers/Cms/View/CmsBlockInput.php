@@ -46,7 +46,7 @@ class CmsBlockInput
         }
     }
 
-    public static function make($type, $options = array())
+    public static function make($type, $options = [])
     {
         if (!($view = self::getView($type))) {
             return null;

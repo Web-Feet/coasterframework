@@ -12,7 +12,7 @@ class Selectpage extends Select
         $parent = BlockSelectOption::where('block_id', '=', $this->_block->id)->where('option', '=', 'parent')->first();
         $parentPageId = !empty($parent) ? $parent->value : 0;
         $this->_editViewData['selectOptions'] = [0 => '-- No Page Selected --'] + Page::get_page_list(['parent' => $parentPageId]);
-        return parent::edit($content);
+        return String_::edit($content);
     }
 
     public function generateSearchText($content)

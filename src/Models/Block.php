@@ -52,6 +52,28 @@ class Block extends Eloquent
     }
 
     /**
+     * @param $blockId
+     * @param $pageId
+     * @return static|null
+     */
+    public static function getBlockOnPage($blockId, $pageId)
+    {
+        if ($page = Page::find($pageId)) {
+            $blocksByCat = Template::template_blocks(config('coaster::frontend.theme'), $page->template);
+        } else {
+            $blocksByCat = Theme::theme_blocks(config('coaster::frontend.theme'));
+        }
+        foreach ($blocksByCat as $blocks) {
+            foreach ($blocks as $block) {
+                if ($block->id == $blockId) {
+                    return static::find($blockId);
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * @param string $blockType
      * @return array
      */
@@ -63,28 +85,6 @@ class Block extends Eloquent
             static::_preloadOnce($data, $key, ['id'], 'id');
         }
         return static::_preloadGetArray($key);
-    }
-
-    public static function get_block_on_page($block_id, $page_id)
-    {
-        if ($page_id) {
-            $page = Page::find($page_id);
-            if (!empty($page)) {
-                $block_cats = Template::template_blocks(config('coaster::frontend.theme'), $page->template);
-            }
-        } else {
-            $block_cats = Theme::theme_blocks(config('coaster::frontend.theme'));
-        }
-        if (!empty($block_cats)) {
-            foreach ($block_cats as $block_cat) {
-                foreach ($block_cat as $block) {
-                    if ($block->id == $block_id) {
-                        return Block::find($block_id);
-                    }
-                }
-            }
-        }
-        return null;
     }
 
     /**
@@ -300,7 +300,7 @@ class Block extends Eloquent
     {
         if ($this->_pageId) {
             PageSearchData::updateText($content, $this->id, $this->_pageId);
-            $pageVersion = PageVersion::get_live_version($this->_pageId);
+            $pageVersion = PageVersion::getLiveVersion($this->_pageId);
             if ($this->_versionId != $pageVersion->version_id) {
                 return $pageVersion->publish();
             }
