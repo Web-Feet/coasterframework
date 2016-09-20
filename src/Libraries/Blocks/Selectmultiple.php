@@ -8,7 +8,7 @@ class Selectmultiple extends Select
     public function display($content, $options = [])
     {
         $content = $content ? unserialize($content) : [];
-        return $this->display($content, $options);
+        return parent::display($content, $options);
     }
 
     public function edit($content)
