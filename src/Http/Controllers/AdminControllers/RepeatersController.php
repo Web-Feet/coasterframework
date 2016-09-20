@@ -8,7 +8,7 @@ class RepeatersController extends Controller
 
     public function postIndex()
     {
-        return Repeater::new_row();
+        return Repeater::newRow();
     }
 
 }

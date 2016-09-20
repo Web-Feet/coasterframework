@@ -18,11 +18,10 @@ use View;
 
 class Repeater extends String_
 {
-    private static $_preloaded_repeater_data;
-    private static $_current_repeater = null;
 
-    public function display($repeaterId, $options = [])
+    public function display($content, $options = [])
     {
+        $repeaterId = $content;
         $template = !empty($options['view']) ? $options['view'] : $this->_block->name;
         $repeatersViews = 'themes.' . PageBuilder::getData('theme') . '.blocks.repeaters.';
 
@@ -32,53 +31,48 @@ class Repeater extends String_
 
         if (View::exists($repeatersViews . $template)) {
             $renderedContent = '';
-            if ($rep_blocks = BlockRepeater::preload($this->_block->id)) {
-                $rep_blocks = explode(',', $rep_blocks->blocks);
+            if ($repeaterBlockNames = BlockRepeater::preload($this->_block->id)) {
+                $repeaterBlockNameArray = explode(',', $repeaterBlockNames->blocks);
 
                 $random = !empty($options['random']) ? $options['random'] : false;
                 $repeaterRows = PageBlockRepeaterData::load_by_repeater_id($repeaterId, $options['version'], $random);
 
                 // pagination
                 if (!empty($options['per_page']) && !empty($repeaterRows)) {
-                    $block_rows_paginator = new LengthAwarePaginator($repeaterRows, count($repeaterRows), $options['per_page'], Request::input('page', 1));
-                    $block_rows_paginator->setPath(Request::getPathInfo());
-                    $links = PaginatorRender::run($block_rows_paginator);
-                    $repeaterRows = array_slice($repeaterRows, (($block_rows_paginator->currentPage() - 1) * $options['per_page']), $options['per_page']);
+                    $pagination = new LengthAwarePaginator($repeaterRows, count($repeaterRows), $options['per_page'], Request::input('page', 1));
+                    $pagination->setPath(Request::getPathInfo());
+                    $paginationLinks = PaginatorRender::run($pagination);
+                    $repeaterRows = array_slice($repeaterRows, (($pagination->currentPage() - 1) * $options['per_page']), $options['per_page']);
                 } else {
-                    $links = '';
+                    $paginationLinks = '';
                 }
 
                 if (!empty($repeaterRows)) {
                     $i = 1;
-                    $is_first = true;
-                    $is_last = false;
+                    $isFirst = true;
+                    $isLast = false;
                     $rows = count($repeaterRows);
                     $cols = !empty($options['cols']) ? (int)$options['cols'] : 1;
                     $column = !empty($options['column']) ? (int)$options['column'] : 1;
-                    $previous = self::$_current_repeater;
-                    self::$_current_repeater = $repeaterId;
-                    self::$_preloaded_repeater_data[$repeaterId] = array();
                     foreach ($repeaterRows as $row) {
                         if ($i % $cols == $column % $cols) {
-                            foreach ($rep_blocks as $rep_block) {
-                                // save block data for when view is being processed
-                                $block_info = Block::preload($rep_block);
-                                if ($block_info->exists) {
-                                    if (!empty($row[$rep_block])) {
-                                        self::$_preloaded_repeater_data[$repeaterId][$block_info->name] = $row[$rep_block];
-                                    } else {
-                                        self::$_preloaded_repeater_data[$repeaterId][$block_info->name] = '';
-                                    }
+                            $previousKey = PageBuilder::getCustomBlockDataKey();
+                            PageBuilder::setCustomBlockDataKey('repeater' . $repeaterId . '.' . $i);
+                            foreach ($repeaterBlockNameArray as $repeaterBlockName) {
+                                $block = Block::preload($repeaterBlockName);
+                                if ($block->exists) {
+                                    PageBuilder::setCustomBlockData($block->name, !empty($row[$repeaterBlockName]) ? $row[$repeaterBlockName] : '', null, false);
                                 }
                             }
-                            if ($i + $cols - 1 >= $rows)
-                                $is_last = true;
-                            $renderedContent .= View::make($repeatersViews . $template, array('is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $rows, 'id' => $block_data, 'pagination' => $links, 'links' => $links))->render();
-                            $is_first = false;
+                            if ($i + $cols - 1 >= $rows) {
+                                $isLast = true;
+                            }
+                            $renderedContent .= View::make($repeatersViews . $template, array('is_first' => $isFirst, 'is_last' => $isLast, 'count' => $i, 'total' => $rows, 'id' => $repeaterId, 'pagination' => $paginationLinks, 'links' => $paginationLinks))->render();
+                            $isFirst = false;
+                            PageBuilder::setCustomBlockDataKey($previousKey);
                         }
                         $i++;
                     }
-                    self::$_current_repeater = $previous;
                 }
             }
             return $renderedContent;
@@ -212,7 +206,7 @@ class Repeater extends String_
     {
         if (!($repeaterId = $this->_block->getRepeaterId())) {
             $repeaterId = PageBlockRepeaterData::next_free_repeater_id();
-            $this->save(['repeater_id' => $repeaterId]);
+            $this->saveRaw($repeaterId);
             $currentRepeaterRows = [];
         } else {
             $currentRepeaterRows = PageBlockRepeaterData::load_by_repeater_id($repeaterId);
@@ -236,7 +230,7 @@ class Repeater extends String_
         }
     }
 
-    public static function new_row()
+    public static function newRow()
     {
         $block = Block::find(Request::input('block_id'));
         $repeaterId = Request::input('repeater_id');
@@ -245,14 +239,5 @@ class Repeater extends String_
         }
         return 0;
     }
-
-    public static function load_repeater_data($block_name)
-    {
-        if (isset(self::$_preloaded_repeater_data[self::$_current_repeater][$block_name])) {
-            return self::$_preloaded_repeater_data[self::$_current_repeater][$block_name];
-        }
-        return false;
-    }
-
 
 }

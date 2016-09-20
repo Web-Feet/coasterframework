@@ -257,9 +257,11 @@ class PageBuilderInstance
      */
     public function img($fileName, $options = [])
     {
-        $image_data = new \stdClass;
-        $image_data->file = '/themes/' . $this->theme . '/img/' . $fileName;
-        return Image::display(null, $image_data, $options);
+        $imageData = new \stdClass;
+        $imageData->file = '/themes/' . $this->theme . '/img/' . $fileName;
+        $imageBlock = (new Block);
+        $imageBlock->type = 'image';
+        return $imageBlock->getTypeObject()->display($imageData, $options);
     }
 
     /**
@@ -284,13 +286,17 @@ class PageBuilderInstance
      * @param string $blockName
      * @param mixed $content
      * @param int $key
+     * @param bool $overwrite
      */
-    public function setCustomBlockData($blockName, $content, $key = 0)
+    public function setCustomBlockData($blockName, $content, $key = null, $overwrite = true)
     {
-        if (!isset($this->_customBlockData[$key])) {
+        $key = is_null($key) ? $this->_customBlockDataKey : $key;
+        if (empty($this->_customBlockData[$key])) {
             $this->_customBlockData[$key] = [];
         }
-        $this->_customBlockData[$key][$blockName] = $content;
+        if ($overwrite || !array_key_exists($blockName, $this->_customBlockData[$key])) {
+            $this->_customBlockData[$key][$blockName] = $content;
+        }
     }
 
     /**
@@ -299,6 +305,14 @@ class PageBuilderInstance
     public function setCustomBlockDataKey($key)
     {
         $this->_customBlockDataKey = $key;
+    }
+
+    /**
+     * @return string|int
+     */
+    public function getCustomBlockDataKey()
+    {
+        return $this->_customBlockDataKey;
     }
 
     /**
@@ -617,7 +631,7 @@ class PageBuilderInstance
         $usingGlobalContent = false;
         $blockData = null;
 
-        if (($customBlockData = $this->_getCustomBlockData($blockName)) !== false) {
+        if (($customBlockData = $this->_getCustomBlockData($blockName)) !== null) {
             // load custom block data for (is also used for repeater content)
             $blockData = $customBlockData;
         } elseif ($block->exists) {
@@ -659,8 +673,7 @@ class PageBuilderInstance
         }
 
         // pass block details and data to display class
-        $blockType = $block->getClass();
-        return $blockType::display($block, $blockData, $options);
+        return $block->setPageId($pageId)->setVersionId($options['version'])->getTypeObject()->display($blockData, $options);
     }
 
     /**
@@ -831,10 +844,11 @@ class PageBuilderInstance
      */
     protected function _getCustomBlockData($blockName)
     {
-        if (isset($this->_customBlockDataKey) && isset($this->_customBlockData[$this->_customBlockDataKey][$blockName])) {
+        if (isset($this->_customBlockDataKey) && !empty($this->_customBlockData[$this->_customBlockDataKey]) && array_key_exists($blockName, $this->_customBlockData[$this->_customBlockDataKey])) {
             return $this->_customBlockData[$this->_customBlockDataKey][$blockName];
+        } else {
+            return null;
         }
-        return Repeater::load_repeater_data($blockName);
     }
 
     /**
