@@ -230,14 +230,4 @@ class Repeater extends String_
         }
     }
 
-    public static function newRow()
-    {
-        $block = Block::find(Request::input('block_id'));
-        $repeaterId = Request::input('repeater_id');
-        if  ($repeaterId && $block && $block->type == 'repeater') {
-            return $block->setPageId(Request::input('page_id'))->getTypeObject()->edit($repeaterId, true);
-        }
-        return 0;
-    }
-
 }
