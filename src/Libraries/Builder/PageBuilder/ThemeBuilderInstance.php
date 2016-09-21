@@ -171,12 +171,11 @@ class ThemeBuilderInstance extends PageBuilderInstance
             $block = new Block;
             $block->type = $this->blockSettings[$block_name]['type'];
         } else {
-            $block = Block::preload($block_name);
+            $block = Block::preloadClone($block_name);
         }
         if (!$block->type) {
             $block->type = BlockUpdater::typeGuess($block_name);
         }
-        $block_class = $block->getClass();
 
         // check if repeater view
         if (!empty($options['view'])) {
@@ -185,7 +184,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
             $repeaterView = $block_name;
         }
 
-        if ($block_class == 'repeater' || in_array($repeaterView, $this->repeaterTemplates)) {
+        if ($block->type == 'repeater' || in_array($repeaterView, $this->repeaterTemplates)) {
             $tmp = $this->repeaterView;
             $this->repeaterView = $block_name;
 

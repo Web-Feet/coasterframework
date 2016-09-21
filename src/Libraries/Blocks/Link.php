@@ -6,7 +6,12 @@ use URL;
 
 class Link extends String_
 {
-
+    /**
+     * Display image link (target attribute appended to end or link if exists)
+     * @param string $content
+     * @param array $options
+     * @return string
+     */
     public function display($content, $options = [])
     {
         $content = $this->_defaultData($content);
@@ -15,6 +20,11 @@ class Link extends String_
         return (($count > 0) ? Path::getFullUrl($link) : $link) . $target;
     }
 
+    /**
+     * Edit link settings
+     * @param string $content
+     * @return string
+     */
     public function edit($content)
     {
         $content = $this->_defaultData($content);
@@ -26,20 +36,30 @@ class Link extends String_
         return parent::edit($content);
     }
 
-    public function save($content)
+    /**
+     * Update link settings
+     * @param array $postContent
+     * @return static
+     */
+    public function submit($postContent)
     {
         $linkData = [];
-        if (!empty($content['internal'])) {
-            $linkData['link'] = 'internal://' . $content['internal'];
-        } elseif (!empty($content['custom'])) {
-            $linkData['link'] = $content['custom'];
+        if (!empty($postContent['internal'])) {
+            $linkData['link'] = 'internal://' . $postContent['internal'];
+        } elseif (!empty($postContent['custom'])) {
+            $linkData['link'] = $postContent['custom'];
         } else {
             $linkData['link'] = '';
         }
         $linkData['target'] = !empty($linkData['target']) ? $linkData['target'] : '';
-        return parent::save(empty($linkData['link']) ? '' : serialize($linkData));
+        return $this->save(empty($linkData['link']) ? '' : serialize($linkData));
     }
 
+    /**
+     * Save link in search text (without the target attribute)
+     * @param null|string $content
+     * @return null|string
+     */
     public function generateSearchText($content)
     {
         $content = $this->_defaultData($content);
@@ -51,6 +71,11 @@ class Link extends String_
         return $this->_generateSearchText($content['link']);
     }
 
+    /**
+     * Return valid link data
+     * @param string $content
+     * @return array
+     */
     protected function _defaultData($content)
     {
         $content = @unserialize($content);
@@ -61,6 +86,11 @@ class Link extends String_
         return $content;
     }
 
+    /**
+     * Return link documents for exporting with theme data
+     * @param string $content
+     * @return array
+     */
     public function exportFiles($content)
     {
         $content = $this->_defaultData($content);

@@ -10,7 +10,13 @@ use View;
 
 class Selectpages extends Selectmultiple
 {
-
+    /**
+     * Display pages selected with view
+     * Also reverse lookup option, find pages with the current page selected
+     * @param string $content
+     * @param array $options
+     * @return string
+     */
     public function display($content, $options = [])
     {
         $pages = [];
@@ -51,6 +57,11 @@ class Selectpages extends Selectmultiple
         }
     }
 
+    /**
+     * Populate select options with page names
+     * @param string $content
+     * @return string
+     */
     public function edit($content)
     {
         $parent = BlockSelectOption::where('block_id', '=', $this->_block->id)->where('option', '=', 'parent')->first();

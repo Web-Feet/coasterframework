@@ -4,12 +4,22 @@ use CoasterCms\Models\BlockSelectOption;
 
 class Selectwprice extends String_
 {
-
+    /**
+     * Return selectwprice data
+     * @param string $content
+     * @param array $options
+     * @return \stdClass
+     */
     public function display($content, $options = [])
     {
         return $this->_defaultData($content);
     }
 
+    /**
+     * Edit selectwprice data view
+     * @param string $content
+     * @return string
+     */
     public function edit($content)
     {
         $this->_editViewData['selectOptions'] = [];
@@ -23,16 +33,26 @@ class Selectwprice extends String_
         return parent::edit($this->_defaultData($content));
     }
 
-    public function save($content)
+    /**
+     * Update selectwprice data
+     * @param array $postContent
+     * @return static
+     */
+    public function submit($postContent)
     {
-        if ($content && (!empty($content['select']) || !empty($content['price']))) {
-            $saveData = new \stdClass;
-            $saveData->selected = !empty($content['select']) ? $content['select'] : 0;
-            $saveData->price = !empty($content['price']) ? $content['price'] : 0;
+        if ($postContent && (!empty($postContent['select']) || !empty($postContent['price']))) {
+            $saveData = $this->_defaultData('');
+            $saveData->selected = !empty($postContent['select']) ? $postContent['select'] : 0;
+            $saveData->price = !empty($postContent['price']) ? $postContent['price'] : 0;
         }
-        return parent::save(isset($saveData) ? serialize($saveData) : '');
+        return $this->save(isset($saveData) ? serialize($saveData) : '');
     }
 
+    /**
+     * Get valid selectwprice data
+     * @param $content
+     * @return \stdClass
+     */
     protected function _defaultData($content)
     {
         $content = @unserialize($content);
@@ -44,6 +64,11 @@ class Selectwprice extends String_
         return $content;
     }
 
+    /**
+     * Add select option and price data to search
+     * @param null|string $content
+     * @return null|string
+     */
     public function generateSearchText($content)
     {
         $content = $this->_defaultData($content);

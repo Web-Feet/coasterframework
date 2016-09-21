@@ -29,6 +29,16 @@ trait DataPreLoad
     }
 
     /**
+     * @param string $key
+     * @param bool $force
+     * @return static
+     */
+    public static function preloadClone($key, $force = false)
+    {
+        return clone static::preload($key, $force);
+    }
+
+    /**
      * @param bool $force
      * @return array
      */

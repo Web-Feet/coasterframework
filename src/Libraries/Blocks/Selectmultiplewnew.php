@@ -4,13 +4,17 @@ use CoasterCms\Models\BlockSelectOption;
 
 class Selectmultiplewnew extends Selectmultiple
 {
-
-    public function save($content)
+    /**
+     * Allow custom options to be added (comma separated)
+     * @param array $postContent
+     * @return static
+     */
+    public function submit($postContent)
     {
-        $content['select'] = !empty($content['select']) ? $content['select'] : [];
+        $postContent['select'] = !empty($postContent['select']) ? $postContent['select'] : [];
 
-        if ($content['custom']) {
-            $newOptions = explode(',', $content['custom']);
+        if ($postContent['custom']) {
+            $newOptions = explode(',', $postContent['custom']);
             $optionsArr = [];
             $options = BlockSelectOption::where('block_id', '=', $this->_block->id)->get();
             if (!$options->isEmpty()) {
@@ -25,10 +29,10 @@ class Selectmultiplewnew extends Selectmultiple
                 }
             }
             BlockSelectOption::import($this->_block->id, $optionsArr);
-            $content['select'] = array_merge($content['select'], $newOptions);
+            $postContent['select'] = array_merge($postContent['select'], $newOptions);
         }
 
-        return parent::save($content);
+        return $this->save($postContent);
     }
 
 }

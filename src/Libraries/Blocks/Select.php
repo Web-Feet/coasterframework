@@ -4,8 +4,17 @@ use CoasterCms\Models\BlockSelectOption;
 
 class Select extends String_
 {
+    /**
+     * @var array
+     */
     public static $blockSettings = ['Manage block select options' => 'themes/selects'];
 
+    /**
+     * Add return all option to the display function
+     * @param string $content
+     * @param array $options
+     * @return array|string
+     */
     public function display($content, $options = [])
     {
         if (isset($options['returnAll']) && $options['returnAll']) {
@@ -14,6 +23,11 @@ class Select extends String_
         return $content;
     }
 
+    /**
+     * Display select options, will fill in bg colour if hexadecimal
+     * @param string $content
+     * @return string
+     */
     public function edit($content)
     {
         $this->_editViewData['selectOptions'] = [];
@@ -27,9 +41,14 @@ class Select extends String_
         return parent::edit($content);
     }
 
-    public function save($content)
+    /**
+     * Save select option
+     * @param array $postContent
+     * @return static
+     */
+    public function submit($postContent)
     {
-        return parent::save(!empty($content['select']) ? $content['select'] : '');
+        return $this->save(!empty($postContent['select']) ? $postContent['select'] : '');
     }
 
 }

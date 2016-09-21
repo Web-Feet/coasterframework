@@ -6,7 +6,12 @@ use View;
 
 class Image extends String_
 {
-
+    /**
+     * Display image, image can be cropped with croppa
+     * @param string $content
+     * @param array $options
+     * @return string
+     */
     public function display($content, $options = [])
     {
         $imageData = $this->_defaultData($content);
@@ -54,6 +59,11 @@ class Image extends String_
         }
     }
 
+    /**
+     * Load image block data with domain relative paths
+     * @param string $content
+     * @return string
+     */
     public function edit($content)
     {
         $imageData = $this->_defaultData($content);
@@ -61,24 +71,39 @@ class Image extends String_
         return parent::edit($imageData);
     }
 
-    public function save($content)
+    /**
+     * Save image block data
+     * @param array $postContent
+     * @return static
+     */
+    public function submit($postContent)
     {
-        if (!empty($content['alt']) || !empty($content['source'])) {
-            $imageData = new \stdClass;
-            $imageData->title = !empty($content['alt']) ? $content['alt'] : '';
-            $imageData->file = !empty($content['source']) ? $content['source'] : '';
+        if (!empty($postContent['alt']) || !empty($postContent['source'])) {
+            $imageData = $this->_defaultData('');
+            $imageData->title = !empty($postContent['alt']) ? $postContent['alt'] : '';
+            $imageData->file = !empty($postContent['source']) ? $postContent['source'] : '';
         } else {
             $imageData = '';
         }
-        return parent::save($imageData ? serialize($imageData) : '');
+        return $this->save($imageData ? serialize($imageData) : '');
     }
 
+    /**
+     * Add image filename and image title data to search
+     * @param null|string $content
+     * @return null|string
+     */
     public function generateSearchText($content)
     {
         $content = $this->_defaultData($content);
         return $this->_generateSearchText($content->title, basename($content->file));
     }
 
+    /**
+     * Return valid image data
+     * @param $content
+     * @return \stdClass
+     */
     protected function _defaultData($content)
     {
         $content = @unserialize($content);
@@ -90,6 +115,11 @@ class Image extends String_
         return $content;
     }
 
+    /**
+     * Return image file for exporting with theme data
+     * @param string $content
+     * @return array
+     */
     public function exportFiles($content)
     {
         $content = $this->_defaultData($content);

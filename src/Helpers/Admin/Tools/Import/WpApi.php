@@ -172,7 +172,7 @@ class WpApi
           $rowData['comment_parent'] = isset($idsInserted[$comment->parent]) ? $idsInserted[$comment->parent] : 0;
 
           $rowData['comment_date'] = $this->carbonDate($comment->date)->format('Y-m-d H:i:s');
-          $rowInfo = Block::preload('comments')->setPageId($page->id)->getTypeObject()->insertRow($rowData);
+          $rowInfo = Block::preloadClone('comments')->setPageId($page->id)->getTypeObject()->insertRow($rowData);
           $idsInserted[$comment->id] = $rowInfo->row_id;
         }
         else
@@ -190,15 +190,15 @@ class WpApi
       try {
         $meta_title_block = Block::where('name', '=', 'meta_title')->first();
         if (!empty($title_block)) {
-            $meta_title_block->setPageId($page_id)->getTypeObject()->saveRaw($meta_title);
+            $meta_title_block->setPageId($page_id)->getTypeObject()->save($meta_title);
         }
         $meta_desc_block = Block::where('name', '=', 'meta_description')->first();
         if (!empty($meta_desc_block)) {
-            $meta_desc_block->setPageId($page_id)->getTypeObject()->saveRaw($meta_description);
+            $meta_desc_block->setPageId($page_id)->getTypeObject()->save($meta_description);
         }
         $meta_keywords_block = Block::where('name', '=', 'meta_keywords')->first();
         if (!empty($meta_keywords_block)) {
-            $meta_keywords_block->setPageId($page_id)->getTypeObject()->saveRaw($meta_keywords);
+            $meta_keywords_block->setPageId($page_id)->getTypeObject()->save($meta_keywords);
         }
       } catch (Exception $e) {
 
@@ -260,19 +260,19 @@ class WpApi
       $tags = $this->syncTags($page, $data->_embedded->{"wp:term"});
       $date_block = Block::where('name', '=', 'post_date')->first();
       if ( ! empty($date_block)) {
-        $date_block->setPageId($page->id)->getTypeObject()->saveRaw($this->carbonDate($data->date)->format("Y-m-d H:i:s"));
+        $date_block->setPageId($page->id)->getTypeObject()->save($this->carbonDate($data->date)->format("Y-m-d H:i:s"));
       }
       $title_block = Block::where('name', '=', config('coaster::admin.title_block'))->first();
       if (!empty($title_block)) {
-          $title_block->setPageId($page->id)->getTypeObject()->saveRaw($pageLang->name);
+          $title_block->setPageId($page->id)->getTypeObject()->save($pageLang->name);
       }
       $content_block = Block::where('name', '=', 'content')->first();
       if (!empty($content_block)) {
-          $content_block->setPageId($page->id)->getTypeObject()->saveRaw($this->processContent($data->content->rendered));
+          $content_block->setPageId($page->id)->getTypeObject()->save($this->processContent($data->content->rendered));
       }
       $leadText_block = Block::where('name', '=', 'lead_text')->first();
       if (!empty($leadText_block)) {
-          $leadText_block->setPageId($page->id)->getTypeObject()->saveRaw($data->excerpt->rendered);
+          $leadText_block->setPageId($page->id)->getTypeObject()->save($data->excerpt->rendered);
       }
       $latestVersion = PageVersion::latest_version($page->id, true);
       if (!empty($latestVersion)) {

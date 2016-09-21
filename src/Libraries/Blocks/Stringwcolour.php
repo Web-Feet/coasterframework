@@ -4,15 +4,25 @@ use CoasterCms\Models\BlockSelectOption;
 
 class Stringwcolour extends String_
 {
-
+    /**
+     * Return stringwcolour data
+     * @param string $content
+     * @param array $options
+     * @return mixed|\stdClass
+     */
     public function display($content, $options = [])
     {
         return $this->_defaultData($content);
     }
 
+    /**
+     * Get colour option to select with text box
+     * @param string $content
+     * @return string
+     */
     public function edit($content)
     {
-        $this->_editViewData['selectOptions'] = array('none' => 'No Colour');
+        $this->_editViewData['selectOptions'] = ['none' => 'No Colour'];
         $selectOptions = BlockSelectOption::where('block_id', '=', $this->_block->id)->get();
         foreach ($selectOptions as $selectOption) {
             $this->_editViewData['selectOptions'][$selectOption->value] = $selectOption->option;
@@ -21,16 +31,21 @@ class Stringwcolour extends String_
         return parent::edit($this->_defaultData($content));
     }
 
-    public function save($content)
+    public function submit($postContent)
     {
-        if ($content && (!empty($content['text']) || !empty($content['colour']))) {
-            $saveData = new \stdClass;
-            $saveData->selected = !empty($content['text']) ? $content['text'] : '';
-            $saveData->colour = !empty($content['colour']) ? $content['colour'] : '';
+        if ($postContent && (!empty($postContent['text']) || !empty($postContent['colour']))) {
+            $saveData = $this->_defaultData('');
+            $saveData->selected = !empty($postContent['text']) ? $postContent['text'] : '';
+            $saveData->colour = !empty($postContent['colour']) ? $postContent['colour'] : '';
         }
-        return parent::save(isset($saveData) ? serialize($saveData) : '');
+        return $this->save(isset($saveData) ? serialize($saveData) : '');
     }
 
+    /**
+     * Return valid stringwcolour data
+     * @param $content
+     * @return mixed|\stdClass
+     */
     protected function _defaultData($content)
     {
         $content = @unserialize($content);
@@ -42,6 +57,11 @@ class Stringwcolour extends String_
         return $content;
     }
 
+    /**
+     * Add text and colour data to search
+     * @param null|string $content
+     * @return null|string
+     */
     public function generateSearchText($content)
     {
         $content = $this->_defaultData($content);

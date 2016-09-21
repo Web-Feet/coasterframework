@@ -610,7 +610,7 @@ class PageBuilderInstance
     public function block($blockName, $options = [])
     {
         // force query available if block details changed in current request
-        $block = Block::preload($blockName, isset($options['force_query']));
+        $block = Block::preloadClone($blockName, isset($options['force_query']));
         $pageId = !empty($options['page_id']) ? Path::unParsePageId($options['page_id']) : $this->pageId();
 
         $usingGlobalContent = false;

@@ -186,9 +186,9 @@ class Block extends Eloquent
     {
         $submittedBlocks = Request::input('block') ?: [];
         foreach ($submittedBlocks as $blockId => $submittedData) {
-            $block = static::preload($blockId);
+            $block = static::preloadClone($blockId);
             if ($block->exists) {
-                $blockTypeObject = $block->setPageId($pageId)->setVersionId($versionId)->getTypeObject()->save($submittedData);
+                $blockTypeObject = $block->setPageId($pageId)->setVersionId($versionId)->getTypeObject()->submit($submittedData);
                 if ($publish) {
                     $blockTypeObject->publish();
                 }
@@ -249,7 +249,7 @@ class Block extends Eloquent
      */
     public function getRepeaterId()
     {
-        return $this->_repeaterRowId;
+        return $this->_repeaterId;
     }
 
     /**
@@ -257,7 +257,7 @@ class Block extends Eloquent
      */
     public function getRepeaterRowId()
     {
-        return $this->_repeaterId;
+        return $this->_repeaterRowId;
     }
 
     /**
@@ -293,13 +293,15 @@ class Block extends Eloquent
     }
 
     /**
-     * @param string $content
+     * @param string $searchText
      * @return bool
      */
-    public function publishContent($content)
+    public function publishContent($searchText)
     {
         if ($this->_pageId) {
-            PageSearchData::updateText($content, $this->id, $this->_pageId);
+            if (!$this->_repeaterId) {
+                PageSearchData::updateText($searchText, $this->id, $this->_pageId);
+            }
             $pageVersion = PageVersion::getLiveVersion($this->_pageId);
             if ($this->_versionId != $pageVersion->version_id) {
                 return $pageVersion->publish();

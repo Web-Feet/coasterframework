@@ -6,7 +6,11 @@ use CoasterCms\Models\Page;
 
 class Selectpage extends Select
 {
-
+    /**
+     * Populate select options with page names (also add no page option)
+     * @param string $content
+     * @return string
+     */
     public function edit($content)
     {
         $parent = BlockSelectOption::where('block_id', '=', $this->_block->id)->where('option', '=', 'parent')->first();
@@ -15,6 +19,11 @@ class Selectpage extends Select
         return String_::edit($content);
     }
 
+    /**
+     * Get page name for search text instead of id
+     * @param null|string $content
+     * @return null
+     */
     public function generateSearchText($content)
     {
         return Path::getById($content)->name ?: null;

@@ -7,8 +7,17 @@ use View;
 
 class Video extends String_
 {
+    /**
+     * @var array
+     */
     protected static $_cachedVideoData = [];
 
+    /**
+     * Display video using info from youtube API
+     * @param string $content
+     * @param array $options
+     * @return string
+     */
     public function display($content, $options = [])
     {
         if (!empty($content)) {
@@ -26,19 +35,29 @@ class Video extends String_
         }
     }
 
-    public function save($content)
+    /**
+     * Save video with and youtube video API data to cache
+     * @param array $postContent
+     * @return static
+     */
+    public function submit($postContent)
     {
-        if (!empty($content['select'])) {
-            if ($videoData = $this->_dl('videos', ['id' => $content, 'part' => 'id,snippet'])) {
-                $cachedVideoData = BlockVideoCache::where('videoId', '=', $content)->first() ?: new BlockVideoCache;
-                $cachedVideoData->videoId = $content;
+        if (!empty($postContent['select'])) {
+            if ($videoData = $this->_dl('videos', ['id' => $postContent, 'part' => 'id,snippet'])) {
+                $cachedVideoData = BlockVideoCache::where('videoId', '=', $postContent)->first() ?: new BlockVideoCache;
+                $cachedVideoData->videoId = $postContent;
                 $cachedVideoData->videoInfo = serialize($videoData);
                 $cachedVideoData->save();
             }
         }
-        return parent::save($content);
+        return $this->save($postContent);
     }
 
+    /**
+     * Return cached youtube video API data or fetch if not cached
+     * @param $videoId
+     * @return mixed
+     */
     protected function _cache($videoId)
     {
         if (!array_key_exists($videoId, static::$_cachedVideoData)) {
@@ -51,6 +70,12 @@ class Video extends String_
         return static::$_cachedVideoData[$videoId];
     }
 
+    /**
+     * Download youtube API data
+     * @param $request
+     * @param array $params
+     * @return null
+     */
     protected function _dl($request, $params = [])
     {
         try {

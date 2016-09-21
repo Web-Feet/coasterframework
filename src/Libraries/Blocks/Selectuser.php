@@ -5,7 +5,12 @@ use Auth;
 
 class Selectuser extends Select
 {
-
+    /**
+     * Display name (convert user id to name if not custom)
+     * @param string $content
+     * @param array $options
+     * @return int|mixed|string
+     */
     public function display($content, $options = [])
     {
         if (is_numeric($content)) {
@@ -14,6 +19,11 @@ class Selectuser extends Select
         return !empty($user) && $user->getName() ? $user->getName() : $content;
     }
 
+    /**
+     * Display user select plus custom input
+     * @param string $content
+     * @return string
+     */
     public function edit($content)
     {
         $users = [];
@@ -26,11 +36,21 @@ class Selectuser extends Select
         return parent::edit($content);
     }
 
-    public function save($content)
+    /**
+     * Save custom user name, if empty save selected user id
+     * @param array $postContent
+     * @return static
+     */
+    public function submit($postContent)
     {
-        return String_::save($content['custom'] ?: (!empty($content['select']) ? $content['select'] : ''));
+        return $this->save($postContent['custom'] ?: (!empty($postContent['select']) ? $postContent['select'] : ''));
     }
 
+    /**
+     * Convert user id to name if not custom
+     * @param null|string $content
+     * @return null|string
+     */
     public function generateSearchText($content)
     {
         $userAliases = $content ? User::userAliases() : [];

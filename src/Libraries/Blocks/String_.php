@@ -7,21 +7,49 @@ use CoasterCms\Models\Block;
 
 class String_
 {
+    /**
+     * @var array
+     */
     public static $blockSettings = [];
 
+    /**
+     * @var Block
+     */
     protected $_block;
+
+    /**
+     * @var array
+     */
     protected $_editViewData;
+
+    /**
+     * @var bool
+     */
     protected $_isSaved;
+
+    /**
+     * @var string
+     */
     protected $_contentSaved;
 
+    /**
+     * String_ constructor.
+     * @param Block $block
+     */
     public function __construct(Block $block)
     {
-        $this->_block = $block;
+        $this->_block = clone $block;
         $this->_editViewData = [];
         $this->_isSaved = false;
         $this->_contentSaved = '';
     }
 
+    /**
+     * Frontend display for the block
+     * @param string $content
+     * @param array $options
+     * @return string
+     */
     public function display($content, $options = [])
     {
         if (!empty($options['pageBuilder'])) {
@@ -44,11 +72,21 @@ class String_
         return $content;
     }
 
+    /**
+     * Frontend form submission
+     * @param array $formData
+     * @return null|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
     public function submission($formData)
     {
         return null;
     }
 
+    /**
+     * Admin display for the block
+     * @param string $content
+     * @return string
+     */
     public function edit($content)
     {
         return CmsBlockInput::make($this->_block->type, $this->_editViewData + [
@@ -60,67 +98,11 @@ class String_
             ]);
     }
 
-    public function save($content)
-    {
-        return $this->_save((string) $content);
-    }
-
-    public function saveRaw($content)
-    {
-        return $this->_save((string) $content);
-    }
-
-    protected function _save($content)
-    {
-        $this->_isSaved = true;
-        $this->_contentSaved = $content;
-        $this->_block->updateContent($content);
-        return $this;
-    }
-
-    public function getSavedContent()
-    {
-        return $this->_contentSaved;
-    }
-
-    public function publish()
-    {
-        if ($this->_block->getPageId() && $this->_isSaved) {
-            $searchText = $this->generateSearchText($this->_contentSaved);
-            $this->_block->publishContent($searchText);
-        }
-        return $this;
-    }
-
-    public function filter($content, $search, $type)
-    {
-        switch ($type) {
-            case 'in':
-                return (strpos($content, $search) !== false);
-                break;
-            default:
-                return ($content == $search);
-        }
-    }
-
-    public function generateSearchText($content)
-    {
-        return $this->_generateSearchText($content);
-    }
-
-    protected function _generateSearchText(...$contentParts)
-    {
-        $searchText = '';
-        foreach ($contentParts as $contentPart) {
-            $contentPart = (string) $contentPart;
-            if ($contentPart !== '') {
-                $searchText .= $contentPart;
-            }
-        }
-        $searchText = trim(strip_tags($searchText));
-        return ($searchText !== '') ? $searchText : null;
-    }
-
+    /**
+     * Create the html key to be used in the block view
+     * @param string $altKey
+     * @return string
+     */
     protected function _getInputHTMLKey($altKey = '')
     {
         if ($this->_block->getRepeaterId() && $this->_block->getRepeaterRowId()) {
@@ -132,6 +114,100 @@ class String_
     }
 
     /**
+     * Admin update using post data from the block view
+     * @param array $postContent
+     * @return static
+     */
+    public function submit($postContent)
+    {
+        return $this->save($postContent);
+    }
+
+    /**
+     * Update block, raw data should be string
+     * @param string $content
+     * @return static
+     */
+    public function save($content)
+    {
+        $this->_isSaved = true;
+        $this->_contentSaved = (string) $content;
+        $this->_block->updateContent($this->_contentSaved);
+        return $this;
+    }
+
+    /**
+     * Gets saved content, used in publish function to generate search text
+     * @return string
+     */
+    public function getSavedContent()
+    {
+        return $this->_contentSaved;
+    }
+
+    /**
+     * Should only be called after save
+     * By default, updates search text and publishes a new page version
+     * @return static
+     */
+    public function publish()
+    {
+        if ($this->_block->getPageId() && $this->_isSaved) {
+            $searchText = $this->generateSearchText($this->getSavedContent());
+            $this->_block->publishContent($searchText);
+        }
+        return $this;
+    }
+
+    /**
+     * Generate search text from saved content
+     * @param null|string $content
+     * @return null|string
+     */
+    public function generateSearchText($content)
+    {
+        return $this->_generateSearchText($content);
+    }
+
+    /**
+     * Joins all non whitespace parameters passed through as and returns string or null if only whitespace
+     * Also removes HTML tags
+     * @param array ...$contentParts
+     * @return null|string
+     */
+    protected function _generateSearchText(...$contentParts)
+    {
+        $searchText = '';
+        foreach ($contentParts as $contentPart) {
+            $contentPart = trim((string) $contentPart);
+            if ($contentPart !== '') {
+                $searchText .= $contentPart . ' ';
+            }
+        }
+        $searchText = trim(strip_tags($searchText));
+        return ($searchText !== '') ? $searchText : null;
+    }
+
+    /**
+     * Used by the PageBuilder filter functions to filter block data
+     * @param string $content
+     * @param string $search
+     * @param string $type
+     * @return bool
+     */
+    public function filter($content, $search, $type)
+    {
+        switch ($type) {
+            case 'in':
+                return (strpos($content, $search) !== false);
+                break;
+            default:
+                return ($content == $search);
+        }
+    }
+
+    /**
+     * Theme export function, returns array of file paths used by this block
      * @param string $content
      * @return array
      */
