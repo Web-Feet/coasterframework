@@ -198,7 +198,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
             $this->repeaterView = $tmp;
         } else {
             // always use blank data for processing blocks
-            $output = $block_class::display($block, '', $options);
+            $output = $block->getTypeObject()->display('', $options);
         }
 
         if ($this->repeaterView) {
