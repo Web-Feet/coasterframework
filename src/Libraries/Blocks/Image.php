@@ -90,19 +90,14 @@ class Image extends String_
         return $content;
     }
 
-    public static function exportFiles($block, $block_data)
+    public function exportFiles($content)
     {
-        $images= [];
-        if (!empty($block_data)) {
-            $image_data = unserialize($block_data);
-            if (!empty($image_data)) {
-                $imageFile = str_replace(URL::to('/'), '', $image_data->file);
-                if (!empty($imageFile)) {
-                    $images[] = $imageFile;
-                }
-            }
+        $content = $this->_defaultData($content);
+        if ($content->file && (strpos($content->file, '/') === 0 || strpos($content->file, URL::to('/')) === 0)) {
+            return [str_replace(URL::to('/'), '', $content->file)];
+        } else {
+            return [];
         }
-        return $images;
     }
 
 }

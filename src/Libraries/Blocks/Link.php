@@ -61,18 +61,14 @@ class Link extends String_
         return $content;
     }
 
-    public static function exportFiles($block, $block_data)
+    public function exportFiles($content)
     {
-        $doc = [];
-        If (!empty($block_data)) {
-            $block_data = unserialize($block_data);
-            if (!empty($block_data['link'])) {
-                if (strpos($block_data['link'], '/') === 0 || strpos($block_data['link'], URL::to('/')) === 0) {
-                    $doc[] = str_replace(URL::to('/'), '', $block_data['link']);
-                }
-            }
+        $content = $this->_defaultData($content);
+        if (!empty($content['link']) && (strpos($content['link'], '/') === 0 || strpos($content['link'], URL::to('/')) === 0)) {
+            return [str_replace(URL::to('/'), '', $content['link'])];
+        } else {
+            return [];
         }
-        return $doc;
     }
 
 }

@@ -132,11 +132,10 @@ class String_
     }
 
     /**
-     * @param \CoasterCms\Models\Block $block
-     * @param string $block_data
+     * @param string $content
      * @return array
      */
-    public static function exportFiles($block, $block_data)
+    public function exportFiles($content)
     {
         return [];
     }

@@ -613,8 +613,6 @@ Class Theme extends Eloquent
             'Content'
         ]);
 
-        $blockClasses = Block::getBlockClasses();
-
         $blocksById = [];
         $blocksByName = [];
         foreach (BlockUpdater::getDatabaseBlocks($theme->id) as $block) {
@@ -671,7 +669,7 @@ Class Theme extends Eloquent
                     $repeaterBlockArr[] = $pageBlock->block_id;
                 }
 
-                $filesUsed = $blockClasses[$blocksById[$pageBlock->block_id]->type]::exportFiles($blocksById[$pageBlock->block_id], $pageBlock->content);
+                $filesUsed = $blocksById[$pageBlock->block_id]->getTypeObject()->exportFiles($pageBlock->content);
                 $allFilesUsed = array_merge($filesUsed, $allFilesUsed);
 
                 $pageBlockArr[] = [
@@ -707,7 +705,7 @@ Class Theme extends Eloquent
                     $blockName = !empty($blocksById[$repeaterBlockId])?$blocksById[$repeaterBlockId]->name:null;
                     if (!empty($blockName) && $repeaterContent) {
 
-                        $filesUsed = $blockClasses[$blocksById[$repeaterBlockId]->type]::exportFiles($blocksById[$repeaterBlockId], $repeaterContent);
+                        $filesUsed = $blocksById[$repeaterBlockId]->getTypeObject()->exportFiles($repeaterContent);
                         $allFilesUsed = array_merge($filesUsed, $allFilesUsed);
 
                         fputcsv($repeaterBlocksCsv, [
