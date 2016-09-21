@@ -42,11 +42,15 @@ trait DataPreLoad
 
     /**
      * @param string $customDataSetKey
+     * @param string $identifier
      * @return bool
      */
-    protected static function _preloadIsset($customDataSetKey = 'default')
+    protected static function _preloadIsset($customDataSetKey = 'default', $identifier = null)
     {
-        return isset(static::$_preLoadedCustomData[$customDataSetKey]);
+        if (isset(static::$_preLoadedCustomData[$customDataSetKey])) {
+            return $identifier ? array_key_exists($identifier, static::$_preLoadedCustomData[$customDataSetKey]) : true;
+        }
+        return false;
     }
 
     /**

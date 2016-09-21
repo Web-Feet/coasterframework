@@ -75,12 +75,17 @@ class PageBlock extends Eloquent
         }
     }
 
+    /**
+     * @param int $block_id
+     * @param bool $reload
+     * @return Block[]
+     */
     public static function page_blocks_on_live_page_versions($block_id, $reload = false)
     {
         if ($reload) {
             static::_preloadClear('liveBlocks');
         }
-        if (!static::_preloadIsset('liveBlocks')) {
+        if (!static::_preloadIsset('liveBlocks', $block_id)) {
             $page_blocks = Block::getDataForVersion(new static, -1, ['block_id', 'language_id'], [$block_id, Language::current()], 'block_id');
             static::_preload($page_blocks, 'liveBlocks', [['block_id']], null, true);
         }
