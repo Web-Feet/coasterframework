@@ -6,7 +6,7 @@ use Auth;
 class Selectuser extends Select
 {
 
-    public function display($content)
+    public function display($content, $options = [])
     {
         if (is_numeric($content)) {
             $user = User::find($content);

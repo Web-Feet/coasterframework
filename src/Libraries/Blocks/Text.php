@@ -7,7 +7,7 @@ class Text extends String_
 
     public function display($content, $options = [])
     {
-        $content = parent::display($content);
+        $content = parent::display($content, $options);
         if (!empty($options['source'])) {
             return $content;
         }

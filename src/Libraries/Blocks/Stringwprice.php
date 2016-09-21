@@ -3,7 +3,7 @@
 class Stringwprice extends String_
 {
 
-    public function display($content)
+    public function display($content, $options = [])
     {
         return $this->_defaultData($content);
     }
