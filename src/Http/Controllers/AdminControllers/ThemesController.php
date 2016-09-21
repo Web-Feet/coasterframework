@@ -42,9 +42,10 @@ class ThemesController extends Controller
 
         $blockSettings = [];
         foreach (Block::getBlockClasses() as $blockName => $blockClass) {
-            $blockSettingsAction = $blockClass::block_settings_action();
-            if (!empty($blockSettingsAction['action']) && Auth::action(str_replace('/', '.', $blockSettingsAction['action']))) {
-                $blockSettings[$blockSettingsAction['name']] = $blockSettingsAction['action'];
+            foreach ($blockClass::$blockSettings as $name => $action) {
+                if (!empty($action) && Auth::action(str_replace('/', '.', $action))) {
+                    $blockSettings[$name] = $action;
+                }
             }
         }
 

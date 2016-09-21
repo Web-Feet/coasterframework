@@ -7,6 +7,8 @@ use CoasterCms\Models\Block;
 
 class String_
 {
+    public static $blockSettings = [];
+
     protected $_block;
     protected $_editViewData;
     protected $_isSaved;
@@ -137,14 +139,6 @@ class String_
     public static function exportFiles($block, $block_data)
     {
         return [];
-    }
-
-    /**
-     * @return array
-     */
-    public static function block_settings_action()
-    {
-        return ['action' => '', 'name' => ''];
     }
 
 }

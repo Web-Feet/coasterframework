@@ -15,6 +15,7 @@ use Validator;
 
 class Form extends String_
 {
+    public static $blockSettings = ['Manage form input validation rules' => 'themes/forms'];
 
     public function display($content, $options = [])
     {
@@ -150,11 +151,6 @@ class Form extends String_
         $content->template = !empty($content->template) ? $content->template : '';
         $content->page_to = !empty($content->page_to) ? $content->page_to : '';
         return $content;
-    }
-
-    public static function block_settings_action()
-    {
-        return ['action' => 'themes/forms', 'name' => 'Manage form input validation rules'];
     }
 
 }

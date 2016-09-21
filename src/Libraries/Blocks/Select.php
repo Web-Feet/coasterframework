@@ -4,6 +4,7 @@ use CoasterCms\Models\BlockSelectOption;
 
 class Select extends String_
 {
+    public static $blockSettings = ['Manage block select options' => 'themes/selects'];
 
     public function display($content, $options = [])
     {
@@ -29,11 +30,6 @@ class Select extends String_
     public function save($content)
     {
         return parent::save(!empty($content['select']) ? $content['select'] : '');
-    }
-
-    public static function block_settings_action()
-    {
-        return ['action' => 'themes/selects', 'name' => 'Manage block select options'];
     }
 
 }
