@@ -59,9 +59,7 @@ class PageBlock extends Eloquent
         if (empty(static::$_preloadDone[$doneKey])) {
             static::$_preloadDone[$doneKey] = true;
             $page_blocks = Block::getDataForVersion(new static, $version, ['page_id'], [$page_id], 'block_id');
-
             static::_preload($page_blocks, 'byVersionPage', [['@'.$version, 'page_id', 'block_id', 'language_id']]);
-
         }
     }
 
