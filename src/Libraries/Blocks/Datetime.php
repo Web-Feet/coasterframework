@@ -2,7 +2,6 @@
 
 use Carbon\Carbon;
 use CoasterCms\Helpers\Cms\DateTimeHelper;
-use CoasterCms\Models\PageBlock;
 
 class Datetime extends String_
 {
@@ -26,8 +25,7 @@ class Datetime extends String_
 
     public function save($content)
     {
-        $content = DateTimeHelper::jQueryToMysql($content);
-        return parent::save($content);
+        return parent::save($content ? DateTimeHelper::jQueryToMysql($content) : '');
     }
 
     public function generateSearchText($content)
@@ -35,30 +33,18 @@ class Datetime extends String_
         return $content ? (new Carbon($content))->format('d/m/Y l dS F') : null;
     }
 
-    public function filter($search, $type)
+    public function filter($content, $search, $type)
     {
-        $live_blocks = PageBlock::page_blocks_on_live_page_versions($this->_block->id);
-        $page_ids = array();
-        if (!empty($live_blocks)) {
-            $search = is_array($search) ? $search : [$search];
-            $search = array_map(function($searchValue) {return is_a($searchValue, Carbon::class) ? $searchValue : new Carbon($searchValue);}, $search);
-            foreach ($live_blocks as $live_block) {
-                $current = (new Carbon($live_block->content));
-                switch ($type) {
-                    case '=':
-                        if ($current->eq($search[0])) {
-                            $page_ids[] = $live_block->page_id;
-                        }
-                        break;
-                    case 'in':
-                        if ($current->gte($search[0]) && $current->lt($search[1])) {
-                            $page_ids[] = $live_block->page_id;
-                        }
-                        break;
-                }
-            }
+        $search = is_array($search) ? $search : [$search];
+        $search = array_map(function($searchValue) {return is_a($searchValue, Carbon::class) ? $searchValue : new Carbon($searchValue);}, $search);
+        $current = (new Carbon($content));
+        switch ($type) {
+            case 'in':
+                return ($current->gte($search[0]) && $current->lt($search[1]));
+                break;
+            default:
+                return $current->eq($search[0]);
         }
-        return $page_ids;
     }
 
 }

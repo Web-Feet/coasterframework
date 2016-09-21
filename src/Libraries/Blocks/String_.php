@@ -4,12 +4,6 @@ use CoasterCms\Helpers\Cms\StringHelper;
 use CoasterCms\Helpers\Cms\View\CmsBlockInput;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\Block;
-use CoasterCms\Models\Language;
-use CoasterCms\Models\PageBlock;
-use CoasterCms\Models\PageBlockDefault;
-use CoasterCms\Models\PageBlockRepeaterData;
-use CoasterCms\Models\PageSearchData;
-use Request;
 
 class String_
 {
@@ -96,6 +90,17 @@ class String_
         return $this;
     }
 
+    public function filter($content, $search, $type)
+    {
+        switch ($type) {
+            case 'in':
+                return (strpos($content, $search) !== false);
+                break;
+            default:
+                return ($content == $search);
+        }
+    }
+
     public function generateSearchText($content)
     {
         return $this->_generateSearchText($content);
@@ -122,29 +127,6 @@ class String_
             $inputHMTLKey = 'block';
         }
         return $inputHMTLKey . '[' . $this->_block->id . ']' . ($altKey ? '[' . $altKey . ']' : '');
-    }
-
-    public function filter($search, $type)
-    {
-        $live_blocks = PageBlock::page_blocks_on_live_page_versions($this->_block->id);
-        $page_ids = array();
-        if (!empty($live_blocks)) {
-            foreach ($live_blocks as $live_block) {
-                switch ($type) {
-                    case '=':
-                        if ($live_block->content == $search) {
-                            $page_ids[] = $live_block->page_id;
-                        }
-                        break;
-                    case 'in':
-                        if (strpos($live_block->content, $search) !== false) {
-                            $page_ids[] = $live_block->page_id;
-                        }
-                        break;
-                }
-            }
-        }
-        return $page_ids;
     }
 
     /**
