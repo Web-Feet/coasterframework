@@ -137,7 +137,7 @@ class PageBlockRepeaterData extends Eloquent
             $repeaterRowsData = Block::getDataForVersion(new static, $version, ['row_key'], [array_keys($rowKeyToId)]) ?: [];
             foreach ($repeaterRowsData as $repeaterRowData) {
                 $repeaterRowId = $rowKeyToId[$repeaterRowData->row_key];
-                if (!isset($rowsByRowKey[$repeaterRowId])) {
+                if (!isset($repeaterRowsById[$repeaterRowId])) {
                     $repeaterRowsById[$repeaterRowId] = [];
                 }
                 $repeaterRowsById[$repeaterRowId][$repeaterRowData->block_id] = $repeaterRowData;

@@ -11,6 +11,7 @@ use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockFormRule;
 use CoasterCms\Models\BlockRepeater;
 use CoasterCms\Models\PageBlockRepeaterData;
+use CoasterCms\Models\PageBlockRepeaterRows;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Request;
 use Validator;
@@ -191,7 +192,8 @@ class Repeater extends String_
                 if (empty($submittedRepeaterRows[$rowId])) {
                     foreach ($existingRepeaterRow as $existingRepeaterBlock) {
                         $block = Block::preloadClone($existingRepeaterBlock->block_id);
-                        if ($block->exists) {
+                        $block->id = $existingRepeaterBlock->block_id;
+                        if ($block->exists || $block->id === 0) {
                             $block->setVersionId($this->_block->getVersionId())->setRepeaterData($postContent['repeater_id'], $rowId)->setPageId($this->_block->getPageId())->getTypeObject()->save('');
                         }
                     }
