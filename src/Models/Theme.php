@@ -665,7 +665,7 @@ Class Theme extends Eloquent
                 }
 
                 if (strtolower($blocksById[$pageBlock->block_id]->type) == 'repeater') {
-                    $repeaterBlocks[$pageBlock->content] = PageBlockRepeaterData::load_by_repeater_id($pageBlock->content);
+                    $repeaterBlocks[$pageBlock->content] = PageBlockRepeaterData::loadRepeaterData($pageBlock->content);
                     $repeaterBlockArr[] = $pageBlock->block_id;
                 }
 

@@ -46,7 +46,7 @@ class Repeater extends String_
                 $repeaterBlockNameArray = explode(',', $repeaterBlockNames->blocks);
 
                 $random = !empty($options['random']) ? $options['random'] : false;
-                $repeaterRows = PageBlockRepeaterData::load_by_repeater_id($repeaterId, $options['version'], $random);
+                $repeaterRows = PageBlockRepeaterData::loadRepeaterData($repeaterId, $options['version'], $random);
 
                 // pagination
                 if (!empty($options['per_page']) && !empty($repeaterRows)) {
@@ -135,8 +135,9 @@ class Repeater extends String_
      */
     public function edit($content, $newRow = false)
     {
+
         // if no current repeater id, reserve next new repeater id for use on save
-        $repeaterId = $content ?: PageBlockRepeaterData::next_free_repeater_id();
+        $repeaterId = $content ?: PageBlockRepeaterRows::nextFreeRepeaterId();
         $this->_editViewData['renderedRows'] = '';
 
         if ($repeaterBlock = BlockRepeater::where('block_id', '=', $this->_block->id)->first()) {
@@ -149,13 +150,13 @@ class Repeater extends String_
             // check if new or existing row needs displaying
             if ($newRow) {
                 $renderedRow = '';
-                $repeaterRowId = PageBlockRepeaterData::next_free_row_id($repeaterId);
+                $repeaterRowId = PageBlockRepeaterRows::nextFreeRepeaterRowId($repeaterId);
                 foreach ($repeaterBlocks as $repeaterBlock) {
                     $renderedRow .= $repeaterBlock->setPageId($this->_block->getPageId())->setRepeaterData($repeaterId, $repeaterRowId)->getTypeObject()->edit('');
                 }
                 return (string) CmsBlockInput::make('repeater.row', array('repeater_id' => $repeaterId, 'row_id' => $repeaterRowId, 'blocks' => $renderedRow));
             } else {
-                $repeaterRowsData = PageBlockRepeaterData::load_by_repeater_id($repeaterId, $this->_block->getVersionId());
+                $repeaterRowsData = PageBlockRepeaterData::loadRepeaterData($repeaterId, $this->_block->getVersionId());
                 foreach ($repeaterRowsData as $repeaterRowId => $repeaterRowData) {
                     $renderedRow = '';
                     foreach ($repeaterBlocks as $repeaterBlockId => $repeaterBlock) {
@@ -190,10 +191,10 @@ class Repeater extends String_
         if ($existingRepeaterRows) {
             foreach ($existingRepeaterRows as $rowId => $existingRepeaterRow) {
                 if (empty($submittedRepeaterRows[$rowId])) {
-                    foreach ($existingRepeaterRow as $existingRepeaterBlock) {
-                        $block = Block::preloadClone($existingRepeaterBlock->block_id);
-                        $block->id = $existingRepeaterBlock->block_id;
-                        if ($block->exists || $block->id === 0) {
+                    foreach ($existingRepeaterRow as $blockId => $existingRepeaterBlockContent) {
+                        $block = Block::preloadClone($blockId);
+                        $block->id = $blockId;
+                        if ($block->exists || $blockId === 0) {
                             $block->setVersionId($this->_block->getVersionId())->setRepeaterData($postContent['repeater_id'], $rowId)->setPageId($this->_block->getPageId())->getTypeObject()->save('');
                         }
                     }
@@ -240,13 +241,13 @@ class Repeater extends String_
     public function insertRow($repeaterBlockContents)
     {
         if (!($repeaterId = $this->_block->getRepeaterId())) {
-            $repeaterId = PageBlockRepeaterData::next_free_repeater_id();
+            $repeaterId = PageBlockRepeaterRows::nextFreeRepeaterId();
             $this->save($repeaterId);
             $currentRepeaterRows = [];
         } else {
-            $currentRepeaterRows = PageBlockRepeaterData::load_by_repeater_id($repeaterId);
+            $currentRepeaterRows = PageBlockRepeaterData::loadRepeaterData($repeaterId);
         }
-        $repeaterRowId = PageBlockRepeaterData::next_free_row_id($repeaterId);
+        $repeaterRowId = PageBlockRepeaterRows::nextFreeRepeaterRowId($repeaterId);
 
         if (!array_key_exists(0, $repeaterBlockContents)) {
             if (!empty($currentRepeaterRows)) {

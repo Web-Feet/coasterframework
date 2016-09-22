@@ -19,34 +19,50 @@ class PageBlockRepeaterRows extends Eloquent
         return static::_preloadGetArray($key);
     }
 
-    public static function add_row_key($repeater_id, $row_id)
+    public static function addRowKey($repeaterId, $rowId)
     {
-        $repeaterRows = static::preloadRepeater($repeater_id);
-        if (!isset($repeaterRows[$row_id])) {
+        $repeaterRows = static::preloadRepeater($repeaterId);
+        if (!isset($repeaterRows[$rowId])) {
             $repeater_row = new PageBlockRepeaterRows;
-            $repeater_row->repeater_id = $repeater_id;
-            $repeater_row->row_id = $row_id;
+            $repeater_row->repeater_id = $repeaterId;
+            $repeater_row->row_id = $rowId;
             $repeater_row->save();
-            $repeaterRows[$row_id] = $repeater_row;
-            static::_preloadAdd('repeater' . $repeater_id, $row_id, $repeater_row);
+            $repeaterRows[$rowId] = $repeater_row;
+            static::_preloadAdd('repeater' . $repeaterId, $rowId, $repeater_row);
         }
-        return $repeaterRows[$row_id];
+        return $repeaterRows[$rowId]->id;
     }
 
-    public static function get_row_key($repeater_id, $row_id)
+    public static function getRowKey($repeaterId, $rowId)
     {
-        $repeaterRows = static::preloadRepeater($repeater_id);
-        return empty($repeaterRows[$row_id]) ? 0 : $repeaterRows[$row_id]->id;
+        $repeaterRows = static::preloadRepeater($repeaterId);
+        return empty($repeaterRows[$rowId]) ? 0 : $repeaterRows[$rowId]->id;
     }
 
-    public static function get_row_objects($repeater_id, $randomLimit = false)
+    public static function getRowIds($repeaterId)
     {
-        $repeaterRows = static::preloadRepeater($repeater_id);
-        if ($randomLimit !== false) {
-            shuffle($repeaterRows);
-            return array_slice($repeaterRows, 0, $randomLimit);
+        $rowsByKey = [];
+        $repeaterRows = static::preloadRepeater($repeaterId);
+        foreach ($repeaterRows as $rowId => $repeaterRow) {
+            $rowsByKey[$repeaterRow->id] = $rowId;
         }
-        return $repeaterRows;
+        return $rowsByKey;
+    }
+
+    public static function nextFreeRepeaterId()
+    {
+        $highestRepeaterId = static::orderBy('repeater_id', 'desc')->first();
+        $newRepeaterId = ($highestRepeaterId ? $highestRepeaterId->repeater_id : 0) + 1;
+        static::addRowKey($newRepeaterId, 0);
+        return $newRepeaterId;
+    }
+
+    public static function nextFreeRepeaterRowId($repeaterId)
+    {
+        $highestRepeaterRowId = static::where('repeater_id', '=', $repeaterId)->orderBy('row_id', 'desc')->first();
+        $newRowId = ($highestRepeaterRowId ? $highestRepeaterRowId->row_id : 0) + 1;
+        static::addRowKey($repeaterId, $newRowId);
+        return $newRowId;
     }
 
 }
