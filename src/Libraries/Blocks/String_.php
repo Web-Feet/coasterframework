@@ -52,7 +52,7 @@ class String_
      */
     public function display($content, $options = [])
     {
-        if (!empty($options['pageBuilder'])) {
+        if (!empty($options['meta']) || !empty($options['pageBuilder'])) {
             $content = preg_replace_callback(
                 '/{{\s*\$(?P<block>\w*)\s*}}/',
                 function ($matches) {
