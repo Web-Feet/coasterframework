@@ -72,7 +72,8 @@ class Stringwpricecolour extends String_
     public function generateSearchText($content)
     {
         $content = $this->_defaultData($content);
-        return $this->_generateSearchText($content->text, $content->price, $content->colour);
+        $searchText = $this->_generateSearchText($content->text, $content->price, $content->colour);
+        return parent::generateSearchText($searchText);
     }
 
 }

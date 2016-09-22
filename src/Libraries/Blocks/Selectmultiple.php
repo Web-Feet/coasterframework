@@ -43,7 +43,8 @@ class Selectmultiple extends Select
     public function generateSearchText($content)
     {
         $content = @unserialize($content) ?: [];
-        return $this->_generateSearchText(...$content);
+        $searchText = $this->_generateSearchText(...$content);
+        return parent::generateSearchText($searchText);
     }
 
     /**

@@ -20,11 +20,6 @@ use View;
 class Repeater extends String_
 {
     /**
-     * @var string
-     */
-    protected $_repeaterContentSaved;
-
-    /**
      * Display repeater view
      * @param string $content
      * @param array $options
@@ -42,8 +37,7 @@ class Repeater extends String_
 
         if (View::exists($repeatersViews . $template)) {
             $renderedContent = '';
-            if ($repeaterBlockNames = BlockRepeater::preload($this->_block->id)) {
-                $repeaterBlockNameArray = explode(',', $repeaterBlockNames->blocks);
+            if ($repeaterBlocks = BlockRepeater::getRepeaterBlocks($this->_block->id)) {
 
                 $random = !empty($options['random']) ? $options['random'] : false;
                 $repeaterRows = PageBlockRepeaterData::loadRepeaterData($repeaterId, $options['version'], $random);
@@ -69,10 +63,9 @@ class Repeater extends String_
                         if ($i % $cols == $column % $cols) {
                             $previousKey = PageBuilder::getCustomBlockDataKey();
                             PageBuilder::setCustomBlockDataKey('repeater' . $repeaterId . '.' . $i);
-                            foreach ($repeaterBlockNameArray as $repeaterBlockName) {
-                                $block = Block::preload($repeaterBlockName);
-                                if ($block->exists) {
-                                    PageBuilder::setCustomBlockData($block->name, !empty($row[$repeaterBlockName]) ? $row[$repeaterBlockName] : '', null, false);
+                            foreach ($repeaterBlocks as $repeaterBlock) {
+                                if ($repeaterBlock->exists) {
+                                    PageBuilder::setCustomBlockData($repeaterBlock->name, !empty($row[$repeaterBlock->id]) ? $row[$repeaterBlock->id] : '', null, false);
                                 }
                             }
                             if ($i + $cols - 1 >= $rows) {
@@ -135,18 +128,11 @@ class Repeater extends String_
      */
     public function edit($content, $newRow = false)
     {
-
         // if no current repeater id, reserve next new repeater id for use on save
         $repeaterId = $content ?: PageBlockRepeaterRows::nextFreeRepeaterId();
         $this->_editViewData['renderedRows'] = '';
 
-        if ($repeaterBlock = BlockRepeater::where('block_id', '=', $this->_block->id)->first()) {
-            // load repeater blocks
-            $repeaterBlocks = [];
-            foreach (Block::whereIn('id', explode(",", $repeaterBlock->blocks))->orderBy('order', 'asc')->get() as $repeaterBlock) {
-                $repeaterBlocks[$repeaterBlock->id] = $repeaterBlock;
-            }
-
+        if ($repeaterBlocks = BlockRepeater::getRepeaterBlocks($this->_block->id)) {
             // check if new or existing row needs displaying
             if ($newRow) {
                 $renderedRow = '';
@@ -203,21 +189,14 @@ class Repeater extends String_
         }
 
         // save new data
-        $this->_repeaterContentSaved = '';
         $rowOrderNumber = 0;
         foreach ($submittedRepeaterRows as $rowId => $submittedRepeaterRow) {
             $rowOrderNumber++;
             foreach ($submittedRepeaterRow as $submittedBlockId => $submittedBlockData) {
                 $block = Block::preloadClone($submittedBlockId)->setVersionId($this->_block->getVersionId())->setRepeaterData($postContent['repeater_id'], $rowId)->setPageId($this->_block->getPageId());
                 if ($block->exists || $submittedBlockId == 0) {
-                    if ($block->exists) {
-                        $blockTypeObject = $block->getTypeObject()->submit($submittedBlockData);
-                        $savedContent = $blockTypeObject->generateSearchText($blockTypeObject->getSavedContent());
-                        $this->_repeaterContentSaved .= ($savedContent !== null) ? $savedContent . "\n" : '';
-                    } else {
-                        $block->id = $submittedBlockId;
-                        $block->getTypeObject()->save($rowOrderNumber);
-                    }
+                    $block->id = $submittedBlockId;
+                    $block->getTypeObject()->submit($submittedBlockData);
                 }
             }
         }
@@ -226,12 +205,29 @@ class Repeater extends String_
     }
 
     /**
-     * Change saved content function to return search text from blocks inside the repeater
-     * @return string
+     * Get search text from repeater blocks
+     * @param null|string $content
+     * @return null|string
      */
-    public function getSavedContent()
+    public function generateSearchText($content)
     {
-        return $this->_repeaterContentSaved;
+        $searchText = '';
+        $repeaterRows = PageBlockRepeaterData::loadRepeaterData($content, $this->_block->getVersionId());
+        $repeaterBlocks = BlockRepeater::getRepeaterBlocks($this->_block->id);
+
+        foreach ($repeaterRows as $rowId => $repeaterRow) {
+            foreach ($repeaterBlocks as $blockId => $repeaterBlock) {
+                if(($blockContent = array_key_exists($blockId, $repeaterRow) ? $repeaterRow[$blockId] : null) !== null) {
+                    $block = Block::preloadClone($blockId)->setRepeaterData($this->_block->getRepeaterId(), $this->_block->getRepeaterRowId())->setPageId($this->_block->getPageId());
+                    if ($block->exists && $block->search_weight > 0) {
+                        $blockSearchText = $block->getTypeObject()->generateSearchText($blockContent);
+                        $searchText .= ($blockSearchText !== null) ? $blockSearchText . "\n" : '';
+                    }
+                }
+            }
+        }
+
+        return parent::generateSearchText($searchText);
     }
 
     /**

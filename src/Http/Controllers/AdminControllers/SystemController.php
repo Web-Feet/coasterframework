@@ -222,7 +222,7 @@ class SystemController extends Controller
 
     public function getSearch()
     {
-        PageSearchData::update_search_data();
+        PageSearchData::updateAllSearchData();
         AdminLog::new_log('Search index updated');
         // as ajax call
         return 1;

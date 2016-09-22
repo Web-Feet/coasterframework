@@ -55,7 +55,7 @@ class Selectuser extends Select
     {
         $userAliases = $content ? User::userAliases() : [];
         $userName = (is_numeric($content) && !empty($userAliases[$content])) ? $userAliases[$content] : $content;
-        return $this->_generateSearchText($userName);
+        return parent::generateSearchText($userName);
     }
 
 }

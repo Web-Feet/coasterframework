@@ -96,7 +96,8 @@ class Image extends String_
     public function generateSearchText($content)
     {
         $content = $this->_defaultData($content);
-        return $this->_generateSearchText($content->title, basename($content->file));
+        $searchText = $this->_generateSearchText($content->title, basename($content->file));
+        return parent::generateSearchText($searchText);
     }
 
     /**

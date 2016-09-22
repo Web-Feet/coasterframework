@@ -15,29 +15,10 @@ class PageSearchData extends Eloquent
         return $this->belongsTo('CoasterCms\Models\Block');
     }
 
-    public static function update_processed_text($block_id, $search_content, $page_id, $language_id)
+    public static function updateText($content, $blockId, $pageId, $languageId = null)
     {
-        $updated_block = self::where('block_id', '=', $block_id)->where('page_id', '=', $page_id)->where('language_id', '=', $language_id)->first();
-        if (isset($updated_block)) {
-            if (!empty($search_content)) {
-                $updated_block->search_text = $search_content;
-                $updated_block->save();
-            } else {
-                $updated_block->delete();
-            }
-        } elseif (!empty($search_content)) {
-            $block = new self;
-            $block->block_id = $block_id;
-            $block->page_id = $page_id;
-            $block->language_id = $language_id;
-            $block->search_text = $search_content;
-            $block->save();
-        }
-    }
-
-    public static function updateText($content, $blockId, $pageId)
-    {
-        $searchData = static::where('block_id', '=', $blockId)->where('page_id', '=', $pageId)->where('language_id', '=', Language::current())->first() ?: new static;
+        $languageId = $languageId ?: Language::current();
+        $searchData = static::where('block_id', '=', $blockId)->where('page_id', '=', $pageId)->where('language_id', '=', $languageId)->first() ?: new static;
         if ($content) {
             $searchData->block_id = $blockId;
             $searchData->page_id = $pageId;
@@ -49,37 +30,17 @@ class PageSearchData extends Eloquent
         }
     }
 
-    public static function update_text($block_id, $block_content, $page_id, $language_id, $version = 0)
-    {
-        $block = Block::preload($block_id);
-        if ($block->exists) {
-            $block_type = $block->getClass();
-            if (method_exists($block_type, 'search_text')) {
-                if (ucwords($block->type) == 'Repeater') {
-                    $search_text = $block_type::search_text($block_content, $version);
-                } else {
-                    $search_text = $block_type::search_text($block_content);
-                }
-                self::update_processed_text($block_id, $search_text, $page_id, $language_id);
-            }
-        } else {
-            self::update_processed_text(0, $block_content, $page_id, $language_id);
-        }
-    }
-
-    public static function update_search_data()
+    public static function updateAllSearchData()
     {
         self::truncate();
-
-        $page_langs = PageLang::all();
-        foreach ($page_langs as $page_lang) {
-            self::update_processed_text(0, strip_tags($page_lang->name), $page_lang->page_id, $page_lang->language_id);
-
-            $page_blocks = Block::getDataForVersion(new PageBlock, $page_lang->live_version, ['language_id', 'page_id'], [$page_lang->language_id, $page_lang->page_id]);
-            if (!empty($page_blocks)) {
-                foreach ($page_blocks as $page_block) {
-                    self::update_text($page_block->block_id, $page_block->content, $page_block->page_id, $page_block->language_id, $page_lang->live_version);
-                }
+        $pageLanguages = PageLang::all();
+        foreach ($pageLanguages as $pageLang) {
+            static::updateText(strip_tags($pageLang->name), 0, $pageLang->page_id, $pageLang->language_id);
+            $pageBlocks = Block::getDataForVersion(new PageBlock, $pageLang->live_version, ['language_id', 'page_id'], [$pageLang->language_id, $pageLang->page_id]);
+            foreach ($pageBlocks as $pageBlock) {
+                $block = Block::preloadClone($pageBlock->block_id)->setPageId($pageBlock->page_id);
+                $searchText = $block->search_weight > 0 ? $block->getTypeObject()->generateSearchText($pageBlock->content) : '';
+                static::updateText($searchText, $pageBlock->block_id, $pageBlock->page_id, $pageBlock->language_id);
             }
         }
     }

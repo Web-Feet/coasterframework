@@ -65,7 +65,8 @@ class Stringwcolour extends String_
     public function generateSearchText($content)
     {
         $content = $this->_defaultData($content);
-        return $this->_generateSearchText($content->text, $content->colour);
+        $searchText = $this->_generateSearchText($content->text, $content->colour);
+        return parent::generateSearchText($searchText);
     }
 
 }

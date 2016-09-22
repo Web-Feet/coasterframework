@@ -542,7 +542,7 @@ class PagesController extends AdminController
                 $title_block->setPageId($page->id)->getTypeObject()->save($page_lang->name); // saves first page version
             }
         }
-        PageSearchData::update_processed_text(0, strip_tags($page_lang->name), $page->id, Language::current());
+        PageSearchData::updateText(strip_tags($page_lang->name), 0, $page->id);
 
         /*
          * Save Groups

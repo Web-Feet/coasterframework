@@ -137,15 +137,6 @@ class String_
     }
 
     /**
-     * Gets saved content, used in publish function to generate search text
-     * @return string
-     */
-    public function getSavedContent()
-    {
-        return $this->_contentSaved;
-    }
-
-    /**
      * Should only be called after save
      * By default, updates search text and publishes a new page version
      * @return static
@@ -153,7 +144,7 @@ class String_
     public function publish()
     {
         if ($this->_block->getPageId() && $this->_isSaved) {
-            $searchText = $this->generateSearchText($this->getSavedContent());
+            $searchText = $this->_block->search_weight > 0 ? $this->generateSearchText($this->_contentSaved) : '';
             $this->_block->publishContent($searchText);
         }
         return $this;
@@ -166,7 +157,7 @@ class String_
      */
     public function generateSearchText($content)
     {
-        return $this->_generateSearchText($content);
+        return $content;
     }
 
     /**

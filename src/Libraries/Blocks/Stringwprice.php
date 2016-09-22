@@ -62,7 +62,8 @@ class Stringwprice extends String_
     public function generateSearchText($content)
     {
         $content = $this->_defaultData($content);
-        return $this->_generateSearchText($content->text, $content->price);
+        $searchText = $this->_generateSearchText($content->text, $content->price);
+        return parent::generateSearchText($searchText);
     }
 
 }

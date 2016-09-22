@@ -983,7 +983,7 @@ Class Theme extends Eloquent
                 }
             }
 
-            PageSearchData::update_search_data();
+            PageSearchData::updateAllSearchData();
         }
     }
 

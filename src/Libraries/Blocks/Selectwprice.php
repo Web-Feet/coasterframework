@@ -72,7 +72,8 @@ class Selectwprice extends String_
     public function generateSearchText($content)
     {
         $content = $this->_defaultData($content);
-        return $this->_generateSearchText($content->selected, $content->price);
+        $searchText = $this->_generateSearchText($content->selected, $content->price);
+        return parent::generateSearchText($searchText);
     }
 
 }

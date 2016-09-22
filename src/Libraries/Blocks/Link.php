@@ -68,7 +68,7 @@ class Link extends String_
             $paths = Path::getById($content['link']);
             $content['link'] = $paths->exists ? $paths->name : '';
         }
-        return $this->_generateSearchText($content['link']);
+        return parent::generateSearchText($content['link']);
     }
 
     /**
