@@ -20,7 +20,7 @@ class Gallery extends String_
     public function display($content, $options = [])
     {
         if ($galleryData = $this->_defaultData($content)) {
-            uasort($galleryData, ['\CoasterCms\Helpers\Admin\GalleryUploadHandler', 'order_items']);
+            uasort($galleryData, [GalleryUploadHandler::class, 'order_items']);
             foreach ($galleryData as $image => $imageData) {
                 $galleryData[$image]->file = '/uploads/system/gallery/' . $this->_block->name . $imageData->path . $image;
             }
