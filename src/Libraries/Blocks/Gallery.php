@@ -21,12 +21,9 @@ class Gallery extends String_
     {
         $images = [];
         if ($galleryData = $this->_defaultData($content)) {
-            uasort($galleryData, array('\CoasterCms\Helpers\Admin\GAlleryUploadHandler', 'order_items'));
+            uasort($galleryData, ['\CoasterCms\Helpers\Admin\GalleryUploadHandler', 'order_items']);
             foreach ($galleryData as $image => $imageData) {
-                $data = new \stdClass;
-                $data->caption = $imageData->caption;
-                $data->file = '/uploads/system/gallery/' . $this->_block->name . $imageData->path . $image;
-                $images[] = $data;
+                $galleryData[$image]->file = '/uploads/system/gallery/' . $this->_block->name . $imageData->path . $image;
             }
         }
 
