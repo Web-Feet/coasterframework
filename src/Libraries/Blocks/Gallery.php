@@ -19,7 +19,6 @@ class Gallery extends String_
      */
     public function display($content, $options = [])
     {
-        $images = [];
         if ($galleryData = $this->_defaultData($content)) {
             uasort($galleryData, ['\CoasterCms\Helpers\Admin\GalleryUploadHandler', 'order_items']);
             foreach ($galleryData as $image => $imageData) {
@@ -31,9 +30,9 @@ class Gallery extends String_
         $galleryViews = 'themes.' . PageBuilder::getData('theme') . '.blocks.gallery.';
 
         if (empty($options['view']) && View::exists($galleryViews . $this->_block->name)) {
-            return View::make($galleryViews . $this->_block->name, ['images' => $images])->render();
+            return View::make($galleryViews . $this->_block->name, ['images' => $galleryData])->render();
         } elseif (View::exists($galleryViews . $options['view'])) {
-            return View::make($galleryViews . $options['view'], ['images' => $images])->render();
+            return View::make($galleryViews . $options['view'], ['images' => $galleryData])->render();
         } else {
             return 'Gallery template not found';
         }
