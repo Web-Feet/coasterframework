@@ -50,7 +50,7 @@ class Video extends String_
                 $cachedVideoData->save();
             }
         }
-        return $this->save($postContent);
+        return $this->save(!empty($postContent['select']) ? $postContent['select'] : '');
     }
 
     /**

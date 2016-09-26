@@ -32,7 +32,7 @@ class Selectmultiplewnew extends Selectmultiple
             $postContent['select'] = array_merge($postContent['select'], $newOptions);
         }
 
-        return $this->save($postContent);
+        return $this->save(!empty($postContent['select']) ? serialize($postContent['select']) : '');
     }
 
 }

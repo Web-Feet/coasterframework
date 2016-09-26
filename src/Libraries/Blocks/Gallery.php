@@ -82,14 +82,14 @@ class Gallery extends String_
 
     /**
      * Display full edit page for gallery
-     * @return string
+     * @return \Illuminate\Contracts\View\View|string
      */
     public function editPage()
     {
         $page = Page::preload($this->_block->getPageId());
         if ($page->exists) {
             $paths = Path::getById($page->id);
-            return View::make('coaster::pages.gallery', ['paths' => $paths, '_block' => $this->_block, 'can_delete' => Auth::action('gallery.delete', ['page_id' => $page->id]), 'can_edit_caption' => Auth::action('gallery.caption', ['page_id' => $page->id])])->render();
+            return View::make('coaster::pages.gallery', ['paths' => $paths, '_block' => $this->_block, 'can_delete' => Auth::action('gallery.delete', ['page_id' => $page->id]), 'can_edit_caption' => Auth::action('gallery.caption', ['page_id' => $page->id])]);
         } else {
             return 'page not found';
         }
