@@ -2,6 +2,8 @@
 
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Libraries\Blocks\Gallery;
+use CoasterCms\Models\AdminLog;
+use CoasterCms\Models\Block;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Template;
@@ -49,39 +51,39 @@ class GalleryController extends Controller
 
     public function getEdit($pageId = 0, $blockId = 0)
     {
-        $this->layoutData['content'] = Gallery::page($blockId, $pageId);
+        $galleryBlock = Block::preload($blockId)->setPageId($pageId)->getTypeObject();
+        $this->layoutData['content'] = $galleryBlock->editPage();
     }
 
     public function getUpdate($pageId = 0, $blockId = 0)
     {
-        return Gallery::run_handler($blockId, $pageId);
+        return $this->postUpdate($pageId, $blockId);
     }
 
     // ajax updates
 
     public function postCaption($pageId = 0, $blockId = 0)
     {
-        return Gallery::caption($blockId, $pageId);
+        $galleryBlock = Block::preload($blockId)->setPageId($pageId)->getTypeObject();
+        return $galleryBlock->submitCaption();
     }
 
     public function postSort($pageId = 0, $blockId = 0)
     {
-        return Gallery::sort($blockId, $pageId);
+        $galleryBlock = Block::preload($blockId)->setPageId($pageId)->getTypeObject();
+        return $galleryBlock->submitSort();
     }
 
     public function postUpdate($pageId = 0, $blockId = 0)
     {
-        return Gallery::update($blockId, $pageId);
+        $galleryBlock = Block::preload($blockId)->setPageId($pageId)->getTypeObject();
+        return $galleryBlock->runHandler();
     }
 
     public function deleteUpdate($pageId = 0, $blockId = 0)
     {
-        $file = Request::input('file');
-        if (empty($file)) {
-            $file = $pageId;
-            $pageId = 0;
-        }
-        return Gallery::delete($blockId, $pageId, $file);
+        $galleryBlock = Block::preload($blockId)->setPageId($pageId)->getTypeObject();
+        return $galleryBlock->submitDelete(Request::input('file'));
     }
 
 }

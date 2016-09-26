@@ -1,13 +1,13 @@
 <?php AssetBuilder::setStatus('cms-editor', true); ?>
 
-<h1>{!! $name !!}</h1>
+<h1>{!! $paths->fullName . ' - ' . $_block->label !!}</h1>
 
 <div class="textbox">
     <div class="col-sm-12">
-        @if (!empty($page))
-            <p><a href="{!! route('coaster.admin.pages.edit', ['pageId' => $page->id]) !!}">&raquo; Return and edit
-                    settings/other content on the '{!! $page->name !!}' page</a></p>
-        @elseif (empty($page))
+        @if ($_block->getPageId())
+            <p><a href="{!! route('coaster.admin.pages.edit', ['pageId' => $_block->getPageId()]) !!}">&raquo; Return and edit
+                    other blocks / page info on the '{{ $paths->name }}' page</a></p>
+        @else
             <p><a href="{!! route('coaster.admin.blocks') !!}">&raquo; Return and edit other
                     site-wide content and settings</a></p>
         @endif
