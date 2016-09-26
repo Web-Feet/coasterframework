@@ -2,7 +2,6 @@
 
 use CoasterCms\Exceptions\PageBuilderException;
 use CoasterCms\Helpers\Cms\Theme\BlockUpdater;
-use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Helpers\Cms\Page\PageLoader;
 use CoasterCms\Libraries\Builder\MenuBuilder;
 use CoasterCms\Libraries\Builder\ViewClasses\PageDetails;
@@ -172,12 +171,11 @@ class ThemeBuilderInstance extends PageBuilderInstance
             $block = new Block;
             $block->type = $this->blockSettings[$block_name]['type'];
         } else {
-            $block = Block::preload($block_name);
+            $block = Block::preloadClone($block_name);
         }
         if (!$block->type) {
             $block->type = BlockUpdater::typeGuess($block_name);
         }
-        $block_class = $block->get_class();
 
         // check if repeater view
         if (!empty($options['view'])) {
@@ -186,7 +184,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
             $repeaterView = $block_name;
         }
 
-        if ($block_class == 'repeater' || in_array($repeaterView, $this->repeaterTemplates)) {
+        if ($block->type == 'repeater' || in_array($repeaterView, $this->repeaterTemplates)) {
             $tmp = $this->repeaterView;
             $this->repeaterView = $block_name;
 
@@ -199,7 +197,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
             $this->repeaterView = $tmp;
         } else {
             // always use blank data for processing blocks
-            $output = $block_class::display($block, '', $options);
+            $output = $block->getTypeObject()->display('', $options);
         }
 
         if ($this->repeaterView) {
@@ -481,7 +479,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
     public function __call($name, $arguments)
     {
         if (strpos($name, 'block_') === 0) {
-            $validTypes = BlockManager::getBlockClasses();
+            $validTypes = Block::getBlockClasses();
             $blockType = strtolower(substr($name, 6));
             if (!empty($validTypes[$blockType])) {
                 $blockName = $arguments[0];

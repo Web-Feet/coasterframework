@@ -1,73 +1,74 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Models\BlockSelectOption;
-use CoasterCms\Models\PageBlock;
-
-class Selectmultiple extends _Base
+class Selectmultiple extends Select
 {
-
-    public static function display($block, $block_data, $options = null)
+    /**
+     * Unserialize string to php array before returning
+     * @param string $content
+     * @param array $options
+     * @return array|string
+     */
+    public function display($content, $options = [])
     {
-        if (isset($options['returnAll']) && $options['returnAll']) {
-            return BlockSelectOption::getOptionsArray($block->id);
-        }
-        if (!empty($block_data)) {
-            return unserialize($block_data);
-        } else {
-            return [];
-        }
+        $content = $content ? unserialize($content) : [];
+        return parent::display($content, $options);
     }
 
-    public static function edit($block, $block_data, $page_id = 0, $parent_repeater = null)
+    /**
+     * Unserialize string to php array before returning
+     * @param string $content
+     * @return string
+     */
+    public function edit($content)
     {
-        $options = array();
-        $select_opts = BlockSelectOption::where('block_id', '=', $block->id)->get();
-        foreach ($select_opts as $opts) {
-            $options[$opts->value] = $opts->option;
-        }
-        $field_data = new \stdClass;
-        $field_data->options = $options;
-        $field_data->selected = @unserialize($block_data);
-        if (preg_match('/^#[a-f0-9]{6}$/i', key($options))) {
-            $field_data->class = "select_colour";
-        }
-        self::$edit_id = array($block->id);
-        return $field_data;
+        $content = @unserialize($content);
+        return parent::edit($content);
     }
 
-    public static function save($block_content)
+    /**
+     * Serialize data to string before saving
+     * @param array $postContent
+     * @return static
+     */
+    public function submit($postContent)
     {
-        if (!empty($block_content)) {
-            return serialize($block_content);
-        } else {
-            return '';
-        }
+        return $this->save(!empty($postContent['select']) ? serialize($postContent['select']) : '');
     }
 
-    public static function filter($block_id, $search, $type)
+    /**
+     * Unserialize string before generating search text
+     * @param null|string $content
+     * @return null|string
+     */
+    public function generateSearchText($content)
     {
-        $live_blocks = PageBlock::page_blocks_on_live_page_versions($block_id);
-        $page_ids = array();
-        if (!empty($live_blocks) && $search) {
-            foreach ($live_blocks as $live_block) {
-                $items = !empty($live_block->content) ? unserialize($live_block->content) : array();
-                switch ($type) {
-                    case '=':
-                        if (in_array($search, $items)) {
-                            $page_ids[] = $live_block->page_id;
-                        }
-                        break;
-                    case 'in':
-                        foreach ($items as $item) {
-                            if (strpos($item, $search) !== false) {
-                                $page_ids[] = $live_block->page_id;
-                            }
-                        }
-                        break;
+        $content = @unserialize($content) ?: [];
+        $searchText = $this->_generateSearchText(...$content);
+        return parent::generateSearchText($searchText);
+    }
+
+    /**
+     * Filter in now an array search
+     * @param string $content
+     * @param string $search
+     * @param string $type
+     * @return bool
+     */
+    public function filter($content, $search, $type)
+    {
+        $items = !empty($content) ? unserialize($content) : [];
+        switch ($type) {
+            case 'in':
+                foreach ($items as $item) {
+                    if (strpos($item, $search) !== false) {
+                        return true;
+                    }
                 }
-            }
+                return false;
+                break;
+            default:
+                return in_array($search, $items);
         }
-        return $page_ids;
     }
 
 }

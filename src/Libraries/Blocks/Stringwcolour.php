@@ -1,73 +1,72 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Models\BlockSelectOption;
-use Request;
 
-class Stringwcolour extends _Base
+class Stringwcolour extends String_
 {
-    public static $blocks_key = 'blockc';
-
-    public static function display($block, $block_data, $options = null)
+    /**
+     * Return stringwcolour data
+     * @param string $content
+     * @param array $options
+     * @return mixed|\stdClass
+     */
+    public function display($content, $options = [])
     {
-        if (!empty($block_data)) {
-            return unserialize($block_data);
-        } else {
-            $text = new \stdClass;
-            $text->text = '';
-            $text->colour = '';
-            return $text;
-        }
+        return $this->_defaultData($content);
     }
 
-    public static function edit($block, $block_data, $page_id = 0, $parent_repeater = null)
+    /**
+     * Get colour option to select with text box
+     * @param string $content
+     * @return string
+     */
+    public function edit($content)
     {
-        $field_data = new \stdClass;
-        $block_data = unserialize($block_data);
-        $field_data->text = empty($block_data->text) ? '' : $block_data->text;
-        $field_data->colour = empty($block_data->colour) ? '' : $block_data->colour;
-
-        $options = array('none' => 'No Colour');
-        $select_opts = BlockSelectOption::where('block_id', '=', $block->id)->get();
-        foreach ($select_opts as $opts) {
-            $options[$opts->value] = $opts->option;
+        $this->_editViewData['selectOptions'] = ['none' => 'No Colour'];
+        $selectOptions = BlockSelectOption::where('block_id', '=', $this->_block->id)->get();
+        foreach ($selectOptions as $selectOption) {
+            $this->_editViewData['selectOptions'][$selectOption->value] = $selectOption->option;
         }
-        $field_data->options = $options;
-        $field_data->class = 'select_colour';
-
-        self::$edit_id = array($block->id);
-        return $field_data;
+        $this->_editViewData['selectClass'] = 'select_colour';
+        return parent::edit($this->_defaultData($content));
     }
 
-    public static function submit($page_id, $blocks_key, $repeater_info = null)
+    public function submit($postContent)
     {
-        $text_blocks = Request::input($blocks_key);
-        if (!empty($text_blocks)) {
-            foreach ($text_blocks as $block_id => $block_content) {
-                $text = new \stdClass;
-                $text->text = $block_content;
-                if (Request::input($blocks_key . '_colour.' . $block_id) != 'none') {
-                    $text->colour = Request::input($blocks_key . '_colour.' . $block_id);
-                }
-                if (empty($text->text) && empty($text->colour)) {
-                    $text = '';
-                } else {
-                    $text = serialize($text);
-                }
-                BlockManager::update_block($block_id, $text, $page_id, $repeater_info);
-            }
+        if ($postContent && (!empty($postContent['text']) || !empty($postContent['colour']))) {
+            $saveData = $this->_defaultData('');
+            $saveData->selected = !empty($postContent['text']) ? $postContent['text'] : '';
+            $saveData->colour = !empty($postContent['colour']) ? $postContent['colour'] : '';
         }
+        return $this->save(isset($saveData) ? serialize($saveData) : '');
     }
 
-    public static function search_text($block_content, $version = 0)
+    /**
+     * Return valid stringwcolour data
+     * @param $content
+     * @return mixed|\stdClass
+     */
+    protected function _defaultData($content)
     {
-        if (!empty($block_content)) {
-            $block_content = unserialize($block_content);
-            if (!empty($block_content->text)) {
-                return strip_tags($block_content->text);
-            }
+        $content = @unserialize($content);
+        if (empty($content) || !is_a($content, \stdClass::class)) {
+            $content = new \stdClass;
         }
-        return null;
+        $content->text = !empty($content->text) ? $content->text : '';
+        $content->colour = !empty($content->colour) ? $content->colour : '';
+        return $content;
+    }
+
+    /**
+     * Add text and colour data to search
+     * @param null|string $content
+     * @return null|string
+     */
+    public function generateSearchText($content)
+    {
+        $content = $this->_defaultData($content);
+        $searchText = $this->_generateSearchText($content->text, $content->colour);
+        return parent::generateSearchText($searchText);
     }
 
 }

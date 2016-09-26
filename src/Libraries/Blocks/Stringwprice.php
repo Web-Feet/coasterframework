@@ -1,62 +1,69 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Helpers\Cms\Theme\BlockManager;
-use Request;
-
-class Stringwprice extends _Base
+class Stringwprice extends String_
 {
-    public static $blocks_key = 'blockp';
-
-    public static function display($block, $block_data, $options = array())
+    /**
+     * Return stringwprice data
+     * @param string $content
+     * @param array $options
+     * @return mixed|\stdClass
+     */
+    public function display($content, $options = [])
     {
-        if (!empty($block_data)) {
-            return unserialize($block_data);
-        } else {
-            $text = new \stdClass;
-            $text->text = '';
-            $text->price = 0;
-            return $text;
-        }
+        return $this->_defaultData($content);
     }
 
-    public static function edit($block, $block_data, $page_id = 0, $parent_repeater = null)
+    /**
+     * Pass valid ata to edit function
+     * @param string $content
+     * @return string
+     */
+    public function edit($content)
     {
-        $field_data = new \stdClass;
-        $block_data = unserialize($block_data);
-        $field_data->text = !isset($block_data->text) ? '' : $block_data->text;
-        $field_data->price = !isset($block_data->price) ? '' : $block_data->price;
-
-        self::$edit_id = array($block->id);
-        return $field_data;
+        return parent::edit($this->_defaultData($content));
     }
 
-    public static function submit($page_id, $blocks_key, $repeater_info = null)
+    /**
+     * Save text/price data
+     * @param array $postContent
+     * @return static
+     */
+    public function submit($postContent)
     {
-        $text_blocks = Request::input($blocks_key);
-        if (!empty($text_blocks)) {
-            foreach ($text_blocks as $block_id => $block_content) {
-                $text = new \stdClass;
-                $text->text = $block_content;
-                $text->price = Request::input($blocks_key . '_price.' . $block_id);
-                if (empty($text->text) && empty($text->price)) {
-                    $text = '';
-                } else {
-                    $text = serialize($text);
-                }
-                BlockManager::update_block($block_id, $text, $page_id, $repeater_info);
-            }
+        if ($postContent && (!empty($postContent['text']) || !empty($postContent['price']))) {
+            $saveData = $this->_defaultData('');
+            $saveData->selected = !empty($postContent['text']) ? $postContent['text'] : '';
+            $saveData->price = !empty($postContent['price']) ? $postContent['price'] : 0;
         }
+        return $this->save(isset($saveData) ? serialize($saveData) : '');
     }
 
-    public static function search_text($block_content, $version = 0)
+    /**
+     * Return valid stringwprice data
+     * @param $content
+     * @return \stdClass
+     */
+    protected function _defaultData($content)
     {
-        if (!empty($block_content)) {
-            $block_content = unserialize($block_content);
-            if (!empty($block_content->text)) {
-                return strip_tags($block_content->text);
-            }
+        $content = @unserialize($content);
+        if (empty($content) || !is_a($content, \stdClass::class)) {
+            $content = new \stdClass;
         }
-        return null;
+        $content->text = !empty($content->text) ? $content->text : '';
+        $content->price = !empty($content->price) ? $content->price : 0;
+        return $content;
+    }
+
+    /**
+     * Add text and price data to search
+     * @param null|string $content
+     * @return null|string
+     */
+    public function generateSearchText($content)
+    {
+        $content = $this->_defaultData($content);
+        $searchText = $this->_generateSearchText($content->text, $content->price);
+        return parent::generateSearchText($searchText);
     }
 
 }

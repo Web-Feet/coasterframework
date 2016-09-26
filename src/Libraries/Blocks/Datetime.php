@@ -1,76 +1,77 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
 use Carbon\Carbon;
-use CoasterCms\Models\PageBlock;
+use CoasterCms\Helpers\Cms\DateTimeHelper;
 
-class Datetime extends _Base
+class Datetime extends String_
 {
-
-    public static function display($block, $block_data, $options = array())
+    /**
+     * Extra format options (either php format or coaster presets coaster.short/coaster.long)
+     * @param string $content
+     * @param array $options
+     * @return string
+     */
+    public function display($content, $options = [])
     {
         if (!empty($options['format'])) {
             if (strpos($options['format'], 'coaster.') === 0) {
                 $options['format'] = config('coaster:date.format'.substr($options['format'], 8));
             }
-            $block_data = (new Carbon($block_data))->format($options['format']);
+            $content = (new Carbon($content))->format($options['format']);
         }
-        return $block_data;
+        return $content;
     }
 
-    public static function edit($block, $block_data, $page_id = 0, $parent_repeater = null)
+    /**
+     * Convert content to jQuery datetime picker format
+     * @param string $content
+     * @return string
+     */
+    public function edit($content)
     {
-        self::$edit_id = array($block->id);
-        return self::mysqlToJQuery($block_data);
+        $content = DateTimeHelper::mysqlToJQuery($content);
+        return parent::edit($content);
     }
 
-    public static function save($block_content)
+    /**
+     * Convert jQuery datetime picker format to mysql
+     * @param array $postContent
+     * @return static
+     */
+    public function submit($postContent)
     {
-        return self::jQueryToMysql($block_content);
+        return $this->save($postContent ? DateTimeHelper::jQueryToMysql($postContent) : '');
     }
 
-    public static function jQueryToMysql($jquery_dt)
+    /**
+     * Add word representations for month/day so they can also be searched
+     * @param null|string $content
+     * @return null|string
+     */
+    public function generateSearchText($content)
     {
-        if (!empty($jquery_dt)) {
-            $date = Carbon::createFromFormat(config('coaster::date.format.jq_php'), $jquery_dt);
-            if (!empty($date)) {
-                return $date->format("Y-m-d H:i:s");
-            }
+        return $content ? (new Carbon($content))->format('d/m/Y l dS F') : null;
+    }
+
+    /**
+     * Datetime exact match check as well as between check
+     * @param string $content
+     * @param string $search
+     * @param string $type
+     * @return bool
+     */
+    public function filter($content, $search, $type)
+    {
+        $search = is_array($search) ? $search : [$search];
+        $search = array_map(function($searchValue) {return is_a($searchValue, Carbon::class) ? $searchValue : new Carbon($searchValue);}, $search);
+        $current = (new Carbon($content));
+        switch ($type) {
+            case 'in':
+                return ($current->gte($search[0]) && $current->lt($search[1]));
+                break;
+            default:
+                return $current->eq($search[0]);
         }
-        return '';
-    }
-
-    public static function mysqlToJQuery($mysql_dt)
-    {
-        if (!empty($mysql_dt) && strtotime($mysql_dt)) {
-            return (new Carbon($mysql_dt))->format(config('coaster::date.format.jq_php'));
-        }
-        return '';
-    }
-
-    public static function filter($block_id, $search, $type)
-    {
-        $live_blocks = PageBlock::page_blocks_on_live_page_versions($block_id);
-        $page_ids = array();
-        if (!empty($live_blocks)) {
-            $search = is_array($search) ? $search : [$search];
-            $search = array_map(function($searchValue) {return is_a($searchValue, Carbon::class) ? $searchValue : new Carbon($searchValue);}, $search);
-            foreach ($live_blocks as $live_block) {
-                $current = (new Carbon($live_block->content));
-                switch ($type) {
-                    case '=':
-                        if ($current->eq($search[0])) {
-                            $page_ids[] = $live_block->page_id;
-                        }
-                        break;
-                    case 'in':
-                        if ($current->gte($search[0]) && $current->lt($search[1])) {
-                            $page_ids[] = $live_block->page_id;
-                        }
-                        break;
-                }
-            }
-        }
-        return $page_ids;
     }
 
 }

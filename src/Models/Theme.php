@@ -2,7 +2,6 @@
 
 use CoasterCms\Helpers\Cms\File\Csv;
 use CoasterCms\Helpers\Cms\Theme\BlockUpdater;
-use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Helpers\Cms\File\Directory;
 use CoasterCms\Helpers\Cms\File\Zip;
 use DB;
@@ -614,8 +613,6 @@ Class Theme extends Eloquent
             'Content'
         ]);
 
-        $blockClasses = BlockManager::getBlockClasses();
-
         $blocksById = [];
         $blocksByName = [];
         foreach (BlockUpdater::getDatabaseBlocks($theme->id) as $block) {
@@ -649,7 +646,7 @@ Class Theme extends Eloquent
             }
         }
 
-        $pageBlocks = array_merge(BlockManager::get_data_for_version(new PageBlock, 0), BlockManager::get_data_for_version(new PageBlockDefault, 0));
+        $pageBlocks = array_merge(Block::getDataForVersion(new PageBlock, 0), Block::getDataForVersion(new PageBlockDefault, 0));
         $repeaterBlocks = [];
 
         $pageBlockArr = [];
@@ -668,11 +665,11 @@ Class Theme extends Eloquent
                 }
 
                 if (strtolower($blocksById[$pageBlock->block_id]->type) == 'repeater') {
-                    $repeaterBlocks[$pageBlock->content] = PageBlockRepeaterData::load_by_repeater_id($pageBlock->content);
+                    $repeaterBlocks[$pageBlock->content] = PageBlockRepeaterData::loadRepeaterData($pageBlock->content);
                     $repeaterBlockArr[] = $pageBlock->block_id;
                 }
 
-                $filesUsed = $blockClasses[$blocksById[$pageBlock->block_id]->type]::exportFiles($blocksById[$pageBlock->block_id], $pageBlock->content);
+                $filesUsed = $blocksById[$pageBlock->block_id]->getTypeObject()->exportFiles($pageBlock->content);
                 $allFilesUsed = array_merge($filesUsed, $allFilesUsed);
 
                 $pageBlockArr[] = [
@@ -708,7 +705,7 @@ Class Theme extends Eloquent
                     $blockName = !empty($blocksById[$repeaterBlockId])?$blocksById[$repeaterBlockId]->name:null;
                     if (!empty($blockName) && $repeaterContent) {
 
-                        $filesUsed = $blockClasses[$blocksById[$repeaterBlockId]->type]::exportFiles($blocksById[$repeaterBlockId], $repeaterContent);
+                        $filesUsed = $blocksById[$repeaterBlockId]->getTypeObject()->exportFiles($repeaterContent);
                         $allFilesUsed = array_merge($filesUsed, $allFilesUsed);
 
                         fputcsv($repeaterBlocksCsv, [
@@ -986,7 +983,7 @@ Class Theme extends Eloquent
                 }
             }
 
-            PageSearchData::update_search_data();
+            PageSearchData::updateAllSearchData();
         }
     }
 

@@ -1,14 +1,19 @@
 <?php namespace CoasterCms\Http\Controllers\AdminControllers;
 
 use CoasterCms\Http\Controllers\AdminController as Controller;
-use CoasterCms\Libraries\Blocks\Repeater;
+use CoasterCms\Models\Block;
+use Request;
 
 class RepeatersController extends Controller
 {
 
     public function postIndex()
     {
-        return Repeater::new_row();
+        $block = Block::find(Request::input('block_id'));
+        if  (($repeaterId = Request::input('repeater_id')) && $block && $block->type == 'repeater') {
+            return $block->setPageId(Request::input('page_id'))->getTypeObject()->edit($repeaterId, true);
+        }
+        return 0;
     }
 
 }

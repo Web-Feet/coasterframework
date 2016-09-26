@@ -1,102 +1,104 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Models\Page;
-use Request;
 use URL;
 
-class Link extends _Base
+class Link extends String_
 {
-    public static $blocks_key = 'link';
-
-    public static function display($block, $block_data, $options = array())
+    /**
+     * Display image link (target attribute appended to end or link if exists)
+     * @param string $content
+     * @param array $options
+     * @return string
+     */
+    public function display($content, $options = [])
     {
-        if (!empty($block_data)) {
-            try {
-                $block_data = unserialize($block_data);
-            } catch (\Exception $e) {
-                $block_data = array('link' => '', 'target' => '');
-            }
-        } else {
-            $block_data = array('link' => '', 'target' => '');
-        }
-        if (!empty($block_data['target'])) {
-            $target = "\" target=\"{$block_data['target']}";
-        } else {
-            $target = "";
-        }
-        $link = str_replace('internal://', '', $block_data['link'], $count);
-        if ($count > 0) {
-            return Path::getFullUrl($link) . $target;
-        } else {
-            return $link . $target;
-        }
+        $content = $this->_defaultData($content);
+        $target = $content['target'] ? ' target=\"'.$content['target'].'"' : '';
+        $link = str_replace('internal://', '', $content['link'], $count);
+        return (($count > 0) ? Path::getFullUrl($link) : $link) . $target;
     }
 
-    public static function edit($block, $block_data, $page_id = 0, $parent_repeater = null)
+    /**
+     * Edit link settings
+     * @param string $content
+     * @return string
+     */
+    public function edit($content)
     {
-        $content = new \stdClass;
-        if (!empty($block_data)) {
-            try {
-                $block_data = unserialize($block_data);
-            } catch (\Exception $e) {
-                $block_data = array('link' => '', 'target' => '');
-            }
+        $content = $this->_defaultData($content);
+        $link = str_replace('internal://', '', $content['link'], $count);
+        $content['link'] = ($count > 0) ? '' : $content['link'];
+        $this->_editViewData['targetOptions'] = [0 => 'Target: Same Tab', '_blank' => 'Target: New Tab'];
+        $this->_editViewData['selectedPage'] = ($count > 0) ? $link : 0;
+        $this->_editViewData['pageList'] = [0 => 'Custom Link: '] + Page::get_page_list();
+        return parent::edit($content);
+    }
+
+    /**
+     * Update link settings
+     * @param array $postContent
+     * @return static
+     */
+    public function submit($postContent)
+    {
+        $linkData = [];
+        if (!empty($postContent['internal'])) {
+            $linkData['link'] = 'internal://' . $postContent['internal'];
+        } elseif (!empty($postContent['custom'])) {
+            $linkData['link'] = $postContent['custom'];
         } else {
-            $block_data = array('link' => '', 'target' => '');
+            $linkData['link'] = '';
         }
-        $link = str_replace('internal://', '', $block_data['link'], $count);
+        $linkData['target'] = !empty($linkData['target']) ? $linkData['target'] : '';
+        return $this->save(empty($linkData['link']) ? '' : serialize($linkData));
+    }
+
+    /**
+     * Save link in search text (without the target attribute)
+     * @param null|string $content
+     * @return null|string
+     */
+    public function generateSearchText($content)
+    {
+        $content = $this->_defaultData($content);
+        $content['link'] = str_replace('internal://', '', $content['link'], $count);
         if ($count > 0) {
-            $content->internal = $link;
-            $content->external = '';
-        } else {
-            $content->internal = 0;
-            $content->external = $link;
+            $paths = Path::getById($content['link']);
+            $content['link'] = $paths->exists ? $paths->name : '';
         }
-        $content->target = !empty($block_data['target']) ? $block_data['target'] : 0;
-        $content->target_options = array(0 => 'Target: Same Tab', '_blank' => 'Target: New Tab');
-        $content->options = array(0 => 'Custom Link: ') + Page::get_page_list();
-        self::$edit_id = array($block->id);
+        return parent::generateSearchText($content['link']);
+    }
+
+    /**
+     * Return valid link data
+     * @param string $content
+     * @return array
+     */
+    protected function _defaultData($content)
+    {
+        $content = @unserialize($content);
+        if (empty($content) || !is_array($content)) {
+            $content = [];
+        }
+        $content = $content + ['link' => '', 'target' => ''];
         return $content;
     }
 
-    public static function submit($page_id, $blocks_key, $repeater_info = null)
+    /**
+     * Return link documents for exporting with theme data
+     * @param string $content
+     * @return array
+     */
+    public function exportFiles($content)
     {
-        $link_blocks = Request::input($blocks_key);
-        if (!empty($link_blocks)) {
-            foreach ($link_blocks as $block_id => $link) {
-                $data = [];
-                if (!empty($link['internal'])) {
-                    $data['link'] = 'internal://' . $link['internal'];
-                } elseif (!empty($link['custom'])) {
-                    $data['link'] = $link['custom'];
-                }
-                if (!empty($link['target'])) {
-                    $data['target'] = $link['target'];
-                }
-                if (!empty($data)) {
-                    $block_content = serialize($data);
-                } else {
-                    $block_content = '';
-                }
-                BlockManager::update_block($block_id, $block_content, $page_id, $repeater_info);
-            }
+        $content = $this->_defaultData($content);
+        if (!empty($content['link']) && (strpos($content['link'], '/') === 0 || strpos($content['link'], URL::to('/')) === 0)) {
+            return [str_replace(URL::to('/'), '', $content['link'])];
+        } else {
+            return [];
         }
-    }
-
-    public static function exportFiles($block, $block_data)
-    {
-        $doc = [];
-        If (!empty($block_data)) {
-            $block_data = unserialize($block_data);
-            if (!empty($block_data['link'])) {
-                if (strpos($block_data['link'], '/') === 0 || strpos($block_data['link'], URL::to('/')) === 0) {
-                    $doc[] = str_replace(URL::to('/'), '', $block_data['link']);
-                }
-            }
-        }
-        return $doc;
     }
 
 }

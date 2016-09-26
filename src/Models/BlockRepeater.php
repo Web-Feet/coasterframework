@@ -14,4 +14,15 @@ Class BlockRepeater extends Eloquent
         return ['block_id'];
     }
 
+    public static function getRepeaterBlocks($blockId)
+    {
+        $repeaterBlocks = [];
+        if ($blockRepeater = BlockRepeater::where('block_id', '=', $blockId)->first()) {
+            foreach (explode(",", $blockRepeater->blocks) as $repeaterBlockId) {
+                $repeaterBlocks[$repeaterBlockId] = Block::preload($repeaterBlockId);
+            }
+        }
+        return $repeaterBlocks;
+    }
+
 }

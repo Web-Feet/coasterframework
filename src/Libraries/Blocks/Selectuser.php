@@ -1,65 +1,61 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Models\User;
 use Auth;
-use Request;
 
-class Selectuser extends _Base
+class Selectuser extends Select
 {
-    public static $blocks_key = 'blockUser';
-
-    public static function display($block, $block_data, $options = array())
+    /**
+     * Display name (convert user id to name if not custom)
+     * @param string $content
+     * @param array $options
+     * @return int|mixed|string
+     */
+    public function display($content, $options = [])
     {
-        if (is_numeric($block_data)) {
-            $user = User::find($block_data);
-            $userName = $user->getName();
-        } else {
-            $userName = $block_data;
+        if (is_numeric($content)) {
+            $user = User::find($content);
         }
-        return parent::display($block, $userName, $options);
+        return !empty($user) && $user->getName() ? $user->getName() : $content;
     }
 
-    public static function edit($block, $block_data, $page_id = 0, $parent_repeater = null)
+    /**
+     * Display user select plus custom input
+     * @param string $content
+     * @return string
+     */
+    public function edit($content)
     {
         $users = [];
         foreach (User::all() as $user) {
             $users[$user->id] = $user->getName() . ' (#'.$user->id.')';
         }
-        $blockData = new \stdClass;
-        $blockData->custom = is_numeric($block_data) ? '' : $block_data;
-        $blockData->users = [0 => '-- Custom User --'] + $users;
-        $blockData->selected = is_numeric($block_data) ? $block_data : ($blockData->custom ? 0 : Auth::user()->id);
-        return parent::edit($block, $blockData, $page_id, $parent_repeater);
+        $this->_editViewData['customName'] = array_key_exists($content, $users) ? '' : $content;
+        $this->_editViewData['selectOptions'] = [0 => '-- Custom User --'] + $users;
+        $content = $this->_editViewData['customName'] ? 0 : ($content ?: Auth::user()->id);
+        return parent::edit($content);
     }
 
-    public static function submit($page_id, $blocks_key, $repeater_info = null)
+    /**
+     * Save custom user name, if empty save selected user id
+     * @param array $postContent
+     * @return static
+     */
+    public function submit($postContent)
     {
-        $updatedBlockIds = [];
-        $customUsers = Request::input($blocks_key . 'Custom') ?: [];
-        foreach ($customUsers as $blockId => $customUser) {
-            if ($customUser) {
-                $updatedBlockIds [] = $blockId;
-                BlockManager::update_block($blockId, $customUser, $page_id, $repeater_info);
-            }
-        }
-        $userIds = Request::input($blocks_key) ?: [];
-        foreach ($userIds as $blockId => $userId) {
-            if (!in_array($blockId, $updatedBlockIds)) {
-                BlockManager::update_block($blockId, $userId, $page_id, $repeater_info);
-            }
-        }
+        return $this->save($postContent['custom'] ?: (!empty($postContent['select']) ? $postContent['select'] : ''));
     }
 
-    public static function search_text($block_content, $version = 0)
+    /**
+     * Convert user id to name if not custom
+     * @param null|string $content
+     * @return null|string
+     */
+    public function generateSearchText($content)
     {
-        if ($block_content) {
-            $userAliases = User::userAliases();
-            if (!empty($userAliases[$block_content])) {
-                return $userAliases[$block_content];
-            }
-        }
-        return null;
+        $userAliases = $content ? User::userAliases() : [];
+        $userName = (is_numeric($content) && !empty($userAliases[$content])) ? $userAliases[$content] : $content;
+        return parent::generateSearchText($userName);
     }
 
 }

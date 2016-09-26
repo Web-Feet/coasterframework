@@ -29,6 +29,16 @@ trait DataPreLoad
     }
 
     /**
+     * @param string $key
+     * @param bool $force
+     * @return static
+     */
+    public static function preloadClone($key, $force = false)
+    {
+        return clone static::preload($key, $force);
+    }
+
+    /**
      * @param bool $force
      * @return array
      */
@@ -42,11 +52,15 @@ trait DataPreLoad
 
     /**
      * @param string $customDataSetKey
+     * @param string $identifier
      * @return bool
      */
-    protected static function _preloadIsset($customDataSetKey = 'default')
+    protected static function _preloadIsset($customDataSetKey = 'default', $identifier = null)
     {
-        return isset(static::$_preLoadedCustomData[$customDataSetKey]);
+        if (isset(static::$_preLoadedCustomData[$customDataSetKey])) {
+            return $identifier ? array_key_exists($identifier, static::$_preLoadedCustomData[$customDataSetKey]) : true;
+        }
+        return false;
     }
 
     /**
@@ -95,7 +109,11 @@ trait DataPreLoad
         if (!static::_preloadIsset($customDataSetKey)) {
             static::$_preLoadedCustomData[$customDataSetKey] = [];
         }
-        static::$_preLoadedCustomData[$customDataSetKey][$identifier] = $value;
+        if (is_null($identifier)) {
+            static::$_preLoadedCustomData[$customDataSetKey][] = $value;
+        } else {
+            static::$_preLoadedCustomData[$customDataSetKey][$identifier] = $value;
+        }
     }
 
     /**

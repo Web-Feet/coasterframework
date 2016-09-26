@@ -1,5 +1,5 @@
-<?php $source_field_id = str_replace(array('[', ']'), array('_', ''), $name . '[source]'); ?>
-<?php $image_preview_id = str_replace(array('[', ']'), array('_', ''), $name . '[image]'); ?>
+<?php $source_field_id = str_replace(['[', ']'], ['_', ''], $name . '[source]'); ?>
+<?php $image_preview_id = str_replace(['[', ']'], ['_', ''], $name . '[image]'); ?>
 
 <div class="form-group">
     {!! Form::label($name, $label, ['class' => 'control-label col-sm-2']) !!}

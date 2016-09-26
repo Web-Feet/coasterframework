@@ -1,6 +1,5 @@
 <?php namespace CoasterCms\Models;
 
-use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use Eloquent;
 
 class PageBlockDefault extends Eloquent
@@ -9,39 +8,30 @@ class PageBlockDefault extends Eloquent
     protected $table = 'page_blocks_default';
     public static $preloaded_lang_default = false;
 
-    public static function update_block($block_id, $content, $page_id = null, $repeater_info = null)
+    public static function updateBlockData($content, $blockId, $versionId)
     {
-
-        $updated_block = self::where('block_id', '=', $block_id)->where('language_id', '=', Language::current())->orderBy('version', 'desc')->first();
-
-        $to_version = BlockManager::$to_version;
-        if (empty($to_version)) {
-            $new_version = PageVersion::add_new($page_id);
-            $to_version = $new_version->version_id;
+        $previousData = static::where('block_id', '=', $blockId)->where('language_id', '=', Language::current())->orderBy('version', 'desc')->first();
+        if (!empty($previousData) && $previousData->version > $versionId) {
+            throw new \Exception('VersionId ('.$versionId.') for the new data must be higher than the previous versionId ('.$previousData->version.')!');
         }
-        if (empty($updated_block) || (!empty($updated_block) && $updated_block->content !== $content)) {
-            $block = new self;
-            $block->block_id = $block_id;
+        if (empty($previousData) || (!empty($previousData) && $previousData->content !== $content)) {
+            $block = new static;
+            $block->block_id = $blockId;
             $block->language_id = Language::current();
             $block->content = $content;
-            $block->version = $to_version;
+            $block->version = $versionId;
             $block->save();
         }
     }
 
-    public static function get_block($block_id, $page_id, $repeater_info, $version)
+    public static function getBlockData($blockId, $versionId)
     {
-        $selected_block = self::where('block_id', '=', $block_id)->where('language_id', '=', Language::current());
-        if (empty($version)) {
-            $selected_block = $selected_block->orderBy('version', 'desc')->first();
-        } else {
-            $selected_block = $selected_block->where('version', '<=', $version)->orderBy('version', 'desc')->first();
+        $getDataQuery = static::where('block_id', '=', $blockId)->where('language_id', '=', Language::current());
+        if (!empty($versionId)) {
+            $getDataQuery = $getDataQuery->where('version', '<=', $versionId);
         }
-        if (!empty($selected_block)) {
-            return $selected_block->content;
-        } else {
-            return null;
-        }
+        $blockData = $getDataQuery->orderBy('version', 'desc')->first();
+        return $blockData ? $blockData->content : null;
     }
 
     public static function preload_block($block_id, $version = 0)
@@ -68,7 +58,7 @@ class PageBlockDefault extends Eloquent
     {
         if (self::$preloaded_lang_default === false) {
             self::$preloaded_lang_default = array();
-            $default_blocks = BlockManager::get_data_for_version(new self, $version, null, null, 'block_id');
+            $default_blocks = Block::getDataForVersion(new self, $version, null, null, 'block_id');
             if (!empty($default_blocks)) {
                 foreach ($default_blocks as $default_block) {
                     if (!isset(self::$preloaded_lang_default[$default_block->block_id])) {

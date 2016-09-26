@@ -7,6 +7,11 @@ use CoasterCms\Models\PageLang;
 class Path
 {
     /**
+     * @var bool
+     */
+    public $exists;
+
+    /**
      * @var int
      */
     public $pageId;
@@ -48,9 +53,11 @@ class Path
 
     /**
      * Path constructor.
+     * @param bool $exists
      */
-    public function __construct()
+    public function __construct($exists)
     {
+        $this->exists = $exists;
         $this->separator = '{sep}';
         $this->name = 'Not set';
         $this->url = 'not_set';
@@ -144,7 +151,7 @@ class Path
     {
         if (empty(self::$_preLoaded[$pageId])) {
             $pageLang = PageLang::preload($pageId);
-            self::$_preLoaded[$pageId] = new self;
+            self::$_preLoaded[$pageId] = new self($pageLang->exists);
             self::$_preLoaded[$pageId]->pageId = $pageId;
             self::$_preLoaded[$pageId]->name = $pageLang->name;
             self::$_preLoaded[$pageId]->url = $pageLang->url;
@@ -161,7 +168,7 @@ class Path
         self::_preLoad();
         $pageData = self::unParsePageId($pageId, false);
         $pageId = $pageData[0];
-        $pagePathData = !empty(self::$_preLoaded[$pageId]) ? self::$_preLoaded[$pageId] : new self;
+        $pagePathData = self::_getById($pageId);
 
         $groupContainerPageId = !empty($pageData[1]) ? $pageData[1] : 0;
         if ($groupContainerPageId && !empty($pagePathData->groupContainers[$groupContainerPageId])) {

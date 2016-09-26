@@ -1,12 +1,12 @@
 <?php namespace CoasterCms\Http\Controllers\AdminControllers;
 
 use Auth;
+use CoasterCms\Helpers\Cms\DateTimeHelper;
 use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Libraries\Builder\FormMessage;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
 use CoasterCms\Http\Controllers\AdminController;
-use CoasterCms\Libraries\Blocks\Datetime;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockBeacon;
@@ -65,42 +65,15 @@ class PagesController extends AdminController
 
     public function postEdit($pageId)
     {
-        // notify user
-        $alert = new \stdClass;
-        $alert->type = 'success';
-        $alert->header = 'Page Content Updated';
-        $alert->content = '';
-
         $existingPage = Page::find($pageId);
 
-        // run if duplicate button was hit
-        if (Request::input('duplicate') == 1) {
-            if ($existingPage->canDuplicate()) {
-                $new_page_id = $this->_save_page_info(0, $existingPage);
-                if ($new_page_id === false) {
-                    $alert->type = 'danger';
-                    $alert->header = 'Error: Duplication failed';
-                    $this->layoutData['alert'] = $alert;
-                    return $this->getEdit($pageId, BlockManager::$to_version);
-                } else {
-                    BlockManager::process_submission($new_page_id);
-                    return \redirect()->route('coaster.admin.pages.edit', ['pageId' => $new_page_id]);
-                }
-            } else {
-                return abort(403, 'Action not permitted');
-            }
-        }
-
-        $new_version = PageVersion::add_new($pageId);
-        BlockManager::$to_version = $new_version->version_id;
-
-        $publishing = config('coaster::admin.publishing') ? true : false;
+        $publish = false;
+        $publishing = (bool) config('coaster::admin.publishing');
         $canPublish = Auth::action('pages.version-publish', ['page_id' => $pageId]);
         if ($publishing && $existingPage->link == 0) {
             // check if publish
             if (Request::input('publish') != '' && $canPublish) {
-                BlockManager::$publish = true;
-                $new_version->publish();
+                $publish = true;
                 // check if there were requests to publish the version being edited
                 if (Request::input('overwriting_version_id')) {
                     $overwriting_page_version = PageVersion::where('version_id', '=', Request::input('overwriting_version_id'))->where('page_id', '=', $pageId)->first();
@@ -114,29 +87,46 @@ class PagesController extends AdminController
                     }
                 }
             }
-            // check if publish request
-            if (Request::input('publish_request') != '') {
-                PagePublishRequests::add($pageId, $new_version->version_id, Request::input('request_note'));
-            }
         } elseif (!$publishing || ($existingPage->link == 1 && $canPublish)) {
-            BlockManager::$publish = true;
-            $new_version->publish();
+            $publish = true;
         }
+
+        // run if duplicate button was hit
+        if (Request::input('duplicate') == 1) {
+            if ($existingPage->canDuplicate()) {
+                $new_page_id = $this->_save_page_info(0, 1, $existingPage);
+                if ($new_page_id === false) {
+                    $this->setAlert('danger', 'Error: Duplication failed');
+                    return $this->getEdit($pageId);
+                } else {
+                    Block::submit($new_page_id, 1, $publish);
+                    return \redirect()->route('coaster.admin.pages.edit', ['pageId' => $new_page_id]);
+                }
+            } else {
+                return abort(403, 'Action not permitted');
+            }
+        }
+
+        $version = PageVersion::add_new($pageId);
 
         // update blocks
-        BlockManager::process_submission($pageId);
-
-        // save page info
-        if ($this->_save_page_info($pageId) === false) {
-            $alert->type = 'warning';
-            $alert->content .= 'Error: "Page Info" not updated (check tab for errors)';
+        Block::submit($pageId, $version->version_id, $publish);
+        if ($publish) {
+            if (Request::input('publish_request') != '') {
+                PagePublishRequests::add($pageId, $version->version_id, Request::input('request_note'));
+            }
+            $version->publish();
         }
 
-        //send alert
-        $this->layoutData['alert'] = $alert;
+        // save page info
+        if ($this->_save_page_info($pageId, $version->version_id) === false) {
+            $this->setAlert('warning', 'Error: "Page Info" not updated (check tab for errors)');
+        } else {
+            $this->setAlert('success', 'Page Content Updated');
+        }
 
         // display page edit form
-        return $this->getEdit($pageId, BlockManager::$to_version);
+        return $this->getEdit($pageId, $version->version_id);
     }
 
     public function postSort()
@@ -207,7 +197,7 @@ class PagesController extends AdminController
 
     public function postVersions($pageId)
     {
-        return BlockManager::version_table($pageId);
+        return PageVersion::version_table($pageId);
     }
 
     public function postVersionSchedule($pageId)
@@ -228,8 +218,8 @@ class PagesController extends AdminController
             }
         }
 
-        $scheduleFrom = Datetime::jQueryToMysql(Request::input('schedule_from'));
-        $scheduleTo = Datetime::jQueryToMysql(Request::input('schedule_to'));
+        $scheduleFrom = DateTimeHelper::jQueryToMysql(Request::input('schedule_from'));
+        $scheduleTo = DateTimeHelper::jQueryToMysql(Request::input('schedule_to'));
         $scheduleToVersion = Request::input('schedule_to_version');
         $scheduleRepeat = Request::input('schedule_repeat')?:0;
         $versionId = Request::input('version_id');
@@ -364,7 +354,7 @@ class PagesController extends AdminController
         return json_encode($json_array);
     }
 
-    private function _save_page_info($pageId = 0, $existingPage = null)
+    private function _save_page_info($pageId = 0, $versionId = 0, $existingPage = null)
     {
         $input = Request::all();
         $canPublish = (config('coaster::admin.publishing') > 0 && Auth::action('pages.version-publish', ['page_id' => $pageId])) || config('coaster::admin.publishing') == 0;
@@ -387,6 +377,9 @@ class PagesController extends AdminController
                     $input['page_info'][$attribute] = $page->$attribute;
                 }
             }
+            $input['page_info']['template'] = !empty($input['page_info']['template']['select']) ? $input['page_info']['template']['select'] : 0;
+            $input['page_info']['live'] = !empty($input['page_info']['live']['select']) ? $input['page_info']['live']['select'] : 0;
+            $input['page_info']['sitemap'] = !empty($input['page_info']['sitemap']['select']) ? $input['page_info']['sitemap']['select'] : 0;
             $page_info = $input['page_info'];
             $page_lang = PageLang::preload($page->id);
             foreach ($page_lang->getAttributes() as $attribute => $value) {
@@ -453,7 +446,7 @@ class PagesController extends AdminController
         }
         $siblings = array_unique($siblings);
 
-        $versionTemplate = $page_info['template'];
+        $versionTemplate = !empty($page_info['template']['select']) ? $page_info['template']['select'] : $page_info['template'];
         if (empty($input['publish']) && $page->id) {
             $page_info['template'] = $page->template;
         }
@@ -466,8 +459,8 @@ class PagesController extends AdminController
                 $page_info['live'] = 0;
             }
         }
-        $page_info['live_start'] = Datetime::jQueryToMysql($page_info['live_start']);
-        $page_info['live_end'] = Datetime::jQueryToMysql($page_info['live_end']);
+        $page_info['live_start'] = DateTimeHelper::jQueryToMysql($page_info['live_start']);
+        $page_info['live_end'] = DateTimeHelper::jQueryToMysql($page_info['live_end']);
 
         $createNewGroup = ($page_info['group_container'] == -1);
         $page_info['group_container'] = $createNewGroup ? 0 : $page_info['group_container'];
@@ -545,12 +538,11 @@ class PagesController extends AdminController
         }
 
         if (!$pageId) {
-            $title_block = Block::where('name', '=', config('coaster::admin.title_block'))->first();
-            if (!empty($title_block)) {
-                BlockManager::update_block($title_block->id, $page_lang->name, $page->id); // saves first page version
+            if ($title_block = Block::where('name', '=', config('coaster::admin.title_block'))->first()) {
+                $title_block->setPageId($page->id)->getTypeObject()->save($page_lang->name); // saves first page version
             }
         }
-        PageSearchData::update_processed_text(0, strip_tags($page_lang->name), $page->id, Language::current());
+        PageSearchData::updateText(strip_tags($page_lang->name), 0, $page->id);
 
         /*
          * Save Groups
@@ -567,7 +559,7 @@ class PagesController extends AdminController
          */
         if ($pageId) {
             // save page versions template
-            $page_version = PageVersion::where('page_id', '=', $page->id)->where('version_id', '=', BlockManager::$to_version)->first();
+            $page_version = PageVersion::where('page_id', '=', $page->id)->where('version_id', '=', $versionId)->first();
             $page_version->template = $versionTemplate;
             $page_version->save();
         } elseif ($existingPage) {
@@ -716,7 +708,6 @@ class PagesController extends AdminController
                 } else {
                     return 'active theme not found';
                 }
-                BlockManager::$current_version = $versionData['editing']; // used for repeater data
                 $blocks_content = PageBlock::preload_page($pageId, $versionData['editing']);
             }
 

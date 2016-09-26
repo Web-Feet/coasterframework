@@ -50,7 +50,7 @@ class FormsController extends Controller
 
     public function getSubmissions($pageId = 0, $blockId = 0)
     {
-        $block_data = Block::get_block_on_page($blockId, $pageId);
+        $block_data = Block::getBlockOnPage($blockId, $pageId);
         if (empty($block_data) || $block_data->type != 'form') {
             \abort('404', 'Form not found on page');
         } else {
@@ -93,7 +93,7 @@ class FormsController extends Controller
 
     public function getCsv($pageId = 0, $blockId = 0)
     {
-        $block_data = Block::get_block_on_page($blockId, $pageId);
+        $block_data = Block::getBlockOnPage($blockId, $pageId);
         if (empty($block_data) || $block_data->type != 'form') {
             \abort('404', 'Form not found on page');
         } else {

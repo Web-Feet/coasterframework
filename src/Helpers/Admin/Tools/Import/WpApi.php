@@ -1,12 +1,8 @@
 <?php namespace CoasterCms\Helpers\Admin\Tools\Import;
 
-use CoasterCms\Helpers\Cms\Theme\BlockManager;
-use CoasterCms\Helpers\Cms\Html\DomDocument;
+use CoasterCms\Helpers\Cms\Html\DOMDocument;
 use CoasterCms\Helpers\Cms\Page\Path;
-use CoasterCms\Libraries\Blocks\Repeater;
-use CoasterCms\Libraries\Blocks\Selectmultiplewnew;
 use CoasterCms\Models\Block;
-use CoasterCms\Models\BlockRepeater;
 use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Page;
@@ -80,7 +76,7 @@ class WpApi
         $toSave[] = strtolower($item->name);
       };
       BlockSelectOption::reguard();
-      BlockManager::update_block($block->id, Selectmultiplewnew::save($toSave), $page_id, null);
+      $block->setPageId($page_id)->getTypeObject()->save(['select' => $toSave]);
       return implode(', ', $toSave);
     }
 
@@ -176,7 +172,7 @@ class WpApi
           $rowData['comment_parent'] = isset($idsInserted[$comment->parent]) ? $idsInserted[$comment->parent] : 0;
 
           $rowData['comment_date'] = $this->carbonDate($comment->date)->format('Y-m-d H:i:s');
-          $rowInfo = Repeater::insertRow('comments', $page->id, $rowData);
+          $rowInfo = Block::preloadClone('comments')->setPageId($page->id)->getTypeObject()->insertRow($rowData);
           $idsInserted[$comment->id] = $rowInfo->row_id;
         }
         else
@@ -194,15 +190,15 @@ class WpApi
       try {
         $meta_title_block = Block::where('name', '=', 'meta_title')->first();
         if (!empty($title_block)) {
-            BlockManager::$meta_title_block($meta_title_block->id, $meta_title, $page_id); // saves first page version
+            $meta_title_block->setPageId($page_id)->getTypeObject()->save($meta_title);
         }
         $meta_desc_block = Block::where('name', '=', 'meta_description')->first();
         if (!empty($meta_desc_block)) {
-            BlockManager::update_block($meta_desc_block->id, $meta_description, $page_id); // saves first page version
+            $meta_desc_block->setPageId($page_id)->getTypeObject()->save($meta_description);
         }
         $meta_keywords_block = Block::where('name', '=', 'meta_keywords')->first();
         if (!empty($meta_keywords_block)) {
-          BlockManager::update_block($meta_keywords_block->id, $meta_keywords, $page_id); // saves first page version
+            $meta_keywords_block->setPageId($page_id)->getTypeObject()->save($meta_keywords);
         }
       } catch (Exception $e) {
 
@@ -264,19 +260,19 @@ class WpApi
       $tags = $this->syncTags($page, $data->_embedded->{"wp:term"});
       $date_block = Block::where('name', '=', 'post_date')->first();
       if ( ! empty($date_block)) {
-        BlockManager::update_block($date_block->id, $this->carbonDate($data->date)->format("Y-m-d H:i:s"), $page->id);
+        $date_block->setPageId($page->id)->getTypeObject()->save($this->carbonDate($data->date)->format("Y-m-d H:i:s"));
       }
       $title_block = Block::where('name', '=', config('coaster::admin.title_block'))->first();
       if (!empty($title_block)) {
-          BlockManager::update_block($title_block->id, $pageLang->name, $page->id); // saves first page version
+          $title_block->setPageId($page->id)->getTypeObject()->save($pageLang->name);
       }
       $content_block = Block::where('name', '=', 'content')->first();
       if (!empty($content_block)) {
-          BlockManager::update_block($content_block->id, $this->processContent($data->content->rendered), $page->id); // saves first page version
+          $content_block->setPageId($page->id)->getTypeObject()->save($this->processContent($data->content->rendered));
       }
       $leadText_block = Block::where('name', '=', 'lead_text')->first();
-      if (!empty($content_block)) {
-          BlockManager::update_block($leadText_block->id, $data->excerpt->rendered, $page->id); // saves first page version
+      if (!empty($leadText_block)) {
+          $leadText_block->setPageId($page->id)->getTypeObject()->save($data->excerpt->rendered);
       }
       $latestVersion = PageVersion::latest_version($page->id, true);
       if (!empty($latestVersion)) {

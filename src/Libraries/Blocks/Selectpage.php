@@ -1,31 +1,32 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
+use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\Page;
 
-class Selectpage extends _Base
+class Selectpage extends Select
 {
-
-    public static function edit($block, $block_data, $page_id = 0, $parent_repeater = null)
+    /**
+     * Populate select options with page names (also add no page option)
+     * @param string $content
+     * @return string
+     */
+    public function edit($content)
     {
-        $list_options = array();
-        $parent = BlockSelectOption::where('block_id', '=', $block->id)->where('option', '=', 'parent')->first();
-        if (!empty($parent)) {
-            $list_options['parent'] = $parent->value;
-        }
-        $field_data = new \stdClass;
-        $field_data->pages_array = array(0 => '-- No Page Selected --') + Page::get_page_list($list_options);
-        $field_data->selected = $block_data;
-        self::$edit_id = array($block->id);
-        return $field_data;
+        $parent = BlockSelectOption::where('block_id', '=', $this->_block->id)->where('option', '=', 'parent')->first();
+        $parentPageId = !empty($parent) ? $parent->value : 0;
+        $this->_editViewData['selectOptions'] = [0 => '-- No Page Selected --'] + Page::get_page_list(['parent' => $parentPageId]);
+        return String_::edit($content);
     }
 
-    public static function save($block_content)
+    /**
+     * Get page name for search text instead of id
+     * @param null|string $content
+     * @return null
+     */
+    public function generateSearchText($content)
     {
-        if (empty($block_content)) {
-            $block_content = '';
-        }
-        return $block_content;
+        return Path::getById($content)->name ?: null;
     }
 
 }

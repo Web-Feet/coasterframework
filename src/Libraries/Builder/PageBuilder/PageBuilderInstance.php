@@ -257,9 +257,11 @@ class PageBuilderInstance
      */
     public function img($fileName, $options = [])
     {
-        $image_data = new \stdClass;
-        $image_data->file = '/themes/' . $this->theme . '/img/' . $fileName;
-        return Image::display(null, $image_data, $options);
+        $imageData = new \stdClass;
+        $imageData->file = '/themes/' . $this->theme . '/img/' . $fileName;
+        $imageBlock = (new Block);
+        $imageBlock->type = 'image';
+        return $imageBlock->getTypeObject()->display($imageData, $options);
     }
 
     /**
@@ -284,13 +286,17 @@ class PageBuilderInstance
      * @param string $blockName
      * @param mixed $content
      * @param int $key
+     * @param bool $overwrite
      */
-    public function setCustomBlockData($blockName, $content, $key = 0)
+    public function setCustomBlockData($blockName, $content, $key = null, $overwrite = true)
     {
-        if (!isset($this->_customBlockData[$key])) {
+        $key = is_null($key) ? $this->_customBlockDataKey : $key;
+        if (empty($this->_customBlockData[$key])) {
             $this->_customBlockData[$key] = [];
         }
-        $this->_customBlockData[$key][$blockName] = $content;
+        if ($overwrite || !array_key_exists($blockName, $this->_customBlockData[$key])) {
+            $this->_customBlockData[$key][$blockName] = $content;
+        }
     }
 
     /**
@@ -299,6 +305,14 @@ class PageBuilderInstance
     public function setCustomBlockDataKey($key)
     {
         $this->_customBlockDataKey = $key;
+    }
+
+    /**
+     * @return string|int
+     */
+    public function getCustomBlockDataKey()
+    {
+        return $this->_customBlockDataKey;
     }
 
     /**
@@ -452,29 +466,79 @@ class PageBuilderInstance
     }
 
     /**
-     * @param string $blockName
-     * @param string $search
+     * @param string|array $blockName
+     * @param string|array $search
      * @param array $options
      * @return string
      */
     public function filter($blockName, $search, $options = [])
     {
         $defaultOptions = [
-            'match' => '='
+            'match' => '=',
+            'fromPageIds' => [],
+            'operand' => 'AND',
+            'multiFilter' => false
         ];
         $options = array_merge($defaultOptions, $options);
-
-        $block = Block::preload($blockName);
-        $blockType = $block->get_class();
-
-        $filteredPages = [];
-        $filterPageIds = $blockType::filter($block->id, $search, $options['match']);
-        foreach ($filterPageIds as $filterPageId) {
-            $filteredPages[] = Page::preload($filterPageId);
-        }
-
         $pageId = !empty($options['page_id']) ? $options['page_id'] : $this->pageId();
+        $blockNames = $options['multiFilter'] ? $blockName : [$blockName];
+        $searches = $options['multiFilter'] ? $search : [$search];
+        $filteredPages = [];
+        foreach ($blockNames as $k => $blockName) {
+            $block = Block::preload($blockName);
+            if ($block->exists) {
+                $blockTypeObject = $block->getTypeObject();
+                $searchValue = $searches[count($searches) > 1 ? $k : 0];
+                $filteredPagesForBlock = [];
+                $liveBlocks = PageBlock::page_blocks_on_live_page_versions($block->id);
+                foreach ($liveBlocks as $liveBlock) {
+                    if (array_key_exists($liveBlock->page_id, $filteredPagesForBlock) || (!empty($options['fromPageIds']) && !in_array($liveBlock->page_id, $options['fromPageIds']))) {
+                        continue;
+                    }
+                    if ($blockTypeObject->filter($liveBlock->content, $searchValue, $options['match'])) {
+                        $filteredPagesForBlock[$liveBlock->page_id] = Page::preload($liveBlock->page_id);
+                    }
+                }
+                if ($options['operand'] == 'OR' || $k == 0) {
+                    $filteredPages = array_merge($filteredPages, $filteredPagesForBlock);
+                } else {
+                    $filteredPages = array_intersect_key($filteredPages, $filteredPagesForBlock);
+                }
+            }
+        }
         return $this->_renderCategory($pageId, $filteredPages, $options);
+    }
+
+    /**
+     * @param array $blockNames
+     * @param array $searches
+     * @param array $options
+     * @return string
+     */
+    public function filters($blockNames, $searches, $options = [])
+    {
+        $options['multiFilter'] = true;
+        return $this->categoryFilter($blockNames, $searches, $options);
+    }
+
+    /**
+     * @param string|array $blockName
+     * @param string|array $search
+     * @param array $options
+     * @return string
+     */
+    public function categoryFilter($blockName, $search, $options = [])
+    {
+        $pageId = !empty($options['page_id']) ? $options['page_id'] : $this->pageId();
+        if ($pageId) {
+            $options['fromPageIds'] = [];
+            $categoryPages = Page::category_pages($pageId, true);
+            foreach ($categoryPages as $categoryPage) {
+                $options['fromPageIds'][] = $categoryPage->id;
+            }
+            return $this->filter($blockName, $search, $options);
+        }
+        return '';
     }
 
     /**
@@ -485,73 +549,8 @@ class PageBuilderInstance
      */
     public function categoryFilters($blockNames, $searches, $options = [])
     {
-        $pageId = !empty($options['page_id']) ? $options['page_id'] : $this->pageId();
-        if ($pageId) {
-
-            $defaultOptions = [
-                'match' => '=',
-                'operand' => 'AND'
-            ];
-            $options = array_merge($defaultOptions, $options);
-            $filteredPages = [];
-            $filterPageIds = [];
-            foreach ($blockNames as $key => $blockName) {
-                if (empty($searches[$key]))
-                {
-                  continue;
-                }
-                $block = Block::preload($blockName);
-                $blockType = $block->get_class();
-                $returnedIds = $blockType::filter($block->id, $searches[$key], $options['match']);
-                if ($options['operand'] == 'OR' || empty($filterPageIds)) {
-                    $filterPageIds = array_merge($filterPageIds, $returnedIds);
-                } else {
-                    $filterPageIds = array_intersect($filterPageIds, $returnedIds);
-                }
-            }
-
-            $categoryPages = Page::category_pages($pageId, true);
-            foreach ($categoryPages as $categoryPage) {
-                if (in_array($categoryPage->id, $filterPageIds)) {
-                    $filteredPages[] = $categoryPage;
-                }
-            }
-            return $this->_renderCategory($pageId, $filteredPages, $options);
-        }
-        return '';
-    }
-
-
-    /**
-     * @param string $blockName
-     * @param string $search
-     * @param array $options
-     * @return string
-     */
-    public function categoryFilter($blockName, $search, $options = [])
-    {
-        $pageId = !empty($options['page_id']) ? $options['page_id'] : $this->pageId();
-        if ($pageId) {
-
-            $defaultOptions = [
-                'match' => '='
-            ];
-            $options = array_merge($defaultOptions, $options);
-
-            $block = Block::preload($blockName);
-            $blockType = $block->get_class();
-
-            $filteredPages = [];
-            $filterPageIds = $blockType::filter($block->id, $search, $options['match']);
-            $categoryPages = Page::category_pages($pageId, true);
-            foreach ($categoryPages as $categoryPage) {
-                if (in_array($categoryPage->id, $filterPageIds)) {
-                    $filteredPages[] = $categoryPage;
-                }
-            }
-            return $this->_renderCategory($pageId, $filteredPages, $options);
-        }
-        return '';
+        $options['multiFilter'] = true;
+        return $this->categoryFilter($blockNames, $searches, $options);
     }
 
     /**
@@ -611,13 +610,13 @@ class PageBuilderInstance
     public function block($blockName, $options = [])
     {
         // force query available if block details changed in current request
-        $block = Block::preload($blockName, isset($options['force_query']));
+        $block = Block::preloadClone($blockName, isset($options['force_query']));
         $pageId = !empty($options['page_id']) ? Path::unParsePageId($options['page_id']) : $this->pageId();
 
         $usingGlobalContent = false;
         $blockData = null;
 
-        if (($customBlockData = $this->_getCustomBlockData($blockName)) !== false) {
+        if (($customBlockData = $this->_getCustomBlockData($blockName)) !== null) {
             // load custom block data for (is also used for repeater content)
             $blockData = $customBlockData;
         } elseif ($block->exists) {
@@ -659,8 +658,7 @@ class PageBuilderInstance
         }
 
         // pass block details and data to display class
-        $blockType = $block->get_class();
-        return $blockType::display($block, $blockData, $options);
+        return $block->setPageId($pageId)->setVersionId($options['version'])->getTypeObject()->display($blockData, $options);
     }
 
     /**
@@ -831,10 +829,11 @@ class PageBuilderInstance
      */
     protected function _getCustomBlockData($blockName)
     {
-        if (isset($this->_customBlockDataKey) && isset($this->_customBlockData[$this->_customBlockDataKey][$blockName])) {
+        if (isset($this->_customBlockDataKey) && !empty($this->_customBlockData[$this->_customBlockDataKey]) && array_key_exists($blockName, $this->_customBlockData[$this->_customBlockDataKey])) {
             return $this->_customBlockData[$this->_customBlockDataKey][$blockName];
+        } else {
+            return null;
         }
-        return Repeater::load_repeater_data($blockName);
     }
 
     /**

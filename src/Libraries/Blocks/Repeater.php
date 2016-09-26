@@ -2,7 +2,6 @@
 
 use Carbon\Carbon;
 use CoasterCms\Helpers\Cms\Email;
-use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Helpers\Cms\View\CmsBlockInput;
 use CoasterCms\Helpers\Cms\View\FormWrap;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
@@ -11,225 +10,91 @@ use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockFormRule;
 use CoasterCms\Models\BlockRepeater;
-use CoasterCms\Models\Language;
-use CoasterCms\Models\PageBlock;
 use CoasterCms\Models\PageBlockRepeaterData;
-use CoasterCms\Models\PageSearchData;
-use CoasterCms\Models\PageVersion;
+use CoasterCms\Models\PageBlockRepeaterRows;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Request;
 use Validator;
 use View;
 
-class Repeater extends _Base
+class Repeater extends String_
 {
-    public static $blocks_key = 'repeater';
-
-    private static $_preloaded_repeater_data;
-    private static $_current_repeater = null;
-
-    public static function display($block, $block_data, $options = array())
+    /**
+     * Display repeater view
+     * @param string $content
+     * @param array $options
+     * @return string
+     */
+    public function display($content, $options = [])
     {
-        $template = !empty($options['view']) ? $options['view'] : $block->name;
+        $repeaterId = $content;
+        $template = !empty($options['view']) ? $options['view'] : $this->_block->name;
         $repeatersViews = 'themes.' . PageBuilder::getData('theme') . '.blocks.repeaters.';
 
         if (!empty($options['form'])) {
-            $formView = $repeatersViews . $template . '-form';
-            return FormWrap::view($block, $options, $formView);
+            return FormWrap::view($this->_block, $options, $repeatersViews . $template . '-form');
         }
 
         if (View::exists($repeatersViews . $template)) {
-            $content = '';
-            if ($rep_blocks = BlockRepeater::preload($block->id)) {
-                $rep_blocks = explode(',', $rep_blocks->blocks);
+            $renderedContent = '';
+            if ($repeaterBlocks = BlockRepeater::getRepeaterBlocks($this->_block->id)) {
 
                 $random = !empty($options['random']) ? $options['random'] : false;
-                $block_rows = PageBlockRepeaterData::load_by_repeater_id($block_data, $options['version'], $random);
+                $repeaterRows = PageBlockRepeaterData::loadRepeaterData($repeaterId, $options['version'], $random);
 
-                if (!empty($block_rows)) {
-                    // pagination
-                    if (!empty($options['per_page']) && (int)$options['per_page'] > 0) {
-                        $block_rows_paginator = new LengthAwarePaginator($block_rows, count($block_rows), $options['per_page'], Request::input('page', 1));
-                        $block_rows_paginator->setPath(Request::getPathInfo());
-                        $links = PaginatorRender::run($block_rows_paginator);
-                        $block_rows = array_slice($block_rows, (($block_rows_paginator->currentPage() - 1) * $options['per_page']), $options['per_page']);
-                        if (empty($block_rows)) {
-                            return $content;
-                        }
-                    } else {
-                        $links = '';
-                    }
+                // pagination
+                if (!empty($options['per_page']) && !empty($repeaterRows)) {
+                    $pagination = new LengthAwarePaginator($repeaterRows, count($repeaterRows), $options['per_page'], Request::input('page', 1));
+                    $pagination->setPath(Request::getPathInfo());
+                    $paginationLinks = PaginatorRender::run($pagination);
+                    $repeaterRows = array_slice($repeaterRows, (($pagination->currentPage() - 1) * $options['per_page']), $options['per_page']);
+                } else {
+                    $paginationLinks = '';
+                }
+
+                if (!empty($repeaterRows)) {
                     $i = 1;
-                    $is_first = true;
-                    $is_last = false;
-                    $rows = count($block_rows);
+                    $isFirst = true;
+                    $isLast = false;
+                    $rows = count($repeaterRows);
                     $cols = !empty($options['cols']) ? (int)$options['cols'] : 1;
                     $column = !empty($options['column']) ? (int)$options['column'] : 1;
-                    $previous = self::$_current_repeater;
-                    self::$_current_repeater = $block_data;
-                    self::$_preloaded_repeater_data[$block_data] = array();
-                    foreach ($block_rows as $row) {
+                    foreach ($repeaterRows as $row) {
                         if ($i % $cols == $column % $cols) {
-                            foreach ($rep_blocks as $rep_block) {
-                                // save block data for when view is being processed
-                                $block_info = Block::preload($rep_block);
-                                if ($block_info->exists) {
-                                    if (!empty($row[$rep_block])) {
-                                        self::$_preloaded_repeater_data[$block_data][$block_info->name] = $row[$rep_block];
-                                    } else {
-                                        self::$_preloaded_repeater_data[$block_data][$block_info->name] = '';
-                                    }
+                            $previousKey = PageBuilder::getCustomBlockDataKey();
+                            PageBuilder::setCustomBlockDataKey('repeater' . $repeaterId . '.' . $i);
+                            foreach ($repeaterBlocks as $repeaterBlock) {
+                                if ($repeaterBlock->exists) {
+                                    PageBuilder::setCustomBlockData($repeaterBlock->name, !empty($row[$repeaterBlock->id]) ? $row[$repeaterBlock->id] : '', null, false);
                                 }
                             }
-                            if ($i + $cols - 1 >= $rows)
-                                $is_last = true;
-                            $content .= View::make($repeatersViews . $template, array('is_first' => $is_first, 'is_last' => $is_last, 'count' => $i, 'total' => $rows, 'id' => $block_data, 'pagination' => $links, 'links' => $links))->render();
-                            $is_first = false;
+                            if ($i + $cols - 1 >= $rows) {
+                                $isLast = true;
+                            }
+                            $renderedContent .= View::make($repeatersViews . $template, array('is_first' => $isFirst, 'is_last' => $isLast, 'count' => $i, 'total' => $rows, 'id' => $repeaterId, 'pagination' => $paginationLinks, 'links' => $paginationLinks))->render();
+                            $isFirst = false;
+                            PageBuilder::setCustomBlockDataKey($previousKey);
                         }
                         $i++;
                     }
-                    self::$_current_repeater = $previous;
                 }
             }
-            return $content;
+            return $renderedContent;
         } else {
             return "Repeater view does not exist in theme";
         }
     }
 
-    public static function edit($block, $block_data, $page_id = 0, $parent_repeater = null)
+    /**
+     * Repeater form submission
+     * @param array $formData
+     * @return null|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
+    public function submission($formData)
     {
-        // if no current repeater id, reserve next new repeater id for use on save
-        if (empty($block_data)) {
-            $block_data = PageBlockRepeaterData::next_free_repeater_id();
-        }
-
-        $content = '';
-
-        $repeater_block = BlockRepeater::where('block_id', '=', $block->id)->first();
-        if (!empty($repeater_block)) {
-
-            $repeater = new \stdClass;
-            $repeater->repeater_id = $block_data;
-
-            // load repeater blocks
-            $repeater_blocks = array();
-            foreach (Block::whereIn('id', explode(",", $repeater_block->blocks))->orderBy('order', 'asc')->get() as $inside_block) {
-                $repeater_blocks[$inside_block->id] = $inside_block;
-            }
-
-            // check if new row needs displaying
-            if (!empty($parent_repeater->new_row)) {
-                $row_data = '';
-                $repeater->row_id = PageBlockRepeaterData::next_free_row_id($repeater->repeater_id);
-                foreach ($repeater_blocks as $repeater_block_data) {
-                    $row_data .= BlockManager::get_field($repeater_block_data, null, $page_id, $repeater);
-                }
-                // only return row (not full form field)
-                $content = CmsBlockInput::make('repeater.row', array('repeater_id' => $repeater->repeater_id, 'row_id' => $repeater->row_id, 'blocks' => $row_data));
-                self::$edit_display_raw = true;
-            } // check for existing repeater data
-            else {
-                $rows = PageBlockRepeaterData::load_by_repeater_id($block_data, BlockManager::$current_version);
-                foreach ($rows as $row_id => $row) {
-                    $row_data = '';
-                    $repeater->row_id = $row_id;
-                    foreach ($repeater_blocks as $repeater_block_id => $repeater_block_data) {
-                        $block_content = isset($row[$repeater_block_id]) ? $row[$repeater_block_id] : null;
-                        $row_data .= BlockManager::get_field($repeater_block_data, $block_content, $page_id, $repeater);
-                    }
-                    $content .= CmsBlockInput::make('repeater.row', array('repeater_id' => $repeater->repeater_id, 'row_id' => $repeater->row_id, 'blocks' => $row_data));
-                }
-                self::$edit_display_raw = false;
-            }
-
-        }
-        self::$edit_id = array($block_data); // repeater_id
-        return $content;
-    }
-
-    public static function submit($page_id, $blocks_key, $repeater_info = null)
-    {
-        if (empty(BlockManager::$to_version)) {
-            $new_version = PageVersion::add_new($page_id);
-            BlockManager::$to_version = $new_version->version_id;
-        }
-
-        // load current and submitted data
-        $existing_repeaters = PageBlockRepeaterData::get_page_repeater_data($page_id, BlockManager::$to_version);
-        $submitted_repeaters = Request::input('repeater_id');
-        $repeaters = Request::input($blocks_key);
-
-        // check changes in new / deleted - repeaters / rows
-        if (!empty($submitted_repeaters)) {
-            foreach ($submitted_repeaters as $submitted_repeater_id => $submitted_repeater) {
-                if (isset($existing_repeaters[$submitted_repeater_id])) {
-                    foreach ($existing_repeaters[$submitted_repeater_id] as $row_id => $row) {
-                        if (empty($repeaters[$submitted_repeater_id][$row_id])) {
-                            foreach ($row as $row_block) {
-                                // if row missing, overwrite all data with blanks in new version
-                                $repeater_info = new \stdClass;
-                                $repeater_info->repeater_id = $row_block->repeater_id;
-                                $repeater_info->row_id = $row_block->row_id;
-                                BlockManager::update_block($row_block->block_id, '', 0, $repeater_info);
-                            }
-                        }
-                    }
-                } else {
-                    // if new repeater submitted, save repeater data
-                    $repeater_info = !empty($submitted_repeater['parent_repeater']) ? unserialize($submitted_repeater['parent_repeater']) : null;
-                    BlockManager::update_block($submitted_repeater['block_id'], $submitted_repeater_id, $submitted_repeater['page_id'], $repeater_info);
-                }
-            }
-        }
-
-        foreach ($existing_repeaters as $repeater_id => $existing_repeater) {
-            if (empty($existing_repeater) && empty($repeaters[$repeater_id]) && !empty($submitted_repeaters[$repeater_id])) {
-                BlockManager::update_block($submitted_repeaters[$repeater_id]['block_id'], '', $page_id);
-            }
-        }
-
-        if (!empty($repeaters)) {
-            foreach ($repeaters as $repeater_id => $repeater) {
-                $repeater_info = new \stdClass;
-                $repeater_info->repeater_id = $repeater_id;
-                $i = 1;
-                foreach ($repeater as $row_id => $row) {
-                    $repeater_info->row_id = $row_id;
-                    // update order value (in block_id 0)
-                    if (empty($existing_repeaters[$repeater_id][$row_id][0]) || $i != $existing_repeaters[$repeater_id][$row_id][0]->content) {
-                        BlockManager::update_block(0, $i, 0, $repeater_info);
-                    }
-                    $i++;
-                    // submit text inputs
-                    BlockManager::submit_text($page_id, $blocks_key . '.' . $repeater_id . '.' . $row_id . '.', $repeater_info);
-                    // submit custom data
-                    BlockManager::submit_custom_block_data($page_id, $blocks_key . '.' . $repeater_id . '.' . $row_id . '.', $repeater_info);
-                }
-            }
-
-            // search text update
-            if (!empty(BlockManager::$publish) && !empty($page_id)) {
-                $repeater_block_ids = Block::getBlockIdsOfType('repeater');
-                $repeater_page_blocks = BlockManager::get_data_for_version(new PageBlock, BlockManager::$to_version, array('page_id', 'block_id', 'language_id'), array($page_id, $repeater_block_ids, Language::current()));
-                foreach ($repeater_page_blocks as $repeater_page_block) {
-                    $search_text = self::search_text($repeater_page_block->content, BlockManager::$to_version);
-                    PageSearchData::update_processed_text($repeater_page_block->block_id, $search_text, $repeater_page_block->page_id, Language::current());
-                }
-            }
-        }
-
-    }
-
-    public static function submission($block, $formData)
-    {
-
-        $formRules = BlockFormRule::get_rules($block->name.'-form');
+        $formRules = BlockFormRule::get_rules($this->_block->name.'-form');
         $v = Validator::make($formData, $formRules);
         if ($v->passes()) {
-
-            $pageId = !empty($formData['page_id']) ? $formData['page_id'] : 0;
-            unset($formData['page_id']);
 
             foreach ($formData as $blockName => $content) {
                 $fieldBlock = Block::preload($blockName);
@@ -240,9 +105,10 @@ class Repeater extends _Base
                     $formData[$blockName] = $content;
                 }
             }
-            self::insertRow($block->id, $pageId, $formData);
 
-            Email::sendFromFormData([$block->name.'-form'], $formData, config('coaster::site.name') . ': New Form Submission - ' . $block->label);
+            $this->insertRow($formData);
+
+            Email::sendFromFormData([$this->_block->name.'-form'], $formData, config('coaster::site.name') . ': New Form Submission - ' . $this->_block->label);
 
             return \redirect(Request::url());
 
@@ -250,95 +116,150 @@ class Repeater extends _Base
             FormMessage::set($v->messages());
         }
 
-        return false;
+        return null;
     }
 
-    public static function search_text($repeater_id, $version = 0)
+    /**
+     * Admin view for editing repeater data
+     * Can return an individual repeater row with default block data)
+     * @param string $content
+     * @param bool $newRow
+     * @return string
+     */
+    public function edit($content, $newRow = false)
     {
-        $search_text = '';
-        $repeaters_data = PageBlockRepeaterData::get_sub_repeater_data($repeater_id, $version);
-        if (!empty($repeaters_data)) {
-            foreach ($repeaters_data as $repeater_data) {
-                $block = Block::preload($repeater_data->block_id);
-                if ($block->exists) {
-                    $block_model = __NAMESPACE__ . '\\' . ucwords($block->type);
-                    if (method_exists($block_model, 'search_text') && $block_model != 'CoasterCms\Libraries\Blocks\Repeater') {
-                        $block_search_text = $block_model::search_text($repeater_data->content);
-                        if (!empty($block_search_text)) {
-                            $search_text .= $block_search_text . "\r\n";
+        // if no current repeater id, reserve next new repeater id for use on save
+        $repeaterId = $content ?: PageBlockRepeaterRows::nextFreeRepeaterId();
+        $this->_editViewData['renderedRows'] = '';
+
+        if ($repeaterBlocks = BlockRepeater::getRepeaterBlocks($this->_block->id)) {
+            // check if new or existing row needs displaying
+            if ($newRow) {
+                $renderedRow = '';
+                $repeaterRowId = PageBlockRepeaterRows::nextFreeRepeaterRowId($repeaterId);
+                foreach ($repeaterBlocks as $repeaterBlock) {
+                    $renderedRow .= $repeaterBlock->setPageId($this->_block->getPageId())->setRepeaterData($repeaterId, $repeaterRowId)->getTypeObject()->edit('');
+                }
+                return (string) CmsBlockInput::make('repeater.row', array('repeater_id' => $repeaterId, 'row_id' => $repeaterRowId, 'blocks' => $renderedRow));
+            } else {
+                $repeaterRowsData = PageBlockRepeaterData::loadRepeaterData($repeaterId, $this->_block->getVersionId());
+                foreach ($repeaterRowsData as $repeaterRowId => $repeaterRowData) {
+                    $renderedRow = '';
+                    foreach ($repeaterBlocks as $repeaterBlockId => $repeaterBlock) {
+                        $fieldContent = isset($repeaterRowData[$repeaterBlockId]) ? $repeaterRowData[$repeaterBlockId] : '';
+                        $renderedRow .= $repeaterBlock->setPageId($this->_block->getPageId())->setRepeaterData($repeaterId, $repeaterRowId)->getTypeObject()->edit($fieldContent);
+                    }
+                    $this->_editViewData['renderedRows'] .= CmsBlockInput::make('repeater.row', ['repeater_id' => $repeaterId, 'row_id' => $repeaterRowId, 'blocks' => $renderedRow]);
+                }
+            }
+        }
+
+        $this->_editViewData['_repeaterId'] = $this->_block->getRepeaterId();
+        $this->_editViewData['_repeaterRowId'] = $this->_block->getRepeaterRowId();
+
+        return parent::edit($repeaterId);
+    }
+
+    /**
+     * Save submitted repeater data
+     * @param array $postContent
+     * @return static
+     */
+    public function submit($postContent)
+    {
+        $return = $this->save($postContent['repeater_id']);
+
+        // load current and submitted data
+        $existingRepeaterRows = PageBlockRepeaterData::loadRepeaterData($postContent['repeater_id'], $this->_block->getVersionId());
+        $submittedRepeaterRows = Request::input('repeater.' . $postContent['repeater_id']) ?: [];
+
+        // if row missing, overwrite all data with blanks in new version
+        if ($existingRepeaterRows) {
+            foreach ($existingRepeaterRows as $rowId => $existingRepeaterRow) {
+                if (empty($submittedRepeaterRows[$rowId])) {
+                    foreach ($existingRepeaterRow as $blockId => $existingRepeaterBlockContent) {
+                        $block = Block::preloadClone($blockId);
+                        $block->id = $blockId;
+                        if ($block->exists || $blockId === 0) {
+                            $block->setVersionId($this->_block->getVersionId())->setRepeaterData($postContent['repeater_id'], $rowId)->setPageId($this->_block->getPageId())->getTypeObject()->save('');
                         }
                     }
                 }
             }
         }
-        return $search_text;
-    }
 
-    // repeater specific functions below
-
-    /**
-     * @param int|string $blockName (id/name)
-     * @param int $pageId
-     * @param array $contentArr (block id/name => block content)
-     * @return \stdClass|false
-     */
-    public static function insertRow($blockName, $pageId, $contentArr)
-    {
-        $repeaterBlock = Block::preload($blockName);
-        if ($repeaterBlock->type == 'repeater') {
-            $currentVersion = $pageId ? PageVersion::latest_version($pageId) : 0;
-
-            $repeaterInfo = new \stdClass;
-            $repeaterInfo->repeater_id = BlockManager::get_block($repeaterBlock->id, $pageId, null, $currentVersion);
-
-            if (!$repeaterInfo->repeater_id) {
-                $repeaterInfo->repeater_id = PageBlockRepeaterData::next_free_repeater_id();
-                BlockManager::update_block($repeaterBlock->id, $repeaterInfo->repeater_id, $pageId, null);
-            }
-
-            $repeaterInfo->row_id = PageBlockRepeaterData::next_free_row_id($repeaterInfo->repeater_id);
-
-            $rows = PageBlockRepeaterData::load_by_repeater_id($repeaterInfo->repeater_id);
-            $rowOrders = !$rows ? [0] : array_map(function ($row) {
-                return !empty($row[0]) ? $row[0] : 0;
-            }, $rows);
-
-            // set a version thar all block updates are done to
-            BlockManager::$to_version = BlockManager::$to_version ?: PageVersion::add_new($pageId)->version_id;
-
-            BlockManager::update_block(0, max($rowOrders) + 1, $pageId, $repeaterInfo);
-            foreach ($contentArr as $blockName => $content) {
-                $block = Block::preload($blockName);
-                if ($block->exists) {
-                    BlockManager::update_block($block->id, $content, $pageId, $repeaterInfo);
+        // save new data
+        $rowOrderNumber = 0;
+        foreach ($submittedRepeaterRows as $rowId => $submittedRepeaterRow) {
+            $rowOrderNumber++;
+            foreach ($submittedRepeaterRow as $submittedBlockId => $submittedBlockData) {
+                $block = Block::preloadClone($submittedBlockId)->setVersionId($this->_block->getVersionId())->setRepeaterData($postContent['repeater_id'], $rowId)->setPageId($this->_block->getPageId());
+                if ($block->exists || $submittedBlockId == 0) {
+                    $block->id = $submittedBlockId;
+                    $block->getTypeObject()->submit($submittedBlockData);
                 }
             }
-
-            return $repeaterInfo;
         }
-        return false;
+
+        return $return;
     }
 
-    public static function new_row()
+    /**
+     * Get search text from repeater blocks
+     * @param null|string $content
+     * @return null|string
+     */
+    public function generateSearchText($content)
     {
-        $block = Block::find(Request::input('block_id'));
-        $repeater_id = Request::input('repeater_id');
-        if (!empty($block) && $block->type == 'repeater' && !empty($repeater_id)) {
-            $repeater_info = new \stdClass;
-            $repeater_info->new_row = true;
-            $new_row = BlockManager::get_field($block, $repeater_id, Request::input('page_id'), $repeater_info);
-            return $new_row;
+        $searchText = '';
+        $repeaterRows = PageBlockRepeaterData::loadRepeaterData($content, $this->_block->getVersionId());
+        $repeaterBlocks = BlockRepeater::getRepeaterBlocks($this->_block->id);
+
+        foreach ($repeaterRows as $rowId => $repeaterRow) {
+            foreach ($repeaterBlocks as $blockId => $repeaterBlock) {
+                if(($blockContent = array_key_exists($blockId, $repeaterRow) ? $repeaterRow[$blockId] : null) !== null) {
+                    $block = Block::preloadClone($blockId)->setRepeaterData($this->_block->getRepeaterId(), $this->_block->getRepeaterRowId())->setPageId($this->_block->getPageId());
+                    if ($block->exists && $block->search_weight > 0) {
+                        $blockSearchText = $block->getTypeObject()->generateSearchText($blockContent);
+                        $searchText .= ($blockSearchText !== null) ? $blockSearchText . "\n" : '';
+                    }
+                }
+            }
         }
-        return 0;
+
+        return parent::generateSearchText($searchText);
     }
 
-    public static function load_repeater_data($block_name)
+    /**
+     * Add new repeater row with passed block contents onto end of repeater rows (or create repeater and set as first row)
+     * @param array $repeaterBlockContents
+     */
+    public function insertRow($repeaterBlockContents)
     {
-        if (isset(self::$_preloaded_repeater_data[self::$_current_repeater][$block_name])) {
-            return self::$_preloaded_repeater_data[self::$_current_repeater][$block_name];
+        if (!($repeaterId = $this->_block->getRepeaterId())) {
+            $repeaterId = PageBlockRepeaterRows::nextFreeRepeaterId();
+            $this->save($repeaterId);
+            $currentRepeaterRows = [];
+        } else {
+            $currentRepeaterRows = PageBlockRepeaterData::loadRepeaterData($repeaterId);
         }
-        return false;
-    }
+        $repeaterRowId = PageBlockRepeaterRows::nextFreeRepeaterRowId($repeaterId);
 
+        if (!array_key_exists(0, $repeaterBlockContents)) {
+            if (!empty($currentRepeaterRows)) {
+                $rowOrders = array_map(function ($row) {return !empty($row[0]) ? $row[0] : 0;}, $currentRepeaterRows);
+                $repeaterBlockContents[0] = max($rowOrders) + 1;
+            } else {
+                $repeaterBlockContents[0] = 1;
+            }
+        }
+
+        foreach ($repeaterBlockContents as $blockName => $content) {
+            $block = Block::preloadClone($blockName);
+            if ($block->exists || $blockName == 0) {
+                $block->setVersionId($this->_block->getVersionId())->setRepeaterData($repeaterId, $repeaterRowId)->setPageId($this->_block->getPageId())->getTypeObject()->save($content);
+            }
+        }
+    }
 
 }

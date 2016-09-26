@@ -1,6 +1,5 @@
 <?php namespace CoasterCms\Models;
 
-use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use Auth;
 use CoasterCms\Libraries\Traits\DataPreLoad;
 use Eloquent;
@@ -167,11 +166,11 @@ class PageGroup extends Eloquent
                     }
 
                     foreach ($sortByBlockIds as $sortByBlockId => $orderDir) {
-                        $sortedPages = BlockManager::get_data_for_version(
+                        $sortedPages = Block::getDataForVersion(
                             new PageBlock,
                             -1,
-                            array('block_id', 'page_id'),
-                            array($sortByBlockId, self::$groupPages[$this->id][$filterType]),
+                            ['block_id', 'page_id'],
+                            [$sortByBlockId, self::$groupPages[$this->id][$filterType]],
                             'content ' . $orderDir
                         );
                         $sortOrder = 0;
@@ -252,16 +251,22 @@ class PageGroup extends Eloquent
 
                     if (!empty($filterByContentArr)) {
                         // get block data for block to filter on
-                        $itemBlock = Block::preload($blockFilter->item_block_id);
-                        $blockType = $itemBlock->get_class();
+                        $blockType = Block::preload($blockFilter->item_block_id)->getTypeObject();
 
                         // run filter with filterBy content
-                        $blockContentOnPageIds = [];
-                        foreach ($filterByContentArr as $filterByContentEl) {
-                            $newPageIds = $blockType::filter($itemBlock->id, $filterByContentEl, '=');
-                            $blockContentOnPageIds = array_unique(array_merge($blockContentOnPageIds, $newPageIds));
+                        $filteredPageIds = [];
+                        foreach ($pageIds as $groupPageId) {
+                            foreach ($filterByContentArr as $filterByContentEl) {
+                                $groupPageBlock = PageBlock::preload_block($groupPageId, $blockFilter->item_block_id, -1, 'page_id');
+                                $groupPageBlockContent = !empty($groupPageBlock[Language::current()]) ? $groupPageBlock[Language::current()]->content : '';
+                                if ($blockType->filter($groupPageBlockContent, $filterByContentEl, '=')) {
+                                    $filteredPageIds[] = $groupPageId;
+                                    break;
+                                }
+                            }
                         }
-                        $pageIds = array_intersect($pageIds, $blockContentOnPageIds);
+
+                        $pageIds = $filteredPageIds;
                     }
 
                 }

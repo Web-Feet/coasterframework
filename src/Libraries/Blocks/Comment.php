@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-class Comment extends _Base
+class Comment extends String_
 {
 
 }

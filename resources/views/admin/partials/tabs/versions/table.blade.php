@@ -6,7 +6,7 @@
     </div>
 
     <div class="pull-right">
-        <p>Published Version: #<span class="live_version_id">{{ $live_version->version_id }}</span> {{ $live_version->name }}</p>
+        <p>Published Version: #<span class="live_version_id">{{ $live_version->version_id }}</span> {{ $live_version->getName() }}</p>
     </div>
 </div>
 
@@ -27,7 +27,7 @@
         @foreach ($versions as $version)
             <tr id="v_{{ $version->version_id }}">
                 <td>{{ $version->version_id }}</td>
-                <td>{{ $version->name }}</td>
+                <td>{{ $version->getName() }}</td>
                 <td>
                     {{ ($version->user)?$version->user->email:'Undefined' }}
                 </td>
