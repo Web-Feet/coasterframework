@@ -266,7 +266,7 @@ class Block extends Eloquent
     public function updateContent($content)
     {
         if (!$this->_versionId) {
-            $this->_versionId = PageVersion::add_new($this->_pageId);
+            $this->_versionId = PageVersion::add_new($this->_pageId)->version_id;
         }
         if ($this->_repeaterId && $this->_repeaterRowId) {
             PageBlockRepeaterData::updateBlockData($content, $this->id, $this->_versionId, $this->_repeaterId, $this->_repeaterRowId);
