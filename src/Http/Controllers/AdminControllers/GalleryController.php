@@ -51,8 +51,7 @@ class GalleryController extends Controller
 
     public function getEdit($pageId = 0, $blockId = 0)
     {
-        $galleryBlock = Block::preload($blockId)->setPageId($pageId)->getTypeObject();
-        $this->layoutData['content'] = $galleryBlock->editPage();
+        $this->layoutData['content'] = $this->_getGalleryBlock($pageId, $blockId)->editPage();
     }
 
     public function getUpdate($pageId = 0, $blockId = 0)
@@ -64,26 +63,38 @@ class GalleryController extends Controller
 
     public function postCaption($pageId = 0, $blockId = 0)
     {
-        $galleryBlock = Block::preload($blockId)->setPageId($pageId)->getTypeObject();
-        return $galleryBlock->submitCaption();
+        return $this->_getGalleryBlock($pageId, $blockId)->submitCaption();
     }
 
     public function postSort($pageId = 0, $blockId = 0)
     {
-        $galleryBlock = Block::preload($blockId)->setPageId($pageId)->getTypeObject();
-        return $galleryBlock->submitSort();
+        return $this->_getGalleryBlock($pageId, $blockId)->submitSort();
     }
 
     public function postUpdate($pageId = 0, $blockId = 0)
     {
-        $galleryBlock = Block::preload($blockId)->setPageId($pageId)->getTypeObject();
-        return $galleryBlock->runHandler();
+        return $this->_getGalleryBlock($pageId, $blockId)->runHandler();
     }
 
     public function deleteUpdate($pageId = 0, $blockId = 0)
     {
+        return $this->_getGalleryBlock($pageId, $blockId)->submitDelete(Request::input('file'));
+    }
+
+    /**
+     * @param int $blockId
+     * @param int $pageId
+     * @return \CoasterCms\Libraries\Blocks\Gallery
+     * @throws \Exception
+     */
+    protected function _getGalleryBlock($pageId, $blockId)
+    {
         $galleryBlock = Block::preload($blockId)->setPageId($pageId)->getTypeObject();
-        return $galleryBlock->submitDelete(Request::input('file'));
+        if (is_a($galleryBlock, Gallery::class)) {
+            return $galleryBlock;
+        } else {
+            throw new \Exception('Not a gallery block!');
+        }
     }
 
 }
