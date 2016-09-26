@@ -75,7 +75,9 @@ class CmsBlockInput
             'field_message' => ''
         ], $options);
 
-        $options['content'] = $options['content'] ?: (empty($options['value']) ? '' : $options['value']);
+        if (!empty($options['value']) && is_string($options['content']) && $options['content'] === '') {
+            $options['content'] = $options['value'];
+        }
 
         return View::make($view, $options)->render();
     }
