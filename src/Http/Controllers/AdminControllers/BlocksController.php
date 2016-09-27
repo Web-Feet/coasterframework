@@ -1,9 +1,9 @@
 <?php namespace CoasterCms\Http\Controllers\AdminControllers;
 
-use CoasterCms\Helpers\Cms\Theme\BlockManager;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;
+use CoasterCms\Models\Page;
 use CoasterCms\Models\PageBlockDefault;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\Theme;
@@ -23,10 +23,18 @@ class BlocksController extends Controller
 
         // load tab contents from categories & blocks (with default block contents)
         $default_blocks = PageBlockDefault::preload();
-        $tab_data = BlockManager::tab_contents($blocks, $default_blocks, 'Site-wide Content');
+
+        list($tab_headers, $tab_contents) = Block::getTabs($blocks, $default_blocks);
+        $tab_headers = array_filter($tab_headers);
+        ksort($tab_headers);
+
+        $tab_data = [
+            'headers' => View::make('coaster::partials.tabs.header', ['tabs' => $tab_headers])->render(),
+            'contents' => View::make('coaster::partials.tabs.content', ['tabs' => $tab_contents, 'item' => 'Site-wide Content', 'new_page' => false, 'publishing' => false, 'can_publish' => true, 'page' => new Page])->render()
+        ];
 
         $this->layoutData['title'] = 'Site-wide Content';
-        $this->layoutData['content'] = View::make('coaster::pages.blocks', array('tab' => $tab_data));
+        $this->layoutData['content'] = View::make('coaster::pages.blocks', ['tab' => $tab_data]);
     }
 
     public function postIndex()

@@ -69,6 +69,7 @@
 
 </div>
 
+<input type="hidden" name="versionFrom" value="{{ $version['editing'] }}">
 <input type="hidden" name="duplicate" value="0" id="duplicate_set">
 
 {!! Form::close() !!}

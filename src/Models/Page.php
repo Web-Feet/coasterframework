@@ -41,11 +41,11 @@ class Page extends Eloquent
 
     public function is_live()
     {
-        if ($this->attributes['live'] == 1) {
+        if ($this->live == 1) {
             return true;
-        } elseif ($this->attributes['live_start'] || $this->attributes['live_end']) {
-            $live_from = strtotime($this->attributes['live_start']) ?: time() - 10;
-            $live_to = strtotime($this->attributes['live_end']) ?: time() + 10;
+        } elseif ($this->live_start || $this->live_end) {
+            $live_from = strtotime($this->live_start) ?: time() - 10;
+            $live_to = strtotime($this->live_end) ?: time() + 10;
             if ($live_from < time() && $live_to > time()) {
                 return true;
             }
@@ -399,9 +399,97 @@ class Page extends Eloquent
 
     public static function adminSearch($q)
     {
-      return Page::join('page_lang', 'page_lang.page_id', '=', 'pages.id')
-      ->where('page_lang.language_id', '=', Language::current())->where('link', '=', 0)
-      ->where('page_lang.name', 'like', '%'.$q.'%')
-      ->get(['pages.*']);
+        return Page::join('page_lang', 'page_lang.page_id', '=', 'pages.id')
+            ->where('page_lang.language_id', '=', Language::current())->where('link', '=', 0)
+            ->where('page_lang.name', 'like', '%'.$q.'%')
+            ->get(['pages.*']);
     }
+
+    public function tabInfo()
+    {
+        $contents = '';
+
+        $publishingOn = config('coaster::admin.publishing') > 0;
+        $canPublish = ($publishingOn && Auth::action('pages.version-publish', ['page_id' => $this->id])) || !$publishingOn;
+
+        // page parent (only updated for new pages)
+        if (!$this->id) {
+            $parentPages = [-1 => '-- None --', 0 => '-- Top Level Page --'] + Page::get_page_list(['links' => false, 'exclude_home' => true, 'group_pages' => false]);
+            if (!array_key_exists($this->parent, $parentPages)) {
+                $this->parent = -1;
+            }
+        } else {
+            $parentPages = null;
+        }
+
+        // beacons selection (only updated for existing pages)
+        if ($this->id && Auth::action('themes.beacons-update')) {
+            $beaconSelect = BlockBeacon::getDropdownOptions($this->id);
+            $beaconSelect = empty($beaconSelect->options) ? null : $beaconSelect;
+        } else {
+            $beaconSelect = null;
+        }
+
+        // page name, url
+        $pageLang = $this->id ? PageLang::where('page_id', '=', $this->id)->where('language_id', '=', Language::current())->first() : new PageLang;
+        $fullUrls = [-1 => '?', 0 => '/'];
+        foreach (Path::all() as $pageId => $details) {
+            $fullUrls[$pageId] = rtrim($details->fullUrl, '/') . '/';
+        }
+        $urlPrefixes = $this->parentPathIds();
+        $contents .= View::make('coaster::partials.tabs.page_info.page_info', ['page' => $this, 'page_lang' => $pageLang, 'parentPages' => $parentPages, 'beacon_select' => $beaconSelect, 'urlArray' => $fullUrls, 'urlPrefixes' => $urlPrefixes, 'publishing_on' => $publishingOn, 'can_publish' => $canPublish])->render();
+
+        // groups
+        $groups = PageGroup::all();
+        if (!$groups->isEmpty() || config('coaster::site.groups') !== '') {
+            $contents .= View::make('coaster::partials.tabs.page_info.groups', ['page' => $this, 'groups' => $groups])->render();
+        }
+
+        //template
+        $templateData = Template::find($this->template);
+        $templates = Theme::get_template_list($this->template);
+        $templateSelectHidden = !empty($templateData) ? $templateData->hidden : false;
+
+        // menu selection
+        $menus = Menu::all();
+        if (!$menus->isEmpty() && Auth::action('menus')) {
+            $in_menus = $this->id ? MenuItem::get_page_menus($this->id) : [];
+            foreach ($menus as $k => $menu) {
+                $menus[$k]->in_menu = in_array($menu->id, $in_menus);
+            }
+        } else {
+            $menus = [];
+        }
+
+        $contents .= View::make('coaster::partials.tabs.page_info.display_info', ['page' => $this, 'template' => $this->template, 'templates' => $templates, 'templateSelectHidden' => $templateSelectHidden, 'menus' => $menus, 'can_publish' => $canPublish])->render();
+
+        // live options, sitemap
+        $liveOptions = [0 => 'Not Live (Hidden)', 1 => 'Live (Ignores Dates)', 2 => 'Live Between Specific Dates/Times'];
+        $sitemapOptions = [0 => 'Excluded From Sitemap', 1 => 'Included in Sitemap (If Page Live)'];
+        $contents .= View::make('coaster::partials.tabs.page_info.live_options', ['page' => $this, 'liveOptions' => $liveOptions, 'sitemapOptions' => $sitemapOptions, 'disabled' => !$canPublish])->render();
+
+        return ['Page Info', $contents];
+    }
+
+    public function tabRequests()
+    {
+        $header = '';
+        $contents = '';
+        $allRequests = PagePublishRequests::all_requests($this->id);
+        if (!$allRequests->isEmpty()) {
+            $awaitingRequests = PagePublishRequests::all_requests($this->id, ['status' => 'awaiting']);
+            $header = 'Publish Requests';
+            if ($count = $awaitingRequests->count()) {
+                $header .= ' &nbsp; <span class="badge">'.$count.'</span>';
+            }
+            if ($awaitingRequests->isEmpty()) {
+                $awaitingRequests = 'No awaiting requests';
+            }
+
+            $requests_table = View::make('coaster::partials.tabs.publish_requests.table', ['show' => ['page' => false, 'status' => true, 'requested_by' => true], 'requests' => $awaitingRequests])->render();
+            $contents = View::make('coaster::partials.tabs.publish_requests.main', ['requests_table' => $requests_table]);
+        }
+        return [$header, $contents];
+    }
+
 }
