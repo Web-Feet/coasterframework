@@ -140,7 +140,7 @@ class Repeater extends String_
                 foreach ($repeaterBlocks as $repeaterBlock) {
                     $renderedRow .= $repeaterBlock->setPageId($this->_block->getPageId())->setRepeaterData($repeaterId, $repeaterRowId)->getTypeObject()->edit('');
                 }
-                return (string) CmsBlockInput::make('repeater.row', array('repeater_id' => $repeaterId, 'row_id' => $repeaterRowId, 'blocks' => $renderedRow));
+                return (string) CmsBlockInput::make('repeater.row', ['repeater_id' => $repeaterId, 'row_id' => $repeaterRowId, 'blocks' => $renderedRow]);
             } else {
                 $repeaterRowsData = PageBlockRepeaterData::loadRepeaterData($repeaterId, $this->_block->getVersionId());
                 foreach ($repeaterRowsData as $repeaterRowId => $repeaterRowData) {
