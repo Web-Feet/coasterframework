@@ -80,11 +80,7 @@ class CmsServiceProvider extends ServiceProvider
         $this->loadViewsFrom($frontendViews, 'coasterCms');
 
         // run routes if not in console
-        if (!App::runningInConsole()) {
-            $routeFile = __DIR__ . '/Http/routes.php';
-        } else {
-            $routeFile = '';
-        }
+        $routeFile = __DIR__ . '/Http/routes.php';
         event(new LoadRouteFile($routeFile));
         if ($routeFile && file_exists($routeFile)) {
             include $routeFile;
