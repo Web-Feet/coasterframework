@@ -109,7 +109,7 @@ class InstallController extends Controller
     {
         $details = Request::all();
 
-        $v = Validator::make($details, array('host' => 'required', 'user' => 'required', 'name' => 'required'));
+        $v = Validator::make($details, ['user' => 'required', 'name' => 'required']);
         if (!$v->passes()) {
             FormMessage::set($v->messages());
             return $this->setupDatabase();
@@ -117,12 +117,12 @@ class InstallController extends Controller
 
         $hostPort = explode(':', $details['host']);
         if (count($hostPort) === 2 && (int) $hostPort[1]) {
-            list($host, $port) = $hostPort;
-            $details['host'] = $host .';port='. $port;
+            list($details['host'], $port) = $hostPort;
         }
 
         try {
-            new \PDO('mysql:dbname='.$details['name'].';host='.$details['host'], $details['user'], $details['password']);
+            $host = ($details['host'] ?: 'localhost') . (isset($port) ? ';port='.$port : '');
+            new \PDO('mysql:dbname='.$details['name'].';host='.$host, $details['user'], $details['password']);
         } catch (\PDOException $e) {
             switch ($e->getCode()) {
                 case 1045: FormMessage::add('user', $e->getMessage()); break;
@@ -138,7 +138,7 @@ class InstallController extends Controller
         }
 
         $updateEnv = [
-            'DB_HOST' => isset($host) ? $host : $details['host'],
+            'DB_HOST' => $details['host'],
             'DB_DATABASE' => $details['name'],
             'DB_PREFIX' => !empty($details['prefix']) ? $details['prefix'] : '',
             'DB_USERNAME' => $details['user'],
