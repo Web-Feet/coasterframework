@@ -776,15 +776,14 @@ class PagesController extends AdminController
         list($tab_headers, $tab_contents) = Block::getTabs($blocks, $blocks_content, $page->id);
 
         list($tab_headers[0], $tab_contents[0]) = $page->tabInfo();
+        ksort($tab_headers);
 
         if ($publishingOn && $page->id && !empty($blocks)) {
             $tab_headers[-1] = 'Versions';
             $tab_contents[-1] = View::make('coaster::partials.tabs.versions.main', ['content' => PageVersion::version_table($page->id)])->render();
             list($tab_headers[-2], $tab_contents[-2]) = $page->tabRequests();
         }
-
         $tab_headers = array_filter($tab_headers);
-        ksort($tab_headers);
 
         $tab_data = [
             'headers' => View::make('coaster::partials.tabs.header', ['tabs' => $tab_headers])->render(),

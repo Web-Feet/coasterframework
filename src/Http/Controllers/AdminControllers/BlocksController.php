@@ -3,7 +3,6 @@
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;
-use CoasterCms\Models\Page;
 use CoasterCms\Models\PageBlockDefault;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\Theme;
@@ -30,7 +29,7 @@ class BlocksController extends Controller
 
         $tab_data = [
             'headers' => View::make('coaster::partials.tabs.header', ['tabs' => $tab_headers])->render(),
-            'contents' => View::make('coaster::partials.tabs.content', ['tabs' => $tab_contents, 'item' => 'Site-wide Content', 'new_page' => false, 'publishing' => false, 'can_publish' => true, 'page' => new Page])->render()
+            'contents' => View::make('coaster::partials.tabs.content', ['tabs' => $tab_contents, 'item' => 'Site-wide Content', 'new_page' => false, 'publishing' => false, 'can_publish' => true])->render()
         ];
 
         $this->layoutData['title'] = 'Site-wide Content';

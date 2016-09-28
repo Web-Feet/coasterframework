@@ -6,7 +6,7 @@
 
         {!! $content !!}
 
-        @if ($index >= 0 && ((!is_null($page) && !$page->link) || $can_publish))
+        @if ($index >= 0 && ((!empty($page) && !$page->link) || $can_publish))
 
             @if ($new_page)
                 <div class="form-group">
