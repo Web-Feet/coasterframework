@@ -401,4 +401,31 @@ class Block extends Eloquent
         return DB::select(DB::raw($correct_versions_query), $parameters);
     }
 
+    /**
+     * @param array $categorisedBlocks
+     * @param array $blockContents
+     * @param int $pageId
+     * @return array
+     */
+    public static function getTabs($categorisedBlocks, $blockContents, $pageId = 0)
+    {
+        $tabHeaders = [];
+        $tabContents = [];
+        foreach ($categorisedBlocks as $categoryId => $categoryBlocks) {
+            $category = BlockCategory::preload($categoryId);
+            $tabIndex = $category->order;
+            while (!empty($tabHeaders[$tabIndex])) {
+                $tabIndex++;
+            }
+            $tabHeaders[$tabIndex] = $category->name;
+            $tabContents[$tabIndex] = '';
+            foreach ($categoryBlocks as $blockId => $block) {
+                /** @var Block $block */
+                $blockContent = isset($blockContents[$blockId][Language::current()]) ? $blockContents[$blockId][Language::current()]->content : '';
+                $tabContents[$tabIndex] .= $block->setPageId($pageId)->getTypeObject()->edit($blockContent);
+            }
+        }
+        return [$tabHeaders, $tabContents];
+    }
+
 }

@@ -57,7 +57,7 @@
 
 {!! Form::open(['class' => 'form-horizontal', 'id' => 'editForm', 'enctype' => 'multipart/form-data']) !!}
 
-<div class="tabbable">
+<div class="tabbable" id="contentTabs">
 
     <ul class="nav nav-tabs">
         {!! $tab['headers'] !!}
@@ -69,6 +69,7 @@
 
 </div>
 
+<input type="hidden" name="versionFrom" value="{{ $version['editing'] }}">
 <input type="hidden" name="duplicate" value="0" id="duplicate_set">
 
 {!! Form::close() !!}
@@ -82,7 +83,7 @@
 
         $(document).ready(function () {
 
-            selected_tab('#editForm', {{ $page->link ? 0 : 1 }});
+            selected_tab('#editForm', parseInt({{ $page->link ? 0 : 1 }}));
             updateListenPageUrl(true);
             updateListenLiveOptions();
             updateListenGroupFields();

@@ -6,7 +6,7 @@
 
 {!! Form::open(['class' => 'form-horizontal', 'id' => 'addForm', 'enctype' => 'multipart/form-data']) !!}
 
-<div class="tabbable">
+<div class="tabbable" id="contentTabs">
 
     <ul class="nav nav-tabs">
         {!! $tab['headers'] !!}

@@ -19,14 +19,10 @@ class Gallery extends String_
      */
     public function display($content, $options = [])
     {
-        $images = [];
         if ($galleryData = $this->_defaultData($content)) {
-            uasort($galleryData, array('\CoasterCms\Helpers\Admin\GAlleryUploadHandler', 'order_items'));
+            uasort($galleryData, [GalleryUploadHandler::class, 'order_items']);
             foreach ($galleryData as $image => $imageData) {
-                $data = new \stdClass;
-                $data->caption = $imageData->caption;
-                $data->file = '/uploads/system/gallery/' . $this->_block->name . $imageData->path . $image;
-                $images[] = $data;
+                $galleryData[$image]->file = '/uploads/system/gallery/' . $this->_block->name . $imageData->path . $image;
             }
         }
 
@@ -34,9 +30,9 @@ class Gallery extends String_
         $galleryViews = 'themes.' . PageBuilder::getData('theme') . '.blocks.gallery.';
 
         if (empty($options['view']) && View::exists($galleryViews . $this->_block->name)) {
-            return View::make($galleryViews . $this->_block->name, ['images' => $images])->render();
+            return View::make($galleryViews . $this->_block->name, ['images' => $galleryData])->render();
         } elseif (View::exists($galleryViews . $options['view'])) {
-            return View::make($galleryViews . $options['view'], ['images' => $images])->render();
+            return View::make($galleryViews . $options['view'], ['images' => $galleryData])->render();
         } else {
             return 'Gallery template not found';
         }
@@ -82,14 +78,14 @@ class Gallery extends String_
 
     /**
      * Display full edit page for gallery
-     * @return string
+     * @return \Illuminate\Contracts\View\View|string
      */
     public function editPage()
     {
         $page = Page::preload($this->_block->getPageId());
         if ($page->exists) {
             $paths = Path::getById($page->id);
-            return View::make('coaster::pages.gallery', ['paths' => $paths, '_block' => $this->_block, 'can_delete' => Auth::action('gallery.delete', ['page_id' => $page->id]), 'can_edit_caption' => Auth::action('gallery.caption', ['page_id' => $page->id])])->render();
+            return View::make('coaster::pages.gallery', ['paths' => $paths, '_block' => $this->_block, 'can_delete' => Auth::action('gallery.delete', ['page_id' => $page->id]), 'can_edit_caption' => Auth::action('gallery.caption', ['page_id' => $page->id])]);
         } else {
             return 'page not found';
         }

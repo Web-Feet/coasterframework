@@ -4,7 +4,7 @@
 <br/>
 
 {!! Form::open(['url' => Request::url(), 'id' => 'blocksForm', 'class' => 'form-horizontal', 'enctype' => 'multipart/form-data']) !!}
-<div class="tabbable">
+<div class="tabbable" id="contentTabs">
 
     <ul class="nav nav-tabs">
         {!! $tab['headers'] !!}
@@ -23,7 +23,7 @@
     <script type='text/javascript'>
 
         $(document).ready(function () {
-            selected_tab('#blocksForm', 1);
+            selected_tab('#blocksForm', 0);
             load_editor_js();
         });
 

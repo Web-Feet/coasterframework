@@ -1,6 +1,6 @@
 <?php AssetBuilder::setStatus('cms-editor', true); ?>
 
-<h1>{!! $paths->fullName . ' - ' . $_block->label !!}</h1>
+<h1>{!! str_replace('{sep}', ' &raquo; ', $paths->fullName) . ' - ' . $_block->label !!}</h1>
 
 <div class="textbox">
     <div class="col-sm-12">
