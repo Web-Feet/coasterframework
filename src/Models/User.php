@@ -134,7 +134,7 @@ class User extends Eloquent implements AuthenticatableContract, AuthorizableCont
         // delete data
         parent::delete();
 
-        return json_encode($log_id);
+        return $log_id;
     }
 
 }

@@ -10,6 +10,7 @@ use CoasterCms\Models\PageLang;
 use CoasterCms\Models\User;
 use CoasterCms\Models\UserRole;
 use Request;
+use Response;
 use Validator;
 use View;
 
@@ -155,18 +156,20 @@ class RolesController extends Controller
     public function postDelete()
     {
         $v = Validator::make(Request::all(), array(
-            'role' => 'required|integer',
             'new_role' => 'required|integer'
         ));
+        $error = 'Invalid new role ID: '. Request::input('new_role');
         if ($v->passes()) {
-            $role = UserRole::find(Request::input('role'));
-            $new_role = Request::input('new_role');
-            if (!empty($role) && $new_role != Request::input('role')) {
-                User::where('role_id', '=', Request::input('role'))->update(array('role_id' => $new_role));
-                return $role->delete();
+            $error = 'Role does not exist with ID: '.Request::input('role');
+            if ($role = UserRole::find(Request::input('role'))) {
+                $error = 'New role ID must be different from the role being deleted';
+                if (Request::input('new_role') != $role->id) {
+                    User::where('role_id', '=', Request::input('role'))->update(['role_id' => Request::input('new_role')]);
+                    return json_encode($role->delete());
+                }
             }
         }
-        return 0;
+        return Response::make($error, 500);
     }
 
     public function getPages($role_id)

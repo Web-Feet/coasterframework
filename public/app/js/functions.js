@@ -43,6 +43,7 @@ function cms_alert(alertClass, alertContent) {
     setTimeout(function() {
         newNotification.fadeOut(2500, function () {$(this).remove();});
     }, 7500);
+    $('html, body').animate({scrollTop: 0}, 500);
 }
 
 function selected_tab(form, indexOrId) {
@@ -87,75 +88,58 @@ function initialize_sort(sort_type, success_callback, fail_callback) {
     });
 }
 
-var last_delete = {};
-var log_ids = {};
+var deletedItems = {};
 function watch_for_delete(selector, item, callback_find_id, custom_url) {
     var delete_modal_el = $('#deleteModal');
-    last_delete['item'] = item;
+    var deletedItem;
     $(selector).click(function() {
-        if (callback_find_id) {
-            last_delete['id'] = callback_find_id($(this));
-        }
-        if (last_delete['id']) {
-            last_delete['name'] = $(this).data('name');
-            delete_modal_el.find('.itemName').html(last_delete['name']);
-            delete_modal_el.find('.itemType').html(last_delete['item']);
-            delete_modal_el.find('.itemTypeC').html(last_delete['item'].capitalize());
-            delete_modal_el.modal('show');
-        }
+        deletedItem = {id: callback_find_id ? callback_find_id($(this)) : $(this).data('id'), name: $(this).data('name'), item: item};
+        delete_modal_el.find('.itemName').html(deletedItem.name);
+        delete_modal_el.find('.itemType').html(deletedItem.item);
+        delete_modal_el.find('.itemTypeC').html(deletedItem.item.capitalize());
+        delete_modal_el.modal('show');
     });
     if (!custom_url) {
         custom_url = window.location.href.split('#')[0]+'/delete';
     }
     delete_modal_el.find('.yes').click(function() {
         $.ajax({
-            url: custom_url+'/'+last_delete['id'].replace(/\D/g,''),
+            dataType: 'json',
+            url: custom_url+'/'+deletedItem.id.replace(/\D/g,''),
             type: 'POST',
             success: function(r) {
-                if (r != '0' && r != 0) {
-                    log_ids = r;
-                    $('#' + last_delete['id']).hide();
-                    last_delete['timeout'] = setTimeout(function () {
-                        $('#' + last_delete['id']).remove();
-                    }, 10000);
-                    cms_alert('warning', 'The ' + last_delete['item'] + ' \'' + last_delete['name'] + '\' has been deleted. <a href=\'#\' onclick=\'undo_log()\'>Undo</a>');
-                } else {
-                    delete_error();
-                }
+                var logIds = r.join(',');
+                deletedItems[logIds] = deletedItem;
+                $('#' + deletedItem.id).hide();
+                cms_alert('warning', 'The ' + deletedItem.item + ' \'' + deletedItem.name + '\' has been deleted. <a href="#" onclick="undo_log(\''+logIds+'\')">Undo</a>');
             },
-            error: delete_error
+            error: function() {
+                cms_alert('danger', 'The ' + deletedItem.item + ' was not deleted (try refreshing the page, you may no longer be logged in)');
+            }
         });
     });
 }
 
-function delete_error() {
-    cms_alert('danger', 'The ' + last_delete['item'] + ' was not deleted (try refreshing the page, you may no longer be logged in)');
-}
-
-function undo_log(log_id) {
-    if (log_id) {
-        log_ids = [log_id];
-        last_delete = {'item':'log',name:'ID '+log_id};
+function undo_log(logIds) {
+    if ($.type(logIds) === 'string') {
+        logIds = logIds.split(',');
+    }
+    var deletedItem;
+    if (!(deletedItem = deletedItems[logIds.toString()])) {
+        deletedItem = {item:'log', name: 'ID #'+logIds.toString()};
     }
     $.ajax({
         url: route('coaster.admin.backups.undo'),
-        data: {'log_ids': log_ids},
+        data: {'log_ids': logIds},
         type: 'POST',
-        success: function (r) {
-            if (r == '1' || r == 1) {
-                clearTimeout(last_delete['timeout']);
-                $('#' + last_delete['id']).show();
-                cms_alert('info', 'The ' + last_delete['item'] + ' \'' + last_delete['name'] + '\' has been restored.');
-            } else {
-                restore_error();
-            }
+        success: function () {
+            $('#' + deletedItem.id).show();
+            cms_alert('info', 'The ' + deletedItem.item + ' \'' + deletedItem.name + '\' has been restored.');
         },
-        error: restore_error
+        error: function () {
+            cms_alert('danger', 'The ' + deletedItem.item + ' was not restored (try refreshing the page, you may no longer be logged in)');
+        }
     });
-}
-
-function restore_error() {
-    cms_alert('danger', 'The ' + last_delete['item'] + ' was not restored (try refreshing the page, you may no longer be logged in)');
 }
 
 function headerNote() {

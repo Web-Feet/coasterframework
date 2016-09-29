@@ -172,7 +172,7 @@ class UserRole extends Eloquent
         $actions->delete();
         $page_actions->delete();
 
-        return json_encode($log_id);
+        return $log_id;
     }
 
 }

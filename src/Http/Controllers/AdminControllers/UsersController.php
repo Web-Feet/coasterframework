@@ -9,6 +9,7 @@ use CoasterCms\Models\UserRole;
 use Hash;
 use Mail;
 use Request;
+use Response;
 use Validator;
 use View;
 
@@ -182,14 +183,14 @@ class UsersController extends Controller
 
     public function postDelete($userId = 0)
     {
-        $user = User::find($userId);
-        // stop admins disabling super admins
-        if (!empty($user) && Auth::user()->role->admin >= $user->role->admin && Auth::user()->id != $user->id) {
-            if (!empty($user)) {
-                return $user->delete();
+        $error = 'User with ID '.$userId.' not found';
+        if ($user = User::find($userId)) {
+            if (Auth::user()->role->admin >= $user->role->admin && Auth::user()->id != $user->id) {
+                return json_encode($user->delete());
             }
+            $error = 'Can\'t remove super admin or your own account';
         }
-        return 0;
+        return Response::make($error, 500);
     }
 
 }

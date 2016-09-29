@@ -24,6 +24,7 @@ use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
 use CoasterCms\Models\UserRole;
 use Request;
+use Response;
 use View;
 
 class PagesController extends AdminController
@@ -183,13 +184,10 @@ class PagesController extends AdminController
 
     public function postDelete($pageId)
     {
-        $page = Page::find($pageId);
-        if (!empty($page)) {
-            // backup/delete
-            $log_id = $page->delete();
-            return $log_id;
+        if ($page = Page::find($pageId)) {
+            return json_encode($page->delete());
         }
-        return 0;
+        return Response::make('Page with ID '.$pageId.' not found', 500);
     }
 
     public function postVersions($pageId)
