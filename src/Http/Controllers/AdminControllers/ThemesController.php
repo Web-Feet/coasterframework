@@ -117,10 +117,7 @@ class ThemesController extends Controller
         $themes_installed = View::make('coaster::partials.themes.thumbs', ['thumbs' => $thumbs, 'auth' => $theme_auth]);
 
         if (!empty(self::$_error)) {
-            $this->layoutData['alert'] = new \stdClass;
-            $this->layoutData['alert']->type = 'danger';
-            $this->layoutData['alert']->header = self::$_error;
-            $this->layoutData['alert']->content = '';
+            $this->addAlert('danger', self::$_error);
         }
 
         $this->layoutData['content'] = View::make('coaster::pages.themes.list', ['themes_installed' => $themes_installed, 'can_upload' => $theme_auth['manage']]);

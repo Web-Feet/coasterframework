@@ -44,7 +44,7 @@ class BlocksController extends Controller
         $versionId = PageVersion::add_new(0)->version_id;
         Block::submit(0, $versionId);
 
-        $this->setAlert('success', 'Site-wide Content Updated');
+        $this->addAlert('success', 'Site-wide Content Updated');
 
         return \redirect()->route('coaster.admin.blocks');
     }

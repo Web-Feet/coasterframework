@@ -25,7 +25,7 @@
                         $('#sublevels').val(r);
                     }
                     else {
-                        cms_alert('error', 'Error receiving data');
+                        cms_alert('danger', 'Error receiving data');
                     }
                 }
             });
@@ -42,7 +42,7 @@
                         $('#' + selected_item + ' .sl_numb').html(sl);
                     }
                     else {
-                        cms_alert('error', 'Error updating menu item');
+                        cms_alert('danger', 'Error updating menu item');
                     }
                 }
             });
@@ -63,7 +63,7 @@
                         }
                     }
                     else {
-                        cms_alert('error', 'Error updating menu item');
+                        cms_alert('danger', 'Error updating menu item');
                     }
                 }
             });
@@ -79,7 +79,7 @@
                         location.reload();
                     }
                     else {
-                        cms_alert('error', 'Error Adding Menu Item', 'The menu item was not added');
+                        cms_alert('danger', 'The menu item was not added');
                     }
                 }
             });

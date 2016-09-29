@@ -273,11 +273,7 @@ class RolesController extends Controller
                 }
             }
 
-            $alert = new \stdClass;
-            $alert->type = 'success';
-            $alert->header = 'Page Permissions Updated';
-            $alert->content = '';
-            $this->layoutData['alert'] = $alert;
+            $this->addAlert('success', 'Page Permissions Updated');
         }
 
         $this->getPages($role_id);

@@ -45,7 +45,7 @@
             @if ($max)
             $('.addPage').click(function () {
                 event.preventDefault();
-                cms_alert('error', 'Max Pages Reached', '');
+                cms_alert('danger', 'Max Pages Reached');
             });
             @endif
 

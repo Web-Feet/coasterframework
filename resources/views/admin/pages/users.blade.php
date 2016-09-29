@@ -52,7 +52,7 @@
 
         function disable_user(user_id, active) {
             if (user_id == {{ Auth::user()->id }}) {
-                alert('Can\'t disable your own account');
+                cms_alert('danger', 'Can\'t disable your own account');
             }
             else {
                 $.ajax({
@@ -71,7 +71,7 @@
                             }
                         }
                         else {
-                            cms_alert('danger', 'Error Processing Request', 'Can\'t disable this user.');
+                            cms_alert('danger', 'Can\'t disable this user.');
                         }
                     }
                 });

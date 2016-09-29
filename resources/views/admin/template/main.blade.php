@@ -65,10 +65,10 @@
 <div class="container{{ empty($sections_menu)?' loginpanel':'' }}" id="content-wrap">
     <div class="row">
         <div class="{{ empty($sections_menu)?'col-sm-6 col-sm-offset-3':'col-sm-12' }}">
-            <div class="alert alert-success" id="cms_notification" style="display: none;">
-                <button type="button" class="close" data-dismiss="alert">&times;</button>
-                <h4 class="note_header"></h4>
-                <p class="note_content"></p>
+            <div id="cmsNotifications">
+                <div class="alert" id="cmsDefaultNotification" style="display: none;">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
             </div>
             {!! $content !!}
             <br /><br />
@@ -90,10 +90,12 @@
 
 {!! AssetBuilder::scripts() !!}
 @yield('scripts')
-@if (!empty($alert))
+@if (!empty($alerts))
     <script type="text/javascript">
         $(document).ready(function () {
-            cms_alert('{!! $alert->type !!}', '{!! $alert->header !!}', '{!! $alert->content !!}');
+            @foreach($alerts as $alert)
+                cms_alert('{!! $alert->class !!}', '{!! $alert->content !!}');
+            @endforeach
         });
     </script>
 @endif

@@ -85,11 +85,7 @@ class SystemController extends Controller
                 }
             }
             AdminLog::new_log('System settings updated');
-            $alert = new \stdClass;
-            $alert->type = 'success';
-            $alert->header = 'System Settings Updated';
-            $alert->content = '';
-            $this->layoutData['alert'] = $alert;
+            $this->addAlert('success', 'System Settings Updated');
         }
 
         return \redirect()->route('coaster.admin.system');

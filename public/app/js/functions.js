@@ -35,15 +35,13 @@ function get_public_url() {
     return adminPublicUrl;
 }
 
-var time_out;
-function cms_alert(type, header, content) {
-    clearTimeout(time_out);
-    var cms_notification_el = $('#cms_notification');
-    cms_notification_el.find('.note_header').html(header);
-    cms_notification_el.find('.note_content').html(content);
-    cms_notification_el.attr('class', 'alert alert-'+type).show();
-    time_out = setTimeout(function() {
-        cms_notification_el.fadeOut(2500);
+var alertTitle = {danger:'Error',info:'Notice',success:'Success',warning:'Warning'};
+function cms_alert(alertClass, alertContent) {
+    var newNotification = $('#cmsDefaultNotification').clone();
+    newNotification.append('<b>'+alertTitle[alertClass].capitalize()+':</b> '+alertContent).addClass('alert-'+alertClass).show();
+    $('#cmsNotifications').append(newNotification);
+    setTimeout(function() {
+        newNotification.fadeOut(2500, function () {$(this).remove();});
     }, 7500);
 }
 
@@ -120,7 +118,7 @@ function watch_for_delete(selector, item, callback_find_id, custom_url) {
                     last_delete['timeout'] = setTimeout(function () {
                         $('#' + last_delete['id']).remove();
                     }, 10000);
-                    cms_alert('warning', last_delete['item'].capitalize() + ' deleted', 'The ' + last_delete['item'] + ' \'' + last_delete['name'] + '\' has been deleted. <a href=\'#\' onclick=\'undo_log()\'>Undo</a>');
+                    cms_alert('warning', 'The ' + last_delete['item'] + ' \'' + last_delete['name'] + '\' has been deleted. <a href=\'#\' onclick=\'undo_log()\'>Undo</a>');
                 } else {
                     delete_error();
                 }
@@ -131,7 +129,7 @@ function watch_for_delete(selector, item, callback_find_id, custom_url) {
 }
 
 function delete_error() {
-    cms_alert('danger', 'Error deleting ' + last_delete['item'].capitalize(), 'The ' + last_delete['item'] + ' was not deleted (try refreshing the page, you may no longer be logged in)');
+    cms_alert('danger', 'The ' + last_delete['item'] + ' was not deleted (try refreshing the page, you may no longer be logged in)');
 }
 
 function undo_log(log_id) {
@@ -147,7 +145,7 @@ function undo_log(log_id) {
             if (r == '1' || r == 1) {
                 clearTimeout(last_delete['timeout']);
                 $('#' + last_delete['id']).show();
-                cms_alert('info', last_delete['item'].capitalize() + ' restored', 'The ' + last_delete['item'] + ' \'' + last_delete['name'] + '\' has been restored.');
+                cms_alert('info', 'The ' + last_delete['item'] + ' \'' + last_delete['name'] + '\' has been restored.');
             } else {
                 restore_error();
             }
@@ -157,7 +155,7 @@ function undo_log(log_id) {
 }
 
 function restore_error() {
-    cms_alert('danger', 'Error restoring ' + last_delete['item'].capitalize(), 'The ' + last_delete['item'] + ' was not restored (try refreshing the page, you may no longer be logged in)');
+    cms_alert('danger', 'The ' + last_delete['item'] + ' was not restored (try refreshing the page, you may no longer be logged in)');
 }
 
 function headerNote() {

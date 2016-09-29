@@ -39,21 +39,21 @@ class AdminController extends Controller
             'site_name' => config('coaster::site.name'),
             'title' => ucwords(Request::segment(2)),
             'modals' => '',
-            'content' => ''
+            'content' => '',
+            'alerts' => []
         ];
     }
 
     /**
-     * @param string $type
-     * @param string $header
-     * @param string $details
+     * @param string $class
+     * @param string $content
      */
-    public function setAlert($type, $header, $details = '')
+    public function addAlert($class, $content = '')
     {
-        $this->layoutData['alert'] = new \stdClass;
-        $this->layoutData['alert']->type = $type;
-        $this->layoutData['alert']->header = $header;
-        $this->layoutData['alert']->content = $details;
+        $alert = new \stdClass;
+        $alert->class = $class;
+        $alert->content = $content;
+        $this->layoutData['alerts'][] = $alert;
     }
 
     /**

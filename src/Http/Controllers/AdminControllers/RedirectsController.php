@@ -56,11 +56,7 @@ class RedirectsController extends Controller
             }
 
             AdminLog::new_log('Mass redirects update');
-            $alert = new \stdClass;
-            $alert->type = 'success';
-            $alert->header = 'Redirects Updated';
-            $alert->content = '';
-            $this->layoutData['alert'] = $alert;
+            $this->addAlert('success', 'Redirects Updated');
         }
         $this->getIndex();
     }

@@ -93,7 +93,7 @@ class PagesController extends AdminController
             if ($existingPage->canDuplicate()) {
                 $new_page_id = $this->_save_page_info(0, 1, $existingPage);
                 if ($new_page_id === false) {
-                    $this->setAlert('danger', 'Error: Duplication failed');
+                    $this->addAlert('danger', 'Duplication failed');
                     return $this->getEdit($pageId);
                 } else {
                     Block::submit($new_page_id, 1, $publish);
@@ -117,9 +117,9 @@ class PagesController extends AdminController
 
         // save page info
         if ($this->_save_page_info($pageId, $version->version_id) === false) {
-            $this->setAlert('warning', 'Error: "Page Info" not updated (check tab for errors)');
+            $this->addAlert('warning', '"Page Info" not updated (check tab for errors)');
         } else {
-            $this->setAlert('success', 'Page Content Updated');
+            $this->addAlert('success', 'Page Content Updated');
         }
 
         // display page edit form
