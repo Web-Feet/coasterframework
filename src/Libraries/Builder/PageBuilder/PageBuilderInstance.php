@@ -352,7 +352,7 @@ class PageBuilderInstance
             $pageLang = new PageLang;
             $pageLang->url = '';
             $pageLang->name = $options['404-name'];
-            $page404->setRelation('page_lang', [$pageLang]);
+            $page404->setRelation('page_lang', $pageLang);
             $pageLevels[] = $page404;
         }
 
