@@ -263,7 +263,7 @@ class PageLoader
         /** @var Page $page */
         $page = self::_pageLangQuery($pageQuery, $path, $languageId)->first(['pages.*']);
 
-        if (!empty($page) && !$page->page_lang->isEmpty()) {
+        if (!empty($page) && $page->page_lang) {
             return $page;
         } else {
             return null;
@@ -288,7 +288,7 @@ class PageLoader
      */
     protected function _isSearchPage($path, Page $parentPage)
     {
-        if ($path == 'search' || (!$parentPage->page_lang->isEmpty() && $parentPage->page_lang[0]->url == 'search')) {
+        if ($path == 'search' || (!$parentPage->page_lang && $parentPage->page_lang->url == 'search')) {
             return true;
         } else {
             return false;

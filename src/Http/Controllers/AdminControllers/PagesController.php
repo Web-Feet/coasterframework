@@ -21,7 +21,6 @@ use CoasterCms\Models\PageSearchData;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\PageVersionSchedule;
 use CoasterCms\Models\Template;
-use CoasterCms\Models\Theme;
 use CoasterCms\Models\UserRole;
 use Request;
 use Response;
@@ -41,9 +40,46 @@ class PagesController extends AdminController
         $this->layoutData['modals'] = View::make('coaster::modals.general.delete_item');
     }
 
-    public function getAdd($pageId = 0, $groupId = 0)
+    public function getAdd($parentPageId = 0, $groupId = 0)
     {
-        $this->layoutData['content'] = $this->_load_page_data(0, 0, ['parentPageId' => $pageId, 'groupId' => $groupId]);
+        $publishingOn = config('coaster::admin.publishing') > 0;
+        $cabPublish = ($publishingOn && Auth::action('pages.version-publish', ['page_id' => $parentPageId])) || (!$publishingOn && Auth::action('pages.edit', ['page_id' => $parentPageId]));
+
+        // set page data
+        $page = new Page;
+        if ($parentPageId && $parent = Page::find($parentPageId)) {
+            $page->parent = $parent->id;
+            $page->template = $parent->child_template;
+        } else {
+            $page->parent = 0;
+        }
+        if ($groupId && $group = PageGroup::find($groupId)) {
+            $page->groups->add($group);
+            $page->template = $group->default_template;
+            $page->parent = $parentPageId ? $page->parent : -1;
+        }
+        $page->group_container = 0;
+        $page->link = 0;
+        $page->live = $cabPublish ? 1 : 0;
+        $page->sitemap = 1;
+
+        // get item name, or default to page
+        $item_name = $page->groupItemsNames() ?: 'Page';
+
+        // get page info tab contents
+        $tab_headers = [];
+        $tab_contents = [];
+        list($tab_headers[0], $tab_contents[0]) = $page->tabInfo();
+        $tab_data = [
+            'headers' => View::make('coaster::partials.tabs.header', ['tabs' => $tab_headers])->render(),
+            'contents' => View::make('coaster::partials.tabs.content', ['tabs' => $tab_contents, 'item' => $item_name, 'new_page' => true, 'publishing' => $publishingOn, 'can_publish' => $cabPublish, 'page' => $page])->render()
+        ];
+
+        $this->layoutData['content'] = View::make('coaster::pages.pages.add', [
+            'page' => $page,
+            'item_name' => $item_name,
+            'tab' => $tab_data
+        ]);
     }
 
     public function postAdd($pageId = 0, $groupId = 0)
@@ -59,7 +95,105 @@ class PagesController extends AdminController
 
     public function getEdit($pageId, $versionId = 0)
     {
-        $this->layoutData['content'] = $this->_load_page_data($pageId, $versionId);
+        // get page data
+        if (!($page = Page::find($pageId))) {
+            return 'Page Not Found';
+        }
+        PageVersionSchedule::checkPageVersionIds();
+
+        $publishingOn = config('coaster::admin.publishing') > 0;
+        $auth = [
+            'can_publish' => ($publishingOn && Auth::action('pages.version-publish', ['page_id' => $pageId])) || (!$publishingOn && Auth::action('pages.edit', ['page_id' => $pageId])),
+            'can_duplicate' => $page->canDuplicate()
+        ];
+
+        // get page lang data
+        if (!($page_lang = $page->page_lang)) {
+            if (!($page_lang = $page->page_default_lang)) {
+                return 'Page Lang Data Not Found';
+            }
+            $page_lang = $page_lang->replicate();
+            $page_lang->language_id = Language::current();
+            $page_lang->save();
+        }
+        $page_lang->url = ltrim($page_lang->url, '/');
+
+        // get version data
+        $versionData = [];
+        $versionData['latest'] = PageVersion::latest_version($pageId);
+        $versionData['editing'] = ($versionId == 0 || $versionId > $versionData['latest']) ? $versionData['latest'] : $versionId;
+        $versionData['live'] = $page_lang->live_version;
+
+        // get frontend link (preview or direct link if document)
+        $frontendLink = Path::getFullUrl($pageId);
+        if (!$page->is_live() && $page->link == 0) {
+            $live_page_version = PageVersion::where('page_id', '=', $pageId)->where('version_id', '=', $versionData['live'])->first();
+            if (!empty($live_page_version)) {
+                $frontendLink .= '?preview=' . $live_page_version->preview_key;
+            }
+        }
+
+        // if loading a non live version get version template rather than current page template
+        if ($versionData['live'] != $versionData['editing']) {
+            if ($page_version = PageVersion::where('version_id', '=', $versionData['editing'])->where('page_id', '=', $pageId)->first()) {
+                $page->template = $page_version->template;
+            } else {
+                return 'Page Version Data Not Found';
+            }
+        }
+
+        // load blocks content
+        if ($page->link == 0) {
+            $blocks = Template::template_blocks(config('coaster::frontend.theme'), $page->template);
+            $blocks_content = PageBlock::preload_page($pageId, $versionData['editing']);
+            list($tab_headers, $tab_contents) = Block::getTabs($blocks, $blocks_content, $page->id);
+        } else {
+            $tab_headers = [];
+            $tab_contents = [];
+        }
+
+        // load page info and order so page info is first and block categories are in order
+        list($tab_headers[0], $tab_contents[0]) = $page->tabInfo();
+        ksort($tab_headers);
+
+        // load version / publish requests
+        if ($publishingOn && count($tab_headers) > 1) {
+            $tab_headers[-1] = 'Versions';
+            $tab_contents[-1] = View::make('coaster::partials.tabs.versions.main', ['content' => PageVersion::version_table($page->id)])->render();
+            list($tab_headers[-2], $tab_contents[-2]) = $page->tabRequests();
+        }
+
+        // remove empty tabs
+        $tab_headers = array_filter($tab_headers);
+
+        // get item name, or default to page
+        $item_name = $page->groupItemsNames() ?: 'Page';
+
+        $tab_data = [
+            'headers' => View::make('coaster::partials.tabs.header', ['tabs' => $tab_headers])->render(),
+            'contents' => View::make('coaster::partials.tabs.content', ['tabs' => $tab_contents, 'item' => $item_name, 'new_page' => false, 'publishing' => $publishingOn, 'can_publish' => $auth['can_publish'], 'page' => $page])->render()
+        ];
+
+        // add required modals
+        if ($publishingOn) {
+            $intervals = PageVersionSchedule::selectOptions();
+            $this->layoutData['modals'] =
+                View::make('coaster::modals.pages.publish')->render() .
+                View::make('coaster::modals.pages.publish_schedule', ['intervals' => $intervals, 'live_version' => $versionData['live']])->render() .
+                View::make('coaster::modals.pages.request_publish')->render() .
+                View::make('coaster::modals.pages.rename_version')->render();
+        }
+
+        $this->layoutData['content'] = View::make('coaster::pages.pages.edit', [
+            'page' => $page,
+            'page_lang' => $page_lang,
+            'item_name' => $item_name,
+            'publishingOn' => $publishingOn,
+            'tab' => $tab_data,
+            'frontendLink' => $frontendLink,
+            'version' => $versionData,
+            'auth' => $auth
+        ]);
         return null;
     }
 
@@ -636,176 +770,6 @@ class PagesController extends AdminController
             AdminLog::new_log('Updated page \'' . $page_lang->name . '\' (Page ID ' . $page->id . ')');
         }
         return $page->id;
-    }
-
-    private function _load_page_data($pageId = 0, $versionId = 0, $addPageInfo = [])
-    {
-        $blocks = [];
-        $blocks_content = [];
-        $auth = [];
-        $versionData = [];
-        $frontendLink = '';
-
-        $publishingOn = config('coaster::admin.publishing') > 0;
-        $auth['can_publish'] = ($publishingOn && Auth::action('pages.version-publish', ['page_id' => $pageId])) || (!$publishingOn && Auth::action('pages.edit', ['page_id' => $pageId]));
-
-        if (!empty($pageId)) {
-
-            // get page data
-            $page = Page::find($pageId);
-            if (empty($page)) {
-                return 'Page Not Found';
-            }
-            $parent = Page::find($page->parent);
-            PageVersionSchedule::checkPageVersionIds();
-
-            // get page lang data
-            $page_lang = PageLang::where('page_id', '=', $pageId)->where('language_id', '=', Language::current())->first();
-            if (empty($page_lang)) {
-                $page_lang = PageLang::where('page_id', '=', $pageId)->first();
-                if (empty($page_lang)) {
-                    return 'Page Lang Data Not Found';
-                }
-                $page_lang = $page_lang->replicate();
-                $page_lang->language_id = Language::current();
-                $page_lang->save();
-            }
-            $page_lang->url = ltrim($page_lang->url, '/');
-
-            // get version data
-            $versionData['latest'] = PageVersion::latest_version($pageId);
-            $versionData['editing'] = ($versionId == 0 || $versionId > $versionData['latest']) ? $versionData['latest'] : $versionId;
-            $versionData['live'] = $page_lang->live_version;
-
-            // get frontend link (preview or direct link if document)
-            $frontendLink = Path::getFullUrl($pageId);
-            if (!$page->is_live() && $page->link == 0) {
-                $live_page_version = PageVersion::where('page_id', '=', $pageId)->where('version_id', '=', $versionData['live'])->first();
-                if (!empty($live_page_version)) {
-                    $frontendLink .= '?preview=' . $live_page_version->preview_key;
-                }
-            }
-
-            // if loading a non live version get version template rather than current page template
-            if ($versionData['live'] != $versionData['editing']) {
-                $page_version = PageVersion::where('version_id', '=', $versionData['editing'])->where('page_id', '=', $pageId)->first();
-                if (empty($page_version)) {
-                    return 'version not found';
-                } else {
-                    $page->template = $page_version->template;
-                }
-            }
-
-            // load blocks and content
-            if ($page->link == 0) {
-                $theme = Theme::find(config('coaster::frontend.theme'));
-                if (!empty($theme)) {
-                    $blocks = Template::template_blocks($theme->id, $page->template);
-                } else {
-                    return 'active theme not found';
-                }
-                $blocks_content = PageBlock::preload_page($pageId, $versionData['editing']);
-            }
-
-            // check duplicate permission
-            $auth['can_duplicate'] = $page->canDuplicate();
-
-            // add required modals
-            if ($publishingOn) {
-                $intervals = PageVersionSchedule::selectOptions();
-                $this->layoutData['modals'] =
-                    View::make('coaster::modals.pages.publish')->render() .
-                    View::make('coaster::modals.pages.publish_schedule', ['intervals' => $intervals, 'live_version' => $versionData['live']])->render() .
-                    View::make('coaster::modals.pages.request_publish')->render() .
-                    View::make('coaster::modals.pages.rename_version')->render();
-            }
-
-        } else {
-
-            // set page data
-            $page = new Page;
-            if (!empty($addPageInfo['parentPageId']) && $parent = Page::find($addPageInfo['parentPageId'])) {
-                $page->parent = $parent->id;
-                $page->template = $parent->child_template;
-            } else {
-                $page->parent = 0;
-            }
-            if (!empty($addPageInfo['groupId']) && $group = PageGroup::find($addPageInfo['groupId'])) {
-                $page->groups->add($group);
-                $page->template = $group->default_template;
-                $page->parent = empty($addPageInfo['parentPageId']) ? -1 : $page->parent;
-            }
-            $page->group_container = 0;
-            $page->link = 0;
-            if (!$auth['can_publish']) {
-                $page->live = 0;
-            } else {
-                $page->live = 1;
-            }
-            $page->sitemap = 1;
-
-            // set page lang data
-            $page_lang = new PageLang;
-            $page_lang->name = '';
-            $page_lang->url = '';
-
-        }
-
-        // set group details if a group page
-        if (!$page->groups->isEmpty()) {
-            $item_name = $page->groupItemsNames() ?: 'Page';
-        } else {
-            $item_name = 'Page';
-        }
-
-        // load child template from parent page template
-        if (empty($page->template) && !empty($parent)) {
-            $parent_template = Template::find($parent->template);
-            if (!empty($parent_template)) {
-                $page->template = $parent_template->child_template;
-            }
-        }
-
-        // get default template if not still note set above
-        if (empty($page->template)) {
-            $page->template = config('coaster::admin.default_template');
-        }
-
-        list($tab_headers, $tab_contents) = Block::getTabs($blocks, $blocks_content, $page->id);
-
-        list($tab_headers[0], $tab_contents[0]) = $page->tabInfo();
-        ksort($tab_headers);
-
-        if ($publishingOn && $page->id && !empty($blocks)) {
-            $tab_headers[-1] = 'Versions';
-            $tab_contents[-1] = View::make('coaster::partials.tabs.versions.main', ['content' => PageVersion::version_table($page->id)])->render();
-            list($tab_headers[-2], $tab_contents[-2]) = $page->tabRequests();
-        }
-        $tab_headers = array_filter($tab_headers);
-
-        $tab_data = [
-            'headers' => View::make('coaster::partials.tabs.header', ['tabs' => $tab_headers])->render(),
-            'contents' => View::make('coaster::partials.tabs.content', ['tabs' => $tab_contents, 'item' => $item_name, 'new_page' => !$page->id, 'publishing' => $publishingOn, 'can_publish' => $auth['can_publish'], 'page' => $page])->render()
-        ];
-
-        if ($pageId > 0) {
-            return View::make('coaster::pages.pages.edit', [
-                'page' => $page,
-                'page_lang' => $page_lang,
-                'item_name' => $item_name,
-                'publishingOn' => $publishingOn,
-                'tab' => $tab_data,
-                'frontendLink' => $frontendLink,
-                'version' => $versionData,
-                'auth' => $auth
-            ]);
-        } else {
-            return View::make('coaster::pages.pages.add', [
-                'page' => $page,
-                'item_name' => $item_name,
-                'tab' => $tab_data
-            ]);
-        }
     }
 
 }

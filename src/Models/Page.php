@@ -19,9 +19,14 @@ class Page extends Eloquent
         return $this->hasMany('CoasterCms\Models\PageBlock');
     }
 
-    public function page_lang()
+    public function page_langs()
     {
         return $this->hasMany('CoasterCms\Models\PageLang');
+    }
+
+    public function page_lang()
+    {
+        return $this->hasOne('CoasterCms\Models\PageLang')->where('language_id', '=', Language::current());
     }
 
     public function page_default_lang()
@@ -446,6 +451,13 @@ class Page extends Eloquent
         }
 
         //template
+        if (empty($this->template)) {
+            $this->template = config('coaster::admin.default_template');
+            $parentPage = Page::find($this->parent);
+            if ($parentPage && $parentTemplate = Template::find($parentPage->template)) {
+                $this->template = $parentTemplate->child_template;
+            }
+        }
         $templateData = Template::find($this->template);
         $templates = Theme::get_template_list($this->template);
         $templateSelectHidden = !empty($templateData) ? $templateData->hidden : false;
