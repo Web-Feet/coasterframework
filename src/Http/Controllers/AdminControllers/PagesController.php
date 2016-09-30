@@ -3,6 +3,7 @@
 use Auth;
 use CoasterCms\Helpers\Cms\DateTimeHelper;
 use CoasterCms\Helpers\Cms\Page\Path;
+use CoasterCms\Libraries\Blocks\Repeater;
 use CoasterCms\Libraries\Builder\FormMessage;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
 use CoasterCms\Http\Controllers\AdminController;
@@ -231,6 +232,7 @@ class PagesController extends AdminController
                     $this->addAlert('danger', 'Duplication failed');
                     return $this->getEdit($pageId);
                 } else {
+                    Repeater::setDuplicate();
                     Block::submit($new_page_id, 1, $publish);
                     return \redirect()->route('coaster.admin.pages.edit', ['pageId' => $new_page_id]);
                 }

@@ -19,6 +19,8 @@ use View;
 
 class Repeater extends String_
 {
+    protected static $_duplicate = false;
+
     /**
      * Display repeater view
      * @param string $content
@@ -167,14 +169,16 @@ class Repeater extends String_
      */
     public function submit($postContent)
     {
-        $return = $this->save($postContent['repeater_id']);
-
         // load current and submitted data
         $existingRepeaterRows = PageBlockRepeaterData::loadRepeaterData($postContent['repeater_id'], $this->_block->getVersionId());
         $submittedRepeaterRows = Request::input('repeater.' . $postContent['repeater_id']) ?: [];
 
+        // save repeater id, if duplicating get new repeater id to save data to
+        $postContent['repeater_id'] = static::$_duplicate ? PageBlockRepeaterRows::nextFreeRepeaterId() : $postContent['repeater_id'];
+        $return = $this->save($postContent['repeater_id']);
+
         // if row missing, overwrite all data with blanks in new version
-        if ($existingRepeaterRows) {
+        if ($existingRepeaterRows && !static::$_duplicate) {
             foreach ($existingRepeaterRows as $rowId => $existingRepeaterRow) {
                 if (empty($submittedRepeaterRows[$rowId])) {
                     foreach ($existingRepeaterRow as $blockId => $existingRepeaterBlockContent) {
@@ -260,6 +264,15 @@ class Repeater extends String_
                 $block->setVersionId($this->_block->getVersionId())->setRepeaterData($repeaterId, $repeaterRowId)->setPageId($this->_block->getPageId())->getTypeObject()->save($content);
             }
         }
+    }
+
+    /**
+     * If duplicate is set will save repeater data under a new id (useful for duplicate pages)
+     * @param bool $duplicate
+     */
+    public static function setDuplicate($duplicate = true)
+    {
+        static::$_duplicate = $duplicate;
     }
 
 }
