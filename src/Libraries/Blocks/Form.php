@@ -103,7 +103,7 @@ class Form extends String_
     {
         if ($form_settings = $this->_block->getContent()) {
             $form_settings = unserialize($form_settings);
-            $form_rules = BlockFormRule::get_rules($form_settings->template);
+            $form_rules = BlockFormRule::get_rules($form_settings->template ?: $this->_block->name);
             $v = Validator::make($formData, $form_rules);
             $captcha = Securimage::captchaCheck();
 
