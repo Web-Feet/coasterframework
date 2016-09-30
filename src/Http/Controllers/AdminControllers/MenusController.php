@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Http\Controllers\AdminControllers;
 
 use Auth;
+use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Menu;
@@ -117,12 +118,11 @@ class MenusController extends Controller
         $itemId = substr(Request::input('id'), 5);
         $item = MenuItem::find($itemId);
         if (!empty($item)) {
-            $item->sub_levels = (int)Request::input('sub_level');
+            $menu = Menu::find($item->menu_id);
+            $item->sub_levels = Request::input('sub_level') > $menu->max_sublevel ? $menu->max_sublevel : Request::input('sub_level');
             $item->save();
-            $this->preload_menu_item_names();
             // log action
-            $item_name = $this->page_names[$item->page_id];
-            AdminLog::new_log('Change sub levels for menu item \'' . $item_name . '\' in \'' . Menu::name($item->menu_id) . '\' to ' . $item->sub_levels);
+            AdminLog::new_log('Change sub levels for menu item \'' . Path::getFullName($item->page_id) . '\' in \'' . Menu::name($item->menu_id) . '\' to ' . $item->sub_levels);
             return 1;
         }
         return null;
