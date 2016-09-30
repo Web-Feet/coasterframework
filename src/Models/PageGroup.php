@@ -132,7 +132,7 @@ class PageGroup extends Eloquent
      */
     public function itemPageIds($checkLive = false, $sort = false)
     {
-        $filterType = $checkLive ? 'all' : 'live';
+        $filterType = $checkLive ? 'live' : 'all';
         $sortedSuffix = '-sorted';
         $sorted = $sort ? $sortedSuffix : '';
 
