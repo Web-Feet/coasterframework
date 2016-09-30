@@ -29,69 +29,51 @@ class Form extends String_
     public function display($content, $options = [])
     {
         $formData = $this->_defaultData($content);
-        $template = $formData->template ?: (!empty($options['view']) ? $options['view'] : $this->_block->name);
+        $template =  !empty($options['view']) ? $options['view'] : $formData->template;
         $templatePath = 'themes.' . PageBuilder::getData('theme') . '.blocks.forms.' . $template;
         return FormWrap::view($this->_block, $options, $templatePath, ['form_data' => $formData]);
     }
 
     /**
      * Save form data
-     *
-    * @param array $formData
-     * @return return form submission object
+     * @param array $formData
+     * @return FormSubmission
      */
-    public function saveData(array $formData)
+    public function submissionSaveData(array $formData)
     {
-      $files = array();
-      foreach ($formData as $field => $value) {
-          if (empty($value)) {
-              unset($formData[$field]);
-          }
-          if (Request::hasFile($field)) {
-              $files[$field] = $value;
-              unset($formData[$field]);
-          }
-      }
+        // remove empty values
+        $formData = array_filter($formData);
 
-      // save form submission
-      $form_submission = new FormSubmission;
-      $form_submission->form_block_id = $this->_block->id;
-      $form_submission->content = serialize($formData);
-      $form_submission->sent = 0;
-      $form_submission->from_page_id = PageBuilder::pageId();
+        // get array of files to upload
+        $files = [];
+        foreach ($formData as $field => $value) {
+            if (Request::hasFile($field)) {
+                $files[$field] = Request::file($field);
+                unset($formData[$field]);
+            }
+        }
 
-      // Save files
-      foreach ($files as $field => $value) {
-          if (Request::hasFile($field)) {
-              $upload_folder = '/uploads/system/forms/' . $this->_block->id;
-              $full_upload_path = public_path() . $upload_folder;
-              if (!file_exists($full_upload_path)) {
-                  mkdir($full_upload_path, 0755, true);
-              }
-              $unique_filename = $field . ' ' . $form_submission->id . ' ' . Request::file($field)->getClientOriginalName();
-              Request::file($field)->move($full_upload_path, $unique_filename);
-              $formData[$field] = \HTML::link($upload_folder . '/' . $unique_filename, $unique_filename);
-          }
-      }
-
-      $form_submission->content = serialize($formData);
-      $form_submission->save();
-
-      return $form_submission;
+        // save form submission
+        $form_submission = new FormSubmission;
+        $form_submission->form_block_id = $this->_block->id;
+        $form_submission->content = serialize($formData);
+        $form_submission->sent = 0;
+        $form_submission->from_page_id = PageBuilder::pageId();
+        $form_submission->uploadFiles($files);
+        $form_submission->save();
+        return $form_submission;
     }
 
     /**
      * Send the form data by email
-     *
      * @param array $formData
-     * @param stdClass $form_settings
-     * @return return boolean
+     * @param \stdClass $form_settings
+     * @return boolean
      */
-    public function sendFormDataInEmail(array $formData, \stdClass $form_settings)
+    public function submissionSendEmail(array $formData, \stdClass $form_settings)
     {
       $subject = config('coaster::site.name') . ': New Form Submission - ' . $this->_block->label;
-      $template = $form_settings->template?:$this->_block->name;
-      return Email::sendFromFormData([$template], $formData, $subject, $form_settings->email_to, $form_settings->email_from);
+      return Email::sendFromFormData([$form_settings->template], $formData, $subject, $form_settings->email_to, $form_settings->email_from);
     }
 
     /**
@@ -102,8 +84,8 @@ class Form extends String_
     public function submission($formData)
     {
         if ($form_settings = $this->_block->getContent()) {
-            $form_settings = unserialize($form_settings);
-            $form_rules = BlockFormRule::get_rules($form_settings->template ?: $this->_block->name);
+            $form_settings = $this->_defaultData($form_settings);
+            $form_rules = BlockFormRule::get_rules($form_settings->template);
             $v = Validator::make($formData, $form_rules);
             $captcha = Securimage::captchaCheck();
 
@@ -113,15 +95,13 @@ class Form extends String_
                 unset($formData['captcha_code']);
 
                 // Save data function (override this function to save data differently)
-                $form_submission = $this->saveData($formData);
-                if ( ! $form_submission)
-                {
-                  FormMessage::add('submission_savve_error', 'Unable to save the form.');
+                $form_submission = $this->submissionSaveData($formData);
+                if (!$form_submission->id) {
+                    FormMessage::add('submission_save_error', 'Unable to save the form.');
                 }
-                // Send email
-                $sentEmail = $this->sendFormDataInEmail($formData, $form_settings);
 
-                if ($sentEmail) {
+                // Send email
+                if ($this->submissionSendEmail($formData, $form_settings)) {
                     $form_submission->sent = 1;
                     $form_submission->save();
                 }
@@ -211,7 +191,7 @@ class Form extends String_
         $content->captcha = !empty($content->captcha) ? $content->captcha : false;
         $content->email_from = !empty($content->email_from) ? $content->email_from : '';
         $content->email_to = !empty($content->email_to) ? $content->email_to : '';
-        $content->template = !empty($content->template) ? $content->template : '';
+        $content->template = !empty($content->template) ? $content->template : $this->_block->name;
         $content->page_to = !empty($content->page_to) ? $content->page_to : '';
         return $content;
     }
