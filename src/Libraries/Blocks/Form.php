@@ -35,6 +35,66 @@ class Form extends String_
     }
 
     /**
+     * Save form data
+     *
+    * @param array $formData
+     * @return return form submission object
+     */
+    public function saveData(array $formData)
+    {
+      $files = array();
+      foreach ($formData as $field => $value) {
+          if (empty($value)) {
+              unset($formData[$field]);
+          }
+          if (Request::hasFile($field)) {
+              $files[$field] = $value;
+              unset($formData[$field]);
+          }
+      }
+
+      // save form submission
+      $form_submission = new FormSubmission;
+      $form_submission->form_block_id = $this->_block->id;
+      $form_submission->content = serialize($formData);
+      $form_submission->sent = 0;
+      $form_submission->from_page_id = PageBuilder::pageId();
+
+      // Save files
+      foreach ($files as $field => $value) {
+          if (Request::hasFile($field)) {
+              $upload_folder = '/uploads/system/forms/' . $this->_block->id;
+              $full_upload_path = public_path() . $upload_folder;
+              if (!file_exists($full_upload_path)) {
+                  mkdir($full_upload_path, 0755, true);
+              }
+              $unique_filename = $field . ' ' . $form_submission->id . ' ' . Request::file($field)->getClientOriginalName();
+              Request::file($field)->move($full_upload_path, $unique_filename);
+              $formData[$field] = \HTML::link($upload_folder . '/' . $unique_filename, $unique_filename);
+          }
+      }
+
+      $form_submission->content = serialize($formData);
+      $form_submission->save();
+
+      return $form_submission;
+    }
+
+    /**
+     * Send the form data by email
+     *
+     * @param array $formData
+     * @param stdClass $form_settings
+     * @return return boolean
+     */
+    public function sendFormDataInEmail(array $formData, \stdClass $form_settings)
+    {
+      $subject = config('coaster::site.name') . ': New Form Submission - ' . $this->_block->label;
+      $template = $form_settings->template?:$this->_block->name;
+      return Email::sendFromFormData([$template], $formData, $subject, $form_settings->email_to, $form_settings->email_from);
+    }
+
+    /**
      * Save form data and send email
      * @param array $formData
      * @return bool|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
@@ -52,44 +112,14 @@ class Form extends String_
                 // delete blank and system fields
                 unset($formData['captcha_code']);
 
-                $files = array();
-                foreach ($formData as $field => $value) {
-                    if (empty($value)) {
-                        unset($formData[$field]);
-                    }
-                    if (Request::hasFile($field)) {
-                        $files[$field] = $value;
-                        unset($formData[$field]);
-                    }
+                // Save data function (override this function to save data differently)
+                $form_submission = $this->saveData($formData);
+                if ( ! $form_submission)
+                {
+                  FormMessage::add('submission_savve_error', 'Unable to save the form.');
                 }
-
-                // save form submission
-                $form_submission = new FormSubmission;
-                $form_submission->form_block_id = $this->_block->id;
-                $form_submission->content = serialize($formData);
-                $form_submission->sent = 0;
-                $form_submission->from_page_id = PageBuilder::pageId();
-                $form_submission->save();
-
-                foreach ($files as $field => $value) {
-                    if (Request::hasFile($field)) {
-                        $upload_folder = '/uploads/system/forms/' . $this->_block->id;
-                        $full_upload_path = public_path() . $upload_folder;
-                        if (!file_exists($full_upload_path)) {
-                            mkdir($full_upload_path, 0755, true);
-                        }
-                        $unique_filename = $field . ' ' . $form_submission->id . ' ' . Request::file($field)->getClientOriginalName();
-                        Request::file($field)->move($full_upload_path, $unique_filename);
-                        $formData[$field] = \HTML::link($upload_folder . '/' . $unique_filename, $unique_filename);
-                    }
-                }
-
-                $form_submission->content = serialize($formData);
-                $form_submission->save();
-
-                $subject = config('coaster::site.name') . ': New Form Submission - ' . $this->_block->label;
-                $template = $form_settings->template?:$this->_block->name;
-                $sentEmail = Email::sendFromFormData([$template], $formData, $subject, $form_settings->email_to, $form_settings->email_from);
+                // Send email
+                $sentEmail = $this->sendFormDataInEmail($formData, $form_settings);
 
                 if ($sentEmail) {
                     $form_submission->sent = 1;
@@ -101,7 +131,7 @@ class Form extends String_
             } else {
                 FormMessage::set($v->messages());
                 if (!$captcha) {
-                    FormMessage::add('captcha_code', 'Invalid Captcha Code!');
+                    FormMessage::add('captcha_code', 'Invalid Captcha Code, try again.');
                 }
             }
 
