@@ -172,7 +172,7 @@ class Form extends String_
     }
 
     /**
-     * Save form settings
+     * Save form settings (Admin)
      * @param array $postContent
      * @return static
      */
