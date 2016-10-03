@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Models;
 
+use Auth;
 use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Libraries\Builder\FormMessage;
 use Eloquent;
@@ -134,6 +135,29 @@ Class BlockBeacon extends Eloquent
         $selectData->options = $options;
         $selectData->selected = $selected;
         return $selectData;
+    }
+
+    public static function updatePage($pageId, $setUniqueIds)
+    {
+        $setBeacons = BlockBeacon::where('page_id', '=', $pageId)->get();
+        $existingBeacons = [];
+        foreach ($setBeacons as $setBeacon) {
+            $existingBeacons[$setBeacon->unique_id] = $setBeacon->unique_id;
+        }
+        if (!empty($existingBeacons)) {
+            BlockBeacon::preload(); // check page relations (remove page id off beacons if url changed)
+        }
+        // update url of beacons
+        foreach ($setUniqueIds as $uniqueId) {
+            if (!empty($existingBeacons[$uniqueId])) {
+                unset($existingBeacons[$uniqueId]);
+            }
+            BlockBeacon::updateUrl($uniqueId, $pageId);
+        }
+        // unset url of no longer linked beacons
+        foreach ($existingBeacons as $uniqueId) {
+            BlockBeacon::updateUrl($uniqueId, 0);
+        }
     }
 
     public static function updateUrl($uniqueId, $pageId)

@@ -498,6 +498,13 @@ class PagesController extends AdminController
             }
         }
 
+        $page_info_other = array_merge($input['page_info_other'], ['beacons' => [], 'menus' => []]);
+        foreach ($page_info_other as $k => $page_info_field) {
+            if (is_array($page_info_field) && array_key_exists('exists', $page_info_field)) {
+                $page_info_other[$k] = array_key_exists('select', $page_info_field) ? $page_info_field['select'] : 0;
+            }
+        }
+
         /*
          * Load missing page & page_lang request data from db or use defaults
          */
@@ -547,7 +554,7 @@ class PagesController extends AdminController
             $page_info_lang['name'] = preg_replace('/\s+Duplicate$/', '', $page_info_lang['name']) . ' Duplicate';
             $page_info_lang['url'] = preg_replace('/--v\w+$/', '', $page_info_lang['url']) . '--v' . base_convert(microtime(true), 10, 36);
         }
-        $page_info_other = !empty($input['page_info_other'])?$input['page_info_other']:[];
+
         $page_groups = !empty($input['page_groups'])?$input['page_groups']:[];
 
         // page limit check
@@ -712,42 +719,15 @@ class PagesController extends AdminController
         /*
          * Save Menu Item
          */
-        if ($canPublish || !$pageId) {
-            // set menu options
-            if (Auth::action('menus')) {
-                $menus = !empty($page_info_other['menus']) ? $page_info_other['menus'] : [];
-                MenuItem::set_page_menus($page->id, $menus);
-            }
+        if (($canPublish || !$pageId) && Auth::action('menus')) {
+            MenuItem::set_page_menus($page->id, $page_info_other['menus']);
         }
 
         /*
          * Save Beacons
          */
-        if (Auth::action('themes.beacons-update')) {
-            $existingBeacons = [];
-            $setBeacons = BlockBeacon::where('page_id', '=', $page->id)->get();
-            foreach ($setBeacons as $setBeacon) {
-                $existingBeacons[$setBeacon->unique_id] = $setBeacon->unique_id;
-            }
-            if (!empty($existingBeacons)) {
-                BlockBeacon::preload(); // check page relations (remove page id off beacons if url changed)
-            }
-            if (!empty($page_info_other['beacons'])) {
-                foreach ($page_info_other['beacons'] as $uniqueId) {
-                    if (!empty($existingBeacons[$uniqueId])) {
-                        unset($existingBeacons[$uniqueId]);
-                    }
-                    BlockBeacon::updateUrl($uniqueId, $page->id);
-                }
-                foreach ($existingBeacons as $uniqueId) {
-                    BlockBeacon::updateUrl($uniqueId, 0);
-                }
-            }
-            if (!empty($input['page_info_other_exists']['beacons'])) {
-                foreach ($existingBeacons as $uniqueId) {
-                    BlockBeacon::updateUrl($uniqueId, 0);
-                }
-            }
+        if ($canPublish && Auth::action('themes.beacons-update')) {
+            BlockBeacon::updatePage($page->id, $page_info_other['beacons']);
         }
 
         /*
