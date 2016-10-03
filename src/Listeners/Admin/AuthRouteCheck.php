@@ -23,7 +23,7 @@ class AuthRouteCheck
                 $event->returnOptions['page_id'] = isset($event->parameters['pageId']) ? $event->parameters['pageId'] : 0;
                 // use parent page id when posting add page form
                 if ($event->action == 'add') {
-                    $event->returnOptions['page_id'] = Request::input('page_info.parent') ?: $event->returnOptions['page_id'];
+                    $event->returnOptions['page_id'] = Request::input('page_info.parent.select') ?: $event->returnOptions['page_id'];
                     if (isset($event->parameters['groupId'])) {
                         $pageGroup = PageGroup::preload($event->parameters['groupId']);
                         if (!$pageGroup->exists || !$pageGroup->canAddItems()) {

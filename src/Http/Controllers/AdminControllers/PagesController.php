@@ -85,12 +85,12 @@ class PagesController extends AdminController
 
     public function postAdd($pageId = 0, $groupId = 0)
     {
-        $new_page_id = $this->_save_page_info();
-        if ($new_page_id === false) {
+        $newPage = $this->_save_page_info(0, 1);
+        if ($newPage === false) {
             $this->getAdd($pageId);
             return null;
         } else {
-            return \redirect()->route('coaster.admin.pages.edit', ['pageId' => $new_page_id]);
+            return \redirect()->route('coaster.admin.pages.edit', ['pageId' => $newPage->id]);
         }
     }
 
@@ -227,14 +227,14 @@ class PagesController extends AdminController
         // run if duplicate button was hit
         if (Request::input('duplicate') == 1) {
             if ($existingPage->canDuplicate()) {
-                $new_page_id = $this->_save_page_info(0, 1, $existingPage);
-                if ($new_page_id === false) {
+                $new_page = $this->_save_page_info(0, 1, $existingPage);
+                if ($new_page === false) {
                     $this->addAlert('danger', 'Duplication failed');
                     return $this->getEdit($pageId);
                 } else {
                     Repeater::setDuplicate();
-                    Block::submit($new_page_id, 1, $publish);
-                    return \redirect()->route('coaster.admin.pages.edit', ['pageId' => $new_page_id]);
+                    Block::submit($new_page->id, 1, $publish);
+                    return \redirect()->route('coaster.admin.pages.edit', ['pageId' => $new_page->id]);
                 }
             } else {
                 return abort(403, 'Action not permitted');
@@ -487,21 +487,14 @@ class PagesController extends AdminController
 
     private function _save_page_info($pageId = 0, $versionId = 0, $existingPage = null)
     {
-        $input = Request::all();
-        $page_info = $input['page_info'];
-        $page_info_lang = $input['page_info_lang'];
+        $page_info = Request::input('page_info') ?: [];
+        $page_info_lang = Request::input('page_info_lang') ?: [];
+        $page_groups = Request::input('page_groups') ?: [];
         $canPublish = (config('coaster::admin.publishing') > 0 && Auth::action('pages.version-publish', ['page_id' => $pageId])) || config('coaster::admin.publishing') == 0;
 
         foreach ($page_info as $k => $page_info_field) {
             if (is_array($page_info_field) && array_key_exists('exists', $page_info_field)) {
                 $page_info[$k] = array_key_exists('select', $page_info_field) ? $page_info_field['select'] : 0;
-            }
-        }
-
-        $page_info_other = array_merge($input['page_info_other'], ['beacons' => [], 'menus' => []]);
-        foreach ($page_info_other as $k => $page_info_field) {
-            if (is_array($page_info_field) && array_key_exists('exists', $page_info_field)) {
-                $page_info_other[$k] = array_key_exists('select', $page_info_field) ? $page_info_field['select'] : 0;
             }
         }
 
@@ -526,8 +519,8 @@ class PagesController extends AdminController
 
             $page_lang = PageLang::preload($page->id);
             foreach ($page_lang->getAttributes() as $attribute => $value) {
-                if (!in_array($attribute, ['updated_at', 'created_at']) && !isset($input['page_info_lang'][$attribute])) {
-                    $input['page_info_lang'][$attribute] = $page_lang->$attribute;
+                if (!in_array($attribute, ['updated_at', 'created_at']) && !isset($page_info_lang[$attribute])) {
+                    $page_info_lang[$attribute] = $page_lang->$attribute;
                 }
             }
         } else {
@@ -554,8 +547,6 @@ class PagesController extends AdminController
             $page_info_lang['name'] = preg_replace('/\s+Duplicate$/', '', $page_info_lang['name']) . ' Duplicate';
             $page_info_lang['url'] = preg_replace('/--v\w+$/', '', $page_info_lang['url']) . '--v' . base_convert(microtime(true), 10, 36);
         }
-
-        $page_groups = !empty($input['page_groups'])?$input['page_groups']:[];
 
         // page limit check
         if (!empty($page_info['link']) && Page::at_limit($page_info['parent'] == -1)) {
@@ -589,7 +580,7 @@ class PagesController extends AdminController
         $siblings = array_unique($siblings);
 
         $versionTemplate = $page_info['template'];
-        if (empty($input['publish']) && $page->id) {
+        if (!Request::input('publish') && $page->id) {
             $page_info['template'] = $page->template;
         }
         if ($page_info['link'] == 1) {
@@ -679,13 +670,6 @@ class PagesController extends AdminController
             $page_lang->save();
         }
 
-        if (!$pageId) {
-            if ($title_block = Block::where('name', '=', config('coaster::admin.title_block'))->first()) {
-                $title_block->setPageId($page->id)->getTypeObject()->save($page_lang->name); // saves first page version
-            }
-        }
-        PageSearchData::updateText(strip_tags($page_lang->name), 0, $page->id);
-
         /*
          * Save Groups
          */
@@ -697,14 +681,22 @@ class PagesController extends AdminController
         }
 
         /*
-         * Save Page Version
+         * Save Page Version & Template
          */
-        if ($pageId) {
-            // save page versions template
-            $page_version = PageVersion::where('page_id', '=', $page->id)->where('version_id', '=', $versionId)->first();
-            $page_version->template = $versionTemplate;
-            $page_version->save();
-        } elseif ($existingPage) {
+        $page_version = PageVersion::where('page_id', '=', $page->id)->where('version_id', '=', $versionId)->first() ?: PageVersion::add_new($page->id);
+        $page_version->version_id = $versionId;
+        $page_version->template = $versionTemplate;
+        $page_version->save();
+
+        if ($title_block = Block::where('name', '=', config('coaster::admin.title_block'))->first()) {
+            $title_block->setVersionId($versionId)->setPageId($page->id)->getTypeObject()->save($page_lang->name); // saves first page version
+        }
+        PageSearchData::updateText(strip_tags($page_lang->name), 0, $page->id);
+
+        /*
+         * User Role Page Actions
+         */
+        if ($existingPage) {
             // duplicate role actions from original page
             foreach (UserRole::all() as $role) {
                 $page_actions = $role->page_actions()->where('page_id', '=', $existingPage->id)->get();
@@ -716,18 +708,23 @@ class PagesController extends AdminController
             }
         }
 
+        $pageOtherInfo = ['menus' => [], 'beacons' => []];
+        foreach (Request::input('page_info_other') as $k => $pageOtherField) {
+            $pageOtherInfo[$k] = (is_array($pageOtherField) && isset($pageOtherField['select'])) ? $pageOtherField['select'] : 0;
+        }
+
         /*
          * Save Menu Item
          */
         if (($canPublish || !$pageId) && Auth::action('menus')) {
-            MenuItem::set_page_menus($page->id, $page_info_other['menus']);
+            MenuItem::set_page_menus($page->id, $pageOtherInfo['menus'] ?: []);
         }
 
         /*
          * Save Beacons
          */
         if ($canPublish && Auth::action('themes.beacons-update')) {
-            BlockBeacon::updatePage($page->id, $page_info_other['beacons']);
+            BlockBeacon::updatePage($page->id, $pageOtherInfo['beacons'] ?: []);
         }
 
         /*
@@ -751,7 +748,7 @@ class PagesController extends AdminController
         } else {
             AdminLog::new_log('Updated page \'' . $page_lang->name . '\' (Page ID ' . $page->id . ')');
         }
-        return $page->id;
+        return $page;
     }
 
 }
