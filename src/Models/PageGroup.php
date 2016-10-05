@@ -66,16 +66,31 @@ class PageGroup extends Eloquent
     /**
      * @return bool
      */
-    public function canAddContainers()
+    public function canEditItems()
     {
         $containers = $this->containerPages();
-        $canAddContainers = $containers->isEmpty();
+        $canEditItems = $containers->isEmpty();
         foreach ($containers as $container) {
-            if ($canAddContainers = Auth::action('pages.edit', ['page_id' => $container->id])) {
+            if ($canEditItems = Auth::action('pages.edit', ['page_id' => $container->id])) {
                 break;
             }
         }
-        return $canAddContainers;
+        return $canEditItems;
+    }
+
+    /**
+     * @return bool
+     */
+    public function canPublishItems()
+    {
+        $containers = $this->containerPages();
+        $canEditItems = false;
+        foreach ($containers as $container) {
+            if ($canEditItems = Auth::action('pages.version-publish', ['page_id' => $container->id])) {
+                break;
+            }
+        }
+        return $canEditItems;
     }
 
     /**

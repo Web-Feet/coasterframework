@@ -56,6 +56,20 @@ class PageVersion extends Eloquent
         $page_version->save();
         return $page_version;
     }
+
+    /**
+     * Does not save automatically and requires page_id before save + other version specific page data (ie. template)
+     * @param null $label
+     * @return static
+     */
+    public static function prepareNew($label = null)
+    {
+        $pageVersion = new static;
+        $pageVersion->version_id = 1;
+        $pageVersion->label = $label;
+        $pageVersion->preview_key = base_convert((rand(10, 99) . microtime(true)), 10, 36);
+        return $pageVersion;
+    }
     
     public function publish($set_live = false, $ignore_auth = false)
     {
@@ -66,6 +80,7 @@ class PageVersion extends Eloquent
         if (!empty($page_lang) && !empty($page) && $haveAuth) {
             $page_lang->live_version = $this->version_id;
             $page_lang->save();
+            PageSearchData::updateText(strip_tags($page_lang->name), 0, $page->id);
             $page->template = $this->template;
             if ($set_live && $page->live == 0) {
                 if (!empty($page->live_start) || !empty($page->live_end)) {

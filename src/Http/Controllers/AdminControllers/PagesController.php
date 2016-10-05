@@ -85,12 +85,20 @@ class PagesController extends AdminController
 
     public function postAdd($pageId = 0, $groupId = 0)
     {
-        $newPage = $this->_save_page_info(0, 1);
-        if ($newPage === false) {
+        $page_version = PageVersion::prepareNew();
+        $page_info = Request::input('page_info') ?: [];
+        $page_info_lang = Request::input('page_info_lang') ?: [];
+        $page_groups = Request::input('page_groups') ?: [];
+        $page_info_other = Request::input('page_info_other') ?: [];
+        $page = new Page;
+
+        if (!$page->savePostData($page_version, $page_info, $page_info_lang, $page_groups, $page_info_other)) {
             $this->getAdd($pageId);
             return null;
         } else {
-            return \redirect()->route('coaster.admin.pages.edit', ['pageId' => $newPage->id]);
+            $page_lang = PageLang::find($page->id);
+            AdminLog::new_log('Added page \'' . $page_lang->name . '\' (Page ID ' . $page->id . ')');
+            return \redirect()->route('coaster.admin.pages.edit', ['pageId' => $page->id]);
         }
     }
 
@@ -201,6 +209,9 @@ class PagesController extends AdminController
     public function postEdit($pageId)
     {
         $existingPage = Page::find($pageId);
+        if (!$existingPage) {
+            return 'Page not found';
+        }
 
         $publish = false;
         $publishing = (bool) config('coaster::admin.publishing');
@@ -224,17 +235,21 @@ class PagesController extends AdminController
             $publish = true;
         }
 
+        $page_info = Request::input('page_info') ?: [];
+        $page_info_lang = Request::input('page_info_lang') ?: [];
+        $page_groups = Request::input('page_groups') ?: [];
+        $page_info_other = Request::input('page_info_other') ?: [];
+
         // run if duplicate button was hit
         if (Request::input('duplicate') == 1) {
             if ($existingPage->canDuplicate()) {
-                $new_page = $this->_save_page_info(0, 1, $existingPage);
-                if ($new_page === false) {
+                if ($duplicatePage = $existingPage->saveDuplicateFromPostData($page_info, $page_info_lang, $page_groups, $page_info_other)) {
+                    Repeater::setDuplicate();
+                    Block::submit($duplicatePage->id, 1, $publish);
+                    return \redirect()->route('coaster.admin.pages.edit', ['pageId' => $duplicatePage->id]);
+                } else {
                     $this->addAlert('danger', 'Duplication failed');
                     return $this->getEdit($pageId);
-                } else {
-                    Repeater::setDuplicate();
-                    Block::submit($new_page->id, 1, $publish);
-                    return \redirect()->route('coaster.admin.pages.edit', ['pageId' => $new_page->id]);
                 }
             } else {
                 return abort(403, 'Action not permitted');
@@ -243,20 +258,23 @@ class PagesController extends AdminController
 
         $version = PageVersion::add_new($pageId);
 
+        // save page info
+        if ($existingPage->savePostData($version, $page_info, $page_info_lang, $page_groups)) {
+            $page_lang = PageLang::find($existingPage->id);
+            AdminLog::new_log('Updated page \'' . $page_lang->name . '\' (Page ID ' . $existingPage->id . ')');
+        } else {
+            $this->addAlert('warning', '"Page Info" not updated (check tab for errors)');
+        }
+
         // update blocks
         Block::submit($pageId, $version->version_id, $publish);
+        $this->addAlert('success', 'Page Content Updated');
+
         if ($publish) {
             if (Request::input('publish_request') != '') {
                 PagePublishRequests::add($pageId, $version->version_id, Request::input('request_note'));
             }
             $version->publish();
-        }
-
-        // save page info
-        if ($this->_save_page_info($pageId, $version->version_id) === false) {
-            $this->addAlert('warning', '"Page Info" not updated (check tab for errors)');
-        } else {
-            $this->addAlert('success', 'Page Content Updated');
         }
 
         // display page edit form
@@ -483,272 +501,6 @@ class PagesController extends AdminController
             return strcmp($a->title, $b->title);
         });
         return json_encode($json_array);
-    }
-
-    private function _save_page_info($pageId = 0, $versionId = 0, $existingPage = null)
-    {
-        $page_info = Request::input('page_info') ?: [];
-        $page_info_lang = Request::input('page_info_lang') ?: [];
-        $page_groups = Request::input('page_groups') ?: [];
-        $canPublish = (config('coaster::admin.publishing') > 0 && Auth::action('pages.version-publish', ['page_id' => $pageId])) || config('coaster::admin.publishing') == 0;
-
-        foreach ($page_info as $k => $page_info_field) {
-            if (is_array($page_info_field) && array_key_exists('exists', $page_info_field)) {
-                $page_info[$k] = array_key_exists('select', $page_info_field) ? $page_info_field['select'] : 0;
-            }
-        }
-
-        /*
-         * Load missing page & page_lang request data from db or use defaults
-         */
-        if ($pageId || $existingPage) {
-            if ($existingPage) {
-                $page = $existingPage->replicate();
-                $page->setRelations([]);
-            } else {
-                $page = Page::find($pageId);
-            }
-            if (empty($page) || (!$existingPage && !$page->id)) {
-                throw new \Exception('page not found');
-            }
-            foreach ($page->getAttributes() as $attribute => $value) {
-                if (!in_array($attribute, ['updated_at', 'created_at']) && !isset($page_info[$attribute])) {
-                    $page_info[$attribute] = $page->$attribute;
-                }
-            }
-
-            $page_lang = PageLang::preload($page->id);
-            foreach ($page_lang->getAttributes() as $attribute => $value) {
-                if (!in_array($attribute, ['updated_at', 'created_at']) && !isset($page_info_lang[$attribute])) {
-                    $page_info_lang[$attribute] = $page_lang->$attribute;
-                }
-            }
-        } else {
-            $page = new Page;
-            $page_lang = new PageLang;
-            $page_info = array_merge([
-                'template' => 0,
-                'parent' => -1,
-                'child_template' => 0,
-                'order' => 0,
-                'group_container' => 0,
-                'link' => 0,
-                'live' => 0,
-                'sitemap' => 1,
-                'live_start'=> null,
-                'live_end' => null
-            ], $page_info);
-            $page_info_lang = array_merge([
-                'url' => '/',
-                'name' => ''
-            ], $page_info_lang);
-        }
-        if ($existingPage) {
-            $page_info_lang['name'] = preg_replace('/\s+Duplicate$/', '', $page_info_lang['name']) . ' Duplicate';
-            $page_info_lang['url'] = preg_replace('/--v\w+$/', '', $page_info_lang['url']) . '--v' . base_convert(microtime(true), 10, 36);
-        }
-
-        // page limit check
-        if (!empty($page_info['link']) && Page::at_limit($page_info['parent'] == -1)) {
-            return false;
-        }
-
-        /*
-         * Save Page
-         */
-        $parent = Page::find($page_info['parent']);
-        if ($page_info['parent'] > 0 && (!$parent || $parent->parent == -1)) {
-            return false;
-        }
-
-        $siblings = [];
-        foreach ($page_groups as $pageGroupId => $checkedVal) {
-            $pageGroup = PageGroup::preload($pageGroupId);
-            $siblings = array_merge($pageGroup->exists ? $pageGroup->itemPageIds() : [], $siblings);
-        }
-        if ($page_info['parent'] >= 0) {
-            $siblings = array_merge(Page::getChildPageIds($page_info['parent']), $siblings);
-            if (isset($page->order)) {
-                $page_info['order'] = $page->order;
-            } else {
-                $page_order = Page::where('parent', '=', $page_info['parent'])->orderBy('order', 'desc')->first();
-                if (!empty($page_order)) {
-                    $page_info['order'] = $page_order->order + 1;
-                }
-            }
-        }
-        $siblings = array_unique($siblings);
-
-        $versionTemplate = $page_info['template'];
-        if (!Request::input('publish') && $page->id) {
-            $page_info['template'] = $page->template;
-        }
-        if ($page_info['link'] == 1) {
-            $page_info['template'] = 0;
-        }
-
-        if ($page_info['live'] == 2) {
-            if (!$page_info['live_start'] && !$page_info['live_end']) {
-                $page_info['live'] = 0;
-            }
-        }
-        $page_info['live_start'] = DateTimeHelper::jQueryToMysql($page_info['live_start']);
-        $page_info['live_end'] = DateTimeHelper::jQueryToMysql($page_info['live_end']);
-
-        $createNewGroup = ($page_info['group_container'] == -1);
-        $page_info['group_container'] = $createNewGroup ? 0 : $page_info['group_container'];
-        $page_info['group_container_url_priority'] = !empty($page_info['group_container_url_priority']) ? $page_info['group_container_url_priority'] : 0;
-        if ($page_info['group_container']) {
-            $groupContainer = PageGroup::preload($page_info['group_container']);
-            if (!$groupContainer->exists || !$groupContainer->canAddContainers()) {
-                $page_info['group_container'] = 0;
-            }
-        }
-
-        if (!$canPublish) {
-            if (!$page->id) {
-                $page_info['live'] = 0;
-            } else {
-                foreach ($page_info as $attribute => $value) {
-                    if (!in_array($attribute, ['updated_at', 'created_at'])) {
-                        $page_info[$attribute] = $page->$attribute;
-                    }
-                }
-            }
-        }
-
-        foreach ($page_info as $attribute => $value) {
-            if (!in_array($attribute, ['updated_at', 'created_at']) && isset($page_info[$attribute])) {
-                $page->$attribute = ($page_info[$attribute] !== '' ? $page_info[$attribute] : null);
-            }
-        }
-
-        // delay save until after page land checks
-        // $page->save();
-
-        /*
-         * Save Page Lang
-         */
-        if ($page_info_lang['name'] == '') {
-            FormMessage::add('page_info_lang[name]', 'page name required');
-            return false;
-        }
-
-        $page_info_lang['url'] = trim($page_info_lang['url']);
-        if ($page->link == 0) {
-            $page_info_lang['url'] = strtolower(str_replace(['/', ' '], '-', $page_info_lang['url']));
-        }
-        if (preg_match('#^[-]+$#', $page_info_lang['url'])) {
-            $page_info_lang['url'] = '';
-        }
-        if ($page_info_lang['url'] == '' && ($page_info['parent'] == 0)) {
-            $page_info_lang['url'] = '/';
-        }
-
-        if ($page_info_lang['url'] == '') {
-            FormMessage::add('page_info_lang[url]', 'page url required');
-            return false;
-        }
-
-        if (!empty($siblings) && $page_info['link'] == 0) {
-            $same_level = PageLang::where('url', '=', $page_info_lang['url'])->whereIn('page_id', $siblings);
-            $same_level = $page->id ? $same_level->where('page_id', '!=', $page->id) : $same_level;
-            if (!$same_level->get()->isEmpty()) {
-                FormMessage::add('page_info_lang[url]', 'url in use by another page!');
-                return false;
-            }
-        }
-
-        $page->save();
-
-        if ($canPublish || !$pageId) {
-            $page_lang->page_id = $page_lang->page_id ?: $page->id;
-            $page_lang->language_id = Language::current();
-            $page_lang->url = $page_info_lang['url'];
-            $page_lang->name = $page_info_lang['name'];
-            $page_lang->live_version = $page_lang->live_version ?: 1;
-            $page_lang->save();
-        }
-
-        /*
-         * Save Groups
-         */
-        $currentGroupIds = $page->groupIds();
-        $newGroupIds = array_keys($page_groups);
-        PageGroupPage::where('page_id', '=', $page->id)->whereIn('group_id', array_diff($currentGroupIds, $newGroupIds))->delete();
-        foreach (array_diff($newGroupIds, $currentGroupIds) as $addGroupId) {
-            $page->groups()->attach($addGroupId);
-        }
-
-        /*
-         * Save Page Version & Template
-         */
-        $page_version = PageVersion::where('page_id', '=', $page->id)->where('version_id', '=', $versionId)->first() ?: PageVersion::add_new($page->id);
-        $page_version->version_id = $versionId;
-        $page_version->template = $versionTemplate;
-        $page_version->save();
-
-        if ($title_block = Block::where('name', '=', config('coaster::admin.title_block'))->first()) {
-            $title_block->setVersionId($versionId)->setPageId($page->id)->getTypeObject()->save($page_lang->name); // saves first page version
-        }
-        PageSearchData::updateText(strip_tags($page_lang->name), 0, $page->id);
-
-        /*
-         * User Role Page Actions
-         */
-        if ($existingPage) {
-            // duplicate role actions from original page
-            foreach (UserRole::all() as $role) {
-                $page_actions = $role->page_actions()->where('page_id', '=', $existingPage->id)->get();
-                if (!empty($page_actions)) {
-                    foreach ($page_actions as $page_action) {
-                        $role->page_actions()->attach($page->id, ['action_id' => $page_action->pivot->action_id, 'access' => $page_action->pivot->access]);
-                    }
-                }
-            }
-        }
-
-        $pageOtherInfo = ['menus' => [], 'beacons' => []];
-        foreach (Request::input('page_info_other') as $k => $pageOtherField) {
-            $pageOtherInfo[$k] = (is_array($pageOtherField) && isset($pageOtherField['select'])) ? $pageOtherField['select'] : 0;
-        }
-
-        /*
-         * Save Menu Item
-         */
-        if (($canPublish || !$pageId) && Auth::action('menus')) {
-            MenuItem::set_page_menus($page->id, $pageOtherInfo['menus'] ?: []);
-        }
-
-        /*
-         * Save Beacons
-         */
-        if ($canPublish && Auth::action('themes.beacons-update')) {
-            BlockBeacon::updatePage($page->id, $pageOtherInfo['beacons'] ?: []);
-        }
-
-        /*
-         * Create New Group
-         */
-        if ($createNewGroup) {
-            $newGroup =  new PageGroup;
-            $newGroup->name = $page_lang->name;
-            $newGroup->item_name = 'Page';
-            $newGroup->default_template = 0;
-            $newGroup->save();
-            $page->group_container = $newGroup->id;
-            $page->save();
-        }
-
-        /*
-         * Log and return saved page id
-         */
-        if (!$pageId) {
-            AdminLog::new_log('Added page \'' . $page_lang->name . '\' (Page ID ' . $page->id . ')');
-        } else {
-            AdminLog::new_log('Updated page \'' . $page_lang->name . '\' (Page ID ' . $page->id . ')');
-        }
-        return $page;
     }
 
 }

@@ -1,9 +1,12 @@
 <?php namespace CoasterCms\Models;
 
 use Auth;
+use CoasterCms\Helpers\Cms\DateTimeHelper;
 use CoasterCms\Helpers\Cms\Page\Path;
+use CoasterCms\Libraries\Builder\FormMessage;
 use CoasterCms\Libraries\Traits\DataPreLoad;
 use Eloquent;
+use Illuminate\Database\Eloquent\Collection;
 use View;
 
 class Page extends Eloquent
@@ -404,7 +407,7 @@ class Page extends Eloquent
 
     public static function adminSearch($q)
     {
-        return Page::join('page_lang', 'page_lang.page_id', '=', 'pages.id')
+        return static::join('page_lang', 'page_lang.page_id', '=', 'pages.id')
             ->where('page_lang.language_id', '=', Language::current())->where('link', '=', 0)
             ->where('page_lang.name', 'like', '%'.$q.'%')
             ->get(['pages.*']);
@@ -419,7 +422,7 @@ class Page extends Eloquent
 
         // page parent (only updated for new pages)
         if (!$this->id) {
-            $parentPages = [-1 => '-- None --', 0 => '-- Top Level Page --'] + Page::get_page_list(['links' => false, 'exclude_home' => true, 'group_pages' => false]);
+            $parentPages = [-1 => '-- None --', 0 => '-- Top Level Page --'] + static::get_page_list(['links' => false, 'exclude_home' => true, 'group_pages' => false]);
             if (!array_key_exists($this->parent, $parentPages)) {
                 $this->parent = -1;
             }
@@ -453,7 +456,7 @@ class Page extends Eloquent
         //template
         if (empty($this->template)) {
             $this->template = config('coaster::admin.default_template');
-            $parentPage = Page::find($this->parent);
+            $parentPage = static::find($this->parent);
             if ($parentPage && $parentTemplate = Template::find($parentPage->template)) {
                 $this->template = $parentTemplate->child_template;
             }
@@ -502,6 +505,245 @@ class Page extends Eloquent
             $contents = View::make('coaster::partials.tabs.publish_requests.main', ['requests_table' => $requests_table]);
         }
         return [$header, $contents];
+    }
+
+    /**
+     * Saves page data
+     * @param PageVersion $pageVersion
+     * @param array $pagePost
+     * @param array $pageLangPost
+     * @param array $pageGroupsPost
+     * @param array $pageInfoOther
+     * @return bool
+     */
+    public function savePostData($pageVersion, $pagePost, $pageLangPost, $pageGroupsPost, $pageInfoOther = [])
+    {
+        /*
+         * Post data fixes
+         */
+        foreach ($pagePost as $k => $pagePostField) {
+            if (is_array($pagePostField) && array_key_exists('exists', $pagePostField)) {
+                $pagePost[$k] = array_key_exists('select', $pagePostField) ? $pagePostField['select'] : 0;
+            }
+        }
+        if (array_key_exists('live_start', $pagePost)) {
+            $pagePost['live_start'] = DateTimeHelper::jQueryToMysql($pagePost['live_start']) ?: null;
+        }
+        if (array_key_exists('live_end', $pagePost)) {
+            $pagePost['live_end'] = DateTimeHelper::jQueryToMysql($pagePost['live_end']) ?: null;
+        }
+        foreach ($pageInfoOther as $k => $pageInfoOtherField) {
+            if (is_array($pageInfoOtherField) && array_key_exists('exists', $pageInfoOtherField) && array_key_exists('select', $pageInfoOtherField)) {
+                $pageInfoOther[$k] = $pageInfoOtherField['select'];
+            }
+        }
+
+        /*
+         * Overwrite default/existing data with posted data
+         */
+        $pageDefaults = array_merge([
+            'template' => 0,
+            'parent' => 0,
+            'child_template' => 0,
+            'order' => 0,
+            'group_container' => 0,
+            'group_container_url_priority' => 0,
+            'canonical_parent' => 0,
+            'link' => 0,
+            'live' => 0,
+            'sitemap' => 1,
+            'live_start'=> null,
+            'live_end' => null
+        ], $this->getAttributes());
+        foreach ($pageDefaults as $pageAttribute => $pageDefault) {
+            if (in_array($pageAttribute, ['template'])) {
+                $pageVersion->$pageAttribute = $pagePost[$pageAttribute];
+                $this->$pageAttribute = $pageDefault;
+            } else {
+                $this->$pageAttribute = array_key_exists($pageAttribute, $pagePost) ? $pagePost[$pageAttribute] : $pageDefault;
+            }
+        }
+
+        $pageLang = PageLang::find($this->id) ?: new PageLang;
+        $pageLangDefaults = array_merge([
+            'language_id' => Language::current(),
+            'url' => '',
+            'name' => '',
+            'live_version' => 1
+        ], $pageLang->getAttributes());
+        foreach ($pageLangDefaults as $pageLangAttribute => $pageLangDefault) {
+            $pageLang->$pageLangAttribute = array_key_exists($pageLangAttribute, $pageLangPost) ? $pageLangPost[$pageLangAttribute] : $pageLangDefault;
+        }
+
+        /*
+         * Check page parent exists if set and page limit is not hit
+         */
+        $parent = static::find($this->parent);
+        if ($this->parent > 0 && !$parent) {
+            return false;
+        }
+        if (!$this->id && !$this->link && static::at_limit($this->parent == -1)) {
+            return false;
+        }
+
+        /*
+         * Check page name/url set and does not conflict
+         */
+        $pageLang->url = trim($pageLang->url);
+        if (!$this->link) {
+            $pageLang->url = strtolower(str_replace(['/', ' '], '-', $pageLang->url));
+            if (preg_match('#^[-]+$#', $pageLangPost['url'])) {
+                $pageLang->url = '';
+            }
+            if ($pageLang->url == '' && !$this->parent) {
+                $pageLang->url = '/';
+            }
+            $siblings = [];
+            foreach ($pageGroupsPost as $pageGroupId => $checkedVal) {
+                $pageGroup = PageGroup::preload($pageGroupId);
+                $siblings = array_merge($pageGroup->exists ? $pageGroup->itemPageIds() : [], $siblings);
+            }
+            if ($this->parent >= 0) {
+                $siblings = array_merge(static::getChildPageIds($this->parent), $siblings);
+            }
+            $siblings = array_unique($siblings);
+        }
+        if (!$pageLang->name) {
+            FormMessage::add('page_info_lang[name]', 'page name required');
+        }
+        if (!$pageLang->url) {
+            FormMessage::add('page_info_lang[url]', 'page url required');
+        }
+        if (!empty($siblings)) {
+            $same_level = PageLang::where('url', '=', $pageLang->url)->whereIn('page_id', $siblings);
+            $same_level = $this->id ? $same_level->where('page_id', '!=', $this->id) : $same_level;
+            if (!$same_level->get()->isEmpty()) {
+                FormMessage::add('page_info_lang[url]', 'url in use by another page!');
+                $pageLang->url = '';
+            }
+        }
+        if (!$pageLang->name || !$pageLang->url) {
+            return false;
+        }
+
+        /*
+         * If adding a page as a group container, create container / check exists
+         */
+        if ($this->group_container == -1) {
+            $groupContainer = new PageGroup;
+            $groupContainer->name = $pageLang->name;
+            $groupContainer->item_name = 'Page';
+            $groupContainer->default_template = 0;
+            $groupContainer->save();
+            $this->group_container = $groupContainer->id;
+        } elseif ($this->group_container) {
+            $groupContainer = PageGroup::preload($this->group_container);
+            if (!$groupContainer->exists || ($pageDefaults['group_container'] != $this->group_container && !$groupContainer->canEditItems())) {
+                $this->group_container = 0;
+            }
+        }
+
+        /*
+         * Check if page info can be updated (based on publishing action, or allowed if new page)
+         */
+        $authPageIdCheck = $this->id ?: ($this->parent > 0 ? $this->parent : 0);
+        $canPublish = (config('coaster::admin.publishing') > 0 && Auth::action('pages.version-publish', ['page_id' => $authPageIdCheck])) || (config('coaster::admin.publishing') == 0 && Auth::action('pages.edit', ['page_id' => $authPageIdCheck]));
+        $canPublish = $canPublish || (isset($groupContainer) && ((config('coaster::admin.publishing') > 0 && $groupContainer->canPublishItems()) || (config('coaster::admin.publishing') == 0 && $groupContainer->canEditItems())));
+        $willPublish = !$this->id || $canPublish;
+
+        /*
+         * Check and save page changes
+         */
+        if ($willPublish) {
+            // if new page set as last ordered page
+            if ($this->parent >= 0 && !$this->id) {
+                $this->order = static::where('parent', '=', $this->parent)->orderBy('order', 'desc')->first()->order + 1;
+            }
+
+            // if link remove template
+            $this->template = $this->link ? 0 : $this->template;
+
+            // set page live between but no dates set set as hidden, or if can't publish set as hidden
+            $this->live = ($this->live == 2 && is_null($this->live_end) && is_null($this->live_start)) ? 0 : $this->live;
+            $this->live = $canPublish ? $this->live : 0;
+
+            // save page data
+            $this->save();
+            $pageLang->page_id = $this->id;
+            $pageLang->save();
+        }
+        $pageVersion->page_id = $this->id;
+        $pageVersion->save();
+
+        /*
+         * Update title block to the page name is new page
+         */
+        if (!$this->id && $titleBlock = Block::where('name', '=', config('coaster::admin.title_block'))->first()) {
+            $titleBlock->setVersionId($pageVersion->version_id)->setPageId($this->id)->getTypeObject()->save($pageLang->name);
+            PageSearchData::updateText(strip_tags($pageLang->name), 0, $this->id);
+        }
+
+        /*
+         * Save Page Groups
+         */
+        $currentGroupIds = $this->groupIds();
+        $newGroupIds = array_keys($pageGroupsPost);
+        PageGroupPage::where('page_id', '=', $this->id)->whereIn('group_id', array_diff($currentGroupIds, $newGroupIds))->delete();
+        foreach (array_diff($newGroupIds, $currentGroupIds) as $addGroupId) {
+            $this->groups()->attach($addGroupId);
+        }
+
+        /*
+         * Save other page info
+         */
+        if ($willPublish && array_key_exists('menus', $pageInfoOther) &&  Auth::action('menus')) {
+            MenuItem::set_page_menus($this->id, $pageInfoOther['menus']);
+        }
+
+        if ($canPublish && array_key_exists('beacons', $pageInfoOther) && Auth::action('themes.beacons-update')) {
+            BlockBeacon::updatePage($this->id, $pageInfoOther['beacons']);
+        }
+
+        return true;
+    }
+
+    /**
+     * Saves page data as new page (will update page groups)
+     * @param array $pagePost
+     * @param array $pageLangPost
+     * @param array $pageGroupsPost
+     * @param array $pageInfoOther
+     * @return Page|false
+     */
+    public function saveDuplicateFromPostData($pagePost, $pageLangPost, $pageGroupsPost, $pageInfoOther = [])
+    {
+        /** @var Page $duplicatePage */
+        $duplicatePage = $this->replicate();
+        $duplicatePage->setRelations([]);
+
+        $pageLangPost['name'] = preg_replace('/\s+Duplicate$/', '', $pageLangPost['name']) . ' Duplicate';
+        $pageLangPost['url'] = preg_replace('/--v\w+$/', '', $pageLangPost['url']) . '--v' . base_convert(microtime(true), 10, 36);
+        $pageVersion = PageVersion::prepareNew();
+
+        if ($duplicatePage->savePostData($pageVersion, $pagePost, $pageLangPost, $pageGroupsPost, $pageInfoOther)) {
+
+            // duplicate role actions from original page
+            foreach (UserRole::all() as $role) {
+                /** @var \Illuminate\Database\Eloquent\Relations\BelongsToMany $pageActionsRelation */
+                $pageActionsRelation = $role->page_actions();
+                /** @var Collection $pageActions */
+                $pageActions = $pageActionsRelation->where('page_id', '=', $duplicatePage->id)->get();
+                if (!$pageActions->isEmpty()) {
+                    foreach ($pageActions as $pageAction) {
+                        $pageActionsRelation->attach($duplicatePage->id, ['action_id' => $pageAction->pivot->action_id, 'access' => $pageAction->pivot->access]);
+                    }
+                }
+            }
+
+            return $duplicatePage;
+        } else {
+            return false;
+        }
     }
 
 }

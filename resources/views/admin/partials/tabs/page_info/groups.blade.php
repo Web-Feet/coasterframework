@@ -20,7 +20,7 @@
         </select>
     </div>
     <div class="col-sm-1 col-xs-4 group-container-options header_note" data-note="The url priority for canonicals. Group pages will use the path from the top level group page with the highest priority by default.">
-        {!! Form::text('page_info[group_container_url_priority]', $page->group_container_url_priority ?: '', ['class' => 'form-control form-inline', 'placeholder' => 50])  !!}
+        {!! Form::text('page_info[group_container_url_priority]', $page->group_container_url_priority ?: 0, ['class' => 'form-control form-inline', 'placeholder' => 50])  !!}
     </div>
 </div>
 
