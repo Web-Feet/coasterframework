@@ -20,7 +20,7 @@ class CreatePageVersionsSchedule extends Migration
             $table->create();
             $table->increments('id');
             $table->integer('page_version_id');
-            $table->timestamp('live_from');
+            $table->timestamp('live_from')->useCurrent();
             $table->integer('repeat_in')->default(0);
             $table->string('repeat_in_func')->nullable();
             $table->timestamps();
