@@ -23,7 +23,7 @@
             @if (!$page->id || $page->link == 0)
                 @if (count($urlPrefixes) > 1)
                     <div class="input-group-addon url-dropdown">
-                        <select name="page_info[canonical_parent]">
+                        <select name="page_info[canonical_parent]" title="Canonical Parent">
                             @if ($page->canonical_parent)
                                 <option value="0">Unset canonical: {{ $urlArray[$page->canonical_parent] }}</option>
                             @endif

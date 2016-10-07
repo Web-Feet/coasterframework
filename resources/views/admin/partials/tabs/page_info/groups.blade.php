@@ -11,7 +11,7 @@
         </label>
     </div>
     <div class="col-sm-7 col-xs-8 group-container-options">
-        <select name="page_info[group_container]" class="form-control">
+        <select name="page_info[group_container]" title="Group Container" class="form-control">
             <option value="-1">-- New Group --</option>
             <option value="0">-- Not Top Level Group Page --</option>
             @foreach($groups as $groupPage)

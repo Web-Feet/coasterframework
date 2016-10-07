@@ -169,7 +169,7 @@ DocCommentHighlightRules.getTagRule = function(start) {
         token : "comment.doc.tag.storage.type",
         regex : "\\b(?:TODO|FIXME|XXX|HACK)\\b"
     };
-}
+};
 
 DocCommentHighlightRules.getStartRule = function(start) {
     return {
@@ -849,7 +849,7 @@ var XmlHighlightRules = function(normalize) {
                     stack.splice(0);
                     return this.token;
             }}
-        ]
+        ];
 
         this.embedRules(HighlightRules, prefix, [{
             token: ["meta.tag.punctuation.end-tag-open.xml", "meta.tag." + tag + ".tag-name.xml"],
@@ -1283,8 +1283,11 @@ define("ace/mode/html_blade_highlight_rules",["require","exports","module","ace/
             }
         ];
 
-        for (var key in this.$rules)
-            this.$rules[key].unshift.apply(this.$rules[key], startRules);
+        for (var key in this.$rules) {
+            if (this.$rules.hasOwnProperty(key)) {
+                this.$rules[key].unshift.apply(this.$rules[key], startRules);
+            }
+        }
 
         this.embedRules(BladeHighlightRules, "blade-", endRules, ["start"]);
 
@@ -1663,20 +1666,22 @@ var CssCompletions = function() {
             var style = document.createElement('c').style;
 
             for (var i in style) {
-                if (typeof style[i] !== 'string')
-                    continue;
+                if (style.hasOwnProperty(i)) {
+                    if (typeof style[i] !== 'string')
+                        continue;
 
-                var name = i.replace(/[A-Z]/g, function(x) {
-                    return '-' + x.toLowerCase();
-                });
+                    var name = i.replace(/[A-Z]/g, function (x) {
+                        return '-' + x.toLowerCase();
+                    });
 
-                if (!propertyMap.hasOwnProperty(name))
-                    propertyMap[name] = 1;
+                    if (!propertyMap.hasOwnProperty(name))
+                        propertyMap[name] = 1;
+                }
             }
         }
 
         this.completionsDefined = true;
-    }
+    };
 
     this.getCompletions = function(state, session, pos, prefix) {
         if (!this.completionsDefined) {
@@ -1811,7 +1816,7 @@ var CssBehaviour = function () {
         }
     });
 
-}
+};
 oop.inherits(CssBehaviour, CstyleBehaviour);
 
 exports.CssBehaviour = CssBehaviour;
@@ -2078,8 +2083,10 @@ oop.inherits(FoldMode, BaseFoldMode);
         if (typeof state != "string")
             state = state[0];
         for (var key in this.subModes) {
-            if (state.indexOf(key) === 0)
-                return this.subModes[key];
+            if (this.subModes.hasOwnProperty(key)) {
+                if (state.indexOf(key) === 0)
+                    return this.subModes[key];
+            }
         }
         return null;
     };
@@ -2271,7 +2278,6 @@ function is(token, type) {
             }
             else if (this.optionalEndTags.hasOwnProperty(top.tagName)) {
                 stack.pop();
-                continue;
             } else {
                 return null;
             }
@@ -2895,7 +2901,7 @@ oop.inherits(Mode, TextMode);
             var match = line.match(/^.*[\{\(\[]\s*$/);
             var startingClassOrMethod = line.match(/^\s*(class|def|module)\s.*$/);
             var startingDoBlock = line.match(/.*do(\s*|\s+\|.*\|\s*)$/);
-            var startingConditional = line.match(/^\s*(if|else|when)\s*/)
+            var startingConditional = line.match(/^\s*(if|else|when)\s*/);
             if (match || startingClassOrMethod || startingDoBlock || startingConditional) {
                 indent += tab;
             }

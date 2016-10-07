@@ -26,11 +26,6 @@ function jq(myid) {
     return "#" + myid.replace( /(:|\.|\[|\]|,)/g, "\\$1" );
 }
 
-function get_url() {
-    var pathArray = window.location.href.split('/');
-    return pathArray[0] + '//' + pathArray[2] + '/';
-}
-
 function get_public_url() {
     return adminPublicUrl;
 }

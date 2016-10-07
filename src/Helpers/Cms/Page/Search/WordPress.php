@@ -43,7 +43,7 @@ class WordPress extends Cms
                 ON weights.ID = wp.ID;
                 ");
             if ($blogPosts) {
-                $defaultSeparator = new Path;
+                $defaultSeparator = new Path(false);
                 foreach ($blogPosts as $blogPost) {
                     $postData = new \stdClass;
                     $postData->id = 'WP' . $blogPost['ID'];
