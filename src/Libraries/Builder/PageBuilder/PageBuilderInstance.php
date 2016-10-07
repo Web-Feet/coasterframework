@@ -622,7 +622,7 @@ class PageBuilderInstance
         } elseif ($block->exists) {
 
             // load block data
-            $globalBlockData = PageBlockDefault::preload_block($block->id);
+            $globalBlockData = PageBlockDefault::preload($block->id);
             $pageBlockData = PageBlock::preload_block($pageId, $block->id, $this->pageVersion($pageId), 'page_id');
 
             // get languages

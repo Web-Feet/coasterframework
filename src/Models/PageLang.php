@@ -40,6 +40,9 @@ class PageLang extends Eloquent
         return static::traitPreload($key);
     }
 
+    /**
+     * @return array
+     */
     protected static function _preloadByColumn()
     {
         return ['page_id'];

@@ -1,12 +1,13 @@
 <?php namespace CoasterCms\Models;
 
+use CoasterCms\Libraries\Traits\DataPreLoad;
 use Eloquent;
 
 class PageBlockDefault extends Eloquent
 {
+    use DataPreLoad;
 
     protected $table = 'page_blocks_default';
-    public static $preloaded_lang_default = false;
 
     public static function updateBlockData($content, $blockId, $versionId)
     {
@@ -34,40 +35,12 @@ class PageBlockDefault extends Eloquent
         return $blockData ? $blockData->content : null;
     }
 
-    public static function preload_block($block_id, $version = 0)
+    /**
+     * @return array
+     */
+    protected static function _preloadByColumn()
     {
-        self::_preload($version);
-        if (!empty(self::$preloaded_lang_default[$block_id])) {
-            return self::$preloaded_lang_default[$block_id];
-        } else {
-            return null;
-        }
-    }
-
-    public static function preload($version = 0)
-    {
-        self::_preload($version);
-        if (!empty(self::$preloaded_lang_default)) {
-            return self::$preloaded_lang_default;
-        } else {
-            return null;
-        }
-    }
-
-    private static function _preload($version)
-    {
-        if (self::$preloaded_lang_default === false) {
-            self::$preloaded_lang_default = array();
-            $default_blocks = Block::getDataForVersion(new self, $version, null, null, 'block_id');
-            if (!empty($default_blocks)) {
-                foreach ($default_blocks as $default_block) {
-                    if (!isset(self::$preloaded_lang_default[$default_block->block_id])) {
-                        self::$preloaded_lang_default[$default_block->block_id] = array();
-                    }
-                    self::$preloaded_lang_default[$default_block->block_id][$default_block->language_id] = $default_block;
-                }
-            }
-        }
+        return [['block_id', 'language_id']];
     }
 
 }

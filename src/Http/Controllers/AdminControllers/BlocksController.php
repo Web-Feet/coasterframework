@@ -21,7 +21,7 @@ class BlocksController extends Controller
         }
 
         // load tab contents from categories & blocks (with default block contents)
-        $default_blocks = PageBlockDefault::preload();
+        $default_blocks = PageBlockDefault::preloadArray();
 
         list($tab_headers, $tab_contents) = Block::getTabs($blocks, $default_blocks);
         $tab_headers = array_filter($tab_headers);
