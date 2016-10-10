@@ -1,10 +1,8 @@
 <?php namespace CoasterCms\Helpers\Cms\Page;
 
-use CoasterCms\Models\Language;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageVersion;
-use CoasterCms\Models\Setting;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
 use Illuminate\Database\Eloquent\Builder;
