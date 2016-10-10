@@ -195,7 +195,7 @@ trait DataPreLoad
      */
     protected static function _preloadCollection()
     {
-        return self::all();
+        return static::all();
     }
 
 }
