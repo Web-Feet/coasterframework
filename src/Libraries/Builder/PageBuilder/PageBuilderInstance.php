@@ -187,7 +187,7 @@ class PageBuilderInstance
     public function pageLiveVersionId($noOverride = false)
     {
         $page = $this->_getPage($noOverride);
-        return (!empty($page) && $page->page_lang) ? $page->page_lang->live_version : 0;
+        return (!empty($page) && $page->pageLang()) ? $page->pageLang()->live_version : 0;
     }
 
     /**
@@ -352,7 +352,7 @@ class PageBuilderInstance
             $pageLang = new PageLang;
             $pageLang->url = '';
             $pageLang->name = $options['404-name'];
-            $page404->setRelation('page_lang', $pageLang);
+            $page404->setRelation('pageCurrentLang', $pageLang);
             $pageLevels[] = $page404;
         }
 
@@ -363,12 +363,12 @@ class PageBuilderInstance
             $lowestLevel = key($pageLevels);
             foreach ($pageLevels as $level => $page) {
 
-                if ($page && $page->page_lang->url != '/') {
-                    $url .= '/' . $page->page_lang->url;
+                if ($page && $page->pageLang()->url != '/') {
+                    $url .= '/' . $page->pageLang()->url;
                 }
                 $active = ($lowestLevel == $level);
 
-                $crumb = new BreadCrumb($page->page_lang, $url, $active);
+                $crumb = new BreadCrumb($page->pageLang(), $url, $active);
 
                 if ($this->_viewExists('.breadcrumbs.' . $options['view'] . '.active_element') && $active) {
                     $crumbs .= $this->_getRenderedView('breadcrumbs.' . $options['view'] . '.active_element', ['crumb' => $crumb]);

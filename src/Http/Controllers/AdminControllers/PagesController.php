@@ -117,8 +117,8 @@ class PagesController extends AdminController
         ];
 
         // get page lang data
-        if (!($page_lang = $page->page_lang)) {
-            if (!($page_lang = $page->page_default_lang)) {
+        if (!($page_lang = $page->pageCurrentLang)) {
+            if (!($page_lang = $page->pageDefaultLang)) {
                 return 'Page Lang Data Not Found';
             }
             $page_lang = $page_lang->replicate();

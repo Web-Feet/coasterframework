@@ -4,6 +4,7 @@ use CoasterCms\Models\Language;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageVersion;
+use CoasterCms\Models\Setting;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
 use Illuminate\Database\Eloquent\Builder;
@@ -101,59 +102,48 @@ class PageLoader
             }
         }
 
-        // load site languages to find pages for
-        $siteLanguages = [Language::current()];
-        if (config('coaster::frontend.language_fallback') == 1) {
-            $siteLanguages[] = config('coaster::frontend.language');
+        // load homepage
+        if (empty($this->pageLevels[0])) {
+            $this->pageLevels[0] = self::_loadHomePage();
         }
 
-        foreach ($siteLanguages as $languageId) {
+        // load sub pages
+        if ($urlSegments) {
+            for ($i = 1; $i <= $urlSegments; $i++) {
+                if (empty($this->pageLevels[$i])) {
 
-            // load homepage
-            if (empty($this->pageLevels[0])) {
-                $this->pageLevels[0] = self::_loadHomePage($languageId);
-            }
+                    $currentSegment = Request::segment($i);
 
-            // load sub pages
-            if ($urlSegments) {
-                for ($i = 1; $i <= $urlSegments; $i++) {
-                    if (empty($this->pageLevels[$i])) {
-
-                        $currentSegment = Request::segment($i);
-                        
-                        if ($urlSegments == $i && $this->feedExtension = Feed::getFeedExtensionFromPath($currentSegment)) {
-                            Feed::removeFeedExtensionFromPath($currentSegment);
-                        }
-
-                        if ($i > 1) {
-                            $parentPage = $this->pageLevels[$i - 1];
-                        } else {
-                            $parentPage = new Page;
-                            $parentPage->id = 0;
-                            $parentPage->group_container = 0;
-                        }
-
-                        $this->pageLevels[$i] = self::_loadSubPage($currentSegment, $languageId, $parentPage);
-
-                        if (empty($this->pageLevels[$i])) {
-                            if (self::_isSearchPage($currentSegment, $parentPage)) {
-                                Search::setSearchBlockRequired();
-                                $this->searchQuery = implode('/', array_slice(Request::segments(), $i-1));
-                                unset($this->pageLevels[$i]);
-                                $urlSegments = $i - 1;
-                            }
-                            break;
-                        }
-
+                    if ($urlSegments == $i && $this->feedExtension = Feed::getFeedExtensionFromPath($currentSegment)) {
+                        Feed::removeFeedExtensionFromPath($currentSegment);
                     }
+
+                    if ($i > 1) {
+                        $parentPage = $this->pageLevels[$i - 1];
+                    } else {
+                        $parentPage = new Page;
+                        $parentPage->id = 0;
+                        $parentPage->group_container = 0;
+                    }
+
+                    $this->pageLevels[$i] = self::_loadSubPage($currentSegment, $parentPage);
+
+                    if (empty($this->pageLevels[$i])) {
+                        if (self::_isSearchPage($currentSegment, $parentPage)) {
+                            Search::setSearchBlockRequired();
+                            $this->searchQuery = implode('/', array_slice(Request::segments(), $i-1));
+                            unset($this->pageLevels[$i]);
+                            $urlSegments = $i - 1;
+                        }
+                        break;
+                    }
+
                 }
             }
+        }
 
-            if (!empty($this->pageLevels[$urlSegments])) {
-                $this->is404 = false;
-                break;
-            }
-
+        if (!empty($this->pageLevels[$urlSegments])) {
+            $this->is404 = false;
         }
 
         if ($this->searchQuery === false && $query = Request::input('q')) {
@@ -206,28 +196,26 @@ class PageLoader
     }
 
     /**
-     * @param int $languageId
      * @return Page|null
      */
-    protected function _loadHomePage($languageId)
+    protected function _loadHomePage()
     {
         $paths = ['', '/'];
-        return self::_pageQuery($paths, $languageId, 0);
+        return self::_pageQuery($paths, 0);
     }
 
     /**
      * @param string $path
-     * @param int $languageId
      * @param Page $parentPage
      * @return Page|null
      */
-    protected function _loadSubPage($path, $languageId, Page $parentPage)
+    protected function _loadSubPage($path, Page $parentPage)
     {
         $paths = [$path];
-        $page = self::_pageQuery($paths, $languageId, $parentPage->id);
+        $page = self::_pageQuery($paths, $parentPage->id);
 
         if (!$page && $parentPage->group_container > 0) {
-            $page = self::_pageQuery($paths, $languageId, false, $parentPage->group_container);
+            $page = self::_pageQuery($paths, false, $parentPage->group_container);
             if ($page) {
                 $group = PageGroup::preload($parentPage->group_container);
                 $page = in_array($page->id, $group->itemPageIdsFiltered($parentPage->id)) ? $page : null;
@@ -238,19 +226,15 @@ class PageLoader
     }
 
     /**
-     * @param string $path
-     * @param int $languageId
+     * @param array $paths
      * @param bool|int $byParentId
      * @param bool|int $byGroupContainerId
      * @return Page|null
      */
-    protected function _pageQuery($path, $languageId, $byParentId = false, $byGroupContainerId = false)
+    protected function _pageQuery($paths, $byParentId = false, $byGroupContainerId = false)
     {
         /** @var Builder $pageQuery */
-        $pageQuery = Page::join('page_lang', 'page_lang.page_id', '=', 'pages.id')
-            ->with(['page_lang' => function ($query) use($path, $languageId) {
-                self::_pageLangQuery($query, $path, $languageId);
-            }]);
+        $pageQuery = Page::join('page_lang', 'page_lang.page_id', '=', 'pages.id')->whereIn('page_lang.url', $paths);
 
         if ($byParentId !== false) {
             $pageQuery->where('parent', '=', $byParentId);
@@ -261,24 +245,12 @@ class PageLoader
         }
 
         /** @var Page $page */
-        $page = self::_pageLangQuery($pageQuery, $path, $languageId)->first(['pages.*']);
-
-        if (!empty($page) && $page->page_lang) {
+        $page = $pageQuery->first(['pages.*']);
+        if (!empty($page) && $page->pageLang()) {
             return $page;
         } else {
             return null;
         }
-    }
-
-    /**
-     * @param Builder $query
-     * @param array $paths
-     * @param int $languageId
-     * @return Builder
-     */
-    protected function _pageLangQuery($query, $paths, $languageId)
-    {
-        return $query->where('page_lang.language_id', '=', $languageId)->whereIn('page_lang.url', $paths);
     }
 
     /**
@@ -288,7 +260,7 @@ class PageLoader
      */
     protected function _isSearchPage($path, Page $parentPage)
     {
-        if ($path == 'search' || (!$parentPage->page_lang && $parentPage->page_lang->url == 'search')) {
+        if ($path == 'search' || ($parentPage->pageLang() && $parentPage->pageLang()->url == 'search')) {
             return true;
         } else {
             return false;

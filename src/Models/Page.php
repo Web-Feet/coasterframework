@@ -27,12 +27,26 @@ class Page extends Eloquent
         return $this->hasMany('CoasterCms\Models\PageLang');
     }
 
-    public function page_lang()
+    /**
+     * @return Eloquent|null
+     */
+    public function pageLang()
+    {
+        return $this->pageCurrentLang ?: (config('coaster::frontend.language_fallback') ? $this->pageDefaultLang : null);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function pageCurrentLang()
     {
         return $this->hasOne('CoasterCms\Models\PageLang')->where('language_id', '=', Language::current());
     }
 
-    public function page_default_lang()
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function pageDefaultLang()
     {
         return $this->hasOne('CoasterCms\Models\PageLang')->where('language_id', '=', config('coaster::frontend.language'));
     }
@@ -564,7 +578,11 @@ class Page extends Eloquent
             }
         }
 
-        $pageLang = PageLang::find($this->id) ?: new PageLang;
+        if (!$this->pageCurrentLang) {
+            $this->pageCurrentLang = ($d = $this->pageDefaultLang) ? $d->replicate() : new PageLang;
+            unset($this->pageCurrentLang->language_id);
+        }
+        $pageLang = $this->pageLang();
         $pageLangDefaults = array_merge([
             'language_id' => Language::current(),
             'url' => '',
