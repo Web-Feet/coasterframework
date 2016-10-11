@@ -11,22 +11,23 @@ class PageRedirect extends Eloquent
     public static function uriHasRedirect($redirect_url_encoded = '')
     {
         $redirect_url_encoded = $redirect_url_encoded ?: trim(Request::getRequestUri(), '/');
-        $redirect_url = urldecode($redirect_url_encoded); // decode foreign chars
-        $redirect = self::where('redirect', '=', $redirect_url)
-            ->orWhere('redirect', '=', $redirect_url_encoded)
-            ->orWhere('redirect', '=', '/' . $redirect_url)
-            ->orWhere('redirect', '=', '/' . $redirect_url_encoded)
-            ->orWhere('redirect', '=', '/' . $redirect_url . '/')
-            ->orWhere('redirect', '=', '/' . $redirect_url_encoded . '/')
-            ->orWhere('redirect', '=', $redirect_url . '/')
-            ->orWhere('redirect', '=', $redirect_url_encoded . '/')
-            ->first();
+        $redirect_url_decoded = urldecode($redirect_url_encoded); // decode foreign chars
+
+        $redirectMatches = [];
+        foreach ([$redirect_url_encoded, $redirect_url_decoded] as $redirectUrl) {
+            $redirectMatches[] = $redirectUrl;
+            $redirectMatches[] = '/' . $redirectUrl;
+            $redirectMatches[] = '/' . $redirectUrl . '/';
+            $redirectMatches[] = $redirectUrl . '/';
+        }
+
+        $redirect = self::whereIn('redirect', $redirectMatches)->first();
         if (!empty($redirect)) {
             return $redirect;
         } else {
             $redirects = self::where('redirect', 'LIKE', '%\%')->get();
             foreach ($redirects as $redirect) {
-                if (strpos($redirect_url, substr(trim($redirect->redirect, '/'), 0, -1)) === 0) {
+                if (strpos($redirect_url_decoded, substr(trim($redirect->redirect, '/'), 0, -1)) === 0) {
                     return $redirect;
                 }
             }
