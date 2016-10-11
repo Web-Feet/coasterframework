@@ -136,9 +136,10 @@ class Path
                 }
                 $loadedIds[] = $pageId;
             }
-            $missingPages = Page::whereNotIn('id', $loadedIds)->get();
-            foreach ($missingPages as $missingPage) {
-                self::_getById($missingPage->id);
+            foreach (Page::preloadArray() as $pageId => $page) {
+                if (!in_array($pageId, $loadedIds)) {
+                    self::_getById($pageId);
+                }
             }
         }
     }
@@ -284,7 +285,8 @@ class Path
     public static function unParsePageId($unParsedPageId, $returnFirstEl = true)
     {
         $parts = explode(',', $unParsedPageId);
-        return $returnFirstEl ? (int) $parts[0] : $parts;
+        $parts[0] = (int) $parts[0];
+        return $returnFirstEl ? $parts[0] : $parts;
     }
 
     /**
