@@ -97,6 +97,7 @@ class PageBuilder
      */
     public static function getData($varName = '')
     {
+        $varName = camel_case($varName);
         if ($varName) {
             return property_exists(static::getInstance(), $varName) ? static::getInstance()->$varName : null;
         } else {
