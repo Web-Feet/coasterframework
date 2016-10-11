@@ -1,6 +1,5 @@
 <?php namespace CoasterCms\Libraries\Builder;
 
-use CoasterCms\Exceptions\PageBuilderException;
 use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Libraries\Builder\ViewClasses\MenuItemDetails;
 use CoasterCms\Models\Menu;
