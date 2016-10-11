@@ -154,7 +154,7 @@ class PagesController extends AdminController
         // load blocks content
         if ($page->link == 0) {
             $blocks = Template::template_blocks(config('coaster::frontend.theme'), $page->template);
-            $blocks_content = PageBlock::preload_page($pageId, $versionData['editing']);
+            $blocks_content = PageBlock::preloadPage($pageId, $versionData['editing']);
             list($tab_headers, $tab_contents) = Block::getTabs($blocks, $blocks_content, $page->id);
         } else {
             $tab_headers = [];

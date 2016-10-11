@@ -33,11 +33,12 @@ class PageGroup extends Eloquent
     }
 
     /**
-     * @return mixed
+     * @return Collection
      */
     public function blockFilters()
     {
-        return $this->groupAttributes()->where('filter_by_block_id', '>', 0);
+        $groupAttributes = $this->groupAttributes ?: collect([]);
+        return $groupAttributes->filter(function($groupAttribute) {return $groupAttribute->filter_by_block_id > 0;});
     }
 
     /**
@@ -247,12 +248,11 @@ class PageGroup extends Eloquent
 
             if ($pageIds = $this->itemPageIds($checkLive, $sort)) {
 
-                foreach ($this->blockFilters as $blockFilter) {
+                foreach ($this->blockFilters() as $blockFilter) {
 
                     // get data to filter by
                     $filterByBlock = Block::preload($blockFilter->filter_by_block_id);
-                    $filterBy = PageBlock::preload_block($pageId, $blockFilter->filter_by_block_id, -1);
-                    $filterByContent = !empty($filterBy[Language::current()]) ? $filterBy[Language::current()]->content : null;
+                    $filterByContent = PageBlock::preloadPageBlockLanguage($pageId, $blockFilter->filter_by_block_id, -1, 'block_id')->content;
                     if ($filterByBlock->type == 'selectmultiple') {
                         $filterByContentArr = unserialize($filterByContent);
                         $filterByContentArr = is_array($filterByContentArr) ? $filterByContentArr : [];
@@ -271,8 +271,7 @@ class PageGroup extends Eloquent
                         $filteredPageIds = [];
                         foreach ($pageIds as $groupPageId) {
                             foreach ($filterByContentArr as $filterByContentEl) {
-                                $groupPageBlock = PageBlock::preload_block($groupPageId, $blockFilter->item_block_id, -1, 'page_id');
-                                $groupPageBlockContent = !empty($groupPageBlock[Language::current()]) ? $groupPageBlock[Language::current()]->content : '';
+                                $groupPageBlockContent = PageBlock::preloadPageBlockLanguage($groupPageId, $blockFilter->item_block_id, -1)->content;
                                 if ($blockType->filter($groupPageBlockContent, $filterByContentEl, '=')) {
                                     $filteredPageIds[] = $groupPageId;
                                     break;

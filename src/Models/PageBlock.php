@@ -7,9 +7,23 @@ class PageBlock extends Eloquent
 {
     use DataPreLoad;
 
+    /**
+     * @var string
+     */
     protected $table = 'page_blocks';
+
+    /**
+     * @var array
+     */
     protected static $_preloadDone = [];
 
+    /**
+     * @param $content
+     * @param $blockId
+     * @param $versionId
+     * @param $pageId
+     * @throws \Exception
+     */
     public static function updateBlockData($content, $blockId, $versionId, $pageId)
     {
         $previousData = static::where('block_id', '=', $blockId)->where('page_id', '=', $pageId)->where('language_id', '=', Language::current())->orderBy('version', 'desc')->first();
@@ -27,6 +41,12 @@ class PageBlock extends Eloquent
         }
     }
 
+    /**
+     * @param $blockId
+     * @param $versionId
+     * @param $pageId
+     * @return mixed|null
+     */
     public static function getBlockData($blockId, $versionId, $pageId)
     {
         $getDataQuery = static::where('block_id', '=', $blockId)->where('page_id', '=', $pageId)->where('language_id', '=', Language::current());
@@ -37,57 +57,104 @@ class PageBlock extends Eloquent
         return $blockData ? $blockData->content : null;
     }
 
-    public static function preload_page($page_id, $version = 0)
+    /**
+     * Load all page block data for a page
+     * @param $pageId
+     * @param int $version
+     * @return PageBlock[][] array keys block_id then language_id
+     */
+    public static function preloadPage($pageId, $version = 0)
     {
-        self::_preloadDataByPage($page_id, $version);
-        return static::_preloadGet('byVersionPage', [$version, $page_id]) ?: [];
+        static::_preloadDataByPage($pageId, $version);
+        return static::_preloadGet('byVersionPage', [$version, $pageId]) ?: [];
     }
 
-    public static function preload_block($page_id, $block_id, $version = 0, $preloadBy = 'block_id')
+    /**
+     * Load all page block data for block on page,
+     * @param $pageId
+     * @param $blockId
+     * @param int $version
+     * @param string $preloadBy
+     * @return PageBlock[] array key is language_id
+     */
+    public static function preloadPageBlock($pageId, $blockId, $version = 0, $preloadBy = 'block_id')
     {
-        if ($preloadBy == 'block_id') {
-            self::_preloadDataByBlock($block_id, $version);
-        } else {
-            self::_preloadDataByPage($page_id, $version);
+        ($preloadBy == 'block_id') ? static::_preloadDataByBlock($blockId, $version) : static::_preloadDataByPage($pageId, $version);
+        return static::_preloadGet('byVersionPage', [$version, $pageId, $blockId]) ?: [];
+    }
+
+    /**
+     * Load page block data for block on page in current language
+     * @param $pageId
+     * @param $blockId
+     * @param int $version
+     * @param string $preloadBy
+     * @return static
+     */
+    public static function preloadPageBlockLanguage($pageId, $blockId, $version = 0, $preloadBy = 'block_id')
+    {
+        ($preloadBy == 'block_id') ? static::_preloadDataByBlock($blockId, $version) : static::_preloadDataByPage($pageId, $version);
+        return static::_preloadGet('byVersionPage', [$version, $pageId, $blockId, Language::current()]) ?: new static;
+    }
+
+    /**
+     * @param $pageIds
+     * @param $version
+     */
+    protected static function _preloadDataByPage($pageIds, $version)
+    {
+        $unloadedPageIds = [];
+        $pageIds = is_array($pageIds) ? $pageIds : [$pageIds];
+        foreach ($pageIds as $pageId) {
+            $doneKey = 'v' . $version . 'p' . $pageId;
+            if (empty(static::$_preloadDone[$doneKey])) {
+                $unloadedPageIds[] = $pageId;
+                static::$_preloadDone[$doneKey] = true;
+            }
         }
-        return static::_preloadGet('byVersionPage', [$version, $page_id, $block_id]) ?: [];
-    }
-
-    protected static function _preloadDataByPage($page_id, $version)
-    {
-        $doneKey = 'v'.$version.'p'.$page_id;
-        if (empty(static::$_preloadDone[$doneKey])) {
-            static::$_preloadDone[$doneKey] = true;
-            $page_blocks = Block::getDataForVersion(new static, $version, ['page_id' => $page_id]);
-            static::_preload($page_blocks, 'byVersionPage', [['@'.$version, 'page_id', 'block_id', 'language_id']]);
-        }
-    }
-
-    protected static function _preloadDataByBlock($block_id, $version)
-    {
-        $doneKey = 'v'.$version.'b'.$block_id;
-        if (empty(static::$_preloadDone[$doneKey])) {
-            static::$_preloadDone[$doneKey] = true;
-            $page_blocks = Block::getDataForVersion(new static, $version, ['block_id' => $block_id]);
-            static::_preload($page_blocks, 'byVersionPage', [['@'.$version, 'page_id', 'block_id', 'language_id']]);
+        if ($unloadedPageIds) {
+            $pageBlocks = Block::getDataForVersion(new static, $version, ['page_id' => $unloadedPageIds]);
+            static::_preload($pageBlocks, 'byVersionPage', [['@'.$version, 'page_id', 'block_id', 'language_id']]);
         }
     }
 
     /**
-     * @param int $block_id
-     * @param bool $reload
-     * @return Block[]
+     * @param $blockIds
+     * @param $version
      */
-    public static function page_blocks_on_live_page_versions($block_id, $reload = false)
+    protected static function _preloadDataByBlock($blockIds, $version)
+    {
+        $unloadedBlockIds = [];
+        $blockIds = is_array($blockIds) ? $blockIds : [$blockIds];
+        foreach ($blockIds as $blockId) {
+            $doneKey = 'v' . $version . 'b' . $blockId;
+            if (empty(static::$_preloadDone[$doneKey])) {
+                $unloadedBlockIds[] = $blockId;
+                static::$_preloadDone[$doneKey] = true;
+            }
+        }
+        if ($unloadedBlockIds) {
+            $pageBlocks = Block::getDataForVersion(new static, $version, ['block_id' => $unloadedBlockIds]);
+            static::_preload($pageBlocks, 'byVersionPage', [['@'.$version, 'page_id', 'block_id', 'language_id']]);
+        }
+    }
+
+    /**
+     * Load page block data for all live versions of a block across all pages
+     * @param int $blockId
+     * @param bool $reload
+     * @return PageBlock[]
+     */
+    public static function livePageBlocksForBlock($blockId, $reload = false)
     {
         if ($reload) {
             static::_preloadClear('liveBlocks');
         }
-        if (!static::_preloadIsset('liveBlocks', $block_id)) {
-            $page_blocks = Block::getDataForVersion(new static, -1, ['block_id' => $block_id, 'language_id' => Language::current()]);
-            static::_preload($page_blocks, 'liveBlocks', [['block_id']], null, true);
+        if (!static::_preloadIsset('liveBlocks', $blockId)) {
+            $pageBlocks = Block::getDataForVersion(new static, -1, ['block_id' => $blockId, 'language_id' => Language::current()]);
+            static::_preload($pageBlocks, 'liveBlocks', [['block_id']], null, true);
         }
-        return static::_preloadGet('liveBlocks', $block_id) ?: [];
+        return static::_preloadGet('liveBlocks', $blockId) ?: [];
     }
 
 }

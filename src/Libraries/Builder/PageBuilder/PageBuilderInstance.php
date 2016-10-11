@@ -490,7 +490,7 @@ class PageBuilderInstance
                 $blockTypeObject = $block->getTypeObject();
                 $searchValue = $searches[count($searches) > 1 ? $k : 0];
                 $filteredPagesForBlock = [];
-                $liveBlocks = PageBlock::page_blocks_on_live_page_versions($block->id);
+                $liveBlocks = PageBlock::livePageBlocksForBlock($block->id);
                 foreach ($liveBlocks as $liveBlock) {
                     if (array_key_exists($liveBlock->page_id, $filteredPagesForBlock) || (!empty($options['fromPageIds']) && !in_array($liveBlock->page_id, $options['fromPageIds']))) {
                         continue;
@@ -623,7 +623,7 @@ class PageBuilderInstance
 
             // load block data
             $globalBlockData = PageBlockDefault::preload($block->id);
-            $pageBlockData = PageBlock::preload_block($pageId, $block->id, $this->pageVersion($pageId), 'page_id');
+            $pageBlockData = PageBlock::preloadPageBlock($pageId, $block->id, $this->pageVersion($pageId));
 
             // get languages
             $loadForLanguages = [Language::current()];

@@ -43,12 +43,11 @@ class GroupsController extends Controller
                     $canDelete = Auth::action('pages.delete', ['page_id' => $pageId]);
 
                     foreach ($attributeBlocks as $attributeBlock) {
-                        $pageBlock = PageBlock::preload_block($pageId, $attributeBlock->id, -1);
-                        $pageBlockContent = !empty($pageBlock) ? $pageBlock[Language::current()]->content : '';
+                        $pageBlockContent = PageBlock::preloadPageBlockLanguage($pageId, $attributeBlock->id, -1, 'block_id')->content;
                         if (strpos($attributeBlock->type, 'selectmultiple') === 0 && !empty($pageBlockContent)) {
                             // selectmultiple
                             $showBlocks[] = implode(', ', unserialize($pageBlockContent));
-                        } elseif ($attributeBlock->type == 'datetime'&& !empty($pageBlockContent)) {
+                        } elseif ($attributeBlock->type == 'datetime' && !empty($pageBlockContent)) {
                             // datetime
                             $showBlocks[] = (new Carbon($pageBlockContent))->format(config('coaster::date.format.long'));
                         } else {
