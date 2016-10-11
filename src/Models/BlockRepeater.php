@@ -17,7 +17,8 @@ Class BlockRepeater extends Eloquent
     public static function getRepeaterBlocks($blockId)
     {
         $repeaterBlocks = [];
-        if ($blockRepeater = BlockRepeater::where('block_id', '=', $blockId)->first()) {
+        $blockRepeater = static::preload($blockId);
+        if ($blockRepeater->exists) {
             foreach (explode(",", $blockRepeater->blocks) as $repeaterBlockId) {
                 $repeaterBlocks[$repeaterBlockId] = Block::preload($repeaterBlockId);
             }
