@@ -77,9 +77,9 @@ class PageBlock extends Eloquent
      * @param string $preloadBy
      * @return PageBlock[] array key is language_id
      */
-    public static function preloadPageBlock($pageId, $blockId, $version = 0, $preloadBy = 'block_id')
+    public static function preloadPageBlock($pageId, $blockId, $version = 0, $preloadBy = 'page_id')
     {
-        ($preloadBy == 'block_id') ? static::_preloadDataByBlock($blockId, $version) : static::_preloadDataByPage($pageId, $version);
+        ($preloadBy == 'page_id') ? static::_preloadDataByPage($pageId, $version) : static::_preloadDataByBlock($blockId, $version);
         return static::_preloadGet('byVersionPage', [$version, $pageId, $blockId]) ?: [];
     }
 
@@ -91,9 +91,9 @@ class PageBlock extends Eloquent
      * @param string $preloadBy
      * @return static
      */
-    public static function preloadPageBlockLanguage($pageId, $blockId, $version = 0, $preloadBy = 'block_id')
+    public static function preloadPageBlockLanguage($pageId, $blockId, $version = 0, $preloadBy = 'page_id')
     {
-        ($preloadBy == 'block_id') ? static::_preloadDataByBlock($blockId, $version) : static::_preloadDataByPage($pageId, $version);
+        ($preloadBy == 'page_id') ? static::_preloadDataByPage($pageId, $version) : static::_preloadDataByBlock($blockId, $version);
         return static::_preloadGet('byVersionPage', [$version, $pageId, $blockId, Language::current()]) ?: new static;
     }
 
