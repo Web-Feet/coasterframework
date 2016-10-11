@@ -646,7 +646,7 @@ Class Theme extends Eloquent
             }
         }
 
-        $pageBlocks = array_merge(Block::getDataForVersion(new PageBlock, 0), Block::getDataForVersion(new PageBlockDefault, 0));
+        $pageBlocks = collect(array_merge(Block::getDataForVersion(new PageBlock, 0)->all(), Block::getDataForVersion(new PageBlockDefault, 0)->all()));
         $repeaterBlocks = [];
 
         $pageBlockArr = [];

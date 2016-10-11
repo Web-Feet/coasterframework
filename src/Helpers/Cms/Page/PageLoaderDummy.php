@@ -28,7 +28,7 @@ class PageLoaderDummy extends PageLoader
         $page_lang->name = '';
         $page_lang->url = '';
         $page_lang->live_version = 0;
-        $page->pageLang = $page_lang;
+        $page->setRelation('pageCurrentLang', $page_lang);
         $this->pageLevels = [$page];
     }
 
