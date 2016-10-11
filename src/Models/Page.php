@@ -459,6 +459,11 @@ class Page extends Eloquent
             $fullUrls[$pageId] = rtrim($details->fullUrl, '/') . '/';
         }
         $urlPrefixes = $this->parentPathIds();
+        foreach ($urlPrefixes as $pageId => $urlPrefix) {
+            if (!in_array($pageId, $fullUrls)) {
+                $fullUrls[$pageId] = '?';
+            }
+        }
         $contents .= View::make('coaster::partials.tabs.page_info.page_info', ['page' => $this, 'page_lang' => $pageLang, 'parentPages' => $parentPages, 'beacon_select' => $beaconSelect, 'urlArray' => $fullUrls, 'urlPrefixes' => $urlPrefixes, 'publishing_on' => $publishingOn, 'can_publish' => $canPublish])->render();
 
         // groups
