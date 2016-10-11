@@ -20,8 +20,8 @@ class PageRedirect extends Eloquent
             $redirectMatches[] = '/' . $redirectUrl . '/';
             $redirectMatches[] = $redirectUrl . '/';
         }
-
-        $redirect = self::whereIn('redirect', $redirectMatches)->first();
+        
+        $redirect = self::whereIn('redirect', array_unique($redirectMatches))->first();
         if (!empty($redirect)) {
             return $redirect;
         } else {
