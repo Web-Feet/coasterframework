@@ -36,7 +36,7 @@ class PageSearchData extends Eloquent
         $pageLanguages = PageLang::all();
         foreach ($pageLanguages as $pageLang) {
             static::updateText(strip_tags($pageLang->name), 0, $pageLang->page_id, $pageLang->language_id);
-            $pageBlocks = Block::getDataForVersion(new PageBlock, $pageLang->live_version, ['language_id', 'page_id'], [$pageLang->language_id, $pageLang->page_id]);
+            $pageBlocks = Block::getDataForVersion(new PageBlock, $pageLang->live_version, ['language_id' => $pageLang->language_id, 'page_id' => $pageLang->page_id]);
             foreach ($pageBlocks as $pageBlock) {
                 $block = Block::preloadClone($pageBlock->block_id)->setPageId($pageBlock->page_id);
                 $searchText = $block->search_weight > 0 ? $block->getTypeObject()->generateSearchText($pageBlock->content) : '';

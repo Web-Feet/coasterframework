@@ -2,6 +2,7 @@
 
 use CoasterCms\Libraries\Traits\DataPreLoad;
 use Eloquent;
+use Illuminate\Database\Eloquent\Collection;
 
 class PageBlockDefault extends Eloquent
 {
@@ -33,6 +34,14 @@ class PageBlockDefault extends Eloquent
         }
         $blockData = $getDataQuery->orderBy('version', 'desc')->first();
         return $blockData ? $blockData->content : null;
+    }
+
+    /**
+     * @return Collection
+     */
+    protected static function _preloadCollection()
+    {
+        return Block::getDataForVersion(new static, 0);
     }
 
     /**

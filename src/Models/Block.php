@@ -3,6 +3,8 @@
 use CoasterCms\Libraries\Traits\DataPreLoad;
 use DB;
 use Eloquent;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Query\JoinClause;
 use Request;
 
 class Block extends Eloquent
@@ -312,93 +314,74 @@ class Block extends Eloquent
 
     /**
      * @param Eloquent $model
-     * @param int $version (select specific version or alternatively -1 for live version 0 & for latest version)
-     * @param array $filter_on
-     * @param array $filter_values
-     * @param string $order_by
-     * @return array
+     * @param int $version (select specific version or 0 for latest version (-1 available on page_blocks to get live version))
+     * @param array $filters
+     * @param array $orderBys
+     * @return Collection
      * @throws \Exception
      */
-    public static function getDataForVersion($model, $version, $filter_on = [], $filter_values = [], $order_by = '')
+    public static function getDataForVersion($model, $version, $filters = [], $orderBys = [])
     {
-        $parameters = [];
-        $where_qs['j'] = [];
-        $where_qs['main'] = ['main.content != ""'];
-        if (!empty($filter_on) && !empty($filter_values)) {
-            $parameters = [];
-            foreach ($filter_values as $k => $filter_value) {
-                if (!empty($filter_value)) {
-                    if (is_array($filter_value)) {
-                        $i = 1;
-                        $vars1 = [];
-                        $vars2 = [];
-                        foreach ($filter_value as $value) {
-                            $parameters['fid1_' . $k . $i] = $value;
-                            $vars1[] = ':fid1_' . $k . $i;
-                            $parameters['fid2_' . $k . $i] = $value;
-                            $vars2[] = ':fid2_' . $k . $i;
-                            $i++;
-                        }
-                        $eq1 = "IN (" . implode(", ", $vars1) . ")";
-                        $eq2 = "IN (" . implode(", ", $vars2) . ")";
+        $tableName = $model->getTable();
+        $fullTableName = DB::getTablePrefix() . $tableName;
+        $pageLangTable = DB::getTablePrefix() . (new PageLang)->getTable();
 
-                    } else {
-                        $parameters['fid1' . $k] = $filter_value;
-                        $parameters['fid2' . $k] = $filter_value;
-                        $eq1 = '= :fid1' . $k;
-                        $eq2 = '= :fid2' . $k;
-                    }
-                    $where_qs['j'][] = 'inr.' . $filter_on[$k] . ' ' . $eq1;
-                    $where_qs['main'][] = 'main.' . $filter_on[$k] . ' ' . $eq2;
+        switch ($tableName) {
+            case 'page_blocks': $identifiers = ['block_id', 'language_id', 'page_id']; break;
+            case 'page_blocks_default': $identifiers = ['block_id', 'language_id']; break;
+            case 'page_blocks_repeater_data': $identifiers = ['block_id', 'row_key']; break;
+            default: throw new \Exception('unknown blocks data table: ' . $fullTableName);
+        }
+        $selectIdentifiers = 'maxVersions.' . implode(', maxVersions.', $identifiers);
+        $joinClauses = ['version' => 'version'] + $identifiers;
+
+        $useMaxLiveJoin = ($tableName == 'page_blocks' && $version == -1) ? 'JOIN '.$pageLangTable.' pl ON pl.page_id = maxVersions.page_id AND pl.language_id = maxVersions.language_id AND pl.live_version >= maxVersions.version' : '';
+
+        $whereQueries = ['main' => [], 'maxVersions' => []];
+        $whereBindings = ['main' => [], 'maxVersions' => []];
+        foreach ($filters as $filterOn => $filterValue) {
+            if (!is_null($filterValue) && $filterValue !== '') {
+                if (is_array($filterValue)) {
+                    $bindings = $filterValue;
+                    $eq = 'IN (' . implode(', ', array_fill(0, count($bindings), '?')) . ')';
                 } else {
-                    return null;
+                    $bindings = [$filterValue];
+                    $eq = '= ?';
+                }
+                foreach ($whereQueries as $queryIdentifier => $query) {
+                    $whereQueries[$queryIdentifier][] = $queryIdentifier . '.' . $filterOn . ' ' . $eq;
+                    $whereBindings[$queryIdentifier] = array_merge($whereBindings[$queryIdentifier], $bindings);
                 }
             }
         }
-        if (!empty($version) && $version > 0) {
-            $where_qs['j'][] = 'version <= :version';
-            $parameters['version'] = $version;
+        $whereQueries['main'][] = 'main.content != ""';
+        if ($version > 0) {
+            $whereQueries['maxVersions'][] = 'version <= ?';
+            $whereBindings['maxVersions'][] = $version;
         }
-        foreach ($where_qs as $k => $where_q) {
-            if (!empty($where_q)) {
-                $where_qs[$k] = 'where ' . implode(' and ', $where_q);
-            } else {
-                $where_qs[$k] = '';
-            }
+
+        $modelDataVersionQuery = $model::from($fullTableName . ' as main')
+            ->join(
+                DB::raw(
+                    '(SELECT ' . $selectIdentifiers . ', MAX(maxVersions.version) as version FROM ' . $fullTableName . ' maxVersions '
+                     . $useMaxLiveJoin . ' '
+                     . (!empty($whereQueries['maxVersions']) ? 'WHERE ' . implode(' AND ', $whereQueries['maxVersions']) : '') . ' 
+                     GROUP BY ' . $selectIdentifiers . ') j'
+                ),
+                function (JoinClause $join) use($joinClauses) {
+                    foreach ($joinClauses as $joinClauseIdentifier) {
+                        $join->on('main.'.$joinClauseIdentifier, '=', 'j.'.$joinClauseIdentifier);
+                    }
+                })
+            ->whereRaw(!empty($whereQueries['main']) ? implode(' AND ', $whereQueries['main']) : '')
+            ->setBindings(array_merge($whereBindings['maxVersions'], $whereBindings['main']));
+
+        $orderBys = $orderBys ?: ['block_id' => 'ASC'];
+        foreach ($orderBys as $orderBy => $orderDirection) {
+            $modelDataVersionQuery->orderBy('main.' . $orderBy, $orderDirection);
         }
-        $on_clause = 'main.version = j.version';
-        $max_live = '';
-        $table_name = $model->getTable();
-        $full_table_name = DB::getTablePrefix() . $table_name;
-        $pageLangTable = DB::getTablePrefix().(new PageLang)->getTable();
-        switch ($table_name) {
-            case 'page_blocks':
-                $max_live = ($version == -1) ? 'join '.$pageLangTable.' pl on pl.page_id = inr.page_id and pl.language_id = inr.language_id and pl.live_version >= inr.version' : '';
-                $identifiers = ['block_id', 'language_id', 'page_id'];
-                break;
-            case 'page_blocks_default':
-                $identifiers = ['block_id', 'language_id'];
-                break;
-            case 'page_blocks_repeater_data':
-                $identifiers = ['block_id', 'row_key'];
-                break;
-            default:
-                throw new \Exception('unknown blocks data table: ' . $full_table_name);
-        }
-        foreach ($identifiers as $identifier) {
-            $on_clause .= ' and main.' . $identifier . ' = j.' . $identifier;
-        }
-        $select_identifiers = 'inr.' . implode(', inr.', $identifiers);
-        $order_by = !empty($order_by) ? ' order by main.' . $order_by : '';
-        $correct_versions_query = "
-            select main.* from " . $full_table_name . " main
-            inner join(
-                select " . $select_identifiers . ", max(inr.version) version from " . $full_table_name . " inr " . $max_live . "
-                " . $where_qs['j'] . "
-                group by " . $select_identifiers . "
-            ) j on " . $on_clause . "
-            " . $where_qs['main'] . $order_by;
-        return DB::select(DB::raw($correct_versions_query), $parameters);
+
+        return $modelDataVersionQuery->get(['main.*']);
     }
 
     /**

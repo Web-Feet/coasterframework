@@ -41,7 +41,7 @@ class PageBlockRepeaterData extends Eloquent
     {
         $repeaterRowsById = [];
         if ($rowIds = PageBlockRepeaterRows::getRowIds($repeaterId)) {
-            $repeaterRowsData = Block::getDataForVersion(new static, $version, ['row_key'], [array_keys($rowIds)]) ?: [];
+            $repeaterRowsData = Block::getDataForVersion(new static, $version, ['row_key' => array_keys($rowIds)]) ?: [];
             foreach ($repeaterRowsData as $repeaterRowData) {
                 $repeaterRowId = $rowIds[$repeaterRowData->row_key];
                 if (!isset($repeaterRowsById[$repeaterRowId])) {

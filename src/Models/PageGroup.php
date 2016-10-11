@@ -184,9 +184,8 @@ class PageGroup extends Eloquent
                         $sortedPages = Block::getDataForVersion(
                             new PageBlock,
                             -1,
-                            ['block_id', 'page_id'],
-                            [$sortByBlockId, self::$groupPages[$this->id][$filterType]],
-                            'content ' . $orderDir
+                            ['block_id' => $sortByBlockId, 'page_id' => self::$groupPages[$this->id][$filterType]],
+                            ['content' => $orderDir]
                         );
                         $sortOrder = 0;
                         foreach ($sortedPages as $index => $sortedPage) {
