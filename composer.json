@@ -22,7 +22,8 @@
     },
     "autoload": {
         "psr-4": {
-            "CoasterCms\\": "src/"
+            "CoasterCms\\": "src/",
+            "CoasterCmsDatabase\\Seeds\\": "database/seeds/"
         }
     }
 }
