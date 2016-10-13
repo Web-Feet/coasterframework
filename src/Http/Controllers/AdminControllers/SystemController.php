@@ -307,6 +307,7 @@ class SystemController extends Controller
             $dbTablesSelect = DB::select('Show Tables');
             $prefix = DB::getTablePrefix();
             foreach ($dbTablesSelect as $table) {
+                $table = (array) $table;
                 $table = reset($table);
                 if (empty($prefix) || strrpos($table, $prefix) === 0) {
                     $name = substr($table, strlen($prefix));
