@@ -360,13 +360,18 @@ class Block extends Eloquent
             $whereBindings['maxVersions'][] = $version;
         }
 
-        $modelDataVersionQuery = $model::from($fullTableName . ' as main')
+        // add db prefix for raw where sql
+        foreach ($whereQueries['main'] as $k => $mainWhereQuery) {
+            $whereQueries['main'][$k] = DB::getTablePrefix() . $mainWhereQuery;
+        }
+
+        $modelDataVersionQuery = $model::from($tableName . ' as main')
             ->join(
                 DB::raw(
                     '(SELECT ' . $selectIdentifiers . ', MAX(maxVersions.version) as version FROM ' . $fullTableName . ' maxVersions '
-                     . $useMaxLiveJoin . ' '
-                     . (!empty($whereQueries['maxVersions']) ? 'WHERE ' . implode(' AND ', $whereQueries['maxVersions']) : '') . ' 
-                     GROUP BY ' . $selectIdentifiers . ') j'
+                    . $useMaxLiveJoin . ' '
+                    . (!empty($whereQueries['maxVersions']) ? 'WHERE ' . implode(' AND ', $whereQueries['maxVersions']) : '') . ' 
+                     GROUP BY ' . $selectIdentifiers . ')' . DB::getTablePrefix() . 'j'
                 ),
                 function (JoinClause $join) use($joinClauses) {
                     foreach ($joinClauses as $joinClauseIdentifier) {
