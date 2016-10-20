@@ -615,7 +615,7 @@ class Page extends Eloquent
         $pageLang->url = trim($pageLang->url);
         if (!$this->link) {
             $pageLang->url = strtolower(str_replace(['/', ' '], '-', $pageLang->url));
-            if (preg_match('#^[-]+$#', $pageLangPost['url'])) {
+            if (preg_match('#^[-]+$#', $pageLang->url)) {
                 $pageLang->url = '';
             }
             if ($pageLang->url == '' && !$this->parent) {
