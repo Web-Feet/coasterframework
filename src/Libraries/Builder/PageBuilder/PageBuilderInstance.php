@@ -261,7 +261,7 @@ class PageBuilderInstance
         $imageData->file = '/themes/' . $this->theme . '/img/' . $fileName;
         $imageBlock = (new Block);
         $imageBlock->type = 'image';
-        return $imageBlock->getTypeObject()->display($imageData, $options);
+        return $imageBlock->getTypeObject()->display(serialize($imageData), $options);
     }
 
     /**
