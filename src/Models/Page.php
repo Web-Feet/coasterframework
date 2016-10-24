@@ -584,7 +584,7 @@ class Page extends Eloquent
         }
 
         if (!$this->pageCurrentLang) {
-            $this->pageCurrentLang = ($d = $this->pageDefaultLang) ? $d->replicate() : new PageLang;
+            $this->setRelation('pageCurrentLang', ($d = $this->pageDefaultLang) ? $d->replicate() : new PageLang);
             unset($this->pageCurrentLang->language_id);
         }
         $pageLang = $this->pageLang();
