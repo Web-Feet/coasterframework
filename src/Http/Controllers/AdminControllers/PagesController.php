@@ -96,8 +96,7 @@ class PagesController extends AdminController
             $this->getAdd($pageId);
             return null;
         } else {
-            $page_lang = PageLang::find($page->id);
-            AdminLog::new_log('Added page \'' . $page_lang->name . '\' (Page ID ' . $page->id . ')');
+            AdminLog::new_log('Added page \'' . $page->pageCurrentLang->name . '\' (Page ID ' . $page->id . ')');
             return \redirect()->route('coaster.admin.pages.edit', ['pageId' => $page->id]);
         }
     }
