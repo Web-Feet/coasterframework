@@ -259,8 +259,7 @@ class PagesController extends AdminController
 
         // save page info
         if ($existingPage->savePostData($version, $page_info, $page_info_lang, $page_groups)) {
-            $page_lang = PageLang::find($existingPage->id);
-            AdminLog::new_log('Updated page \'' . $page_lang->name . '\' (Page ID ' . $existingPage->id . ')');
+            AdminLog::new_log('Updated page \'' . $existingPage->pageLang()->name . '\' (Page ID ' . $existingPage->id . ')');
         } else {
             $this->addAlert('warning', '"Page Info" not updated (check tab for errors)');
         }
