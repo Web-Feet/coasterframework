@@ -64,7 +64,7 @@ class Repeater extends String_
                     foreach ($repeaterRows as $rowId => $row) {
                         if ($i % $cols == $column % $cols) {
                             $previousKey = PageBuilder::getCustomBlockDataKey();
-                            PageBuilder::setCustomBlockDataKey('repeater' . $repeaterId . '.' . $i);
+                            PageBuilder::setCustomBlockDataKey('repeater' . $repeaterId . '.' . $rowId);
                             foreach ($repeaterBlocks as $repeaterBlock) {
                                 if ($repeaterBlock->exists) {
                                     PageBuilder::setCustomBlockData($repeaterBlock->name, !empty($row[$repeaterBlock->id]) ? $row[$repeaterBlock->id] : '', null, false);
