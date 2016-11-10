@@ -49,7 +49,7 @@ class Repeater extends String_
                     $pagination = new LengthAwarePaginator($repeaterRows, count($repeaterRows), $options['per_page'], Request::input('page', 1));
                     $pagination->setPath(Request::getPathInfo());
                     $paginationLinks = PaginatorRender::run($pagination);
-                    $repeaterRows = array_slice($repeaterRows, (($pagination->currentPage() - 1) * $options['per_page']), $options['per_page']);
+                    $repeaterRows = array_slice($repeaterRows, (($pagination->currentPage() - 1) * $options['per_page']), $options['per_page'], true);
                 } else {
                     $paginationLinks = '';
                 }
@@ -61,7 +61,7 @@ class Repeater extends String_
                     $rows = count($repeaterRows);
                     $cols = !empty($options['cols']) ? (int)$options['cols'] : 1;
                     $column = !empty($options['column']) ? (int)$options['column'] : 1;
-                    foreach ($repeaterRows as $row) {
+                    foreach ($repeaterRows as $rowId => $row) {
                         if ($i % $cols == $column % $cols) {
                             $previousKey = PageBuilder::getCustomBlockDataKey();
                             PageBuilder::setCustomBlockDataKey('repeater' . $repeaterId . '.' . $i);
