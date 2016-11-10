@@ -680,7 +680,8 @@ class Page extends Eloquent
         if ($willPublish) {
             // if new page set as last ordered page
             if ($this->parent >= 0 && !$this->id) {
-                $this->order = static::where('parent', '=', $this->parent)->orderBy('order', 'desc')->first()->order + 1;
+                $lastSibling = static::where('parent', '=', $this->parent)->orderBy('order', 'desc')->first();
+                $this->order = $lastSibling ? $lastSibling->order + 1 : 1;
             }
 
             // if link remove template
