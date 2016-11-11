@@ -280,15 +280,19 @@ class Block extends Eloquent
     }
 
     /**
-     * @return string
+     * @param bool $globalFallback
+     * @return string|null
      */
-    public function getContent()
+    public function getContent($globalFallback = false)
     {
         if ($this->_repeaterId && $this->_repeaterRowId) {
             $blockData = PageBlockRepeaterData::getBlockData($this->id, $this->_versionId, $this->_repeaterId, $this->_repeaterRowId);
         } elseif ($this->_pageId) {
             $blockData = PageBlock::getBlockData($this->id, $this->_versionId, $this->_pageId);
         } else {
+            $global = true;
+        }
+        if (isset($global) || ($globalFallback && is_null($blockData))) {
             $blockData = PageBlockDefault::getBlockData($this->id, $this->_versionId);
         }
         return $blockData;

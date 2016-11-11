@@ -83,7 +83,7 @@ class Form extends String_
      */
     public function submission($formData)
     {
-        if ($form_settings = $this->_block->getContent()) {
+        if ($form_settings = $this->_block->getContent(true)) {
             $form_settings = $this->_defaultData($form_settings);
             $form_rules = BlockFormRule::get_rules($form_settings->template);
             $v = Validator::make($formData, $form_rules);
