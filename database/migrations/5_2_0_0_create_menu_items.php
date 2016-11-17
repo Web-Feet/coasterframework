@@ -20,7 +20,7 @@ class CreateMenuItems extends Migration
             $table->string('page_id');
             $table->integer('order')->default(0);
             $table->integer('sub_levels')->default(0);
-            $table->text('custom_name');
+            $table->text('custom_name')->nullable();
             $table->timestamps();
         });
     }
