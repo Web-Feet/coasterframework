@@ -261,6 +261,7 @@ class Repeater extends String_
         foreach ($repeaterBlockContents as $blockName => $content) {
             $block = Block::preloadClone($blockName);
             if ($block->exists || $blockName == 0) {
+                $block->id = ($blockName === 0) ? 0 : $block->id;
                 $block->setVersionId($this->_block->getVersionId())->setRepeaterData($repeaterId, $repeaterRowId)->setPageId($this->_block->getPageId())->getTypeObject()->save($content);
             }
         }
