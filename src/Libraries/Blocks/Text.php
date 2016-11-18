@@ -16,7 +16,10 @@ class Text extends String_
         if (!empty($options['source'])) {
             return $content;
         }
-        if (empty($options['meta'])) {
+        if (isset($options['meta']) &&  !isset($options['nl2br'])) {
+            $options['nl2br'] = $options['meta'];
+        }
+        if ((isset($options['nl2br']) && $options['nl2br']) || !isset($options['nl2br'])) {
             $content = nl2br($content);
         }
         if (!empty($options['length'])) {
