@@ -300,8 +300,20 @@ if (empty($assetsVersions['jquery']) || $force || version_compare($assetsVersion
     $zip->close();
     unlink($tinyMceZip);
 
-    $assetsVersions['jquery'] = '1.12.0';
-    file_put_contents($assetsFile, json_encode($assetsVersions));
+    $tinyCompressor2Zip = public_path('coaster/jquery/tinymce_compressor-4.0.0.zip');
+    $response = $guzzleClient->request('GET', 'https://github.com/tinymce/tinymce_compressor/archive/4.0.0.zip', [
+        'sink' => $tinyCompressor2Zip
+    ]);
+
+    $zip = new \CoasterCms\Helpers\Cms\File\Zip;
+    $zip->open($tinyCompressor2Zip);
+    $zip->extractFile('tinymce_compressor-4.0.0/tinymce.gzip.js', public_path('coaster/jquery/tinymce/tinymce.gzip.js'));
+    $zip->close();
+    unlink($tinyCompressor2Zip);
+
+    // Copy php compressor
+    copy(realpath(__DIR__.'/../public/jquery/tinymce/tinymce.gzip.php'), $coasterPublicFolder . '/jquery/tinymce/tinymce.gzip.php');
+    echo ".";
 
     $assetsVersions['jquery'] = '1.12.0';
     file_put_contents($assetsFile, json_encode($assetsVersions));
