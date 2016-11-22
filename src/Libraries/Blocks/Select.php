@@ -48,7 +48,7 @@ class Select extends String_
      */
     public function submit($postContent)
     {
-        return $this->save(!empty($postContent['select']) ? $postContent['select'] : '');
+        return $this->save(isset($postContent['select']) ? $postContent['select'] : '');
     }
 
 }
