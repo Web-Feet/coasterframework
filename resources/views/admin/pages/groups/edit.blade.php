@@ -27,7 +27,7 @@
 
             {!! CmsBlockInput::make('string', ['label' => 'Group Name', 'name' => 'group[name]', 'value' => $group->name]) !!}
             {!! CmsBlockInput::make('string', ['label' => 'Item Name', 'name' => 'group[item_name]', 'value' => $group->item_name]) !!}
-            {!! CmsBlockInput::make('select', ['label' => 'Default Template', 'name' => 'group[default_template]', 'value' => $templateSelectContent]) !!}
+            {!! CmsBlockInput::make('select', ['label' => 'Default Template', 'name' => 'group[default_template]', 'selectOptions' => $templateSelectOptions, 'value' => $defaultTemplate]) !!}
             {!! CmsBlockInput::make('string', ['label' => 'Url Priority', 'name' => 'group[url_priority]', 'value' => $group->url_priority]) !!}
 
             <div class="col-sm-10 col-sm-offset-2">

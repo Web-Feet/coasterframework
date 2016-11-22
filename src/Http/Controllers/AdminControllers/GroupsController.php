@@ -72,12 +72,10 @@ class GroupsController extends Controller
         $group = PageGroup::preload($groupId);
         if ($group->exists) {
 
-            $templateSelectContent = new \stdClass;
-            $templateSelectContent->options = [0 => '-- No default --'] + Theme::get_template_list($group->default_template);
-            $templateSelectContent->selected = $group->default_template;
+            $templateSelectOptions = [0 => '-- No default --'] + Theme::get_template_list($group->default_template);
             $blockList = Block::idToLabelArray();
 
-            $this->layoutData['content'] = View::make('coaster::pages.groups.edit', ['group' => $group, 'templateSelectContent' => $templateSelectContent, 'blockList' => $blockList]);
+            $this->layoutData['content'] = View::make('coaster::pages.groups.edit', ['group' => $group, 'defaultTemplate' => $group->default_template, 'templateSelectOptions' => $templateSelectOptions, 'blockList' => $blockList]);
         }
     }
 
@@ -89,6 +87,9 @@ class GroupsController extends Controller
             $groupInput = Request::input('group', []);
             foreach ($groupInput as $groupAttribute => $attributeValue) {
                 if ($group->$groupAttribute !== null && $groupAttribute != 'id') {
+                    if (is_array($attributeValue)) {
+                        $attributeValue = isset($attributeValue['select']) ? $attributeValue['select'] : '';
+                    }
                     $group->$groupAttribute = $attributeValue;
                 }
             }
@@ -116,7 +117,7 @@ class GroupsController extends Controller
             PageGroupAttribute::whereIn('id', $deleteAttributeIds)->delete();
         }
 
-        $this->getEdit($groupId);
+        return redirect()->route('coaster.admin.groups.edit', ['groupId' => $groupId]);
     }
 
 
