@@ -722,8 +722,8 @@ class Page extends Eloquent
         /*
          * Save other page info
          */
-        if ($willPublish && array_key_exists('menus', $pageInfoOther) &&  Auth::action('menus')) {
-            MenuItem::set_page_menus($this->id, $pageInfoOther['menus']);
+        if ($willPublish && Auth::action('menus')) {
+            MenuItem::set_page_menus($this->id, array_key_exists('menus', $pageInfoOther) ? $pageInfoOther['menus'] : []);
         }
 
         if ($canPublish && array_key_exists('beacons', $pageInfoOther) && Auth::action('themes.beacons-update')) {
