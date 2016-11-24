@@ -460,7 +460,7 @@ class Page extends Eloquent
         }
         $urlPrefixes = $this->parentPathIds();
         foreach ($urlPrefixes as $pageId => $urlPrefix) {
-            if (!in_array($pageId, $fullUrls)) {
+            if (!key_exists($pageId, $fullUrls)) {
                 $fullUrls[$pageId] = '?';
             }
         }
