@@ -240,7 +240,7 @@ class Repeater extends String_
      */
     public function insertRow($repeaterBlockContents)
     {
-        if (!($repeaterId = $this->_block->getRepeaterId())) {
+        if (!($repeaterId = $this->_block->getContent())) {
             $repeaterId = PageBlockRepeaterRows::nextFreeRepeaterId();
             $this->save($repeaterId);
             $currentRepeaterRows = [];
