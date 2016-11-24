@@ -575,11 +575,11 @@ class Page extends Eloquent
             'live_end' => null
         ], $this->getAttributes());
         foreach ($pageDefaults as $pageAttribute => $pageDefault) {
-            if (in_array($pageAttribute, ['template'])) {
-                $pageVersion->$pageAttribute = $pagePost[$pageAttribute];
-                $this->$pageAttribute = $pageDefault;
-            } else {
-                $this->$pageAttribute = array_key_exists($pageAttribute, $pagePost) ? $pagePost[$pageAttribute] : $pageDefault;
+            $this->$pageAttribute = $pageDefault;
+            switch ($pageAttribute) {
+                case 'template': $pageVersion->$pageAttribute = $pagePost[$pageAttribute]; break;
+                default:
+                    $this->$pageAttribute = array_key_exists($pageAttribute, $pagePost) ? $pagePost[$pageAttribute] : $this->$pageAttribute;
             }
         }
 
@@ -667,7 +667,7 @@ class Page extends Eloquent
         }
 
         /*
-         * Check if page info can be updated (based on publishing action, or allowed if new page)
+         * Check if page info can be updated (based on publishing auth action, or allowed if new page)
          */
         $authPageIdCheck = $this->id ?: ($this->parent > 0 ? $this->parent : 0);
         $canPublish = (config('coaster::admin.publishing') > 0 && Auth::action('pages.version-publish', ['page_id' => $authPageIdCheck])) || (config('coaster::admin.publishing') == 0 && Auth::action('pages.edit', ['page_id' => $authPageIdCheck]));
@@ -684,7 +684,9 @@ class Page extends Eloquent
                 $this->order = $lastSibling ? $lastSibling->order + 1 : 1;
             }
 
-            // if link remove template
+            // if new page publish template
+            $this->template = $this->id ? $this->template: $pageVersion->template;
+            // if link remove live template
             $this->template = $this->link ? 0 : $this->template;
 
             // set page live between but no dates set set as hidden, or if can't publish set as hidden
