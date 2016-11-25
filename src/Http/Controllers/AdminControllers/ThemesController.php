@@ -228,7 +228,7 @@ class ThemesController extends Controller
             $themes = base_path('resources/views/themes');
             if (is_dir($themes)) {
                 foreach (scandir($themes) as $theme) {
-                    if (!is_dir($theme) && $theme != '.' && $theme != '..') {
+                    if (is_dir($themes . DIRECTORY_SEPARATOR . $theme) && $theme != '.' && $theme != '..') {
 
                         $forms = $themes . DIRECTORY_SEPARATOR . $theme . '/blocks/forms';
                         if (is_dir($forms)) {
