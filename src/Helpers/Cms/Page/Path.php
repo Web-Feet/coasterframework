@@ -78,7 +78,6 @@ class Path
                 $pagePathData->fullUrl = $pagePathData->url;
             } else {
                 $pagePathData->fullUrl = ($parentPathData ? $parentPathData->fullUrl : '') . '/' . $pagePathData->url;
-                $pagePathData->fullUrl = $pagePathData->fullUrl == '//' ? '/' : $pagePathData->fullUrl;
             }
 
             if ($childPages = Page::getChildPages($pageId)) {
@@ -131,7 +130,7 @@ class Path
                     $groupPath = current($pagePathData->groupContainers);
                     if ($groupPath['canonical'] || $groupPath['priority'] > 100 || is_null($pagePathData->fullUrl)) {
                         $pagePathData->fullName = $groupPath['name'] . $pagePathData->separator . $pagePathData->name;
-                        $pagePathData->fullUrl = $groupPath['url'] . '/' . $pagePathData->url;
+                        $pagePathData->fullUrl = rtrim($groupPath['url'], '/') . '/' . $pagePathData->url;
                     }
                 }
                 $loadedIds[] = $pageId;
@@ -155,7 +154,7 @@ class Path
             self::$_preLoaded[$pageId] = new self($pageLang->exists);
             self::$_preLoaded[$pageId]->pageId = $pageId;
             self::$_preLoaded[$pageId]->name = $pageLang->name;
-            self::$_preLoaded[$pageId]->url = $pageLang->url;
+            self::$_preLoaded[$pageId]->url = rtrim($pageLang->url, '/');
         }
         return self::$_preLoaded[$pageId];
     }

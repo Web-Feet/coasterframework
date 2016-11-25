@@ -116,12 +116,10 @@ class PageLoader
                         Feed::removeFeedExtensionFromPath($currentSegment);
                     }
 
-                    if ($i > 1) {
-                        $parentPage = $this->pageLevels[$i - 1];
-                    } else {
-                        $parentPage = new Page;
+                    $parentPage = $this->pageLevels[$i - 1];
+                    if ($i == 1) {
+                        $parentPage = clone $parentPage;
                         $parentPage->id = 0;
-                        $parentPage->group_container = 0;
                     }
 
                     $this->pageLevels[$i] = self::_loadSubPage($currentSegment, $parentPage);
