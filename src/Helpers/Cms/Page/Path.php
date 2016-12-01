@@ -144,7 +144,7 @@ class Path
     }
 
     /**
-     * @param $pageId
+     * @param string|int $pageId
      * @return Path
      */
     protected static function _getById($pageId)
@@ -160,7 +160,7 @@ class Path
     }
 
     /**
-     * @param $pageId
+     * @param string|int $pageId
      * @return Path
      */
     public static function getById($pageId)
