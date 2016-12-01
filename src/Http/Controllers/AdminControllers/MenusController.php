@@ -8,6 +8,7 @@ use CoasterCms\Models\Menu;
 use CoasterCms\Models\MenuItem;
 use CoasterCms\Models\Page;
 use Request;
+use Response;
 use View;
 
 class MenusController extends Controller
@@ -75,17 +76,15 @@ class MenusController extends Controller
 
     public function postDelete($itemId)
     {
-        $menu_item = MenuItem::find($itemId);
-        if (!empty($menu_item)) {
+        if ($menu_item = MenuItem::find($itemId)) {
             $this->preload_menu_item_names();
             // log action
             $item_name = $this->page_names[$menu_item->page_id];
             $log_id = AdminLog::new_log('Menu Item \'' . $item_name . '\' deleted from \'' . Menu::name($menu_item->menu_id) . '\'');
             $menu_item->delete();
-            return $log_id;
-        } else {
-            return 0;
+            return json_encode([$log_id]);
         }
+        return Response::make('Menu item with ID '.$itemId.' not found', 500);
     }
 
     public function postSort()
