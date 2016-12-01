@@ -47,7 +47,7 @@ function selected_tab(form, indexOrId) {
         indexOrId = hash.substring(4);
     }
     var tabs = $('#contentTabs > .nav-tabs');
-    var tabEl = $('#'+indexOrId);
+    var tabEl = $('#navtab'+indexOrId);
     if (!tabEl.length) {
         tabEl = tabs.children().eq(parseInt(indexOrId));
         if (!tabEl.length) {
