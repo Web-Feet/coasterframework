@@ -36,6 +36,19 @@ class Video extends String_
     }
 
     /**
+     * @param string $content
+     * @return string
+     */
+    public function edit($content)
+    {
+        $this->_editViewData['placeHolder'] = [];
+        if ($this->_editViewData['videoInfo'] = $this->_cache($content)) {
+            $this->_editViewData['placeHolder'][$content] = $this->_editViewData['videoInfo']->snippet->title;
+        }
+        return parent::edit($content);
+    }
+
+    /**
      * Save video with and youtube video API data to cache
      * @param array $postContent
      * @return static
