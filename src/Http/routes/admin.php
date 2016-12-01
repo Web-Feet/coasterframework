@@ -46,7 +46,7 @@ Route::group(['prefix' => $adminUrl, 'middleware' => ['web', 'coaster.admin'], '
     Route::get('pages/add/{pageId?}/{groupId?}', ['uses' => 'PagesController@getAdd', 'as' => $routeNamePrefix . 'pages.add']);
     Route::post('pages/add/{pageId?}/{groupId?}', ['uses' => 'PagesController@postAdd', 'as' => $routeNamePrefix . 'pages.add.post']);
     Route::get('pages/edit/{pageId}/{version?}', ['uses' => 'PagesController@getEdit', 'as' => $routeNamePrefix . 'pages.edit'])->where(['pageId' => '\w+', 'version' => '\w+']);
-    Route::post('pages/edit/{pageId}', ['uses' => 'PagesController@postEdit', 'as' => $routeNamePrefix . 'pages.edit.post']);
+    Route::post('pages/edit/{pageId}/{version?}', ['uses' => 'PagesController@postEdit', 'as' => $routeNamePrefix . 'pages.edit.post']);
     Route::post('pages/sort', ['uses' => 'PagesController@postSort', 'as' => $routeNamePrefix . 'pages.sort']);
     Route::post('pages/delete/{pageId}', ['uses' => 'PagesController@postDelete', 'as' => $routeNamePrefix . 'pages.delete']);
     Route::post('pages/versions/{pageId}', ['uses' => 'PagesController@postVersions', 'as' => $routeNamePrefix . 'pages.versions']);
