@@ -78,6 +78,7 @@ class InstallController extends Controller
                         \mkdir($dir, 0777, true);
                     }
                 }
+                $next = true;
             } catch (\Exception $e) {}
             if (!$isWritable = is_writable($dir)) {
                 $continue = false;
