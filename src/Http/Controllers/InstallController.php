@@ -75,7 +75,7 @@ class InstallController extends Controller
                     if (!$isWritable) { // is dir at this point
                         file_put_contents($dir, '');
                     } else {
-                        \mkdir($dir, 0777, true);
+                        \mkdir($dir, 0755, true);
                     }
                 }
                 $next = true;
