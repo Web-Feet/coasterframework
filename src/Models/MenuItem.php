@@ -1,9 +1,12 @@
 <?php namespace CoasterCms\Models;
 
+use CoasterCms\Helpers\Cms\Page\Path;
+use CoasterCms\Libraries\Traits\Logger;
 use Eloquent;
 
 class MenuItem extends Eloquent
 {
+    use Logger;
 
     protected $table = 'menu_items';
 
@@ -48,6 +51,15 @@ class MenuItem extends Eloquent
         if (!empty($current)) {
             self::where('page_id', '=', $page_id)->whereIn('menu_id', $current)->delete();
         }
+    }
+
+    public static function boot()
+    {
+        parent::boot();
+        static::deleted(function (MenuItem $menuItem) {
+            $log = 'Menu Item \'' . Path::getFullName($menuItem->page_id) . '\' deleted from \'' . Menu::name($menuItem->menu_id) . '\'';
+            $menuItem->addLogWithBackup($log, $menuItem);
+        });
     }
 
 }

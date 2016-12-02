@@ -77,12 +77,8 @@ class MenusController extends Controller
     public function postDelete($itemId)
     {
         if ($menu_item = MenuItem::find($itemId)) {
-            $this->preload_menu_item_names();
-            // log action
-            $item_name = $this->page_names[$menu_item->page_id];
-            $log_id = AdminLog::new_log('Menu Item \'' . $item_name . '\' deleted from \'' . Menu::name($menu_item->menu_id) . '\'');
             $menu_item->delete();
-            return json_encode([$log_id]);
+            return $menu_item->getJSONLogIds();
         }
         return Response::make('Menu item with ID '.$itemId.' not found', 500);
     }

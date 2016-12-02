@@ -6,11 +6,16 @@ class Backup extends Eloquent
 {
     protected $table = 'backups';
 
+    /**
+     * @var int
+     */
+    protected static $_backupLogId = null;
+
     public static function new_backup($log, $model, $data)
     {
         if (!empty($data)) {
             $new_backup = new self;
-            $new_backup->log_id = $log;
+            $new_backup->log_id = static::$_backupLogId ?: $log;
             if (!is_array($data) && !is_a($data, 'Illuminate\Database\Eloquent\Collection')) {
                 $new_backup->primary_id = $data->id;
             } else {
@@ -53,7 +58,22 @@ class Backup extends Eloquent
         } else {
             $obj->save();
         }
+    }
 
+    /**
+     * @param int $id
+     */
+    public static function useBackupLogId($id)
+    {
+        static::$_backupLogId = $id;
+    }
+
+    /**
+     *
+     */
+    public static function resetBackupLogId()
+    {
+        static::$_backupLogId = null;
     }
 
 }
