@@ -49,7 +49,7 @@
         $(document).ready(function () {
             $('.addButton').click(function () {
                 $.ajax({
-                    url: route('coaster.admin.themes'),
+                    url: route('coaster.admin.themes.beacons.post'),
                     type: 'POST',
                     data: {add: true},
                     success: function (r) {
