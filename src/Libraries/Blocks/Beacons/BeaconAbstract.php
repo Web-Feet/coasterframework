@@ -1,5 +1,8 @@
 <?php namespace CoasterCms\Libraries\Blocks\Beacons;
 
+use GuzzleHttp\Client;
+use Illuminate\Support\Collection;
+
 /**
  * Beacon Abstract
  */
@@ -11,7 +14,7 @@ abstract class BeaconAbstract
    * If uid is provided returns one beacon
    *
    * @param string [$uid (Beacon UID)]
-   * @return stdClass
+   * @return \stdClass
    */
   abstract function listBeacons($uid = '');
 
@@ -25,11 +28,11 @@ abstract class BeaconAbstract
   abstract function setUrl($uid, $url);
 
   /**
-   * Abdstract for beacon "driver" Get list of beacons
+   * Abstract for beacon "driver" Get list of beacons
    *
    * Returns collection of beacons with the url assigned to them
    *
-   * @param string|null $uid (Beacon UID)
+   * @param string $url
    * @return Collection
    */
   abstract function getBeaconsByUrl($url = '');
@@ -45,7 +48,7 @@ abstract class BeaconAbstract
   /**
    * Get pending configs
    *
-   * @return  stdClass
+   * @return \stdClass
    */
   abstract public function getPendingConfigs();
 
