@@ -53,7 +53,7 @@ if (empty($assetsVersions['ace']) || $force || version_compare($assetsVersions['
     $zipPath = public_path('coaster/ace-'.$releaseFileName);
     $response = $guzzleClient->request('GET', 'https://github.com/ajaxorg/ace-builds/archive/'.$releaseFileName, [
         'sink' => $zipPath
-    ]);
+    ])->getBody()->close();
     echo ".";
 
     $zip = new \CoasterCms\Helpers\Cms\File\Zip;
@@ -82,7 +82,7 @@ if (empty($assetsVersions['bootstrap']) || $force || version_compare($assetsVers
     $bootstrapZip = public_path('coaster/bootstrap-3.3.6-dist.zip');
     $response = $guzzleClient->request('GET', 'https://github.com/twbs/bootstrap/releases/download/v3.3.6/bootstrap-3.3.6-dist.zip', [
         'sink' => $bootstrapZip
-    ]);
+    ])->getBody()->close();
     echo ".";
 
     $zip = new \CoasterCms\Helpers\Cms\File\Zip;
@@ -110,7 +110,7 @@ if (empty($assetsVersions['filemanager']) || $force || version_compare($assetsVe
     $client = new \GuzzleHttp\Client;
     $response = $guzzleClient->request('GET', 'https://github.com/trippo/ResponsiveFilemanager/releases/download/v9.10.1/responsive_filemanager.zip', [
         'sink' => $responsiveFileManagerZip
-    ]);
+    ])->getBody()->close();
     echo ".";
 
     $zip = new \CoasterCms\Helpers\Cms\File\Zip;
@@ -192,18 +192,18 @@ if (empty($assetsVersions['jquery']) || $force || version_compare($assetsVersion
 
     $response = $guzzleClient->request('GET', 'https://code.jquery.com/jquery-1.12.0.min.js', [
         'sink' => public_path('coaster/jquery/jquery-1.12.0.min.js')
-    ]);
+    ])->getBody()->close();
     echo ".";
 
     $response = $guzzleClient->request('GET', 'https://cdnjs.cloudflare.com/ajax/libs/jquery-mousewheel/3.1.13/jquery.mousewheel.js', [
         'sink' => public_path('coaster/jquery/jquery.mousewheel.js')
-    ]);
+    ])->getBody()->close();
     echo ".";
 
     $nestedSortableZip = public_path('coaster/jquery/nestedSortable-master.zip');
     $response = $guzzleClient->request('GET', 'https://github.com/ilikenwf/nestedSortable/archive/master.zip', [
         'sink' => $nestedSortableZip
-    ]);
+    ])->getBody()->close();
 
     $zip = new \CoasterCms\Helpers\Cms\File\Zip;
     $zip->open($nestedSortableZip);
@@ -215,7 +215,7 @@ if (empty($assetsVersions['jquery']) || $force || version_compare($assetsVersion
     $fancyBoxZip = public_path('coaster/jquery/fancyBox-2.1.5.zip');
     $response = $guzzleClient->request('GET', 'https://github.com/fancyapps/fancyBox/archive/v2.1.5.zip', [
         'sink' => $fancyBoxZip
-    ]);
+    ])->getBody()->close();
 
     $zip = new \CoasterCms\Helpers\Cms\File\Zip;
     $zip->open($fancyBoxZip);
@@ -236,7 +236,7 @@ if (empty($assetsVersions['jquery']) || $force || version_compare($assetsVersion
     $jQueryFileUploadExternal = $jQueryFileUploadPublicDir . '/Gallery-2.16.0.zip';
     $response = $guzzleClient->request('GET', 'https://github.com/blueimp/Gallery/archive/2.16.0.zip', [
         'sink' => $jQueryFileUploadExternal
-    ]);
+    ])->getBody()->close();
     $zip = new \CoasterCms\Helpers\Cms\File\Zip;
     $zip->open($jQueryFileUploadExternal);
     $zip->extractFile('Gallery-2.16.0/js/jquery.blueimp-gallery.min.js', $jQueryFileUploadPublicDir . '/js/external/jquery.blueimp-gallery.min.js');
@@ -247,7 +247,7 @@ if (empty($assetsVersions['jquery']) || $force || version_compare($assetsVersion
     $jQueryFileUploadExternal = $jQueryFileUploadPublicDir . '/JavaScript-Canvas-to-Blob-2.2.0.zip';
     $response = $guzzleClient->request('GET', 'https://github.com/blueimp/JavaScript-Canvas-to-Blob/archive/2.2.0.zip', [
         'sink' => $jQueryFileUploadExternal
-    ]);
+    ])->getBody()->close();
     $zip = new \CoasterCms\Helpers\Cms\File\Zip;
     $zip->open($jQueryFileUploadExternal);
     $zip->extractFile('JavaScript-Canvas-to-Blob-2.2.0/js/canvas-to-blob.min.js', $jQueryFileUploadPublicDir . '/js/external/canvas-to-blob.min.js');
@@ -258,7 +258,7 @@ if (empty($assetsVersions['jquery']) || $force || version_compare($assetsVersion
     $jQueryFileUploadExternal = $jQueryFileUploadPublicDir . '/JavaScript-Load-Image-1.14.0.zip';
     $response = $guzzleClient->request('GET', 'https://github.com/blueimp/JavaScript-Load-Image/archive/1.14.0.zip', [
         'sink' => $jQueryFileUploadExternal
-    ]);
+    ])->getBody()->close();
     $zip = new \CoasterCms\Helpers\Cms\File\Zip;
     $zip->open($jQueryFileUploadExternal);
     $zip->extractFile('JavaScript-Load-Image-1.14.0/js/load-image.all.min.js', $jQueryFileUploadPublicDir . '/js/external/load-image.all.min.js');
@@ -269,7 +269,7 @@ if (empty($assetsVersions['jquery']) || $force || version_compare($assetsVersion
     $jQueryFileUploadExternal = $jQueryFileUploadPublicDir . '/JavaScript-Templates-2.5.5.zip';
     $response = $guzzleClient->request('GET', 'https://github.com/blueimp/JavaScript-Templates/archive/2.5.5.zip', [
         'sink' => $jQueryFileUploadExternal
-    ]);
+    ])->getBody()->close();
     $zip = new \CoasterCms\Helpers\Cms\File\Zip;
     $zip->open($jQueryFileUploadExternal);
     $zip->extractFile('JavaScript-Templates-2.5.5/js/tmpl.min.js', $jQueryFileUploadPublicDir . '/js/external/tmpl.min.js');
@@ -280,7 +280,7 @@ if (empty($assetsVersions['jquery']) || $force || version_compare($assetsVersion
     $select2Zip = public_path('coaster/jquery/select2-4.0.2.zip');
     $response = $guzzleClient->request('GET', 'https://github.com/select2/select2/archive/4.0.2.zip', [
         'sink' => $select2Zip
-    ]);
+    ])->getBody()->close();
 
     $zip = new \CoasterCms\Helpers\Cms\File\Zip;
     $zip->open($select2Zip);
@@ -292,7 +292,7 @@ if (empty($assetsVersions['jquery']) || $force || version_compare($assetsVersion
     $tinyMceZip = public_path('coaster/jquery/tinymce-dist-4.3.3.zip');
     $response = $guzzleClient->request('GET', 'https://github.com/tinymce/tinymce-dist/archive/4.3.3.zip', [
         'sink' => $tinyMceZip
-    ]);
+    ])->getBody()->close();
 
     $zip = new \CoasterCms\Helpers\Cms\File\Zip;
     $zip->open($tinyMceZip);
@@ -303,7 +303,7 @@ if (empty($assetsVersions['jquery']) || $force || version_compare($assetsVersion
     $tinyCompressor2Zip = public_path('coaster/jquery/tinymce_compressor-4.0.0.zip');
     $response = $guzzleClient->request('GET', 'https://github.com/tinymce/tinymce_compressor/archive/4.0.0.zip', [
         'sink' => $tinyCompressor2Zip
-    ]);
+    ])->getBody()->close();
 
     $zip = new \CoasterCms\Helpers\Cms\File\Zip;
     $zip->open($tinyCompressor2Zip);
@@ -371,7 +371,7 @@ if (empty($assetsVersions['jquery-ui']) || $force || version_compare($assetsVers
             'version' => '1.11.4'
         ],
         'sink' => $jQueryUIZip
-    ]);
+    ])->getBody()->close();
 
     $zip = new \CoasterCms\Helpers\Cms\File\Zip;
     $zip->open($jQueryUIZip);
@@ -384,7 +384,7 @@ if (empty($assetsVersions['jquery-ui']) || $force || version_compare($assetsVers
     $timePickerFile = public_path('coaster/jquery-ui/jquery-ui-timepicker-addon.js');
     $response = $guzzleClient->request('GET', 'https://github.com/trentrichardson/jQuery-Timepicker-Addon/archive/v1.4.zip', [
         'sink' => $timePickerZip
-    ]);
+    ])->getBody()->close();
 
     $zip = new \CoasterCms\Helpers\Cms\File\Zip;
     $zip->open($timePickerZip);
@@ -396,7 +396,7 @@ if (empty($assetsVersions['jquery-ui']) || $force || version_compare($assetsVers
 
     $response = $guzzleClient->request('GET', 'https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.2/jquery.ui.touch-punch.min.js', [
         'sink' => public_path('coaster/jquery-ui/jquery.ui.touch-punch.min.js')
-    ]);
+    ])->getBody()->close();
 
     $assetsVersions['jquery-ui'] = '1.11.4';
     file_put_contents($assetsFile, json_encode($assetsVersions));
@@ -416,7 +416,7 @@ if (empty($assetsVersions['securimage']) || $force || version_compare($assetsVer
     $client = new \GuzzleHttp\Client;
     $response = $guzzleClient->request('GET', 'https://github.com/dapphp/securimage/archive/3.6.3.zip', [
         'sink' => $secureImageZip
-    ]);
+    ])->getBody()->close();
     echo ".";
 
     $zip = new \CoasterCms\Helpers\Cms\File\Zip;
