@@ -100,7 +100,7 @@
                 else {
                   editor.session.setMode("ace/mode/html_blade");
                 }
-                ta.html(r.file);
+                ta[0].innerHTML = String(r.file);
                 editor.setValue(r.file, 1);
 
                 editor.on('input', function(){
