@@ -118,7 +118,7 @@ class PageLoader
 
                     $parentPage = $this->pageLevels[$i - 1];
                     if ($i == 1) {
-                        $parentPage = clone $parentPage;
+                        $parentPage = isset($parentPage) ? clone $parentPage : new Page;
                         $parentPage->id = 0;
                     }
 
