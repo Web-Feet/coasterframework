@@ -60,7 +60,7 @@
             $('.glyphicon-remove').click(function () {
                 var button = $(this);
                 $.ajax({
-                    url: route('coaster.admin.themes'),
+                    url: route('coaster.admin.themes.beacons.post'),
                     type: 'POST',
                     data: {delete_id: $(this).data('id')},
                     success: function () {
