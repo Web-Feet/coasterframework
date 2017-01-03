@@ -40,22 +40,17 @@ Class BlockBeacon extends Eloquent
                 self::$_beacons[$beacon->unique_id] = $beacon;
             }
             try {
+                $enabledDrivers = [
+                    'Kontakt' => config('coaster::key.kontakt'),
+                    'Estimote' => config('coaster::key.estimote')
+                ];
+
                 $devicesData = [];
-                $allPendingConfigs = [];
-
-                if (config('coaster::key.kontakt')) {
-                    $devicesData += array_map(function ($v) {$v->driver = 'Kontakt'; return $v;}, static::getClass('Kontakt')->listBeacons());
-                    $allPendingConfigs += static::getClass('Kontakt')->getPendingConfigs();
-                }
-                if (config('coaster::key.estimote')) {
-                    $devicesData += array_map(function ($v) {$v->driver = 'Estimote'; return $v;}, static::getClass('Estimote')->listBeacons());
-                    $allPendingConfigs += static::getClass('Estimote')->getPendingConfigs();
-                }
-
                 $pendingConfigs = [];
-                foreach ($allPendingConfigs as $pendingConfig) {
-                    if (!empty($pendingConfig->url)) {
-                        $pendingConfigs[$pendingConfig->uniqueId] = $pendingConfig;
+                foreach ($enabledDrivers as $driver => $apiKey) {
+                    if ($apiKey) {
+                        $devicesData += array_map(function ($v)use($driver) {$v->driver = $driver; return $v;}, static::getClass($driver)->listBeacons());
+                        $pendingConfigs += static::getClass($driver)->getPendingConfigs();
                     }
                 }
 

@@ -102,8 +102,8 @@ class EstimoteBeacon extends BeaconAbstract
             $tmp->profiles = ['EDDYSTONE'];
             $tmp->url = '';
 
-            $this->pendingDevices[$tmp->uniqueId] = clone $tmp;
             if (!empty($estimoteDevice->pending_settings->advertisers->eddystone_url)) {
+                $this->pendingDevices[$tmp->uniqueId] = clone $tmp;
                 $this->pendingDevices[$tmp->uniqueId]->url = $estimoteDevice->pending_settings->advertisers->eddystone_url[0]->url;
             }
 

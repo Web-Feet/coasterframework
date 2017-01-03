@@ -64,7 +64,15 @@ class KontaktBeacon extends BeaconAbstract
     {
         $client = $this->getClient();
         $beacons = json_decode($client->request('GET', 'config', ['query' => ['deviceType' => 'beacon']])->getBody());
-        return $beacons->configs;
+
+        $pendingConfigs = [];
+        foreach ($beacons->configs as $pendingConfig) {
+            if (!empty($pendingConfig->url)) {
+                $pendingConfigs[$pendingConfig->uniqueId] = $pendingConfig;
+            }
+        }
+
+        return $pendingConfigs;
     }
 
     public function listBeacons($uid = '')
