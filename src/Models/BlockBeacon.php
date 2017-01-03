@@ -204,7 +204,7 @@ Class BlockBeacon extends Eloquent
 
             if ($pageId) {
                 $pageUrl = Path::getFullUrl($pageId);
-                $pageUrl = str_replace('test', 'test.co.uk', URL::to($pageUrl));
+                $pageUrl = URL::to($pageUrl);
                 try {
                     $bitlyResponse = json_decode(self::_bitly()->request('GET', 'v3/shorten', [
                         'query' => [
@@ -215,11 +215,11 @@ Class BlockBeacon extends Eloquent
                     if ($bitlyResponse->status_code == 200) {
                         $beaconUrl = 'http://bit.ly/' . $bitlyResponse->data->hash;
                     } else {
-                        FormMessage::add('page_info_other[beacons]', 'Error generating bit.ly url (response1:  '.$bitlyResponse->status_txt.')');
+                        FormMessage::add('page_info_other[beacons]', 'Error generating bit.ly url (response:  '.$bitlyResponse->status_txt.')');
                         return 0;
                     }
                 } catch (RequestException $e) {
-                    FormMessage::add('page_info_other[beacons]', 'Error generating bit.ly url (response2: '.$e->getCode().')');
+                    FormMessage::add('page_info_other[beacons]', 'Error generating bit.ly url (response: '.$e->getCode().')');
                     return 0;
                 }
             }
