@@ -1,4 +1,4 @@
-<?php namespace CoasterCms\Libraries\Blocks\Beacons;
+<?php namespace CoasterCms\Libraries\Beacons;
 
 use GuzzleHttp\Client;
 use Illuminate\Support\Collection;
@@ -36,7 +36,6 @@ abstract class BeaconAbstract
    * @return Collection
    */
   abstract function getBeaconsByUrl($url = '');
-
 
   /**
    * Get guzzle client abstract
