@@ -137,16 +137,18 @@ class PageBuilderInstance
     }
 
     /**
+     * @param bool $withThemePath
      * @return string
      */
-    public function templatePath()
+    public function templatePath($withThemePath = true)
     {
+        $themePath = $withThemePath ? $this->themePath() : '';
         if ($this->externalTemplate) {
-            return $this->themePath() . 'externals.' . $this->externalTemplate;
+            return $themePath . 'externals.' . $this->externalTemplate;
         } elseif ($this->feedExtension) {
-            return $this->themePath() . 'feed.' . $this->feedExtension . '.' . $this->template;
+            return $themePath . 'feed.' . $this->feedExtension . '.' . $this->template;
         } else {
-            return $this->themePath() . 'templates.' . $this->template;
+            return $themePath . 'templates.' . $this->template;
         }
     }
 
