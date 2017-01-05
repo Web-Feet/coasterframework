@@ -157,7 +157,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
     public function block($block_name, $options = [])
     {
         if ($this->_importIgnore($options)) {
-            return '';
+            return $this->_returnValue('', $options);
         }
 
         if(empty($options['version'])) {
@@ -236,13 +236,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
             }
         }
 
-        foreach (['importReturnValue', 'import_return_value'] as $returnValueKey) {
-            if (!empty($options[$returnValueKey])) {
-                $output = $options[$returnValueKey];
-            }
-        }
-
-        return $output;
+        return $this->_returnValue($output, $options);
     }
 
     /**
@@ -277,9 +271,28 @@ class ThemeBuilderInstance extends PageBuilderInstance
         return MenuBuilder::customMenu([], 0, 1, 0, $options);
     }
 
+    /**
+     * @param array $options
+     * @return bool
+     */
     protected function _importIgnore($options)
     {
         return (!empty($options['import_ignore']) && $options['import_ignore']) || (!empty($options['importIgnore']) && $options['importIgnore']);
+    }
+
+    /**
+     * @param mixed $output
+     * @param array $options
+     * @return mixed
+     */
+    protected function _returnValue($output, $options)
+    {
+        foreach (['importReturnValue', 'import_return_value'] as $returnValueKey) {
+            if (!empty($options[$returnValueKey])) {
+                $output = $options[$returnValueKey];
+            }
+        }
+        return $output;
     }
 
     /**
@@ -295,7 +308,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
         $view = !empty($options['view'])?$options['view']:'default';
 
         $catView = 'currentCategory=';
-        
+
         if (!isset($this->categoryView) || $this->categoryView != $catView . $view) {
 
             $tmp = $this->categoryView;
