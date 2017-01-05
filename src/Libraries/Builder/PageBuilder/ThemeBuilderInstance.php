@@ -273,6 +273,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
             $newMenu->save();
             $this->loadMenus[$newMenu->name] = $newMenu;
         }
+        $options['menu'] = $this->loadMenus[$menu_name];
         return MenuBuilder::customMenu([], 0, 1, 0, $options);
     }
 

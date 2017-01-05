@@ -11,14 +11,9 @@ use View;
 class MenuBuilder
 {
     /**
-     * @var string
+     * @var array
      */
-    protected static $_view;
-
-    /**
-     * @var bool
-     */
-    protected static $_canonicals;
+    protected static $_options;
 
     /**
      * @param array $menuName
@@ -29,6 +24,7 @@ class MenuBuilder
     {
         $menu = Menu::get_menu($menuName);
         if (!empty($menu)) {
+            $options['menu'] = $menu;
             self::_setOptions($options);
             return self::_buildMenu($menu->items()->get(), 0, 1);
         } else {
@@ -72,12 +68,10 @@ class MenuBuilder
      */
     protected static function _setOptions($options)
     {
-        $options = array_merge([
+        self::$_options = array_merge([
             'view' => 'default',
             'canonicals' => config('coaster::frontend.canonicals')
         ], $options);
-        self::$_view = $options['view'];
-        self::$_canonicals = $options['canonicals'];
     }
 
     /**
@@ -130,7 +124,7 @@ class MenuBuilder
             $pageId = Path::unParsePageId($item->page_id);
             
             $active = ($currentPage->id == $pageId || in_array($pageId, $pageParents));
-            $itemData = new MenuItemDetails($item, $active, $parentPageId, self::$_canonicals);
+            $itemData = new MenuItemDetails($item, $active, $parentPageId, self::$_options['canonicals']);
 
             $subMenu = '';
             $subLevels = $item->sub_levels > 0 ? $item->sub_levels : $defaultSubLevels;
@@ -161,8 +155,9 @@ class MenuBuilder
      */
     protected static function _getRenderedView($viewPath, $data = [])
     {
-        $viewPath = 'themes.' . PageBuilder::getData('theme') . '.menus.' . self::$_view . '.' . $viewPath;
+        $viewPath = 'themes.' . PageBuilder::getData('theme') . '.menus.' . self::$_options['view'] . '.' . $viewPath;
         if (View::exists($viewPath)) {
+            $data = array_merge(self::$_options, $data);
             return View::make($viewPath, $data)->render();
         } else {
             return 'View not found (' . $viewPath . ')';
