@@ -10,6 +10,7 @@ use CoasterCms\Models\FormSubmission;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\Theme;
 use Request;
+use Response;
 use Session;
 use Validator;
 
@@ -115,6 +116,8 @@ class Form extends String_
                 }
             }
 
+        } else {
+            return Response::make('No form settings found, try saving the form block in the admin.', 500);
         }
 
         return false;
