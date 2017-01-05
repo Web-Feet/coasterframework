@@ -1,14 +1,11 @@
 <?php namespace CoasterCms\Http\Controllers;
 
-use CoasterCms\Events\Cms\GeneratePage\InitializePageBuilder;
 use CoasterCms\Events\Cms\GeneratePage\LoadedPageResponse;
 use CoasterCms\Events\Cms\GeneratePage\LoadErrorTemplate;
 use CoasterCms\Events\Cms\GeneratePage\LoadPageTemplate;
 use CoasterCms\Exceptions\CmsPageException;
 use CoasterCms\Helpers\Cms\Html\DOMDocument;
-use CoasterCms\Helpers\Cms\Page\PageLoader;
 use CoasterCms\Helpers\Cms\Page\Search;
-use CoasterCms\Libraries\Builder\PageBuilder\PageBuilderInstance;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\PageRedirect;
@@ -54,19 +51,6 @@ class CmsController extends Controller
     {
         // update scheduled versions
         PageVersionSchedule::checkPageVersionIds();
-
-        $pageLoader = [
-            'class' => PageLoader::class,
-            'args' => []
-        ];
-        $pageBuilder = [
-            'class' => PageBuilderInstance::class,
-            'args' => []
-        ];
-
-        // try to load cms page for current request
-        event(new InitializePageBuilder($pageLoader, $pageBuilder));
-        PageBuilder::setClass($pageBuilder['class'], $pageBuilder['args'], $pageLoader['class'], $pageLoader['args']);
 
         try {
 

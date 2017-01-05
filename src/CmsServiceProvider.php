@@ -9,6 +9,7 @@ use CoasterCms\Events\Cms\SetViewPaths;
 use CoasterCms\Helpers\Cms\Install;
 use CoasterCms\Http\Middleware\AdminAuth;
 use CoasterCms\Http\Middleware\GuestAuth;
+use CoasterCms\Http\Middleware\PageBuilderInit;
 use CoasterCms\Http\Middleware\UploadChecks;
 use Illuminate\Foundation\Http\Kernel;
 use Illuminate\Routing\Router;
@@ -40,7 +41,8 @@ class CmsServiceProvider extends ServiceProvider
         ];
         $routerMiddleware = [
             'coaster.admin' => AdminAuth::class,
-            'coaster.guest' => GuestAuth::class
+            'coaster.guest' => GuestAuth::class,
+            'coaster.pagebuilder.init' => PageBuilderInit::class
         ];
         event(new LoadMiddleware($globalMiddleware, $routerMiddleware));
         foreach ($globalMiddleware as $globalMiddlewareClass) {
