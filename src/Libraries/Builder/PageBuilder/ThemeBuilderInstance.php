@@ -277,7 +277,20 @@ class ThemeBuilderInstance extends PageBuilderInstance
      */
     protected function _importIgnore($options)
     {
-        return (!empty($options['import_ignore']) && $options['import_ignore']) || (!empty($options['importIgnore']) && $options['importIgnore']);
+        $ignoreSnakeCaseOpts = ['import_ignore', 'review_ignore'];
+
+        $ignoreOpts = [];
+        foreach ($ignoreSnakeCaseOpts as $ignoreSnakeCaseOpt) {
+            $ignoreOpts[$ignoreSnakeCaseOpt] = null;
+            $ignoreOpts[camel_case($ignoreSnakeCaseOpt)] = null;
+        }
+
+        foreach (array_intersect_key($options, $ignoreOpts) as $ignoreValue) {
+            if ($ignoreValue) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -287,9 +300,17 @@ class ThemeBuilderInstance extends PageBuilderInstance
      */
     protected function _returnValue($output, $options)
     {
-        foreach (['importReturnValue', 'import_return_value'] as $returnValueKey) {
-            if (!empty($options[$returnValueKey])) {
-                $output = $options[$returnValueKey];
+        $returnSnakeCaseOpts = ['import_return_value', 'review_return_value'];
+
+        $returnOpts = [];
+        foreach ($returnSnakeCaseOpts as $returnSnakeCaseOpt) {
+            $returnOpts[$returnSnakeCaseOpt] = null;
+            $returnOpts[camel_case($returnSnakeCaseOpt)] = null;
+        }
+
+        foreach (array_intersect_key($options, $returnOpts) as $returnValue) {
+            if ($returnValue) {
+                return $returnValue;
             }
         }
         return $output;
