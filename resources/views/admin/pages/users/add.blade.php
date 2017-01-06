@@ -8,7 +8,7 @@
         The account '{!! Request::input('email') !!}' has been successfully created!<br/>
         Account Password: {!! $password !!}
     </p>
-    @if (Request::input('send_email') == 1)
+    @if (!empty($email_message))
         <p class="text-{!! $email_status !!}">{!! $email_message !!}</p>
     @endif
 

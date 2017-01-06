@@ -156,21 +156,27 @@ class UsersController extends Controller
 
             AdminLog::new_log('User \'' . $new_user->email . '\' added');
 
-            Mail::send('coaster::emails.new_account', array('email' => $new_user->email, 'password' => $password), function ($message) use ($new_user) {
-                $message->from(config('coaster::site.email'));
-                $message->to($new_user->email);
-                $message->subject(config('coaster::site.name') . ': New Account Details');
-            });
+            if (Request::input('send_email') == 1) {
+                Mail::send('coaster::emails.new_account', array('email' => $new_user->email, 'password' => $password), function ($message) use ($new_user) {
+                    $message->from(config('coaster::site.email'));
+                    $message->to($new_user->email);
+                    $message->subject(config('coaster::site.name') . ': New Account Details');
+                });
 
-            $failures = Mail::failures();
+                $failures = Mail::failures();
 
-            if (empty($failures)) {
-                $email_message = 'An email has been sent to the new user with their login details.';
-                $email_status = 'success';
+                if (empty($failures)) {
+                    $email_message = 'An email has been sent to the new user with their login details.';
+                    $email_status = 'success';
+                } else {
+                    $email_message = 'There was an error sending the login details to the new user.';
+                    $email_status = 'warning';
+                }
             } else {
-                $email_message = 'There was an error sending the login details to the new user.';
-                $email_status = 'warning';
+                $email_message = '';
+                $email_status = '';
             }
+
             $this->layoutData['content'] = View::make('coaster::pages.users.add', array('success' => true, 'password' => $password, 'email_message' => $email_message, 'email_status' => $email_status));
         } else {
             FormMessage::set($v->messages());
