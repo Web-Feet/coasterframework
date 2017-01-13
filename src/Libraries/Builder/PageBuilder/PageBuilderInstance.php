@@ -328,11 +328,12 @@ class PageBuilderInstance
 
     /**
      * @param string $section
+     * @param array $viewData
      * @return string
      */
-    public function section($section)
+    public function section($section, $viewData = [])
     {
-        return $this->_getRenderedView('sections.' . $section);
+        return $this->_getRenderedView('sections.' . $section, $viewData);
     }
 
     /**
@@ -479,12 +480,11 @@ class PageBuilderInstance
             'match' => '=',
             'fromPageIds' => [],
             'operand' => 'AND',
-            'multiFilter' => false
         ];
         $options = array_merge($defaultOptions, $options);
         $pageId = !empty($options['page_id']) ? $options['page_id'] : $this->pageId();
-        $blockNames = $options['multiFilter'] ? $blockName : [$blockName];
-        $searches = $options['multiFilter'] ? $search : [$search];
+        $blockNames = is_array($blockName) ? $blockName : [$blockName];
+        $searches = is_array($search) ? $search : [$search];
         $filteredPages = [];
         foreach ($blockNames as $k => $blockName) {
             $block = Block::preload($blockName);
@@ -519,8 +519,7 @@ class PageBuilderInstance
      */
     public function filters($blockNames, $searches, $options = [])
     {
-        $options['multiFilter'] = true;
-        return $this->categoryFilter($blockNames, $searches, $options);
+        return $this->filter($blockNames, $searches, $options);
     }
 
     /**
@@ -551,7 +550,6 @@ class PageBuilderInstance
      */
     public function categoryFilters($blockNames, $searches, $options = [])
     {
-        $options['multiFilter'] = true;
         return $this->categoryFilter($blockNames, $searches, $options);
     }
 
