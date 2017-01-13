@@ -32,10 +32,10 @@ class Repeater extends String_
         $repeaterId = $content;
 
         if (!empty($options['form'])) {
-            return FormWrap::view($this->_block, $options, $this->_displayView(array_merge($options, ['view_suffix' => '-form'])));
+            return FormWrap::view($this->_block, $options, $this->displayView(array_merge($options, ['view_suffix' => '-form'])));
         }
 
-        if ($repeaterView = $this->_displayView($options)) {
+        if ($repeaterView = $this->displayView($options)) {
 
             $renderedContent = '';
             if ($repeaterBlocks = BlockRepeater::getRepeaterBlocks($this->_block->id)) {

@@ -8,6 +8,7 @@ use CoasterCms\Libraries\Builder\ViewClasses\PageDetails;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\Menu;
+use CoasterCms\Models\Page;
 use View;
 
 class ThemeBuilderInstance extends PageBuilderInstance
@@ -84,6 +85,10 @@ class ThemeBuilderInstance extends PageBuilderInstance
         $this->categoryView = '';
         $this->repeaterView = '';
         $this->errors = [];
+
+        // set page override so check can be made if the actual page id is ever called
+        $this->pageOverride = clone $this->page;
+        $this->page->id = -666;
 
         $this->templateBlocks = [];
         $this->coreTemplates = ['__core_category', '__core_otherPage', '__core_repeater'];
@@ -167,11 +172,9 @@ class ThemeBuilderInstance extends PageBuilderInstance
         $block_name = strtolower($block_name);
 
         // get block type
+        $block = Block::preloadClone($block_name);
         if (isset($this->blockSettings[$block_name]['type'])) {
-            $block = new Block;
             $block->type = $this->blockSettings[$block_name]['type'];
-        } else {
-            $block = Block::preloadClone($block_name);
         }
         if (!$block->type) {
             $block->type = BlockUpdater::typeGuess($block_name);
@@ -195,6 +198,17 @@ class ThemeBuilderInstance extends PageBuilderInstance
             )->render();
 
             $this->repeaterView = $tmp;
+        } elseif ($block->type == 'selectpages') {
+
+            if ($displayVew = $block->getTypeObject()->displayView($options)) {
+                $output = View::make(
+                    $displayVew,
+                    ['is_first' => true, 'is_last' => true, 'count' => 1, 'total' => 1, 'pages' => [], 'page' => new Page()]
+                )->render();
+            } else {
+                $output = '';
+            }
+
         } else {
             // always use blank data for processing blocks
             $output = $block->getTypeObject()->display('', $options);
@@ -212,8 +226,8 @@ class ThemeBuilderInstance extends PageBuilderInstance
         } elseif ($this->categoryView) {
             $template = '__core_category';
         } else {
-            // if in a normal template
-            if (!array_key_exists('page_id', $options)) {
+            // if in a normal template (only if no page_id set or using the true page_id)
+            if (!array_key_exists('page_id', $options) || $options['page_id'] === -666) {
                 $template = $this->template;
             } else {
                 $template = '__core_otherPage';

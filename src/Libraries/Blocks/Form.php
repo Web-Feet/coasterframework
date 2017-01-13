@@ -31,7 +31,7 @@ class Form extends String_
     {
         $formData = $this->_defaultData($content);
         $options['view'] = !empty($options['view']) ? $options['view'] : $formData->template;
-        return FormWrap::view($this->_block, $options, $this->_displayView($options), ['form_data' => $formData]);
+        return FormWrap::view($this->_block, $options, $this->displayView($options), ['form_data' => $formData]);
     }
 
     /**

@@ -49,21 +49,21 @@ class Selectpages extends Selectmultiple
             }
         }
 
-        if (!empty($options['repeated_view']) && $displayView = $this->_displayView($options)) {
+        if (!empty($options['repeated_view']) && $displayView = $this->displayView($options)) {
             $renderedContent = '';
             if (!empty($pages)) {
                 $i = 1;
                 $isFirst = true;
                 $total = count($pages);
-                $pageOverride = PageBuilder::getData('PageOverride');
+                $pageOverride = PageBuilder::getData('pageOverride');
                 foreach ($pages as $pageId => $page) {
                     $isLast = ($total == $i);
-                    PageBuilder::setData('PageOverride', $page);
-                    $renderedContent .= View::make($displayView, ['is_first' => $isFirst, 'is_last' => $isLast, 'count' => $i, 'total' => $total])->render();
+                    PageBuilder::setData('pageOverride', $page->page);
+                    $renderedContent .= View::make($displayView, ['pages' => $pages, 'page' => $page, 'is_first' => $isFirst, 'is_last' => $isLast, 'count' => $i, 'total' => $total])->render();
                     $isFirst = false;
                     $i++;
                 }
-                PageBuilder::setData('PageOverride', $pageOverride);
+                PageBuilder::setData('pageOverride', $pageOverride);
             }
             return $renderedContent;
         } else {

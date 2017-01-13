@@ -90,7 +90,7 @@ class String_
      * @param string|array view
      * @return string
      */
-    protected function _displayView($view = '')
+    public function displayView($view = '')
     {
         if (is_array($view)) {
             $viewSuffix = !empty($view['view_suffix']) ? $view['view_suffix'] : '';
@@ -101,7 +101,7 @@ class String_
         $pView = $view . '#' . $viewSuffix;
         if (!array_key_exists($pView, $this->_processedDisplayView)) {
             $this->_processedDisplayView[$pView] = '';
-            $viewRootPath = 'themes.' . PageBuilder::getData('theme') . '.blocks.' . strtolower($this->_block->type) . 's.';
+            $viewRootPath = 'themes.' . PageBuilder::getData('theme') . '.blocks.' . strtolower(str_plural($this->_block->type)) . '.';
             if ($view) {
                 array_unshift($this->_displayViewPriorities, $view);
             }
@@ -123,7 +123,7 @@ class String_
      */
     protected function _renderDisplayView($view, $data = [])
     {
-        if ($displayView = $this->_displayView($view)) {
+        if ($displayView = $this->displayView($view)) {
             return View::make($displayView, $data)->render();
         } else {
             return ucwords($this->_block->type) . ' template not found for block: ' . $this->_block->name;
