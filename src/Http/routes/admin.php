@@ -131,6 +131,7 @@ Route::group(['prefix' => $adminUrl, 'middleware' => ['web', 'coaster.admin'], '
     Route::get('search', ['uses' => 'SearchController@getIndex', 'as' => $routeNamePrefix . 'search']);
 
     Route::get('import/wp-blog', ['uses' => 'ImportWpController@getImport', 'as' => $routeNamePrefix . 'wpimport']);
+    Route::post('import/wp-blog', ['uses' => 'ImportWpController@postImport', 'as' => $routeNamePrefix . 'wpimport.post']);
 
     Route::post('adminsearch', ['uses' => 'AdminSearchController@search', 'as' => $routeNamePrefix . 'adminsearch']);
 

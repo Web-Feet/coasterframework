@@ -6,6 +6,8 @@ use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Page;
+use CoasterCms\Models\TemplateBlock;
+use CoasterCms\Models\Template;
 use CoasterCms\Models\PageBlockRepeaterData;
 use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageVersion;
@@ -16,12 +18,22 @@ class WpApi
 {
     protected $url = '';
     protected $blog_name = 'blog';
-    protected $per_page = 30;
+    protected $per_page = 50;
     protected $category_block_name = 'categories';
+    protected $templates = [
+                          'list_template' => 'blog',
+                          'item_template' => 'blog-post',
+                          'category_template' => 'blog-category',
+                          'search_template' => 'blog-search',
+                          'archive_template' =>'blog-archives'
+                        ];
+    protected $templateObjs = [];
     protected $tag_block_name = 'tags';
     protected $groupPage = null;
     protected $group = null;
     protected $ret = [];
+
+    protected $block;
 
     public function __construct($url)
     {
@@ -41,15 +53,21 @@ class WpApi
 
     }
 
-    public function featuredImage($data)
+    public function featuredImage($data, $pageLang)
     {
-        if (property_exists($data, "wp:featuredmedia")) {
-            $data = head($data->{"wp:featuredmedia"});
-            if (isset($data->source_url)) {
-                return $data->source_url;
+        if (property_exists($data->_embedded, "wp:featuredmedia")) {
+
+            $imData = head($data->_embedded->{"wp:featuredmedia"});
+
+            if ( ! empty($imData->source_url) && $imData->media_type == 'image') {
+              $imageBlock = $this->getBlock('image', 'image', 'Main Image');
+              $im = $this->saveImageLocally($imData->source_url);
+              $alt = empty($imData->alt_text) ? $pageLang->name : $imData->alt_text;
+              $imageBlock->setPageId($pageLang->page_id)->getTypeObject()->submit(['source' => $im, 'alt' => $alt]);
+              return $imData->source_url;
             }
         }
-        return null;
+        return '';
     }
     public function getAuthor($wpAuthorData)
     {
@@ -57,16 +75,23 @@ class WpApi
     }
 
 
-    public function getBlock($name, $type = 'selectmultiplewnew')
+    public function getBlock($name, $type = 'selectmultiplewnew', $label = '', $note = '')
     {
-      $label = str_replace('_', ' ', $name);
+      if (isset($this->blocks[$name]))
+      {
+       return $this->blocks[$name];
+      }
+      $label = empty($label) ? str_replace('_', ' ', $name) : $label;
       Block::unguard();
-      $block = Block::firstOrCreate(['name' => $name, 'label' => ucwords($label), 'note' => 'Select or add new '.$name, 'category_id' => 1, 'type' => $type]);
+      $block = Block::firstOrCreate(['name' => $name, 'label' => ucwords($label), 'note' => $note, 'category_id' => 1, 'type' => $type]);
       Block::reguard();
-
+      TemplateBlock::unguard();
+      TemplateBlock::firstOrCreate(['template_id' => $this->getTemplateId('item_template'), 'block_id' => $block->id]);
+      TemplateBlock::reguard();
+      $this->blocks[$name] = $block;
       return $block;
     }
-    public function loopDataAndAddToSelectMultpipleWNewBlock($block, $data, $page_id)
+    public function loopDataAndAddToSelectMultipleWNewBlock($block, $data, $page_id)
     {
       $toSave = [];
       BlockSelectOption::unguard();
@@ -74,9 +99,10 @@ class WpApi
       {
         $selectOpt = BlockSelectOption::firstOrCreate(['block_id' => $block->id, 'option' => $item->name, 'value' => strtolower($item->name)]);
         $toSave[] = strtolower($item->name);
-      };
+      }
       BlockSelectOption::reguard();
-      $block->setPageId($page_id)->getTypeObject()->save(['select' => $toSave]);
+
+      $block->setPageId($page_id)->getTypeObject()->submit(['select' => $toSave, 'custom' => '']);
       return implode(', ', $toSave);
     }
 
@@ -86,7 +112,7 @@ class WpApi
 
         $cats = collect($data)->collapse()->where('taxonomy', 'category')->all();
 
-        return $this->loopDataAndAddToSelectMultpipleWNewBlock($catBlock, $cats, $page_id);
+        return $this->loopDataAndAddToSelectMultipleWNewBlock($catBlock, $cats, $page_id);
     }
 
     private function syncTags($page, $tags)
@@ -94,33 +120,94 @@ class WpApi
         $tagBlock = $this->getBlock($this->tag_block_name);
         $tags = collect($tags)->collapse()->where('taxonomy', 'post_tag')->all();
 
-        return $this->loopDataAndAddToSelectMultpipleWNewBlock($tagBlock, $tags, $page->id);
+        return $this->loopDataAndAddToSelectMultipleWNewBlock($tagBlock, $tags, $page->id);
+    }
+
+    public function getTemplateId($name='')
+    {
+      if (isset($this->templateObjs[$name])) {
+        return $this->templateObjs[$name]->id;
+      }
+      $tpl = Template::where('template', '=', $this->templates[$name])->first();
+
+      $this->templateObjs[$name] = $tpl;
+      return $tpl->id;
+    }
+
+    public function createGroupPage($name, $item_name, $template_name, $item_template_name = '')
+    {
+      if ($item_template_name == 'item_template')
+      {
+        $this->blogPageGroup = new PageGroup;
+        $this->blogPageGroup->name = ucfirst($name);
+        $this->blogPageGroup->item_name = $item_name;
+        $this->blogPageGroup->default_template = $this->getTemplateId($item_template_name);
+        $this->blogPageGroup->save();
+      }
+
+      $groupPage = new Page;
+      $groupPage->group_container = $this->blogPageGroup->id;
+      $groupPage->template = $this->getTemplateId($template_name);
+
+      if ($item_template_name != 'item_template')
+      {
+        $groupPage->parent = $this->blogPage->id;
+      }
+      $groupPage->save();
+
+      // Page Lang
+      $groupPageLang = new PageLang;
+      $groupPageLang->page_id = $groupPage->id;
+      $groupPageLang->live_version = 1;
+      $groupPageLang->language_id = Language::current();
+      $groupPageLang->name = ucfirst($name);
+      $groupPageLang->url = str_slug($groupPageLang->name);
+      $groupPageLang->save();
+
+      $titleBlock = $this->getBlock('title', 'string', 'Main Title');
+      $titleBlock->setPageId($groupPage->id)->getTypeObject()->submit($groupPageLang->name);
+
+      return $groupPage;
     }
 
     public function getBlogGroupPage()
     {
+      $this->blogPageGroup = PageGroup::where('name', '=', $this->blog_name);
       // New Page
       $groupPageLang = PageLang::where('name', '=', $this->blog_name)->first();
+
       if (empty($groupPageLang))
       {
-        $groupPage = new Page;
-        $groupPage->group_container = 1;
-        $groupPage->save();
-
-        // Page Lang
-        $groupPageLang = new PageLang;
-        $groupPageLang->page_id = $groupPage->id;
-        $groupPageLang->version = 1;
-        $groupPageLang->language_id = Language::current();
-        $groupPageLang->name = $this->blog_name;
-        $groupPageLang->url = str_slug($groupPageLang->name);
-        $groupPageLang->save();
+        // Blog Initialize;
+        $this->blogPage = $groupPage = $this->createGroupPage($this->blog_name, 'Post', 'list_template', 'item_template');
+        $this->categoryPage = $this->createGroupPage('Categories', '', 'category_template');
+        $this->archivePage = $this->createGroupPage('Archive', '', 'archive_template');
+        $this->searchPage = $this->createGroupPage('Search', '', 'search_template');
       }
       else
       {
         $groupPage = Page::find($groupPageLang->page_id);
       }
       return $groupPage;
+    }
+
+    public function saveImageLocally($image)
+    {
+      $imagePathArr = explode('/', $image);
+      $fullFileName = end($imagePathArr);
+
+      $newUrlPath = 'uploads/images/'.$fullFileName;
+      // Open the file to get existing content
+      $data = @file_get_contents($image);
+
+      // New file
+      $new = public_path($newUrlPath);
+      if ( ! file_exists($new)) {
+        // Write the contents back to a new file
+        file_put_contents($new, $data);
+      }
+
+      return '/'.$newUrlPath;
     }
 
     public function processContent($content)
@@ -130,23 +217,11 @@ class WpApi
       $images = $doc->getElementsByTagName('img');
       foreach ($images as $imageNode)
       {
+        try {
          $image = $imageNode->getAttribute('src');
-         $imagePathArr = explode('/', $image);
-         $fullFileName = end($imagePathArr);
-
-         $newUrlPath = 'uploads/images/'.$fullFileName;
-         try {
-           // Open the file to get existing content
-           $data = @file_get_contents($image);
-
-           // New file
-           $new = public_path($newUrlPath);
-           if ( ! file_exists($new)) {
-             // Write the contents back to a new file
-             file_put_contents($new, $data);
-           }
-
-           $content = str_replace($image, url()->to($newUrlPath), $content);
+         $newUrlPath = $this->saveImageLocally($image);
+         $content = str_replace($image, url()->to($newUrlPath), $content);
+         $content = preg_replace('/[width|height]=".*"/', '', $content);
          } catch (Exception $e) {
 
          }
@@ -157,6 +232,7 @@ class WpApi
 
     public function getComments($data, $page)
     {
+      $ret = '';
       $commentData = collect($this->getJson($this->url . '/wp-json/wp/v2/comments/?post='.$data->id ));
       $idsInserted = [];
       foreach ($commentData as $comment)
@@ -172,14 +248,19 @@ class WpApi
           $rowData['comment_parent'] = isset($idsInserted[$comment->parent]) ? $idsInserted[$comment->parent] : 0;
 
           $rowData['comment_date'] = $this->carbonDate($comment->date)->format('Y-m-d H:i:s');
-          $rowInfo = Block::preloadClone('comments')->setPageId($page->id)->getTypeObject()->insertRow($rowData);
-          $idsInserted[$comment->id] = $rowInfo->row_id;
+          Block::preloadClone('comments')->setPageId($page->id)->getTypeObject()->insertRow($rowData);
+          $check = PageBlockRepeaterData::where('content', '=', $comment->content->rendered)->first();
+          $idsInserted[$comment->id] = $check->row_id;
+          $ret .= 'Comment: '.$comment->content->rendered.', ';
         }
         else
         {
           $idsInserted[$comment->id] = $check->row_id;
+          $ret .= 'Comment: '.$comment->content->rendered.', ';
         }
       }
+      return $ret;
+
     }
 
     public function getMetas($yoastData, $data, $page_id)
@@ -188,15 +269,15 @@ class WpApi
       $meta_description = (empty($yoastData->metadesc)) ? substr(strip_tags($data->content->rendered), 0, 140).'...' : $yoastData->metadesc;
       $meta_keywords = (empty($yoastData->metakeywords)) ? $data->title->rendered : $yoastData->metakeywords;
       try {
-        $meta_title_block = Block::where('name', '=', 'meta_title')->first();
+        $meta_title_block = $this->getBlock('meta_title', 'string', 'Meta Title');
         if (!empty($title_block)) {
             $meta_title_block->setPageId($page_id)->getTypeObject()->save($meta_title);
         }
-        $meta_desc_block = Block::where('name', '=', 'meta_description')->first();
+        $meta_desc_block = $this->getBlock('meta_description', 'string', 'Meta Description');
         if (!empty($meta_desc_block)) {
             $meta_desc_block->setPageId($page_id)->getTypeObject()->save($meta_description);
         }
-        $meta_keywords_block = Block::where('name', '=', 'meta_keywords')->first();
+        $meta_keywords_block = $this->getBlock('meta_keywords', 'string', 'Meta Keywords');
         if (!empty($meta_keywords_block)) {
             $meta_keywords_block->setPageId($page_id)->getTypeObject()->save($meta_keywords);
         }
@@ -221,10 +302,7 @@ class WpApi
       {
         $page = Page::find($pageLang->page_id);
         $comments  = $this->getComments($data, $page);
-        $latestVersion = PageVersion::latest_version($page->id, true);
-        if (!empty($latestVersion)) {
-            $latestVersion->publish();
-        }
+
         if ( ! empty($data->yoast))
         {
           $this->getMetas($data->yoast, $data, $page->id);
@@ -235,8 +313,15 @@ class WpApi
         $res->newLink = Path::getFullUrl($page->id);
         $res->categories = 'UPDATE RUN';
         $res->tags = 'UPDATE RUN';
+        $res->comments = $comments;
+        $res->main_image = $this->featuredImage($data, $pageLang);
+        $latestVersion = PageVersion::latest_version($page->id, true);
+        if (!empty($latestVersion)) {
+            $latestVersion->publish();
+        }
         return $res;
       }
+
       $page->live = 2;
       $page->live_start = $this->carbonDate($data->date)->format("Y-m-d H:i:s");
       $page->created_at = $this->carbonDate($data->date);
@@ -274,21 +359,24 @@ class WpApi
       if (!empty($leadText_block)) {
           $leadText_block->setPageId($page->id)->getTypeObject()->save($data->excerpt->rendered);
       }
-      $latestVersion = PageVersion::latest_version($page->id, true);
-      if (!empty($latestVersion)) {
-          $latestVersion->publish();
-      }
+
       if ( ! empty($data->yoast))
       {
         $this->getMetas($data->yoast, $data, $page->id);
       }
+
       $res = new \stdClass;
       $res->message = 'Post '.$uporc.': '.$pageLang->name;
       $res->oldLink = $data->link;
       $res->newLink = Path::getFullUrl($page->id);
       $res->categories = $categories;
       $res->tags = $tags;
-
+      $res->comments = $comments;
+      $res->main_image = $this->featuredImage($data, $pageLang);
+      $latestVersion = PageVersion::latest_version($page->id, true);
+      if (!empty($latestVersion)) {
+          $latestVersion->publish();
+      }
       return $res;
 
     }
@@ -308,7 +396,9 @@ class WpApi
         if (count($posts) == $this->per_page) {
           $this->importPosts($page+1);
         }
-
+        if (empty($posts)) {
+          $this->ret[] = 'No posts to import, check the API is installed correctly.';
+        }
         return $this->ret;
     }
 

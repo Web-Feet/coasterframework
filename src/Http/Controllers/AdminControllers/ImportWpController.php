@@ -9,13 +9,17 @@ use CoasterCms\Helpers\Admin\Tools\Import\WpApi;
  */
 class ImportWpController extends Controller
 {
-
-  function getImport()
+  public function postImport()
   {
-    $wpImport = new WpApi(\Request::input('blog_url'));
+    $url = request()->get('blog_url');
+    $wpImport = new WpApi($url);
     $ret = $wpImport->importPosts();
 
-    return response($ret);
+    $this->layoutData['content'] = view('coaster::pages.tools.wordpress.import', array('url' => $url, 'can_import' => Auth::action('wpimport'), 'result' => $ret));
+  }
 
+  public function getImport()
+  {
+    $this->layoutData['content'] = view('coaster::pages.tools.wordpress.import', array('url' => '', 'can_import' => Auth::action('wpimport'), 'result' => []));
   }
 }
