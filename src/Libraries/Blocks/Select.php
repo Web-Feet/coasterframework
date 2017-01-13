@@ -30,13 +30,15 @@ class Select extends String_
      */
     public function edit($content)
     {
-        $this->_editViewData['selectOptions'] = [];
-        $selectOptions = BlockSelectOption::where('block_id', '=', $this->_block->id)->get();
-        foreach ($selectOptions as $selectOption) {
-            $this->_editViewData['selectOptions'][$selectOption->value] = $selectOption->option;
-        }
-        if (preg_match('/^#[a-f0-9]{6}$/i', key($selectOptions))) {
-            $this->_editViewData['class'] = 'select_colour';
+        if (!array_key_exists('selectOptions', $this->_editViewData)) {
+            $this->_editViewData['selectOptions'] = [];
+            $selectOptions = BlockSelectOption::where('block_id', '=', $this->_block->id)->get();
+            foreach ($selectOptions as $selectOption) {
+                $this->_editViewData['selectOptions'][$selectOption->value] = $selectOption->option;
+            }
+            if (preg_match('/^#[a-f0-9]{6}$/i', key($selectOptions))) {
+                $this->_editViewData['class'] = 'select_colour';
+            }
         }
         return parent::edit($content);
     }
