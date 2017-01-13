@@ -30,11 +30,7 @@ class Form extends String_
     public function display($content, $options = [])
     {
         $formData = $this->_defaultData($content);
-        if ($formData->template) {
-            // for old version that had a template select in the admin
-            $this->_displayViewPriorities = array_unshift($this->_displayViewPriorities, $formData->template);
-        }
-        $this->_displayView($options);
+        $options['view'] = !empty($options['view']) ? $options['view'] : $formData->template;
         return FormWrap::view($this->_block, $options, $this->_displayView($options), ['form_data' => $formData]);
     }
 
