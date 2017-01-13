@@ -30,9 +30,12 @@ class Form extends String_
     public function display($content, $options = [])
     {
         $formData = $this->_defaultData($content);
-        $template =  !empty($options['view']) ? $options['view'] : $formData->template;
-        $templatePath = 'themes.' . PageBuilder::getData('theme') . '.blocks.forms.' . $template;
-        return FormWrap::view($this->_block, $options, $templatePath, ['form_data' => $formData]);
+        if ($formData->template) {
+            // for old version that had a template select in the admin
+            $this->_displayViewPriorities = array_unshift($this->_displayViewPriorities, $formData->template);
+        }
+        $this->_displayView($options);
+        return FormWrap::view($this->_block, $options, $this->_displayView($options), ['form_data' => $formData]);
     }
 
     /**
@@ -86,7 +89,7 @@ class Form extends String_
     {
         if ($form_settings = $this->_block->getContent(true)) {
             $form_settings = $this->_defaultData($form_settings);
-            $form_rules = BlockFormRule::get_rules($form_settings->template);
+            $form_rules = BlockFormRule::get_rules($form_settings->template ?: $this->_block->name);
             $v = Validator::make($formData, $form_rules);
             $captcha = Securimage::captchaCheck();
 
@@ -132,7 +135,6 @@ class Form extends String_
     public function edit($postContent)
     {
         $formData = $this->_defaultData($postContent);
-        $formData->template = $formData->template == $this->_block->name ? 0 : $formData->template;
 
         $this->_editViewData['pageList'] = Page::get_page_list();
         $this->_editViewData['formTemplates'] = [0 => '-- Use view from template --'];
@@ -194,7 +196,7 @@ class Form extends String_
         $content->captcha = !empty($content->captcha) ? $content->captcha : false;
         $content->email_from = !empty($content->email_from) ? $content->email_from : '';
         $content->email_to = !empty($content->email_to) ? $content->email_to : '';
-        $content->template = !empty($content->template) ? $content->template : $this->_block->name;
+        $content->template = !empty($content->template) ? $content->template : '';
         $content->page_to = !empty($content->page_to) ? $content->page_to : '';
         return $content;
     }

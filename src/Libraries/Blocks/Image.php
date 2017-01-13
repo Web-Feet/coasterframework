@@ -50,13 +50,7 @@ class Image extends String_
             $imageData->file = $imageData->original;
         }
 
-        $template = !empty($options['view']) ? $options['view'] : 'default';
-        $imageViews = 'themes.' . PageBuilder::getData('theme') . '.blocks.images.';
-        if (View::exists($imageViews . $template)) {
-            return View::make($imageViews . $template, array('image' => $imageData))->render();
-        } else {
-            return 'Image template not found';
-        }
+        return $this->_renderDisplayView($options, ['image' => $imageData]);
     }
 
     /**

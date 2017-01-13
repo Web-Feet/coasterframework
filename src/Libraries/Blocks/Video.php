@@ -21,15 +21,10 @@ class Video extends String_
     public function display($content, $options = [])
     {
         if (!empty($content)) {
-            $template = !empty($options['view']) ? $options['view'] : 'default';
-            $videoViews = 'themes.' . PageBuilder::getData('theme') . '.blocks.videos.';
-            if (!View::exists($videoViews . $template)) {
-                return 'Video template not found';
-            }
             if (!($videoInfo = $this->_cache($content))) {
                 return 'Video does not exist, it may have been removed from youtube';
             }
-            return View::make($videoViews . $template, ['video' => $videoInfo])->render();
+            return $this->_renderDisplayView($options, ['video' => $videoInfo]);
         } else {
             return '';
         }

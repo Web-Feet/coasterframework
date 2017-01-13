@@ -26,16 +26,7 @@ class Gallery extends String_
             }
         }
 
-        $options['view'] = !empty($options['view']) ? $options['view'] : 'default';
-        $galleryViews = 'themes.' . PageBuilder::getData('theme') . '.blocks.gallery.';
-
-        if (empty($options['view']) && View::exists($galleryViews . $this->_block->name)) {
-            return View::make($galleryViews . $this->_block->name, ['images' => $galleryData])->render();
-        } elseif (View::exists($galleryViews . $options['view'])) {
-            return View::make($galleryViews . $options['view'], ['images' => $galleryData])->render();
-        } else {
-            return 'Gallery template not found';
-        }
+        return $this->_renderDisplayView($options, ['images' => $galleryData]);
     }
 
     /**
