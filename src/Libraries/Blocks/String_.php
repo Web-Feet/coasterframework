@@ -4,6 +4,7 @@ use CoasterCms\Helpers\Cms\StringHelper;
 use CoasterCms\Helpers\Cms\View\CmsBlockInput;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\Block;
+use View;
 
 class String_
 {
@@ -33,6 +34,16 @@ class String_
     protected $_contentSaved;
 
     /**
+     * @var array
+     */
+    protected $_displayViewPriorities;
+
+    /**
+     * @var array
+     */
+    protected $_processedDisplayView;
+
+    /**
      * String_ constructor.
      * @param Block $block
      */
@@ -42,6 +53,8 @@ class String_
         $this->_editViewData = [];
         $this->_isSaved = false;
         $this->_contentSaved = '';
+        $this->_processedDisplayView = [];
+        $this->_displayViewPriorities = [$this->_block->name, 'default'];
     }
 
     /**
@@ -70,6 +83,51 @@ class String_
             $content = StringHelper::cutString($content);
         }
         return $content;
+    }
+
+    /**
+     * Return display block view path
+     * @param string|array view
+     * @return string
+     */
+    protected function _displayView($view = '')
+    {
+        if (is_array($view)) {
+            $viewSuffix = !empty($view['view_suffix']) ? $view['view_suffix'] : '';
+            $view = !empty($view['view']) ? $view['view'] : '';
+        } else {
+            $viewSuffix = '';
+        }
+        $pView = $view . '#' . $viewSuffix;
+        if (!array_key_exists($pView, $this->_processedDisplayView)) {
+            $this->_processedDisplayView[$pView] = '';
+            $viewRootPath = 'themes.' . PageBuilder::getData('theme') . '.blocks.' . strtolower($this->_block->type) . 's.';
+            if ($view) {
+                array_unshift($this->_displayViewPriorities, $view);
+            }
+            foreach ($this->_displayViewPriorities as $viewPriority) {
+                if (View::exists($viewRootPath . $viewPriority . $viewSuffix)) {
+                    $this->_processedDisplayView[$pView] = $viewRootPath . $viewPriority . $viewSuffix;
+                    break;
+                }
+            }
+        }
+        return $this->_processedDisplayView[$pView];
+    }
+
+    /**
+     * Return rendered display block view
+     * @param string|array view
+     * @param array $data
+     * @return string
+     */
+    protected function _renderDisplayView($view, $data = [])
+    {
+        if ($displayView = $this->_displayView($view)) {
+            return View::make($displayView, $data)->render();
+        } else {
+            return ucwords($this->_block->type) . ' template not found for block: ' . $this->_block->name;
+        }
     }
 
     /**

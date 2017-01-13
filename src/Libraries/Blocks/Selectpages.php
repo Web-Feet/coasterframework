@@ -48,13 +48,7 @@ class Selectpages extends Selectmultiple
                 $pages[$page_id] = new PageDetails($parsedPageId[0], !empty($parsedPageId[1]) ? $parsedPageId[1] : 0);
             }
         }
-        $template = !empty($options['view']) ? $options['view'] : $this->_block->name;
-        $selectPageViews = 'themes.' . PageBuilder::getData('theme') . '.blocks.selectpages.';
-        if (View::exists($selectPageViews . $template)) {
-            return View::make($selectPageViews . $template, array('pages' => $pages))->render();
-        } else {
-            return 'Select pages template not found';
-        }
+        return $this->_renderDisplayView($options);
     }
 
     /**

@@ -9,7 +9,7 @@ class Selectuser extends Select
      * Display name (convert user id to name if not custom)
      * @param string $content
      * @param array $options
-     * @return int|mixed|string
+     * @return string
      */
     public function display($content, $options = [])
     {

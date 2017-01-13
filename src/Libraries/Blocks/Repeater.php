@@ -30,14 +30,13 @@ class Repeater extends String_
     public function display($content, $options = [])
     {
         $repeaterId = $content;
-        $template = !empty($options['view']) ? $options['view'] : $this->_block->name;
-        $repeatersViews = 'themes.' . PageBuilder::getData('theme') . '.blocks.repeaters.';
 
         if (!empty($options['form'])) {
-            return FormWrap::view($this->_block, $options, $repeatersViews . $template . '-form');
+            return FormWrap::view($this->_block, $options, $this->_displayView(array_merge($options, ['view_suffix' => '-form'])));
         }
 
-        if (View::exists($repeatersViews . $template)) {
+        if ($repeaterView = $this->_displayView($options)) {
+
             $renderedContent = '';
             if ($repeaterBlocks = BlockRepeater::getRepeaterBlocks($this->_block->id)) {
 
@@ -73,7 +72,7 @@ class Repeater extends String_
                             if ($i + $cols - 1 >= $rows) {
                                 $isLast = true;
                             }
-                            $renderedContent .= View::make($repeatersViews . $template, array('is_first' => $isFirst, 'is_last' => $isLast, 'count' => $i, 'total' => $rows, 'id' => $repeaterId, 'pagination' => $paginationLinks, 'links' => $paginationLinks))->render();
+                            $renderedContent .= View::make($repeaterView, array('is_first' => $isFirst, 'is_last' => $isLast, 'count' => $i, 'total' => $rows, 'id' => $repeaterId, 'pagination' => $paginationLinks, 'links' => $paginationLinks))->render();
                             $isFirst = false;
                             PageBuilder::setCustomBlockDataKey($previousKey);
                         }
@@ -83,7 +82,7 @@ class Repeater extends String_
             }
             return $renderedContent;
         } else {
-            return "Repeater view does not exist in theme";
+            return $this->_renderDisplayView($options);
         }
     }
 

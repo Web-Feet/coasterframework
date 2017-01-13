@@ -328,11 +328,12 @@ class PageBuilderInstance
 
     /**
      * @param string $section
+     * @param array $viewData
      * @return string
      */
-    public function section($section)
+    public function section($section, $viewData = [])
     {
-        return $this->_getRenderedView('sections.' . $section);
+        return $this->_getRenderedView('sections.' . $section, $viewData);
     }
 
     /**
@@ -483,7 +484,7 @@ class PageBuilderInstance
         ];
         $options = array_merge($defaultOptions, $options);
         $pageId = !empty($options['page_id']) ? $options['page_id'] : $this->pageId();
-        $blockNames = $options['multiFilter'] ? $blockName : [$blockName];
+        $blockNames = is_array($blockName) ? $blockName : [$blockName];
         $searches = $options['multiFilter'] ? $search : [$search];
         $filteredPages = [];
         foreach ($blockNames as $k => $blockName) {
