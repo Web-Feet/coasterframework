@@ -677,6 +677,7 @@ class Page extends Eloquent
         /*
          * Check and save page changes
          */
+        $newPage = !$this->id;
         if ($willPublish) {
             // if new page set as last ordered page
             if ($this->parent >= 0 && !$this->id) {
@@ -704,7 +705,7 @@ class Page extends Eloquent
         /*
          * Update title block to the page name is new page
          */
-        if (!$this->id && $titleBlock = Block::where('name', '=', config('coaster::admin.title_block'))->first()) {
+        if ($newPage && $titleBlock = Block::where('name', '=', config('coaster::admin.title_block'))->first()) {
             $titleBlock->setVersionId($pageVersion->version_id)->setPageId($this->id)->getTypeObject()->save($pageLang->name);
             PageSearchData::updateText(strip_tags($pageLang->name), 0, $this->id);
         }
