@@ -173,7 +173,7 @@ class String_
 
     /**
      * Admin update using post data from the block view
-     * @param array $postContent
+     * @param mixed $postContent
      * @return static
      */
     public function submit($postContent)
