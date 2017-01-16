@@ -214,24 +214,24 @@ class ThemeBuilderInstance extends PageBuilderInstance
             $output = $block->getTypeObject()->display('', $options);
         }
 
-        if ($this->repeaterView) {
-            // if in a repeater template
-            if (!isset($this->repeaterBlocks[$this->repeaterView])) {
-                $this->repeaterBlocks[$this->repeaterView] = [];
-            }
-            if (!in_array($block_name, $this->repeaterBlocks[$this->repeaterView])) {
-                $this->repeaterBlocks[$this->repeaterView][] = $block_name;
-            }
-            $template = '__core_repeater';
-        } elseif ($this->categoryView) {
-            $template = '__core_category';
-        } else {
-            // if in a normal template (only if no page_id set or using the true page_id)
-            if (!array_key_exists('page_id', $options) || $options['page_id'] === -666) {
-                $template = $this->template;
+        // if in a normal template (only if no page_id set or using the true page_id)
+        if (!array_key_exists('page_id', $options) || $options['page_id'] === -666) {
+            if ($this->repeaterView) {
+                // if in a repeater template
+                if (!isset($this->repeaterBlocks[$this->repeaterView])) {
+                    $this->repeaterBlocks[$this->repeaterView] = [];
+                }
+                if (!in_array($block_name, $this->repeaterBlocks[$this->repeaterView])) {
+                    $this->repeaterBlocks[$this->repeaterView][] = $block_name;
+                }
+                $template = '__core_repeater';
+            } elseif ($this->categoryView) {
+                $template = '__core_category';
             } else {
-                $template = '__core_otherPage';
+                $template = $this->template;
             }
+        } else {
+            $template = '__core_otherPage';
         }
 
         if (!isset($this->templateBlocks[$template])) {
