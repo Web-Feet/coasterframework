@@ -197,7 +197,11 @@ class Repeater extends String_
             $rowOrderNumber++;
             foreach ($submittedRepeaterRow as $submittedBlockId => $submittedBlockData) {
                 $block = Block::preloadClone($submittedBlockId)->setVersionId($this->_block->getVersionId())->setRepeaterData($postContent['repeater_id'], $rowId)->setPageId($this->_block->getPageId());
-                if ($block->exists || $submittedBlockId == 0) {
+                if ($submittedBlockId == 0) { // use block id 0 to save order value
+                    $block->exists = true;
+                    $submittedBlockData = $rowOrderNumber;
+                }
+                if ($block->exists) {
                     $block->id = $submittedBlockId;
                     $block->getTypeObject()->submit($submittedBlockData);
                 }
