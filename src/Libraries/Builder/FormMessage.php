@@ -78,6 +78,14 @@ class FormMessage
     }
 
     /**
+     * @return MessageBag
+     */
+    public function getMessageBag()
+    {
+        return static::$_messages;
+    }
+
+    /**
      * @param string $key
      * @return string
      */
