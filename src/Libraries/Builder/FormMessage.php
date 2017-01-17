@@ -82,6 +82,9 @@ class FormMessage
      */
     public function getMessageBag()
     {
+        if (!isset(self::$_messages)) {
+            self::$_messages = new MessageBag;
+        }
         return static::$_messages;
     }
 
