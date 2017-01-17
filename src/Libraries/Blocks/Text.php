@@ -26,7 +26,7 @@ class Text extends String_
         if (!empty($options['length'])) {
             $options['keep_tags'] = empty($options['keep_tags']) ? '' : $options['keep_tags']; //ie <br>,<p>
             $content = StringHelper::cutString(strip_tags($content, $options['keep_tags']), $options['length']);
-            if ($options['keep_tags']) {
+            if ($options['keep_tags'] && $content) {
                 $dom = new DOMDocument; // fix unclosed html tags
                 $dom->loadHTML($content);
                 $content = $dom->saveBodyHTML();
