@@ -137,7 +137,7 @@ class CmsController extends Controller
             // save page content
             if (PageBuilder::getData('externalTemplate')) {
                 $domDocument->appendInputFieldNames(config('coaster::frontend.external_form_input'));
-                $response->setContent($this->responseContent = $domDocument->saveBodyHMTL());
+                $response->setContent($this->responseContent = $domDocument->saveBodyHTML());
             } else {
                 $response->setContent($domDocument->saveHTML($domDocument));
             }

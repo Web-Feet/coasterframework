@@ -164,11 +164,11 @@ class String_
     protected function _getInputHTMLKey($altKey = '')
     {
         if ($this->_block->getRepeaterId() && $this->_block->getRepeaterRowId()) {
-            $inputHMTLKey = 'repeater[' . $this->_block->getRepeaterId() . '][' . $this->_block->getRepeaterRowId() . ']';
+            $inputHTMLKey = 'repeater[' . $this->_block->getRepeaterId() . '][' . $this->_block->getRepeaterRowId() . ']';
         } else {
-            $inputHMTLKey = 'block';
+            $inputHTMLKey = 'block';
         }
-        return $inputHMTLKey . '[' . $this->_block->id . ']' . ($altKey ? '[' . $altKey . ']' : '');
+        return $inputHTMLKey . '[' . $this->_block->id . ']' . ($altKey ? '[' . $altKey . ']' : '');
     }
 
     /**

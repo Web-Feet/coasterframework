@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
+use CoasterCms\Helpers\Cms\Html\DOMDocument;
 use CoasterCms\Helpers\Cms\StringHelper;
 
 class Text extends String_
@@ -23,7 +24,13 @@ class Text extends String_
             $content = nl2br($content);
         }
         if (!empty($options['length'])) {
-            $content = StringHelper::cutString(strip_tags($content), $options['length']);
+            $options['keep_tags'] = empty($options['keep_tags']) ? '' : $options['keep_tags']; //ie <br>,<p>
+            $content = StringHelper::cutString(strip_tags($content, $options['keep_tags']), $options['length']);
+            if ($options['keep_tags']) {
+                $dom = new DOMDocument; // fix unclosed html tags
+                $dom->loadHTML($content);
+                $content = $dom->saveBodyHTML();
+            }
         }
         return $content;
     }

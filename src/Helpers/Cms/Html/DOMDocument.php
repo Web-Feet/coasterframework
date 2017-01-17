@@ -59,7 +59,7 @@ class DOMDocument extends \DOMDocument
         return $innerHTML;
     }
 
-    public function saveBodyHMTL($withTags = false)
+    public function saveBodyHTML($withTags = false)
     {
         if ($bodyNode = $this->getElementsByTagName('body')->item(0)) {
             return $withTags ? $this->saveHTML($bodyNode) : $this->saveInnerHTML($bodyNode);
