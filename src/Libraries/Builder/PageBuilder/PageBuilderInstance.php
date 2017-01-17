@@ -78,7 +78,7 @@ class PageBuilderInstance
     /**
      * @var string|false
      */
-    public $externalTemplate;
+    public $customTemplate;
 
     /**
      * @var string|false
@@ -116,7 +116,7 @@ class PageBuilderInstance
         $this->is404 = $pageLoader->is404;
         $this->isLive = $pageLoader->isLive;
         $this->previewVersion = $pageLoader->previewVersion;
-        $this->externalTemplate = $pageLoader->externalTemplate;
+        $this->customTemplate = $pageLoader->customTemplate;
         $this->feedExtension = $pageLoader->feedExtension;
         $this->searchQuery = $pageLoader->searchQuery;
 
@@ -143,8 +143,8 @@ class PageBuilderInstance
     public function templatePath($withThemePath = true)
     {
         $themePath = $withThemePath ? $this->themePath() : '';
-        if ($this->externalTemplate) {
-            return $themePath . 'externals.' . $this->externalTemplate;
+        if ($this->customTemplate) {
+            return $themePath . $this->customTemplate;
         } elseif ($this->feedExtension) {
             return $themePath . 'feed.' . $this->feedExtension . '.' . $this->template;
         } else {

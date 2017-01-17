@@ -33,7 +33,7 @@ class PageLoader
     /**
      * @var false|string
      */
-    public $externalTemplate;
+    public $customTemplate;
 
     /**
      * @var false|string
@@ -69,7 +69,7 @@ class PageLoader
         $this->is404 = true;
         $this->isLive = true;
         $this->previewVersion = false;
-        $this->externalTemplate = false;
+        $this->customTemplate = false;
         $this->feedExtension = false;
         $this->searchQuery = false;
         $this->_load();
@@ -153,7 +153,7 @@ class PageLoader
 
     /**
      * Load current page status.
-     * Is live, Is preview, External Template
+     * Is live, Is preview, Custom Template
      */
     protected function _loadPageStatus()
     {
@@ -172,8 +172,8 @@ class PageLoader
 
         }
 
-        if($externalTemplate = Request::get('external')) {
-            $this->externalTemplate = $externalTemplate;
+        if($customTemplate = Request::get('external')) {
+            $this->customTemplate = 'externals.' . $customTemplate;
         }
 
     }
