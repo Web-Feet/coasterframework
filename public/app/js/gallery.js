@@ -22,24 +22,39 @@ function updateCaption(image_btn) {
 
 $(document).ready(function () {
 
+    // Init
     $('#fileupload').fileupload({
         // Uncomment the following to send cross-domain cookies:
         //xhrFields: {withCredentials: true},
         url: window.location.href.replace('/edit/', '/update/'),
-        sequentialUploads: false
+        sequentialUploads: false // required as uploaded are version individually
     });
 
-    var fixHelper = function (e, ui) {
-        ui.children().each(function () {
-            $(this).width($(this).width());
-        });
-        return ui;
-    };
+    // Load existing files:
+    $('#fileupload').addClass('fileupload-processing');
+    $.ajax({
+        // Uncomment the following to send cross-domain cookies:
+        //xhrFields: {withCredentials: true},
+        url: $('#fileupload').fileupload('option', 'url'),
+        dataType: 'json',
+        context: $('#fileupload')[0]
+    }).always(function () {
+        $(this).removeClass('fileupload-processing');
+    }).done(function (result) {
+        $(this).fileupload('option', 'done')
+            .call(this, $.Event('done'), {result: result});
+    });
 
+    // Sortable on gallery
     $("#gallery tbody").sortable({
         handle: 'td:first',
-        helper: fixHelper,
         items: 'tr',
+        helper: function (e, ui) {
+            ui.children().each(function () {
+                $(this).width($(this).width());
+            });
+            return ui;
+        },
         update: function () {
             var sort_arr = $(this).sortable("toArray", {attribute: 'data-file'});
             $.ajax({
