@@ -260,7 +260,10 @@ class PageBuilderInstance
     public function img($fileName, $options = [])
     {
         $imageData = new \stdClass;
-        $imageData->file = '/themes/' . $this->theme . '/img/' . $fileName;
+        $imageData->file =  $fileName;
+        if (empty($options['full_path'])) {
+            $imageData->file = '/themes/' . $this->theme . '/img/' . $imageData->file;
+        }
         $imageBlock = (new Block);
         $imageBlock->type = 'image';
         return $imageBlock->getTypeObject()->display(serialize($imageData), $options);
