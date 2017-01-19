@@ -111,6 +111,9 @@ class Gallery extends String_
             $galleryData[$image]->order = $order++;
         }
         $this->_block->updateContent(serialize($galleryData));
+        if ($this->_block->getPageId() && !config('coaster::admin.publishing')) { // update live page if no publishing
+            PageVersion::latest_version($this->_block->getPageId(), true)->publish();
+        }
         return 1;
     }
 
