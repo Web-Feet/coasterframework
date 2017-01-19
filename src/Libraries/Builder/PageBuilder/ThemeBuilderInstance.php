@@ -190,28 +190,11 @@ class ThemeBuilderInstance extends PageBuilderInstance
         if ($block->type == 'repeater' || in_array($repeaterView, $this->repeaterTemplates)) {
             $tmp = $this->repeaterView;
             $this->repeaterView = $block_name;
-
-            // manually call the repeater view as the Repeater::display function won't work if RepeaterBlock table returns no results
-            $output = View::make(
-                'themes.' . $this->theme . '.blocks.repeaters.' . $repeaterView,
-                ['is_first' => true, 'is_last' => true, 'count' => 1, 'total' => 1, 'id' => 1, 'pagination' => '']
-            )->render();
-
+            $output = $block->getTypeObject()->displayDummy($options);
             $this->repeaterView = $tmp;
-        } elseif ($block->type == 'selectpages') {
-
-            if ($displayVew = $block->getTypeObject()->displayView($options)) {
-                $output = View::make(
-                    $displayVew,
-                    ['is_first' => true, 'is_last' => true, 'count' => 1, 'total' => 1, 'pages' => [], 'page' => new Page()]
-                )->render();
-            } else {
-                $output = '';
-            }
-
         } else {
             // always use blank data for processing blocks
-            $output = $block->getTypeObject()->display('', $options);
+            $output = $block->getTypeObject()->displayDummy($options);
         }
 
         // if in a normal template (only if no page_id set or using the true page_id)

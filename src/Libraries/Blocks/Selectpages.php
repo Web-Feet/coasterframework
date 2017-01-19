@@ -6,7 +6,6 @@ use CoasterCms\Libraries\Builder\ViewClasses\PageDetails;
 use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageBlock;
-use View;
 
 class Selectpages extends Selectmultiple
 {
@@ -49,26 +48,32 @@ class Selectpages extends Selectmultiple
             }
         }
 
-        if (!empty($options['repeated_view']) && $displayView = $this->displayView($options)) {
-            $renderedContent = '';
-            if (!empty($pages)) {
-                $i = 1;
-                $isFirst = true;
-                $total = count($pages);
-                $pageOverride = PageBuilder::getData('pageOverride');
-                foreach ($pages as $pageId => $page) {
-                    $isLast = ($total == $i);
-                    PageBuilder::setData('pageOverride', $page->page);
-                    $renderedContent .= View::make($displayView, ['pages' => $pages, 'page' => $page, 'is_first' => $isFirst, 'is_last' => $isLast, 'count' => $i, 'total' => $total])->render();
-                    $isFirst = false;
-                    $i++;
-                }
-                PageBuilder::setData('pageOverride', $pageOverride);
-            }
-            return $renderedContent;
-        } else {
-            return $this->_renderDisplayView($options, ['pages' => $pages]);
-        }
+        return $this->_renderDisplayView($options, ['pages' => $pages], 'page');
+    }
+
+    /**
+     * @param array $options
+     * @return string
+     */
+    public function displayDummy($options)
+    {
+        return $this->_renderDisplayView($options, ['pages' => [new Page]], 'page');
+    }
+
+    /**
+     * Set default page id to selected page in the repeated view
+     * @param string $displayView
+     * @param array $data
+     * @return string
+     */
+    protected function _renderRepeatedDisplayViewItem($displayView, $data = [])
+    {
+        $pageOverride = PageBuilder::getData('pageOverride');
+        $item = reset($data);
+        PageBuilder::setData('pageOverride', $item->page);
+        $renderedView = parent::_renderRepeatedDisplayViewItem($displayView, $data);
+        PageBuilder::setData('pageOverride', $pageOverride);
+        return $renderedView;
     }
 
     /**

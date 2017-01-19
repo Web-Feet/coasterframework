@@ -3,9 +3,9 @@
 use Auth;
 use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Helpers\Admin\GalleryUploadHandler;
-use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Page;
+use CoasterCms\Models\PageVersion;
 use Request;
 use URL;
 use View;
@@ -26,7 +26,21 @@ class Gallery extends String_
             }
         }
 
-        return $this->_renderDisplayView($options, ['images' => $galleryData]);
+        return $this->_renderDisplayView($options, ['images' => $galleryData], 'image');
+    }
+
+    /**
+     * @param array $options
+     * @return string
+     */
+    public function displayDummy($options)
+    {
+        $image = new \stdClass;
+        $image->caption = '';
+        $image->order = '';
+        $image->path = '';
+        $image->file = '';
+        return $this->_renderDisplayView($options, ['images' => [$image]], 'image');
     }
 
     /**
@@ -169,6 +183,9 @@ class Gallery extends String_
             $currentData[$uploadHandler->name]->order = $order + 1;
             $currentData[$uploadHandler->name]->path = '/' . $this->_block->getPageId() . '/';
             $this->_block->updateContent(serialize($currentData));
+        }
+        if ($this->_block->getPageId() && !config('coaster::admin.publishing')) { // update live page if no publishing
+            PageVersion::latest_version($this->_block->getPageId(), true)->publish();
         }
         return $uploadHandler->get_response();
     }

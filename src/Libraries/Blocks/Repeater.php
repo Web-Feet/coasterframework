@@ -15,7 +15,6 @@ use CoasterCms\Models\PageBlockRepeaterRows;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Request;
 use Validator;
-use View;
 
 class Repeater extends String_
 {
@@ -29,61 +28,73 @@ class Repeater extends String_
      */
     public function display($content, $options = [])
     {
-        $repeaterId = $content;
-
         if (!empty($options['form'])) {
             return FormWrap::view($this->_block, $options, $this->displayView(array_merge($options, ['view_suffix' => '-form'])));
         }
 
-        if ($repeaterView = $this->displayView($options)) {
+        $options = $options + ['random' => false, 'repeated_view' => true];
+        $repeaterRows = PageBlockRepeaterData::loadRepeaterData($content, $options['version'], $options['random']);
+        return $this->_renderDisplayView($options, ['repeater' => $repeaterRows, 'repeater_id' => $content], 'repeater_row');
+    }
 
-            $renderedContent = '';
-            if ($repeaterBlocks = BlockRepeater::getRepeaterBlocks($this->_block->id)) {
+    /**
+     * @param array $options
+     * @return string
+     */
+    public function displayDummy($options)
+    {
+        $options = $options + ['repeated_view' => true];
+        return $this->_renderDisplayView($options, ['repeater' => [0], 'repeater_id' => 0], 'repeater_row');
+    }
 
-                $random = !empty($options['random']) ? $options['random'] : false;
-                $repeaterRows = PageBlockRepeaterData::loadRepeaterData($repeaterId, $options['version'], $random);
+    /**
+     * Check per page values and load block info to pass to repeated view
+     * @param string|array $view
+     * @param array $data
+     * @param string $itemName
+     * @return string
+     */
+    protected function _renderRepeatedDisplayView($view, $data = [], $itemName = 'item')
+    {
+        $repeaterRows = reset($data);
+        $repeaterBlocks = BlockRepeater::getRepeaterBlocks($this->_block->id);
+        if ($repeaterRows && $repeaterBlocks) {
 
-                // pagination
-                if (!empty($options['per_page']) && !empty($repeaterRows)) {
-                    $pagination = new LengthAwarePaginator($repeaterRows, count($repeaterRows), $options['per_page'], Request::input('page', 1));
-                    $pagination->setPath(Request::getPathInfo());
-                    $paginationLinks = PaginatorRender::run($pagination);
-                    $repeaterRows = array_slice($repeaterRows, (($pagination->currentPage() - 1) * $options['per_page']), $options['per_page'], true);
-                } else {
-                    $paginationLinks = '';
-                }
-
-                if (!empty($repeaterRows)) {
-                    $i = 1;
-                    $isFirst = true;
-                    $isLast = false;
-                    $rows = count($repeaterRows);
-                    $cols = !empty($options['cols']) ? (int)$options['cols'] : 1;
-                    $column = !empty($options['column']) ? (int)$options['column'] : 1;
-                    foreach ($repeaterRows as $rowId => $row) {
-                        if ($i % $cols == $column % $cols) {
-                            $previousKey = PageBuilder::getCustomBlockDataKey();
-                            PageBuilder::setCustomBlockDataKey('repeater' . $repeaterId . '.' . $rowId);
-                            foreach ($repeaterBlocks as $repeaterBlock) {
-                                if ($repeaterBlock->exists) {
-                                    PageBuilder::setCustomBlockData($repeaterBlock->name, !empty($row[$repeaterBlock->id]) ? $row[$repeaterBlock->id] : '', null, false);
-                                }
-                            }
-                            if ($i + $cols - 1 >= $rows) {
-                                $isLast = true;
-                            }
-                            $renderedContent .= View::make($repeaterView, array('is_first' => $isFirst, 'is_last' => $isLast, 'count' => $i, 'total' => $rows, 'id' => $repeaterId, 'pagination' => $paginationLinks, 'links' => $paginationLinks))->render();
-                            $isFirst = false;
-                            PageBuilder::setCustomBlockDataKey($previousKey);
-                        }
-                        $i++;
-                    }
-                }
+            // pagination
+            if (!empty($view['per_page'])) {
+                $pagination = new LengthAwarePaginator($repeaterRows, count($repeaterRows), $view['per_page'], Request::input('page', 1));
+                $pagination->setPath(Request::getPathInfo());
+                $paginationLinks = PaginatorRender::run($pagination);
+                $repeaterRows = array_slice($repeaterRows, (($pagination->currentPage() - 1) * $view['per_page']), $view['per_page'], true);
+            } else {
+                $paginationLinks = '';
             }
-            return $renderedContent;
-        } else {
-            return $this->_renderDisplayView($options);
+
+            return parent::_renderRepeatedDisplayView($view, [key($data) => $repeaterRows, 'blocks' => $repeaterBlocks, 'repeater_id' => $data['repeater_id'], 'pagination' => $paginationLinks, 'links' => $paginationLinks], $itemName);
         }
+        return '';
+    }
+
+    /**
+     * Load custom data so PageBuilder::block will return repeater data
+     * @param string $displayView
+     * @param array $data
+     * @return string
+     */
+    protected function _renderRepeatedDisplayViewItem($displayView, $data = [])
+    {
+        $itemData = reset($data);
+        $itemDataIdKey = key($data) . '_id';
+        $previousKey = PageBuilder::getCustomBlockDataKey();
+        PageBuilder::setCustomBlockDataKey('repeater' . $data['repeater_id'] . '.' . $data[$itemDataIdKey]);
+        foreach ($data['blocks'] as $repeaterBlock) {
+            if ($repeaterBlock->exists) {
+                PageBuilder::setCustomBlockData($repeaterBlock->name, !empty($itemData[$repeaterBlock->id]) ? $itemData[$repeaterBlock->id] : '', null, false);
+            }
+        }
+        $renderedContent = parent::_renderRepeatedDisplayViewItem($displayView, $data);
+        PageBuilder::setCustomBlockDataKey($previousKey);
+        return $renderedContent;
     }
 
     /**
