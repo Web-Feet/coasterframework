@@ -75,7 +75,7 @@ class GalleryUploadHandler extends \UploadHandler
 
     public function generate_response($content, $print_response = true)
     {
-        if ($print_response && !empty($content['files'])) {
+        if (!empty($content['files'])) {
             foreach ($content['files'] as $key => $content_image_data) {
                 if (!empty($this->options['selected_data'][$content_image_data->name])) {
                     foreach (get_object_vars($this->options['selected_data'][$content_image_data->name]) as $var => $data) {
