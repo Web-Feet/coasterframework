@@ -32,6 +32,15 @@ class PageVersion extends Eloquent
         return 0;
     }
 
+    public static function can_publish($pageId)
+    {
+        if (config('coaster::admin.publishing')) {
+            return Auth::action('pages.version-publish', ['page_id' => $pageId]);
+        } else {
+            return Auth::action('pages.edit', ['page_id' => $pageId]);
+        }
+    }
+
     public static function getLiveVersion($pageId)
     {
         if (!static::_preloadIsset('liveVersions') ) {
@@ -75,8 +84,7 @@ class PageVersion extends Eloquent
     {
         $page_lang = PageLang::where('page_id', '=', $this->page_id)->where('language_id', '=', Language::current())->first();
         $page = Page::find($this->page_id);
-        $publishingOn = (config('coaster::admin.publishing') > 0) ? true : false;
-        $haveAuth = $ignore_auth || (($publishingOn && Auth::action('pages.version-publish', ['page_id' => $this->page_id])) || (!$publishingOn && Auth::action('pages.edit', ['page_id' => $this->page_id])));
+        $haveAuth = $ignore_auth || static::can_publish($this->page_id);
         if (!empty($page_lang) && !empty($page) && $haveAuth) {
             $page_lang->live_version = $this->version_id;
             $page_lang->save();
