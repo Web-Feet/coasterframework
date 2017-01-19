@@ -230,7 +230,6 @@ if (empty($assetsVersions['jquery']) || $force || version_compare($assetsVersion
     \CoasterCms\Helpers\Cms\File\Directory::copy($jQueryFileUploadDir . '/css', $jQueryFileUploadPublicDir . '/css');
     \CoasterCms\Helpers\Cms\File\Directory::copy($jQueryFileUploadDir . '/img', $jQueryFileUploadPublicDir . '/img');
     \CoasterCms\Helpers\Cms\File\Directory::copy($jQueryFileUploadDir . '/js', $jQueryFileUploadPublicDir . '/js');
-    \CoasterCms\Helpers\Cms\File\File::replaceString($jQueryFileUploadDir . '/js/main.js', '        url: \'server/php/\'', '        url: window.location.href.replace(\'/edit/\', \'/update/\')');
     echo ".";
 
     $jQueryFileUploadExternal = $jQueryFileUploadPublicDir . '/Gallery-2.16.0.zip';
