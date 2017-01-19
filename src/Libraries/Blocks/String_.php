@@ -148,7 +148,11 @@ class String_
             }
             return View::make($displayView, $data)->render();
         } else {
-            return ucwords($this->_block->type) . ' template not found for block: ' . $this->_block->name . '<br />' . implode('<br />', $this->_processedDisplayViewLog);
+            $error = 'Template not found for ' . $this->_block->type . ' block: ' . $this->_block->name;
+            foreach ($this->_processedDisplayViewLog as $k => $viewNotFound) {
+                $error .= '<br />Tried #' . ($k+1) . ' ' . $viewNotFound;
+            }
+            return $error;
         }
     }
 
