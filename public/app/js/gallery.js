@@ -27,7 +27,7 @@ $(document).ready(function () {
         // Uncomment the following to send cross-domain cookies:
         //xhrFields: {withCredentials: true},
         url: window.location.href.replace('/edit/', '/update/'),
-        sequentialUploads: false // required as uploaded are version individually
+        sequentialUploads: true // required as uploaded are version individually
     });
 
     // Load existing files:
