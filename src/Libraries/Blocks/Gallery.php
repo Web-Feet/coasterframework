@@ -127,6 +127,9 @@ class Gallery extends String_
         if (!empty($galleryData[Request::input('file_data')])) {
             $galleryData[Request::input('file_data')]->caption = Request::input('caption');
             $this->_block->updateContent(serialize($galleryData));
+            if ($this->_block->getPageId() && !config('coaster::admin.publishing')) { // update live page if no publishing
+                PageVersion::latest_version($this->_block->getPageId(), true)->publish();
+            }
             return 1;
         }
         return 0;
