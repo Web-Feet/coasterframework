@@ -279,12 +279,11 @@ class Path
      * remove group data from saved block content or block options
      * @param int|string $unParsedPageId
      * @param bool $returnFirstEl
-     * @return int|array
+     * @return int|string|array
      */
     public static function unParsePageId($unParsedPageId, $returnFirstEl = true)
     {
         $parts = explode(',', $unParsedPageId);
-        $parts[0] = (int) $parts[0];
         return $returnFirstEl ? $parts[0] : $parts;
     }
 
