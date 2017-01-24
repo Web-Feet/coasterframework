@@ -17,7 +17,7 @@ class Routes
             /** @var Route $route */
             $action = $route->getAction();
             if (!empty($action['as']) && strpos($action['as'], 'coaster.admin') === 0) {
-                $coasterRoutes[$action['as']] = $route->getUri();
+                $coasterRoutes[$action['as']] = $route->uri;
 
             }
         }

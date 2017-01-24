@@ -49,7 +49,7 @@ class CmsServiceProvider extends ServiceProvider
             $kernel->pushMiddleware($globalMiddlewareClass);
         }
         foreach ($routerMiddleware as $routerMiddlewareName => $routerMiddlewareClass) {
-            $router->middleware($routerMiddlewareName, $routerMiddlewareClass);
+            $router->middlewareGroup($routerMiddlewareName, [$routerMiddlewareClass]);
         }
 
         // use coater guard and user provider

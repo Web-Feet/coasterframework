@@ -21,7 +21,7 @@ class Richtext extends Text
      */
     public function edit($content)
     {
-        return parent::edit(htmlentities($content));
+        return parent::edit($content);
     }
 
 }
