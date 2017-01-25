@@ -767,6 +767,7 @@ class PageBuilderInstance
         if (!empty($options['per_page']) && (int)$options['per_page'] > 0) {
             $paginator = new LengthAwarePaginator($pagesOfSelectedType, count($pagesOfSelectedType), $options['per_page'], Request::input('page', 1));
             $paginator->setPath(Request::getPathInfo());
+            $paginator->appends(Request::all());
             $paginationLinks = PaginatorRender::run($paginator);
             $pages = array_slice($pagesOfSelectedType, (($paginator->currentPage() - 1) * $options['per_page']), $options['per_page']);
         } else {
