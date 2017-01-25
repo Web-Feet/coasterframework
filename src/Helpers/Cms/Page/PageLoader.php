@@ -125,9 +125,9 @@ class PageLoader
                     $this->pageLevels[$i] = self::_loadSubPage($currentSegment, $parentPage);
 
                     if (empty($this->pageLevels[$i])) {
-                        if (self::_isSearchPage($currentSegment, $parentPage)) {
+                        if (($searchOffset = self::_isSearchPage($currentSegment, $parentPage)) !== false) {
                             Search::setSearchBlockRequired();
-                            $this->searchQuery = implode('/', array_slice(Request::segments(), $i));
+                            $this->searchQuery = implode('/', array_slice(Request::segments(), $i - 1 + $searchOffset));
                             unset($this->pageLevels[$i]);
                             $urlSegments = $i - 1;
                         }
@@ -250,14 +250,16 @@ class PageLoader
     }
 
     /**
+     * If a search page returns an additional offset from which segment to take the search query
      * @param string $path
      * @param Page $parentPage
-     * @return bool
+     * @return false|int
      */
     protected function _isSearchPage($path, Page $parentPage)
     {
-        if ($path == 'search' || ($parentPage->pageLang() && $parentPage->pageLang()->url == 'search')) {
-            return true;
+        $ppIsNamedSearch = ($parentPage->pageLang() && $parentPage->pageLang()->url == 'search');
+        if ($path == 'search' || $ppIsNamedSearch) {
+            return $ppIsNamedSearch ? 0 : 1;
         } else {
             return false;
         }
