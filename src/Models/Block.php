@@ -290,9 +290,10 @@ class Block extends Eloquent
         } elseif ($this->_pageId) {
             $blockData = PageBlock::getBlockData($this->id, $this->_versionId, $this->_pageId);
         } else {
-            $global = true;
+            $globalFallback = true;
+            $blockData = null;
         }
-        if (isset($global) || ($globalFallback && is_null($blockData))) {
+        if ($globalFallback && is_null($blockData)) {
             $blockData = PageBlockDefault::getBlockData($this->id, $this->_versionId);
         }
         return $blockData;
