@@ -575,12 +575,7 @@ class Page extends Eloquent
             'live_end' => null
         ], $this->getAttributes());
         foreach ($pageDefaults as $pageAttribute => $pageDefault) {
-            $this->$pageAttribute = $pageDefault;
-            switch ($pageAttribute) {
-                case 'template': $pageVersion->$pageAttribute = $pagePost[$pageAttribute]; break;
-                default:
-                    $this->$pageAttribute = array_key_exists($pageAttribute, $pagePost) ? $pagePost[$pageAttribute] : $this->$pageAttribute;
-            }
+            $this->$pageAttribute = array_key_exists($pageAttribute, $pagePost) ? $pagePost[$pageAttribute] : $pageDefault;
         }
 
         if (!$this->pageCurrentLang) {
@@ -751,6 +746,7 @@ class Page extends Eloquent
         $pageLangPost['name'] = preg_replace('/\s+Duplicate$/', '', $pageLangPost['name']) . ' Duplicate';
         $pageLangPost['url'] = preg_replace('/--v\w+$/', '', $pageLangPost['url']) . '--v' . base_convert(microtime(true), 10, 36);
         $pageVersion = PageVersion::prepareNew();
+        $pageVersion->template = $duplicatePage->template;
 
         if ($duplicatePage->savePostData($pageVersion, $pagePost, $pageLangPost, $pageGroupsPost, $pageInfoOther)) {
 
