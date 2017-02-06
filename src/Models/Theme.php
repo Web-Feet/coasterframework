@@ -794,7 +794,12 @@ Class Theme extends Eloquent
             $error = 'pages data not imported, invalid columns in: ';
             if (!$pagesFileHandle = Csv::check($pagesCsv, 14)) {
                 if (file_exists($pagesCsv)) {
-                    throw new \Exception($error . $pagesCsv);
+                    if ($pagesFileHandle = Csv::check($pagesCsv, 12)) {
+                        // TODO individual column checks + defaults for optional columns
+                        $defaultTheme = true;
+                    } else {
+                        throw new \Exception($error . $pagesCsv);
+                    }
                 }
             }
             if (!$groupsHandle = Csv::check($groupsCsv, 5)) {
@@ -833,6 +838,9 @@ Class Theme extends Eloquent
                 $row = 0;
                 while (($data = fgetcsv($pagesFileHandle)) !== false) {
                     if ($row++ == 0 && $data[0] == 'Page Id') continue;
+                    if (isset($defaultTheme)) {
+                        $data = array_merge($data, ['', '']);
+                    }
                     list($pageId, $pageName, $pageUrl, $templateName, $parentId, $defaultChildTemplateName, $order, $link, $live, $sitemap, $groupContainer, $groupContainerUrlPriority, $canonicalParentPageId, $groupIds) = $data;
                     $newPage = new Page;
                     $newPage->id = $pageId;
