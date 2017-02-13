@@ -1,4 +1,11 @@
 <p align="center"><img src="https://www.coastercms.org/uploads/images/logo_coaster_github3.jpg"></p>
+
+<p align="center">
+  <a href="https://packagist.org/packages/web-feet/coasterframework"><img src="https://poser.pugx.org/web-feet/coasterframework/downloads.svg"></a>
+  <a href="https://packagist.org/packages/web-feet/coasterframework"><img src="https://poser.pugx.org/web-feet/coasterframework/version.svg"></a>
+  <a href="https://www.gnu.org/licenses/gpl-3.0.en.html"><img src="https://poser.pugx.org/web-feet/coasterframework/license.svg"></a>
+</p>
+
 This is the codebase for Coaster CMS - all the inner workings are here and it is designed to work in conjunction with the Coaster CMS framework (https://github.com/Web-Feet/coastercms).
 
 You can also use this as a stand alone to add CMS functionality to your project.
