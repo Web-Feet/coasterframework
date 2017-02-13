@@ -8,9 +8,9 @@
 
 This is the codebase for Coaster CMS - all the inner workings are here and it is designed to work in conjunction with the Coaster CMS framework (https://github.com/Web-Feet/coastercms).
 
-You can also use this as a stand alone to add CMS functionality to your project.
+You can also use this as a stand-alone library to add content management functionality to your project.
 
-## Installing or adding to an existing Laravel project
+## Add to an Existing Laravel Project
 
 The steps are are as follows:
 
