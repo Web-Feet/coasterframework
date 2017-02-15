@@ -575,7 +575,12 @@ class Page extends Eloquent
             'live_end' => null
         ], $this->getAttributes());
         foreach ($pageDefaults as $pageAttribute => $pageDefault) {
-            $this->$pageAttribute = array_key_exists($pageAttribute, $pagePost) ? $pagePost[$pageAttribute] : $pageDefault;
+            $setAttributeValue = array_key_exists($pageAttribute, $pagePost) ? $pagePost[$pageAttribute] : $pageDefault;
+            if (in_array($pageAttribute, ['template'])) { // don't directly update to page, only to page version
+                $pageVersion->$pageAttribute = $setAttributeValue;
+            } else {
+                $this->$pageAttribute = $setAttributeValue;
+            }
         }
 
         if (!$this->pageCurrentLang) {

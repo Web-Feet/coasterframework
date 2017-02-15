@@ -58,7 +58,8 @@ class Repeater extends String_
     {
         $repeaterRows = reset($data);
         $repeaterBlocks = BlockRepeater::getRepeaterBlocks($this->_block->id);
-        if ($repeaterRows && $repeaterBlocks) {
+        // $repeaterRows[0] check allows skipping of block check (used for dummy data)
+        if (($repeaterRows && $repeaterBlocks) || (isset($repeaterRows[0]) && $repeaterRows[0] === 0)) {
 
             // pagination
             if (!empty($view['per_page'])) {
@@ -69,7 +70,6 @@ class Repeater extends String_
             } else {
                 $paginationLinks = '';
             }
-
             return parent::_renderRepeatedDisplayView($view, [key($data) => $repeaterRows, 'blocks' => $repeaterBlocks, 'repeater_id' => $data['repeater_id'], 'pagination' => $paginationLinks, 'links' => $paginationLinks], $itemName);
         }
         return '';
