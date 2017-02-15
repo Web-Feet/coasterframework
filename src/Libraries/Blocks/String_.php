@@ -91,6 +91,17 @@ class String_
     }
 
     /**
+     * Frontend return string or unserialized data
+     * @param string $content
+     * @param array $options
+     * @return mixed
+     */
+    public function data($content, $options = [])
+    {
+        return $this->_defaultData($content);
+    }
+
+    /**
      * Used in theme builder to render views
      * @param array $options
      * @return string
@@ -273,6 +284,16 @@ class String_
         $this->_contentSaved = (string) $content;
         $this->_block->updateContent($this->_contentSaved);
         return $this;
+    }
+
+    /**
+     * Return string or if content is serialized return unserialized data
+     * @param string $content
+     * @return mixed
+     */
+    protected function _defaultData($content)
+    {
+        return $content;
     }
 
     /**

@@ -25,7 +25,7 @@ class Form extends String_
      * Display form view
      * @param string $content
      * @param array $options
-     * @return \Illuminate\Contracts\View\View|string
+     * @return string
      */
     public function display($content, $options = [])
     {

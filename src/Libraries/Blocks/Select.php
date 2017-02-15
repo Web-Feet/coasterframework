@@ -10,17 +10,17 @@ class Select extends String_
     public static $blockSettings = ['Manage block select options' => 'themes/selects'];
 
     /**
-     * Add return all option to the display function
+     * Add return all option to the data function
      * @param string $content
      * @param array $options
      * @return array|string
      */
-    public function display($content, $options = [])
+    public function data($content, $options = [])
     {
         if (isset($options['returnAll']) && $options['returnAll']) {
             return BlockSelectOption::getOptionsArray($this->_block->id);
         }
-        return $content;
+        return parent::data($content);
     }
 
     /**

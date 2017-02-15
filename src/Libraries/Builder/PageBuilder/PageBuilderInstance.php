@@ -663,8 +663,16 @@ class PageBuilderInstance
             $options['version'] = $usingGlobalContent ? 0 : $this->pageVersion($pageId);
         }
 
-        // pass block details and data to display class
-        return $block->setPageId($pageId)->setVersionId($options['version'])->getTypeObject()->display($blockData, $options);
+        // generate type object (ie. String / Image / Repeater) with page and version data
+        $blockTypeObject = $block->setPageId($pageId)->setVersionId($options['version'])->getTypeObject();
+
+        if (isset($options['data']) && $options['data']) {
+            // return data from type object
+            return $blockTypeObject->data($blockData, $options);
+        } else {
+            // return rendered view from type object
+            return $blockTypeObject->display($blockData, $options);
+        }
     }
 
     /**
