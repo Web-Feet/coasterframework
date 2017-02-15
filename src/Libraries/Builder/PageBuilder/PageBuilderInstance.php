@@ -676,6 +676,16 @@ class PageBuilderInstance
     }
 
     /**
+     * @param string $blockName
+     * @param array $options
+     * @return mixed
+     */
+    public function blockData($blockName, $options = [])
+    {
+        return $this->block($blockName, $options + ['data' => true]);
+    }
+
+    /**
      * @param int $getPosts
      * @param string $where
      * @return \PDOStatement
