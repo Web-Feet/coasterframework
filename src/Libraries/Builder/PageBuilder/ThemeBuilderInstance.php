@@ -16,7 +16,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
     /**
      * @var string
      */
-    protected $repeaterView;
+    protected $currentRepeaterBlockName;
 
     /**
      * @var string
@@ -74,6 +74,11 @@ class ThemeBuilderInstance extends PageBuilderInstance
     public $errors;
 
     /**
+     * @ int
+     */
+    const DUMMY_ORIGINAL_PAGE_ID = -10;
+
+    /**
      * ThemeBuilderInstance constructor.
      * @param PageLoader $pageLoader
      * @param bool $loadOverrideFile
@@ -83,12 +88,12 @@ class ThemeBuilderInstance extends PageBuilderInstance
         parent::__construct($pageLoader);
         $this->loadOverrideFile = $loadOverrideFile;
         $this->categoryView = '';
-        $this->repeaterView = '';
+        $this->currentRepeaterBlockName = '';
         $this->errors = [];
 
         // set page override so check can be made if the actual page id is ever called
         $this->pageOverride = clone $this->page;
-        $this->page->id = -666;
+        $this->page->id = static::DUMMY_ORIGINAL_PAGE_ID;
 
         $this->templateBlocks = [];
         $this->coreTemplates = ['__core_category', '__core_otherPage', '__core_repeater'];
@@ -157,55 +162,75 @@ class ThemeBuilderInstance extends PageBuilderInstance
     /**
      * @param string $block_name
      * @param array $options
+     * @param string $fn
      * @return mixed|string
      */
-    public function block($block_name, $options = [])
+    protected function _block($block_name, $options = [], $fn = 'display')
     {
         if ($this->_importIgnore($options)) {
             return $this->_returnValue('', $options);
         }
 
-        if(empty($options['version'])) {
-            $options['version'] = 0;
-        }
-
         $block_name = strtolower($block_name);
 
         // get block type
+        /** @var Block $block */
         $block = Block::preloadClone($block_name);
+        $block->name = $block_name;
         if (isset($this->blockSettings[$block_name]['type'])) {
             $block->type = $this->blockSettings[$block_name]['type'];
         }
         if (!$block->type) {
-            $block->type = BlockUpdater::typeGuess($block_name);
+            if (in_array(empty($options['view']) ? $block_name : $options['view'], $this->repeaterTemplates)) {
+                $block->type = 'repeater';
+                $this->blockSettings[$block_name]['type'] = 'repeater';
+            } else {
+                $block->type = BlockUpdater::typeGuess($block_name);
+            }
         }
 
-        // check if repeater view
-        if (!empty($options['view'])) {
-            $repeaterView = $options['view'];
-        } else {
-            $repeaterView = $block_name;
+        // set block note
+        if (!empty($options['importNote'])) {
+            if (!isset($this->blockSettings[$block_name])) {
+                $this->blockSettings[$block_name] = [];
+            }
+            if (!isset($this->blockSettings[$block_name]['note'])) {
+                $this->blockSettings[$block_name]['note'] = $options['importNote'];
+            }
         }
 
-        if ($block->type == 'repeater' || in_array($repeaterView, $this->repeaterTemplates)) {
-            $tmp = $this->repeaterView;
-            $this->repeaterView = $block_name;
+        // set version
+        $options['version'] = empty($options['version']) ? 0 : $options['version'];
+
+        // set current repeater (so can track which blocks are used by this repeater)
+        if ($block->type == 'repeater') {
+            $parentRepeater = (string) $this->currentRepeaterBlockName;
+            $this->currentRepeaterBlockName = $block_name;
+        }
+
+        // always use blank block content for processing blocks for consistency
+        if ($fn == 'displayDummy') {
+            // displayDummy does not require any block content
             $output = $block->getTypeObject()->displayDummy($options);
-            $this->repeaterView = $tmp;
         } else {
-            // always use blank data for processing blocks
-            $output = $block->getTypeObject()->displayDummy($options);
+            // use blank data for the other functions
+            $output = $block->getTypeObject()->$fn('', $options);
         }
 
-        // if in a normal template (only if no page_id set or using the true page_id)
-        if (!array_key_exists('page_id', $options) || $options['page_id'] === -666) {
-            if ($this->repeaterView) {
+        // reset repeater block name after rendering repeater view
+        if (isset($parentRepeater)) {
+            $this->currentRepeaterBlockName = $parentRepeater;
+        }
+
+        // if in a normal template (only if no page_id set or using the original page_id)
+        if (!array_key_exists('page_id', $options) || $options['page_id'] === static::DUMMY_ORIGINAL_PAGE_ID) {
+            if ($this->currentRepeaterBlockName) {
                 // if in a repeater template
-                if (!isset($this->repeaterBlocks[$this->repeaterView])) {
-                    $this->repeaterBlocks[$this->repeaterView] = [];
+                if (!isset($this->repeaterBlocks[$this->currentRepeaterBlockName])) {
+                    $this->repeaterBlocks[$this->currentRepeaterBlockName] = [];
                 }
-                if (!in_array($block_name, $this->repeaterBlocks[$this->repeaterView])) {
-                    $this->repeaterBlocks[$this->repeaterView][] = $block_name;
+                if (!in_array($block_name, $this->repeaterBlocks[$this->currentRepeaterBlockName])) {
+                    $this->repeaterBlocks[$this->currentRepeaterBlockName][] = $block_name;
                 }
                 $template = '__core_repeater';
             } elseif ($this->categoryView) {
@@ -217,6 +242,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
             $template = '__core_otherPage';
         }
 
+        // add block to template
         if (!isset($this->templateBlocks[$template])) {
             $this->templateBlocks[$template] = [];
         }
@@ -224,16 +250,27 @@ class ThemeBuilderInstance extends PageBuilderInstance
             $this->templateBlocks[$template][] = $block_name;
         }
 
-        if (!empty($options['importNote'])) {
-            if (!isset($this->blockSettings[$block_name])) {
-                $this->blockSettings[$block_name] = [];
-            }
-            if (!isset($this->blockSettings[$block_name]['note'])) {
-                $this->blockSettings[$block_name]['note'] = $options['importNote'];
-            }
-        }
-
         return $this->_returnValue($output, $options);
+    }
+
+    /**
+     * @param string $block_name
+     * @param array $options
+     * @return string
+     */
+    public function block($block_name, $options = [])
+    {
+        return $this->_block($block_name, $options, 'displayDummy');
+    }
+
+    /**
+     * @param string $block_name
+     * @param array $options
+     * @return mixed|string
+     */
+    public function blockData($block_name, $options = [])
+    {
+        return $this->_block($block_name, $options, 'data');
     }
 
     /**
@@ -355,15 +392,18 @@ class ThemeBuilderInstance extends PageBuilderInstance
      */
     protected function _checkRepeaterTemplates()
     {
-        $this->repeaterView = '';
+        $this->currentRepeaterBlockName = '';
         $this->repeaterTemplates = [];
         $this->repeaterBlocks = [];
 
-        $repeaterPath = base_path('resources/views/themes/' . $this->theme . '/blocks/repeaters');
-        if (is_dir($repeaterPath)) {
-            foreach (scandir($repeaterPath) as $repeaterFile) {
-                if ($repeaterTemplate = explode('.', $repeaterFile)[0]) {
-                    $this->repeaterTemplates[] = $repeaterTemplate;
+        $repeaterPaths = [base_path('resources/views/themes/' . $this->theme . '/blocks/repeater')];
+        $repeaterPaths[] = $repeaterPaths[0].'s';
+        foreach ($repeaterPaths as $repeaterPath) {
+            if (is_dir($repeaterPath)) {
+                foreach (scandir($repeaterPath) as $repeaterFile) {
+                    if ($repeaterTemplate = explode('.', $repeaterFile)[0]) {
+                        $this->repeaterTemplates[] = $repeaterTemplate;
+                    }
                 }
             }
         }
@@ -528,7 +568,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
         } catch (PageBuilderException $e) {
             $error = $e->getMessage() . ' (themes.' . $this->theme . '.templates.' . $this->template;
             $error .= $this->categoryView ? ' ' . $this->categoryView : $this->categoryView;
-            $error .= $this->repeaterView ? ' ' . $this->repeaterView : $this->repeaterView;
+            $error .= $this->currentRepeaterBlockName ? ' ' . $this->currentRepeaterBlockName : $this->currentRepeaterBlockName;
             $error .= ')';
             $this->errors[] = $error;
             throw new PageBuilderException($error);

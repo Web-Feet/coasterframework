@@ -20,7 +20,7 @@ use CoasterCms\Libraries\Builder\PageBuilder\PageBuilderInstance;
  * @method static string img(string $fileName, array $options = [])
  * @method static string css(string $fileName)
  * @method static string js(string $fileName)
- * @method static void setCustomBlockData(string $blockName, mixed $content, mixed $key = 0, bool $overwrite = true)
+ * @method static void setCustomBlockData(string $blockName, mixed $content, int $key = 0, bool $overwrite = true)
  * @method static void setCustomBlockDataKey(string $key)
  * @method static string getCustomBlockDataKey()
  * @method static string external(string $section)
@@ -35,6 +35,7 @@ use CoasterCms\Libraries\Builder\PageBuilder\PageBuilderInstance;
  * @method static string categoryFilters(array $blockNames, string $search, array $options = [])
  * @method static string search(array $options = [])
  * @method static string block(string $blockName, $options = [])
+ * @method static mixed blockData(string $blockName, $options = [])
  * @method static \PDOStatement blogPosts(int $getPosts = 3, string $where = 'post_type = "post" AND post_status = "publish"')
  */
 

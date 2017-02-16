@@ -127,15 +127,29 @@ class String_
         $pView = $view . '#' . $viewSuffix;
         if (!array_key_exists($pView, $this->_processedDisplayView)) {
             $this->_processedDisplayView[$pView] = '';
-            $viewRootPath = 'themes.' . PageBuilder::getData('theme') . '.blocks.' . strtolower(str_plural($this->_block->type)) . '.';
             if ($view) {
                 array_unshift($this->_displayViewPriorities, $view);
             }
-            foreach ($this->_displayViewPriorities as $viewPriority) {
-                $this->_processedDisplayViewLog[] = $viewRootPath . $viewPriority . $viewSuffix;
-                if (View::exists($viewRootPath . $viewPriority . $viewSuffix)) {
-                    $this->_processedDisplayView[$pView] = $viewRootPath . $viewPriority . $viewSuffix;
-                    break;
+            $viewRootPath = 'themes.' . PageBuilder::getData('theme') . '.blocks.';
+            $oldPaths = [
+                'repeater' => 'repeaters',
+                'video' => 'videos',
+                'image' => 'images',
+                'form' => 'forms',
+            ];
+            $this->_block->type = strtolower($this->_block->type);
+            $blockFolders = [$this->_block->type];
+            if (array_key_exists($this->_block->type, $oldPaths)) {
+                $blockFolders[] = $oldPaths[$this->_block->type];
+            }
+            foreach ($blockFolders as $blockFolder) {
+                $viewPath = $viewRootPath . $blockFolder . '.';
+                foreach ($this->_displayViewPriorities as $viewPriority) {
+                    $this->_processedDisplayViewLog[] = $viewPath . $viewPriority . $viewSuffix;
+                    if (View::exists($viewPath . $viewPriority . $viewSuffix)) {
+                        $this->_processedDisplayView[$pView] = $viewPath . $viewPriority . $viewSuffix;
+                        break;
+                    }
                 }
             }
         }

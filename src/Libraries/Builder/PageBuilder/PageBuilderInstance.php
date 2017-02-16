@@ -293,9 +293,9 @@ class PageBuilderInstance
      * @param int $key
      * @param bool $overwrite
      */
-    public function setCustomBlockData($blockName, $content, $key = null, $overwrite = true)
+    public function setCustomBlockData($blockName, $content, $key = 0, $overwrite = true)
     {
-        $key = is_null($key) ? $this->_customBlockDataKey : $key;
+        $key = ($key == 0) ? $this->_customBlockDataKey : $key;
         if (empty($this->_customBlockData[$key])) {
             $this->_customBlockData[$key] = [];
         }
@@ -611,9 +611,10 @@ class PageBuilderInstance
     /**
      * @param string $blockName
      * @param array $options
-     * @return mixed|string
+     * @param string $fn
+     * @return mixed
      */
-    public function block($blockName, $options = [])
+    protected function _block($blockName, $options = [], $fn = 'display')
     {
         // force query available if block details changed in current request
         $block = Block::preloadClone($blockName, isset($options['force_query']));
@@ -666,23 +667,30 @@ class PageBuilderInstance
         // generate type object (ie. String / Image / Repeater) with page and version data
         $blockTypeObject = $block->setPageId($pageId)->setVersionId($options['version'])->getTypeObject();
 
-        if (isset($options['data']) && $options['data']) {
-            // return data from type object
-            return $blockTypeObject->data($blockData, $options);
-        } else {
-            // return rendered view from type object
-            return $blockTypeObject->display($blockData, $options);
-        }
+        // return rendered view or run custom function on block type
+        return $blockTypeObject->$fn($blockData, $options);
     }
 
     /**
+     * Return string or rendered view for block
+     * @param string $blockName
+     * @param array $options
+     * @return string
+     */
+    public function block($blockName, $options = [])
+    {
+        return $this->_block($blockName, $options);
+    }
+
+    /**
+     * Return data for block
      * @param string $blockName
      * @param array $options
      * @return mixed
      */
     public function blockData($blockName, $options = [])
     {
-        return $this->block($blockName, $options + ['data' => true]);
+        return $this->_block($blockName, $options, 'data');
     }
 
     /**
