@@ -44,8 +44,8 @@
                 <th>Label</th>
                 <th>Category/Tab</th>
                 <th>Type</th>
-                <th><i class="glyphicon glyphicon-info-sign header_note" data-note="A block with the show in site-wide content option checked will appear in the site-wide content section of the admin."></i>Show in Site-wide Content</th>
-                <th><i class="glyphicon glyphicon-info-sign header_note" data-note="If both the show in pages and show in site-wide content boxes above are checked, the block will appear in both pages and site-wide content."></i>Show in Pages</th>
+                <th><i class="glyphicon glyphicon-info-sign header_note" data-note="The block will now appear in the site-wide content section of the admin instead of pages. (saved as a theme block rather than template block)"></i>Show in Site-wide Content</th>
+                <th><i class="glyphicon glyphicon-info-sign header_note" data-note="The block will still appear in the pages when editing them. (saved as a theme block rather than template block)"></i>Show in Pages</th>
             </tr>
             </thead>
 
