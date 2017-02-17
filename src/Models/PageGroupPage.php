@@ -22,4 +22,12 @@ class PageGroupPage extends Eloquent
         return array_unique(static::_preloadGet('pageGroups', $pageId) ?: []);
     }
 
+    /**
+     *
+     */
+    public static function clearGroupIds()
+    {
+        static::_preloadClear('pageGroups');
+    }
+
 }

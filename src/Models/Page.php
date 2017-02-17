@@ -93,8 +93,11 @@ class Page extends Eloquent
         return implode('/', array_unique($itemNames));
     }
 
-    public function groupIds()
+    public function groupIds($clearCache = false)
     {
+        if ($clearCache) {
+            PageGroupPage::clearGroupIds();
+        }
         return PageGroupPage::getGroupIds($this->id);
     }
 
@@ -719,6 +722,7 @@ class Page extends Eloquent
         foreach (array_diff($newGroupIds, $currentGroupIds) as $addGroupId) {
             $this->groups()->attach($addGroupId);
         }
+        $this->groupIds(true); // clear old groups as data may be used again in page info view
 
         /*
          * Save other page info
