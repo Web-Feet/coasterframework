@@ -1,27 +1,43 @@
 <?php namespace CoasterCms\Models;
 
+use CoasterCms\Libraries\Traits\DataPreLoad;
 use DB;
 use Eloquent;
 
 class Template extends Eloquent
 {
+    use DataPreLoad;
 
     protected $table = 'templates';
     protected static $_blocksOfType = [];
 
+    /**
+     * @return array
+     */
+    protected static function _preloadByColumn()
+    {
+        return ['id', 'template'];
+    }
+
     public static function name($template_id)
     {
-        $template = self::find($template_id);
-        if (!empty($template)) {
-            return $template->template;
-        } else {
-            return null;
-        }
+        return self::preload($template_id)->template;
     }
 
     public function blocks()
     {
         return $this->belongsToMany('CoasterCms\Models\Block', 'template_blocks')->where('active', '=', 1)->orderBy('order', 'asc');
+    }
+
+    public static function getTemplateIds($templates) {
+        $validTemplates = [];
+        foreach ($templates as $templateIdentifier) {
+            $template = static::preload($templateIdentifier);
+            if ($template->exists) {
+                $validTemplates[$template->id] = $template->id;
+            }
+        }
+        return $validTemplates;
     }
 
     public static function template_blocks($theme, $template)

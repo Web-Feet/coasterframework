@@ -20,6 +20,7 @@ use CoasterCms\Models\PageLang;
 use CoasterCms\Models\PageSearchData;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\Setting;
+use CoasterCms\Models\Template;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -481,7 +482,6 @@ class PageBuilderInstance
     {
         $defaultOptions = [
             'match' => '=',
-            'fromPageIds' => [],
             'operand' => 'AND',
             'multiFilter' => false
         ];
@@ -498,8 +498,8 @@ class PageBuilderInstance
                 $filteredPagesForBlock = [];
                 $liveBlocks = PageBlock::livePageBlocksForBlock($block->id);
                 foreach ($liveBlocks as $liveBlock) {
-                    if (array_key_exists($liveBlock->page_id, $filteredPagesForBlock) || (!empty($options['fromPageIds']) && !in_array($liveBlock->page_id, $options['fromPageIds']))) {
-                        continue;
+                    if (array_key_exists($liveBlock->page_id, $filteredPagesForBlock)) {
+                        continue; // skip unnecessary extra checks
                     }
                     if ($blockTypeObject->filter($liveBlock->content, $searchValue, $options['match'])) {
                         $filteredPagesForBlock[$liveBlock->page_id] = Page::preload($liveBlock->page_id);
@@ -570,25 +570,8 @@ class PageBuilderInstance
         if ($this->searchQuery !== false) {
             $pages = PageSearchData::lookup($this->searchQuery);
             if (!empty($pages)) {
-                if (!empty($options['templates'])) {
-                    foreach ($pages as $k => $page) {
-                        if (!isset($page->template) || !in_array($page->template, $options['templates'])) {
-                            unset($pages[$k]);
-                        }
-                    }
-                }
-                if (!empty($options['groups'])) {
-                    $pageIds = [];
-                    $pageGroupPages = PageGroupPage::whereIn('group_id', $options['groups'])->get();
-                    foreach ($pageGroupPages as $pageGroupPage) {
-                        $pageIds[] = $pageGroupPage->page_id;
-                    }
-                    foreach ($pages as $k => $page) {
-                        if (!in_array($page->id, $pageIds)) {
-                            unset($pages[$k]);
-                        }
-                    }
-                }
+                // pass to renderer as it will do filtering on pages
+                $pages = $this->_renderCategory(0, $pages, ['render' => false] + $options);
                 $results = count($pages);
                 $showing = "";
                 if ($results > 20) {
@@ -748,7 +731,7 @@ class PageBuilderInstance
      * @param int $categoryPageId
      * @param Page[]|Collection $pages
      * @param array $options
-     * @return string
+     * @return string|array
      */
     protected function _renderCategory($categoryPageId, $pages, $options)
     {
@@ -763,13 +746,12 @@ class PageBuilderInstance
             'per_page' => 20,
             'limit' => 0,
             'content' => '',
+            'templates' => [],
+            'groups' => [],
+            'fromPageIds' => [],
             'canonicals' => config('coaster::frontend.canonicals')
         ];
         $options = array_merge($defaultOptions, $options);
-
-        if (!$options['render']) {
-            return $pages;
-        }
 
         // select page of selected type
         $pagesOfSelectedType = [];
@@ -783,21 +765,54 @@ class PageBuilderInstance
                 }
             }
         }
+        $pages = $pagesOfSelectedType;
+
+        // filtering by templates/groups/pageIds
+        if (!empty($options['templates'])) {
+            $templates = Template::getTemplateIds($options['templates']); // converts names to ids
+            foreach ($pages as $k => $page) {
+                if (!isset($page->template) || !in_array($page->template, $templates)) {
+                    unset($pages[$k]);
+                }
+            }
+        }
+        if (!empty($options['groups'])) {
+            $pageIds = [];
+            $pageGroupPages = PageGroupPage::whereIn('group_id', $options['groups'])->get();
+            foreach ($pageGroupPages as $pageGroupPage) {
+                $pageIds[] = $pageGroupPage->page_id;
+            }
+            foreach ($pages as $k => $page) {
+                if (!in_array($page->id, $pageIds)) {
+                    unset($pages[$k]);
+                }
+            }
+        }
+        if (!empty($options['fromPageIds'])) {
+            foreach ($pages as $k => $page) {
+                if (!in_array($page->id, $options['fromPageIds'])) {
+                    unset($pages[$k]);
+                }
+            }
+        }
 
         // limit results
         if (!empty($options['limit']) && is_int($options['limit'])) {
-            $pagesOfSelectedType = array_slice($pagesOfSelectedType, 0, $options['limit']);
+            $pages = array_slice($pages, 0, $options['limit']);
+        }
+
+        if (!$options['render']) {
+            return $pages;
         }
 
         // pagination
         if (!empty($options['per_page']) && (int)$options['per_page'] > 0) {
-            $paginator = new LengthAwarePaginator($pagesOfSelectedType, count($pagesOfSelectedType), $options['per_page'], Request::input('page', 1));
+            $paginator = new LengthAwarePaginator($pages, count($pages), $options['per_page'], Request::input('page', 1));
             $paginator->setPath(Request::getPathInfo());
             $paginator->appends(Request::all());
             $paginationLinks = PaginatorRender::run($paginator);
-            $pages = array_slice($pagesOfSelectedType, (($paginator->currentPage() - 1) * $options['per_page']), $options['per_page']);
+            $pages = array_slice($pages, (($paginator->currentPage() - 1) * $options['per_page']), $options['per_page']);
         } else {
-            $pages = $pagesOfSelectedType;
             $paginationLinks = '';
         }
 
