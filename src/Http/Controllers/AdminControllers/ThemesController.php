@@ -230,13 +230,16 @@ class ThemesController extends Controller
                 foreach (scandir($themes) as $theme) {
                     if (is_dir($themes . DIRECTORY_SEPARATOR . $theme) && $theme != '.' && $theme != '..') {
 
-                        $forms = $themes . DIRECTORY_SEPARATOR . $theme . '/blocks/forms';
-                        if (is_dir($forms)) {
-                            foreach (scandir($forms) as $form) {
-                                if (!is_dir($forms . DIRECTORY_SEPARATOR . $form)) {
-                                    $form_file = explode(".", $form);
-                                    if (!empty($form_file[0])) {
-                                        $formTemplates[] = $form_file[0];
+                        $formsDirs = [$themes . DIRECTORY_SEPARATOR . $theme . '/blocks/form'];
+                        $formsDirs[] = $formsDirs[0].'s';
+                        foreach ($formsDirs as $forms) {
+                            if (is_dir($forms)) {
+                                foreach (scandir($forms) as $form) {
+                                    if (!is_dir($forms . DIRECTORY_SEPARATOR . $form)) {
+                                        $form_file = explode(".", $form);
+                                        if (!empty($form_file[0])) {
+                                            $formTemplates[] = $form_file[0];
+                                        }
                                     }
                                 }
                             }

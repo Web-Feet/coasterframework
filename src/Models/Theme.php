@@ -588,15 +588,15 @@ Class Theme extends Eloquent
                     !empty($templatesById[$pageGroup->default_template])?$templatesById[$pageGroup->default_template]:''
                 ]);
 
-                foreach ($groupAttributesByGroupId as $groupId => $attributes) {
-                    foreach ($attributes as $attribute) {
+                if (!empty($groupAttributesByGroupId[$pageGroup->id])) {
+                    foreach ($groupAttributesByGroupId[$pageGroup->id] as $groupAttribute) {
                         fputcsv($groupAttributesCsv, [
-                            $attribute->id,
-                            $groupId,
-                            Block::preload($attribute->item_block_id)->name,
-                            $attribute->item_block_order_priority,
-                            $attribute->item_block_order_dir,
-                            $attribute->filter_by_block_id?:''
+                            $groupAttribute->id,
+                            $pageGroup->id,
+                            Block::preload($groupAttribute->item_block_id)->name,
+                            $groupAttribute->item_block_order_priority,
+                            $groupAttribute->item_block_order_dir,
+                            $groupAttribute->filter_by_block_id?:''
                         ]);
                     }
                 }

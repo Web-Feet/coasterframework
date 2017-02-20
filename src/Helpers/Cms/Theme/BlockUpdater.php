@@ -216,23 +216,26 @@ class BlockUpdater
 
             $formRules = BlockFormRule::all();
             if (!$formRules->isEmpty()) {
-                $formsDir = base_path().'/resources/views/themes/'.$theme->theme.'/blocks/forms';
-                if (is_dir($formsDir)) {
-                    $themeForms = [];
-                    foreach (scandir($formsDir) as $formTemplate) {
-                        if (!in_array($formTemplate, ['.', '..'])) {
-                            $formTemplateParts = explode('.', $formTemplate);
-                            $themeForms[] = $formTemplateParts[0];
+                $themeForms = [];
+                $formsDirs = [base_path().'/resources/views/themes/'.$theme->theme.'/blocks/form'];
+                $formsDirs[] = $formsDirs[0].'s';
+                foreach ($formsDirs as $formsDir) {
+                    if (is_dir($formsDir)) {
+                        foreach (scandir($formsDir) as $formTemplate) {
+                            if (!in_array($formTemplate, ['.', '..'])) {
+                                $formTemplateParts = explode('.', $formTemplate);
+                                $themeForms[] = $formTemplateParts[0];
+                            }
                         }
                     }
-                    foreach ($formRules as $formRule) {
-                        if (in_array($formRule->form_template, $themeForms)) {
-                            fputcsv($formRulesCsv, [
-                                $formRule->form_template,
-                                $formRule->field,
-                                $formRule->rule
-                            ]);
-                        }
+                }
+                foreach ($formRules as $formRule) {
+                    if (in_array($formRule->form_template, $themeForms)) {
+                        fputcsv($formRulesCsv, [
+                            $formRule->form_template,
+                            $formRule->field,
+                            $formRule->rule
+                        ]);
                     }
                 }
             }
