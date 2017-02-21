@@ -84,22 +84,7 @@ class MenuBuilder
     protected static function _buildMenu($items, $parentPageId, $level = 1, $subLevels = 0)
     {
         // convert page models to menu items and remove non-live pages
-        foreach ($items as $k => $item) {
-            if (is_a($item, Page::class)) {
-                $pageId = $item->id;
-                $items[$k] = new MenuItem;
-                $items[$k]->page_id = $item->id;
-                $items[$k]->sub_levels = 0;
-                $items[$k]->custom_name = '';
-            } else {
-                $pageId = $item->page_id;
-            }
-            $pageId = Path::unParsePageId($pageId);
-            $page = Page::preload($pageId);
-            if (!$page->exists || !$page->is_live()) {
-                unset($items[$k]);
-            }
-        }
+        $items = static::_convertPagesToItems($items);
 
         $pageParents = [];
         $pageLevels = PageBuilder::getData('pageLevels')?:[];
@@ -130,6 +115,7 @@ class MenuBuilder
             $subLevels = $item->sub_levels > 0 ? $item->sub_levels : $defaultSubLevels;
             if ($subLevels > 0) {
                 if ($subPages = Page::category_pages($pageId)) {
+                    $subPages = static::_convertPagesToItems($subPages, $item);
                     $subMenu = self::_buildMenu($subPages, $pageId, $level + 1, $subLevels - 1);
                 }
             }
@@ -146,6 +132,30 @@ class MenuBuilder
         } else {
             return $menuItems;
         }
+    }
+
+    /**
+     * @param array $items
+     * @param MenuItem|null $baseItem
+     * @return mixed
+     */
+    protected static function _convertPagesToItems($items, $baseItem = null)
+    {
+        $baseItem = $baseItem ?: new MenuItem;
+        foreach ($items as $k => $item) {
+            if (is_a($item, Page::class)) {
+                $items[$k] = clone $baseItem;
+                $items[$k]->page_id = $item->id;
+                $items[$k]->sub_levels = 0;
+                $items[$k]->custom_name = $items[$k]->getCustomName($item->id);
+            }
+            $pageId = Path::unParsePageId($items[$k]->page_id);
+            $page = Page::preload($pageId);
+            if (!$page->exists || !$page->is_live()) {
+                unset($items[$k]);
+            }
+        }
+        return $items;
     }
 
     /**
