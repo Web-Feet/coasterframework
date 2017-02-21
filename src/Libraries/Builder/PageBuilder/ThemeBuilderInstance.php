@@ -173,6 +173,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
 
         // get block type
         $block = Block::preloadClone($block_name);
+        $block->name = $block_name;
         if (isset($this->blockSettings[$block_name]['type'])) {
             $block->type = $this->blockSettings[$block_name]['type'];
         }
