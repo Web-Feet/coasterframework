@@ -277,7 +277,7 @@ ol.sortable li div{ border:none; padding:10px; transition:all 0.3s ease;}
 .modal-body {padding: 30px 20px;}
 
 i.glyphicon {transition:all 0.3s ease;}
-i.glyphicon:hover{color:#eb5b4f !important; cursor: pointer; }
+i.glyphicon:hover, i.fa:hover{color:#eb5b4f !important; cursor: pointer; }
 i.glyphicon-move{cursor: move;}
 a.glyphicon, i.glyphicon {color:#333; text-decoration: none; padding: 3px 5px;}
 

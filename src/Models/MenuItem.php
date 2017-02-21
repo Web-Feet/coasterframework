@@ -1,8 +1,10 @@
 <?php namespace CoasterCms\Models;
 
+use Auth;
 use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Libraries\Traits\Logger;
 use Eloquent;
+use View;
 
 class MenuItem extends Eloquent
 {
@@ -50,6 +52,58 @@ class MenuItem extends Eloquent
         }
         if (!empty($current)) {
             self::where('page_id', '=', $page_id)->whereIn('menu_id', $current)->delete();
+        }
+    }
+
+    public function getRenderedChildItems($parentPageId = null, $subLevels = null, $depth = 1)
+    {
+        $parentPageId = $parentPageId ?: $this->page_id;
+        $subLevels = is_null($subLevels) ? $this->sub_levels : $subLevels;
+        if ($subLevels > 0) {
+            $renderedPages = '';
+            if ($childPages = Page::getChildPages($parentPageId)) {
+                $permissions = [
+                    'rename' => Auth::action('menus.rename')
+                ];
+                foreach ($childPages as $childPage) {
+                    $leaf = $this->getRenderedChildItems($childPage->id, $subLevels - 1, $depth + 1);
+                    $name = PageLang::getName($childPage->id);
+                    $renderedPages .= View::make('coaster::partials.menus.page_li', ['page' => $childPage, 'item' => $this, 'name' => $name, 'leaf' => $leaf, 'permissions' => $permissions])->render();
+                }
+                return View::make('coaster::partials.menus.page_ol', ['renderedPages' => $renderedPages, 'item' => $this, 'depth' => $depth])->render();
+            }
+        }
+        return '';
+    }
+
+    public function getCustomName($pageId = 0)
+    {
+        if ($pageId) {
+            $pageNames = @unserialize($this->custom_page_names);
+            if (is_array($pageNames) && array_key_exists($pageId, $pageNames)) {
+                return $pageNames[$pageId];
+            }
+            return '';
+        } else {
+            return $this->custom_name;
+        }
+    }
+
+    public function setCustomName($customName, $pageId = 0)
+    {
+        if ($pageId) {
+            $pageNames = @unserialize($this->custom_page_names);
+            $pageNames = is_array($pageNames) ? $pageNames : [];
+            if ($customName) {
+                $pageNames[$pageId] = $customName;
+            } elseif (array_key_exists($pageId, $pageNames)) {
+                unset($pageNames[$pageId]);
+            }
+            if ($pageNames) {
+                $this->custom_page_names = serialize($pageNames);
+            }
+        } else {
+            $this->custom_name = $customName;
         }
     }
 

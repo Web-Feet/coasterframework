@@ -52,3 +52,9 @@ li.mjs-nestedSortable-collapsed.mjs-nestedSortable-hovering div {
 .sortable li.mjs-nestedSortable-leaf > div > .disclose {
     display: none;
 }
+
+.menuLayout li.mjs-nestedSortable-branch ol li div  {
+    background-size: 10px 10px !important;
+    background-image: linear-gradient(-45deg, #eee 46%, #fff 49%, #fff 51%, #eee 55%);
+    cursor: default;
+}
