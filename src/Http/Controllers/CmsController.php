@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Http\Controllers;
 
+use Cache;
 use CoasterCms\Events\Cms\GeneratePage\LoadedPageResponse;
 use CoasterCms\Events\Cms\GeneratePage\LoadErrorTemplate;
 use CoasterCms\Events\Cms\GeneratePage\LoadPageTemplate;
@@ -99,7 +100,9 @@ class CmsController extends Controller
             event(new LoadPageTemplate($templatePath));
             if (View::exists($templatePath)) {
                 $this->_setHeader('Content-Type', PageBuilder::getData('contentType'));
-                $this->responseContent = View::make($templatePath)->render();
+                $this->responseContent = Cache::remember('fpc_page' . PageBuilder::pageId(), config('coaster::frontend.cache'), function() use($templatePath) {
+                    return View::make($templatePath)->render();
+                });
             } else {
                 throw new Exception('cms page found with non existent template - '.$templatePath, 500);
             }

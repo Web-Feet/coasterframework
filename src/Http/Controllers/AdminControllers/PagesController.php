@@ -1,28 +1,23 @@
 <?php namespace CoasterCms\Http\Controllers\AdminControllers;
 
 use Auth;
+use Cache;
 use CoasterCms\Helpers\Cms\DateTimeHelper;
 use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Libraries\Blocks\Repeater;
-use CoasterCms\Libraries\Builder\FormMessage;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
 use CoasterCms\Http\Controllers\AdminController;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;
-use CoasterCms\Models\BlockBeacon;
 use CoasterCms\Models\Language;
-use CoasterCms\Models\MenuItem;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageBlock;
 use CoasterCms\Models\PageGroup;
-use CoasterCms\Models\PageGroupPage;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\PagePublishRequests;
-use CoasterCms\Models\PageSearchData;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\PageVersionSchedule;
 use CoasterCms\Models\Template;
-use CoasterCms\Models\UserRole;
 use Request;
 use Response;
 use View;
@@ -273,6 +268,7 @@ class PagesController extends AdminController
                 PagePublishRequests::add($pageId, $version->version_id, Request::input('request_note'));
             }
             $version->publish();
+            Cache::forget('fpc_page'.$pageId);
         }
 
         // display page edit form

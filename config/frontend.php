@@ -12,6 +12,7 @@ return [
     'theme' => '1',
     'language' => '1',
     'canonicals' => '1',
-    'enabled_feed_extensions' => ['rss', 'xml']
+    'enabled_feed_extensions' => ['rss', 'xml'],
+    'cache' => '240' // fpc cache minutes
 
 ];

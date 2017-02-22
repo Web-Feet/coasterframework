@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Http\Controllers\AdminControllers;
 
+use Cache;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;
@@ -44,6 +45,7 @@ class BlocksController extends Controller
         $versionId = PageVersion::add_new(0)->version_id;
         Block::submit(0, $versionId);
 
+        Cache::flush();
         $this->addAlert('success', 'Site-wide Content Updated');
 
         return \redirect()->route('coaster.admin.blocks');
