@@ -129,10 +129,7 @@
                 isTree: true,
                 expandOnHover: 700,
                 startCollapsed: true,
-                disableParentChange: true,
-                isAllowed: function (placeholder, placeholderParent, currentItem) {
-                    return currentItem.attr('id') != null;
-                }
+                disableParentChange: true
             });
 
             $('.disclose').unbind('click').on('click', function () {
@@ -140,7 +137,7 @@
                 $(this).closest('li').toggleClass('mjs-nestedSortable-collapsed').toggleClass('mjs-nestedSortable-expanded');
             });
 
-            initialize_sort('sortable', sort_items_s, sort_items_f);
+            initialize_sort('nestedSortable', sort_items_s, sort_items_f);
             watch_for_delete('.delete', 'menu item', function (el) {
                 return el.closest('li').attr('id');
             }, route('coaster.admin.menus.delete', {itemId: ''}));

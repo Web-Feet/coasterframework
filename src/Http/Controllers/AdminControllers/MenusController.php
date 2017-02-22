@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Http\Controllers\AdminControllers;
 
-use Auth;
+use Cache;
 use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminLog;
@@ -58,16 +58,32 @@ class MenusController extends Controller
 
     public function postSort()
     {
-        $order = 1;
         $items = Request::input('list');
-        $menuId = 0;
+        $menuItems = [];
+        $pages = [];
         foreach ($items as $itemId => $parentItemId) {
-            $current_item = MenuItem::find($itemId);
+            if (strpos($itemId, 'p') === 0) {
+                $itemId = trim($itemId, 'p');
+                if (strpos($parentItemId, 'p') === 0) {
+                    $pages[$itemId] = trim($parentItemId, 'p');
+                } elseif ($itemPageId = MenuItem::preload($parentItemId)->page_id) {
+                    $pages[$itemId] = $itemPageId;
+                }
+            } else {
+                $menuItems[$itemId] = null;
+            }
+        }
+        $order = 1;
+        $menuId = 0;
+        foreach ($menuItems as $itemId => $parentItemId) {
+            $current_item = MenuItem::preload($itemId);
             $current_item->order = $order++;
             $current_item->save();
             $menuId = $current_item->menu_id;
         }
+        Page::sortPages($pages);
         AdminLog::log('Items re-ordered in menu \'' . Menu::name($menuId) . '\'');
+        Cache::flush();
         return 1;
     }
 

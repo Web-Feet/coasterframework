@@ -2,13 +2,14 @@
 
 use Auth;
 use CoasterCms\Helpers\Cms\Page\Path;
+use CoasterCms\Libraries\Traits\DataPreLoad;
 use CoasterCms\Libraries\Traits\Logger;
 use Eloquent;
 use View;
 
 class MenuItem extends Eloquent
 {
-    use Logger;
+    use Logger, DataPreLoad;
 
     protected $table = 'menu_items';
 
