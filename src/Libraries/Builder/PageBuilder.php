@@ -8,6 +8,7 @@ use CoasterCms\Libraries\Builder\PageBuilder\PageBuilderInstance;
  * @package CoasterCms\Libraries\Builder
  * @method static string themePath()
  * @method static string templatePath()
+ * @method static bool canCache(null|int $setValue = null)
  * @method static int pageId(bool $noOverride = false)
  * @method static int parentPageId(bool $noOverride = false)
  * @method static int pageTemplateId(bool $noOverride = false)

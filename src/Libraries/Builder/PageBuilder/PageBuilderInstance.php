@@ -7,8 +7,6 @@ use CoasterCms\Helpers\Cms\Page\Search;
 use CoasterCms\Libraries\Builder\ViewClasses\BreadCrumb;
 use CoasterCms\Libraries\Builder\ViewClasses\PageDetails;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
-use CoasterCms\Libraries\Blocks\Image;
-use CoasterCms\Libraries\Blocks\Repeater;
 use CoasterCms\Libraries\Builder\MenuBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\Language;
@@ -151,6 +149,21 @@ class PageBuilderInstance
         } else {
             return $themePath . 'templates.' . $this->template;
         }
+    }
+
+    /**
+     * @param int|null $setValue
+     * @return bool
+     */
+    public function canCache($setValue = null)
+    {
+        if (!is_null($setValue)) {
+            config('coaster::frontend.cache', $setValue);
+        }
+        if (Search::searchBlockExists() || Request::input()) {
+            return false;
+        }
+        return true;
     }
 
     /**

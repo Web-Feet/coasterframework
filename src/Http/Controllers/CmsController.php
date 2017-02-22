@@ -100,16 +100,14 @@ class CmsController extends Controller
             event(new LoadPageTemplate($templatePath));
             if (View::exists($templatePath)) {
                 $this->_setHeader('Content-Type', PageBuilder::getData('contentType'));
-                $this->responseContent = Cache::remember('fpc_page' . PageBuilder::pageId(), config('coaster::frontend.cache'), function() use($templatePath) {
-                    return View::make($templatePath)->render();
-                });
+                $this->responseContent = $this->_getRenderedTemplate($templatePath);
             } else {
                 throw new Exception('cms page found with non existent template - '.$templatePath, 500);
             }
 
             // if declared as a search page, must have search block
             if (Search::searchBlockRequired() && !Search::searchBlockExists()) {
-                throw new Exception('cms page found without search function', 404);
+                throw new Exception('No search function implemented on this page', 404);
             }
 
         } catch (CmsPageException $e) {
@@ -147,6 +145,25 @@ class CmsController extends Controller
         }
 
         return $response;
+    }
+
+    /**
+     * @param string $templatePath
+     * @return string
+     */
+    protected function _getRenderedTemplate($templatePath)
+    {
+        if (config('coaster::frontend.cache') > 0) {
+            $cacheName = 'fpc_page' . PageBuilder::pageId();
+            $renderedTemplate = Cache::remember($cacheName, config('coaster::frontend.cache'), function () use ($templatePath) {
+                return View::make($templatePath)->render();
+            });
+            if (!PageBuilder::canCache()) {
+                Cache::forget($cacheName);
+            }
+            return $renderedTemplate;
+        }
+        return View::make($templatePath)->render();
     }
 
     /**
