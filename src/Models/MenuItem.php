@@ -60,17 +60,19 @@ class MenuItem extends Eloquent
     {
         $parentPageId = $parentPageId ?: $this->page_id;
         $subLevels = is_null($subLevels) ? $this->sub_levels : $subLevels;
-        if ($subLevels > 0) {
+        if ($subLevels > 0 && $childPages = Page::getChildPages($parentPageId)) {
             $renderedPages = '';
-            if ($childPages = Page::getChildPages($parentPageId)) {
-                $permissions = [
-                    'rename' => Auth::action('menus.rename')
-                ];
-                foreach ($childPages as $childPage) {
+            $permissions = [
+                'rename' => Auth::action('menus.rename')
+            ];
+            foreach ($childPages as $childPage) {
+                if ($childPage->is_live()) {
                     $leaf = $this->getRenderedChildItems($childPage->id, $subLevels - 1, $depth + 1);
                     $name = PageLang::getName($childPage->id);
                     $renderedPages .= View::make('coaster::partials.menus.page_li', ['page' => $childPage, 'item' => $this, 'name' => $name, 'leaf' => $leaf, 'permissions' => $permissions])->render();
                 }
+            }
+            if ($renderedPages) {
                 return View::make('coaster::partials.menus.page_ol', ['renderedPages' => $renderedPages, 'item' => $this, 'depth' => $depth])->render();
             }
         }
@@ -103,6 +105,22 @@ class MenuItem extends Eloquent
         } else {
             return $this->custom_name;
         }
+    }
+
+    public function isHiddenPage($pageId = 0)
+    {
+        return $this->hidden_pages ? in_array($pageId, explode(',', $this->hidden_pages)) : false;
+    }
+
+    public function setHiddenPage($pageId, $setHidden = true)
+    {
+        $hiddenPages = $this->hidden_pages ? explode(',', $this->hidden_pages) : [];
+        if ($setHidden) {
+            $hiddenPages[] = $pageId;
+        } elseif (($key = array_search($pageId, $hiddenPages)) !== false) {
+            unset($hiddenPages[$key]);
+        }
+        $this->hidden_pages = $hiddenPages ? implode(',', array_unique($hiddenPages)) : null;
     }
 
     public function setCustomName($customName, $pageId = 0)

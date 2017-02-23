@@ -6,7 +6,7 @@
             @if ($permissions['subpage'] == true)
                 <span class='sl_numb'>{!! $item->sub_levels !!}</span> Sublevels  &nbsp;
                 <i class="sub-levels fa fa-sort-amount-desc itemTooltip" data-name="{!! $name!!}"
-                   data-max-sublevel="{!! $menu->max_sublevel !!}" title="Edit Subpage Level"></i> &nbsp;
+                   title="Edit Subpage Level"></i> &nbsp;
             @else
                 <span class='sl_numb'>{!! $item->sub_levels !!}</span> Sublevels &nbsp;
             @endif

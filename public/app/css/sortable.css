@@ -53,10 +53,19 @@ li.mjs-nestedSortable-collapsed.mjs-nestedSortable-hovering div {
     display: none;
 }
 
-.menuLayout li.mjs-nestedSortable-branch ol li div  {
+ol.sortable li div{ border:none; padding:10px; transition:all 0.3s ease;}
+
+.menuLayout ol.sortable li div:hover{background-color: #d6d6d6;}
+
+.menuLayout li.mjs-nestedSortable-branch li div  {
     background: repeating-linear-gradient(-45deg, #fafafa, #fafafa 5px, #fff 5px, #fff 10px);
     border: 1px solid #ccc;
 }
 
+.menuLayout li.mjs-nestedSortable-branch li.hidden-page div  {
+    background: repeating-linear-gradient(-45deg, #fffafa, #fffafa 5px, #fff 5px, #fff 10px);
+    border: 1px solid #eb5b4f;
+}
+
 .sortable .disclose {color:#a52f26;}
-.menuLayout li.mjs-nestedSortable-branch ol li div .disclose {color:#999;}
+.menuLayout li.mjs-nestedSortable-branch ol li div .disclose {color:#666;}

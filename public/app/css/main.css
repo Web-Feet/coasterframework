@@ -61,11 +61,6 @@ select{ height:35px; font-size:16px; font-family: 'Raleway', sans-serif; }
 
 
 
-ol.sortable li div{ border:none; padding:10px; transition:all 0.3s ease;}
-
-.menuLayout ol.sortable li div:hover{background-color: #d6d6d6 !important;}
-
-
 [class^="icon-"], [class*=" icon-"] {
     display: inline-block;
     width: 14px;

@@ -69,6 +69,7 @@ Route::group(['prefix' => $adminUrl, 'middleware' => ['web', 'coaster.admin'], '
     Route::post('menus/get-levels', ['uses' => 'MenusController@postGetLevels', 'as' => $routeNamePrefix . 'menus.get-levels']);
     Route::post('menus/save-levels', ['uses' => 'MenusController@postSaveLevels', 'as' => $routeNamePrefix . 'menus.save-levels']);
     Route::post('menus/rename', ['uses' => 'MenusController@postRename', 'as' => $routeNamePrefix . 'menus.rename']);
+    Route::post('menus/hide-page', ['uses' => 'MenusController@postHidePage', 'as' => $routeNamePrefix . 'menus.hide-page']);
 
     Route::get('blocks', ['uses' => 'BlocksController@getIndex', 'as' => $routeNamePrefix . 'blocks']);
     Route::post('blocks', ['uses' => 'BlocksController@postIndex', 'as' => $routeNamePrefix . 'blocks.index.post']);

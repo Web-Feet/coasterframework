@@ -212,7 +212,11 @@ class MenuBuilder
     protected function _returnExistingLiveItems($items)
     {
         foreach ($items as $k => $item) {
-            $pageId = Path::unParsePageId($items[$k]->page_id);
+            $pageId = Path::unParsePageId($item->page_id);
+            if ($item->isHiddenPage($pageId)) {
+                unset($items[$k]);
+                continue;
+            }
             $page = Page::preload($pageId);
             if (!$page->exists || !$page->is_live()) {
                 unset($items[$k]);

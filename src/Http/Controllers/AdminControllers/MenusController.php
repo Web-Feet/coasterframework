@@ -98,6 +98,18 @@ class MenusController extends Controller
         return abort(500, 'Item not found');
     }
 
+    public function postHidePage()
+    {
+        $itemId = Request::input('itemId');
+        $item = MenuItem::find($itemId);
+        if (!empty($item)) {
+            $item->setHiddenPage(Request::input('pageId'), Request::input('hide'));
+            $item->save();
+            return 1;
+        }
+        return abort(500, 'Item not found');
+    }
+
     public function postSaveLevels()
     {
         $itemId = Request::input('id');
