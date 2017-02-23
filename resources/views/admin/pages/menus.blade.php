@@ -11,22 +11,24 @@
         var selected_item;
 
         $('.sub-levels').click(function () {
-            var max_sublevel = $(this).data('max-sublevel');
-            $('#subLevelMIModal option:gt(0)').hide();
-            $('#subLevelMIModal option:lt(' + (max_sublevel + 1) + ')').show();
+            var spModal = $('#subLevelMIModal');
+            spModal.find('.page-name').html($(this).data('name'));
             selected_item = $(this).closest('li');
             $.ajax({
                 url: route('coaster.admin.menus.get-levels'),
                 type: 'POST',
+                dataType: 'json',
                 data: {id: selected_item.data('id')},
                 success: function (r) {
-                    if (r % 1 === 0) {
-                        $('#subLevelMIModal').modal('show');
-                        $('#sublevels').val(r);
-                    }
-                    else {
-                        cms_alert('danger', 'Error receiving data');
-                    }
+                    $('#subLevelMIModal').modal('show');
+                    $('#sublevels').val(r.sub_levels);
+                    spModal.find('.page-levels').html(r.max_levels);
+                    spModal.find('.menu-max-levels').html(r.menu_max_levels);
+                    spModal.find('option:gt(0)').hide();
+                    spModal.find('option:lt(' + (r.menu_max_levels + 1) + ')').show();
+                },
+                error: function () {
+                    cms_alert('danger', 'Error receiving data');
                 }
             });
         });

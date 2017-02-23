@@ -3,17 +3,18 @@
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal">×</button>
-                <h3>Menu Item Subpage Levels:</h3>
+                <h3>Menu Item Sub-page Levels:</h3>
             </div>
             <div class="modal-body form-horizontal">
-                <p>The number of subpage levels to show:</p>
+                <p>The '<span class="page-name"></span>' page currently has <span class="page-levels"></span> levels of sub-pages.</p>
+                <p>Set the maximum number of sub-page levels to show (this menu is limited to <span class="menu-max-levels"></span> max):</p>
                 <br/>
                 <div class="form-group">
                     <div class="col-sm-3">
-                        {!! Form::label('sublevels', 'Levels:', ['class' => 'control-label']) !!}
+                        {!! Form::label('sublevels', 'Shown Levels:', ['class' => 'control-label']) !!}
                     </div>
                     <div class="col-sm-9">
-                        {!! Form::select('sublevels', [0 => 0, 1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5], 1, ['class' => 'form-control']) !!}
+                        {!! Form::select('sublevels', range(0,9), 1, ['class' => 'form-control']) !!}
                     </div>
                 </div>
             </div>

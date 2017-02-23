@@ -271,7 +271,6 @@ ol.sortable li div{ border:none; padding:10px; transition:all 0.3s ease;}
 .filemanager {width: 100%;  border: 0;  min-height: 600px;}
 .addButton{margin-top: 25px;}
 .long-select {min-width: 250px;}
-.sortable .disclose {color:#a52f26;}
 
 .modal h3 {margin: 7px 0;}
 .modal-body {padding: 30px 20px;}

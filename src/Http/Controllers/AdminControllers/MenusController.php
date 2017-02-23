@@ -92,9 +92,10 @@ class MenusController extends Controller
         $itemId = Request::input('id');
         $item = MenuItem::find($itemId);
         if (!empty($item)) {
-            return $item->sub_levels;
+            $menu = Menu::find($item->menu_id);
+            return json_encode(['sub_levels' => $item->sub_levels, 'max_levels' => $item->getMaxLevels(), 'menu_max_levels' => $menu->max_sublevel]);
         }
-        return null;
+        return abort(500, 'Item not found');
     }
 
     public function postSaveLevels()

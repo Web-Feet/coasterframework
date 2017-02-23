@@ -57,3 +57,6 @@ li.mjs-nestedSortable-collapsed.mjs-nestedSortable-hovering div {
     background: repeating-linear-gradient(-45deg, #fafafa, #fafafa 5px, #fff 5px, #fff 10px);
     border: 1px solid #ccc;
 }
+
+.sortable .disclose {color:#a52f26;}
+.menuLayout li.mjs-nestedSortable-branch ol li div .disclose {color:#999;}

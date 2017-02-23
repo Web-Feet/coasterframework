@@ -77,6 +77,21 @@ class MenuItem extends Eloquent
         return '';
     }
 
+    public function getMaxLevels($parentPageId = null, $levels = 0)
+    {
+        $parentPageId = $parentPageId ?: $this->page_id;
+        if ($childPages = Page::getChildPages($parentPageId)) {
+            $levels++;
+            $maxFurtherLevels = 0;
+            foreach ($childPages as $childPage) {
+                $furtherLevels = static::getMaxLevels($childPage->id);
+                $maxFurtherLevels =  ($furtherLevels > $maxFurtherLevels) ? $furtherLevels : $maxFurtherLevels;
+            }
+            $levels += $maxFurtherLevels;
+        }
+        return $levels;
+    }
+
     public function getCustomName($pageId = 0)
     {
         if ($pageId) {
