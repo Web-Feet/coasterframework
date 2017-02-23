@@ -521,7 +521,9 @@ Class Theme extends Eloquent
             'Item Page Id',
             'Item Order',
             'Item Sublevels',
-            'Item Custom Name'
+            'Item Custom Name',
+            'Custom Subpage Names',
+            'Hidden Pages'
         ]);
 
         $menuItems = MenuItem::whereIn('menu_id', $menuIds)->get()->all();
@@ -542,7 +544,9 @@ Class Theme extends Eloquent
                 $menuItem->page_id,
                 $menuItem->order,
                 $menuItem->sub_levels,
-                $menuItem->custom_name
+                $menuItem->custom_name,
+                $menuItem->custom_page_names,
+                $menuItem->hidden_pages
             ]);
         }
 
@@ -817,9 +821,11 @@ Class Theme extends Eloquent
                     throw new \Exception($error . $menusCsv);
                 }
             }
-            if (!$menuItemsCsvHandle = Csv::check($menuItemsCsv, 5)) {
+            if (!$menuItemsCsvHandle = Csv::check($menuItemsCsv, 7)) {
                 if (file_exists($menuItemsCsv)) {
-                    throw new \Exception($error . $menuItemsCsv);
+                    if (!($menuItemsCsv = Csv::check($pagesCsv, 5))) {
+                        throw new \Exception($error . $menuItemsCsv);
+                    }
                 }
             }
             if (!$pageBlocksCsvHandle = Csv::check($pageBlocksCsv, 3)) {
@@ -924,7 +930,8 @@ Class Theme extends Eloquent
                 $row = 0;
                 while (($data = fgetcsv($menuItemsCsvHandle)) !== false) {
                     if ($row++ == 0 && $data[0] == 'Menu Identifier') continue;
-                    list($menuIdentifier, $pageId, $order, $subLevels, $customName) = $data;
+                    if (count($data) == 5) $data = array_merge($data, ['', '']);
+                    list($menuIdentifier, $pageId, $order, $subLevels, $customName, $customPageNames, $hiddenPages) = $data;
                     if (!empty($menuIds[$menuIdentifier])) {
                         $newMenuItem = new MenuItem;
                         $newMenuItem->menu_id = $menuIds[$menuIdentifier];
@@ -932,6 +939,8 @@ Class Theme extends Eloquent
                         $newMenuItem->order = $order;
                         $newMenuItem->sub_levels = $subLevels;
                         $newMenuItem->custom_name = $customName;
+                        $newMenuItem->custom_page_names = $customPageNames;
+                        $newMenuItem->hidden_pages = $hiddenPages;
                         $newMenuItem->save();
                     }
                 }
