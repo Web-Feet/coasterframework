@@ -251,7 +251,7 @@ class Page extends Eloquent
         $list = array();
         foreach ($paths as $page_id => $path) {
             if ((!isset($options['exclude_home']) || $path->fullUrl != '/') && !is_null($path->fullUrl)) {
-                $list[$page_id] = $path->fullName;
+                $list[$page_id] = html_entity_decode($path->fullName); // fix form selects which have another html encode on
             }
         }
 
