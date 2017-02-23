@@ -209,7 +209,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
         }
 
         // always use blank block content for processing blocks for consistency
-        if ($fn == 'displayDummy') {
+        if ($fn == 'display') {
             // displayDummy does not require any block content
             $output = $block->getTypeObject()->displayDummy($options);
         } else {
@@ -251,26 +251,6 @@ class ThemeBuilderInstance extends PageBuilderInstance
         }
 
         return $this->_returnValue($output, $options);
-    }
-
-    /**
-     * @param string $block_name
-     * @param array $options
-     * @return string
-     */
-    public function block($block_name, $options = [])
-    {
-        return $this->_block($block_name, $options, 'displayDummy');
-    }
-
-    /**
-     * @param string $block_name
-     * @param array $options
-     * @return mixed|string
-     */
-    public function blockData($block_name, $options = [])
-    {
-        return $this->_block($block_name, $options, 'data');
     }
 
     /**
