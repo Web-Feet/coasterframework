@@ -5,6 +5,7 @@ use CoasterCms\Helpers\Cms\Theme\BlockUpdater;
 use CoasterCms\Helpers\Cms\Page\PageLoader;
 use CoasterCms\Libraries\Builder\MenuBuilder;
 use CoasterCms\Libraries\Builder\ViewClasses\PageDetails;
+use CoasterCms\Libraries\Import\BlocksImport;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\Menu;
@@ -440,39 +441,20 @@ class ThemeBuilderInstance extends PageBuilderInstance
      */
     protected function _loadBlockOverwriteFile()
     {
-        $this->blockSettings = [];
+        $blocksImportFile = base_path('resources/views/themes/' . $this->theme . '/import/blocks.csv');
+        $blockImport = new BlocksImport($blocksImportFile, false);
 
-        $selectOptions = base_path('resources/views/themes/' . $this->theme . '/import/blocks.csv');
-        if (file_exists($selectOptions) && ($fileHandle = fopen($selectOptions, 'r')) !== false) {
-            $row = 0;
-            while (($data = fgetcsv($fileHandle)) !== false) {
-                if ($row++ == 0 && $data[0] == 'Block Name') continue;
-                if (!empty($data[0])) {
-                    $fields = ['name', 'label', 'note', 'category_id', 'type', 'global_site', 'global_pages', 'templates', 'order'];
-                    foreach ($fields as $fieldId => $field) {
-                        if (isset($data[$fieldId])) {
-                            $setting = trim($data[$fieldId]);
-                            if ($setting != '') {
-                                if (in_array($field, ['global_site', 'global_pages'])) {
-                                    if (empty($setting) || strtolower($setting) == 'false' || strtolower($setting) == 'no' || strtolower($setting) == 'n') {
-                                        $setting = false;
-                                    } else {
-                                        $setting = true;
-                                    }
-                                }
-                                if ($field == 'category_id') {
-                                    $setting = $this->_getBlockCategoryIdFromName($setting);
-                                }
-                                if ($field == 'name') {
-                                    $setting = strtolower($setting);
-                                }
-                                $this->blockSettings[$data[0]][$field] = $setting;
-                            }
-                        }
-                    }
-                }
+        if (!$blockImport->validate()) {
+            dd('Error with data in: '.$blocksImportFile, $blockImport->getValidationErrors());
+        }
+
+        $blockImport->run();
+        $this->blockSettings = $blockImport->getSettings();
+
+        foreach ($this->blockSettings as $block => &$blockSettings) {
+            if (!empty($blockSettings['category_id'])) {
+                $blockSettings['category_id'] = $this->_getBlockCategoryIdFromName($blockSettings['category_id']);
             }
-            fclose($fileHandle);
         }
     }
 
