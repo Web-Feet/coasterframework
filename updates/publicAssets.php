@@ -219,7 +219,7 @@ if (empty($assetsVersions['jquery']) || $force || version_compare($assetsVersion
 
     $zip = new \CoasterCms\Helpers\Cms\File\Zip;
     $zip->open($fancyBoxZip);
-    $zip->extractDir('fancyBox-2.1.5/source', public_path('coaster/jquery/fancybox'));
+    $zip->extractDir('fancybox-2.1.5/source', public_path('coaster/jquery/fancybox'));
     $zip->close();
     unlink($fancyBoxZip);
     echo ".";
