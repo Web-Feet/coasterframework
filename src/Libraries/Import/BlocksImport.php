@@ -1,5 +1,9 @@
 <?php namespace CoasterCms\Libraries\Import;
 
+use CoasterCms\Helpers\Cms\Page\PageLoaderDummy;
+use CoasterCms\Libraries\Builder\PageBuilder;
+use View;
+
 class BlocksImport extends AbstractImport
 {
 
@@ -12,6 +16,11 @@ class BlocksImport extends AbstractImport
      * @var string
      */
     protected $_currentBlockName;
+
+    /**
+     * @var string
+     */
+    protected $_categoryImport;
 
     /**
      * BlocksImport constructor.
@@ -75,6 +84,9 @@ class BlocksImport extends AbstractImport
             if ($mappedName == 'name') {
                 $importFieldData = strtolower($importFieldData);
             }
+            if (!empty($blockSettings['category_id'])) { // TODO
+                $blockSettings['category_id'] = $this->_getBlockCategoryIdFromName($blockSettings['category_id']);
+            }
 
             $this->_blockSettings[$this->_currentBlockName][$mappedName] = $importFieldData;
         }
@@ -88,6 +100,22 @@ class BlocksImport extends AbstractImport
         $this->_currentBlockName = $this->_importCurrentRow['Block Name'];
     }
 
+    public function run()
+    {
+        if (array_key_exists('theme', $this->_additionalData) && parent::run()) {
+            $theme = $this->_additionalData['theme'];
+
+            $categoryImport = new \CoasterCms\Libraries\Import\Blocks\CategoryImport(
+                base_path('resources/views/themes/' . $theme->theme . '/import/blocks/categories.csv'),
+                false
+            );
+            $categoryImport->run();
+
+            $this->_processFiles(); // TODO move block import funcs from block updater and eventually replace it with this file
+
+        }
+    }
+
     /**
      * @return array
      */
@@ -95,5 +123,37 @@ class BlocksImport extends AbstractImport
     {
         return $this->_blockSettings;
     }
+
+    protected function _processFiles($overwriteFile = true)
+    {
+        if (!empty($this->_additionalData['theme'])) {
+
+            $themeModel = $this->_additionalData['theme'];
+            $themePath = base_path('resources/views/themes/' . $themeModel->theme . '/templates');
+
+            // TODO change overwrite option
+            PageBuilder::setClass(PageBuilder\ThemeBuilderInstance::class, [$overwriteFile], PageLoaderDummy::class, [$themeModel->theme]);
+
+            if (is_dir($themePath)) {
+
+                foreach (scandir($themePath) as $templateFile) {
+                    if (($templateName = explode('.', $templateFile)[0]) && !is_dir($themePath.'/'.$templateFile)) {
+                        PageBuilder::setData('template', $templateName);
+                        View::make('themes.' . $themeModel->theme . '.templates.' . $templateName)->render();
+                    }
+                }
+
+                if ($errors = PageBuilder::getData('errors')) {
+                    echo 'Could not complete block import, errors found in theme:'; dd($errors);
+                }
+
+
+                // get data
+
+            }
+        }
+    }
+
+
 
 }

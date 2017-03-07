@@ -19,6 +19,11 @@ class PagesImport extends AbstractImport
     protected $_currentPageLang;
 
     /**
+     * @var PageGroupPage[]
+     */
+    protected $_newPageGroupPages;
+
+    /**
      * @var array
      */
     protected $_templateIds;
@@ -29,7 +34,7 @@ class PagesImport extends AbstractImport
     public function fieldMap()
     {
         return [
-            'Page Id' => [['Page', 'id'], ['PageLang', 'page_id']],
+            'Page Id' => ['Page', 'id'],
             'Page Name' => ['PageLang', 'name'],
             'Page Url' => ['PageLang', 'url'],
             'Page Live Version' => ['PageLang', 'live_version'],
@@ -54,7 +59,6 @@ class PagesImport extends AbstractImport
     public function validateRules()
     {
         return [
-            'Page Id' => 'required',
             'Page Name' => 'required',
             'Page Url'  => 'required'
         ];
@@ -68,7 +72,7 @@ class PagesImport extends AbstractImport
         return [
             'Page Language Id' => config('coaster::frontend.language'),
             'Page Live Version' => 1,
-            'Page Page Id' => 0,
+            'Parent Page Id' => 0,
             'Default Child Template' => 0,
             'Page Order Value'  => 1000,
             'Is Link (0 or 1)'  => 0,
@@ -100,11 +104,8 @@ class PagesImport extends AbstractImport
         $mappedName = $this->_fieldMap[$importFieldName];
         if ($importFieldData !== '') {
             if (is_array($mappedName)) {
-                $mapToAttributes = is_array($mappedName[0]) ? $mappedName : [$mappedName];
-                foreach ($mapToAttributes as $mapToAttribute) {
-                    list($model, $attribute) = $mapToAttribute;
-                    $this->{'_current'.$model}->$attribute = $importFieldData;
-                }
+                list($model, $attribute) = $mappedName;
+                $this->{'_current'.$model}->$attribute = $importFieldData;
             } else {
                 $this->$mappedName($importFieldData);
             }
@@ -127,9 +128,8 @@ class PagesImport extends AbstractImport
         $groupIds = $groupIds ? explode(',', $groupIds) : [];
         foreach ($groupIds as $groupId) {
             $newPageGroupPage = new PageGroupPage;
-            $newPageGroupPage->page_id = $this->_importCurrentRow['Page Id'];
             $newPageGroupPage->group_id = $groupId;
-            $newPageGroupPage->save();
+            $this->_newPageGroupPages[] = $newPageGroupPage;
         }
     }
 
@@ -140,6 +140,7 @@ class PagesImport extends AbstractImport
     {
         $this->_currentPage = new Page;
         $this->_currentPageLang = new PageLang;
+        $this->_newPageGroupPages = [];
     }
 
     /**
@@ -148,7 +149,12 @@ class PagesImport extends AbstractImport
     protected function _endRowImport()
     {
         $this->_currentPage->save();
+        $this->_currentPageLang->page_id = $this->_currentPage->id;
         $this->_currentPageLang->save();
+        foreach ($this->_newPageGroupPages as $newPageGroupPage) {
+            $newPageGroupPage->page_id = $this->_currentPage->id;
+            $newPageGroupPage->save();
+        }
         PageVersion::add_new($this->_currentPage->id);
     }
 
