@@ -22,10 +22,19 @@ abstract class AbstractImport
     protected $_validationErrors;
 
     /**
+     * @var array
+     */
+    protected $_customValidationColumnNames;
+
+    /**
+     * @var bool
+     */
+    protected $_hasBeenValidated;
+
+    /**
      * @var string
      */
     protected $_importFile;
-
 
     /**
      * @var bool
@@ -48,6 +57,11 @@ abstract class AbstractImport
     protected $_defaultsIfBlank;
 
     /**
+     * @var array
+     */
+    protected $_additionalData;
+
+    /**
      * AbstractImport constructor.
      * @param string $importFile
      * @param bool $requiredFile
@@ -56,23 +70,28 @@ abstract class AbstractImport
     {
         $this->_importFile = $importFile;
         $this->_importFileRequired = $requiredFile;
+        $this->_importData = $this->_importData();
+        $this->_fieldMap = $this->fieldMap();
         $this->_validationErrors = [];
         $this->_validationRules = $this->validateRules();
-        $this->_fieldMap = $this->fieldMap();
+        $this->_customValidationColumnNames =$this->_customValidationColumnNames();
         $this->_defaultsIfBlank = $this->defaultsIfBlank();
-        if (file_exists($importFile) && is_readable($importFile)) {
-            $importData = array_map('str_getcsv', file($importFile));
-            $headerRow = array_shift($importData);
-            try {
-                array_walk($importData, ['self', '_csvNameColumns'], $headerRow);
-                $this->_importData = $importData;
-            } catch (\Exception $e) {
-                $this->_validationErrors[] = 'CSV format error, number of columns in the header row does not match for some data rows';
-                $this->_importData = [];
-            }
-        } else {
-            $this->_importData = false;
-        }
+    }
+
+    /**
+     *
+     */
+    public function getAdditionalData()
+    {
+        return $this->_additionalData;
+    }
+
+    /**
+     * @param $data
+     */
+    public function setAdditionalData($data)
+    {
+        $this->_additionalData = $data;
     }
 
     /**
@@ -83,6 +102,33 @@ abstract class AbstractImport
     protected function _csvNameColumns(&$row, $column, $headerRow)
     {
         $row = array_combine($headerRow, $row);
+    }
+
+    /**
+     * @return array
+     */
+    protected function _customValidationColumnNames()
+    {
+        $columnHeaders = array_keys($this->_fieldMap);
+        return array_combine($columnHeaders, array_map(function ($columnHeader) {return '\''.$columnHeader.'\'';}, $columnHeaders));
+    }
+
+    /**
+     * @return array|bool
+     */
+    protected function _importData()
+    {
+        if (file_exists($this->_importFile) && is_readable($this->_importFile)) {
+            $importData = array_map('str_getcsv', file($this->_importFile));
+            $headerRow = array_shift($importData);
+            try {
+                array_walk($importData, ['self', '_csvNameColumns'], $headerRow);
+                return $importData;
+            } catch (\Exception $e) {
+                $this->_validationErrors[] = 'CSV format error, number of columns in the header row does not match for some data rows';
+            }
+        }
+        return false;
     }
 
     /**
@@ -111,16 +157,20 @@ abstract class AbstractImport
 
     public function run()
     {
-        foreach ($this->_importData as $importRow) {
-            $this->_importCurrentRow = $importRow;
-            $this->_startRowImport();
-            foreach ($importRow as $importFieldName => $importFieldData) {
-                if (array_key_exists($importFieldName, $this->_fieldMap)) {
+        if ($this->_hasBeenValidated || $this->validate()) {
+            foreach ($this->_importData as $importRow) {
+                $this->_importCurrentRow = $importRow;
+                $this->_startRowImport();
+                foreach ($this->_fieldMap as $importFieldName => $importTo) {
+                    $importFieldData = array_key_exists($importFieldName, $importRow) ? $importRow[$importFieldName] : '';
                     $importFieldData = ($importFieldData === '' && array_key_exists($importFieldName, $this->_defaultsIfBlank)) ? $this->_defaultsIfBlank[$importFieldName] : $importFieldData;
                     $this->_importField($importFieldName, $importFieldData);
                 }
+                $this->_endRowImport();
             }
-            $this->_endRowImport();
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -155,24 +205,9 @@ abstract class AbstractImport
             $this->_validationErrors[] = 'A required import file is missing or not readable: ' . $this->_importFile;
             return false;
         }
-
         if ($this->_validationRules) {
-
-            // do column checks once to reduce number
-            $skipFieldValidation = [];
-            if ($requiredRules = $this->_getRequiredColumns()) {
-                $firstDataRow = current($this->_importData) ?: [];
-                try {
-                    Validator::make($firstDataRow, $requiredRules)->validate();
-                } catch (ValidationException $e) {
-                    $errorBag = $e->validator->getMessageBag();
-                    foreach ($errorBag->toArray() as $presentMessage) {
-                        $this->_validationErrors[] = $presentMessage[0];
-                    }
-                    $skipFieldValidation = $errorBag->keys();
-                }
-            }
-
+            // do column checks first to reduce number of overall checks
+            $skipFieldValidation = $this->_validateColumns();
             foreach ($this->_importData as $row => $importRow) {
                 try {
                     $rules = $this->_validationRules;
@@ -180,7 +215,7 @@ abstract class AbstractImport
                         unset($importRow[$skipField]);
                         unset($rules[$skipField]);
                     }
-                    Validator::make($importRow, $rules)->validate();
+                    Validator::make($importRow, $rules, [], $this->_customValidationColumnNames)->validate();
                 } catch (ValidationException $e) {
                     foreach ($e->validator->getMessageBag()->toArray() as $errorMessages) {
                         foreach ($errorMessages as $errorMessage) {
@@ -189,10 +224,28 @@ abstract class AbstractImport
                     }
                 }
             }
-
         }
+        return $this->_hasBeenValidated = empty($this->_validationErrors);
+    }
 
-        return empty($this->_validationErrors);
+    /**
+     * @return array
+     */
+    protected function _validateColumns()
+    {
+        if ($requiredRules = $this->_getRequiredColumns()) {
+            $firstDataRow = current($this->_importData) ?: [];
+            try {
+                Validator::make($firstDataRow, $requiredRules, [], $this->_customValidationColumnNames)->validate();
+            } catch (ValidationException $e) {
+                $errorBag = $e->validator->getMessageBag();
+                foreach ($errorBag->toArray() as $presentMessage) {
+                    $this->_validationErrors[] = $presentMessage[0];
+                }
+                return $errorBag->keys();
+            }
+        }
+        return [];
     }
 
     /**

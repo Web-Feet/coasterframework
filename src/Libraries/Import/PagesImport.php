@@ -4,6 +4,7 @@ use CoasterCms\Models\Page;
 use CoasterCms\Models\PageGroupPage;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\PageVersion;
+use CoasterCms\Models\Template;
 
 class PagesImport extends AbstractImport
 {
@@ -18,27 +19,9 @@ class PagesImport extends AbstractImport
     protected $_currentPageLang;
 
     /**
-     * @return array
+     * @var array
      */
-    public function validateRules()
-    {
-        return [
-            'Page Id' => '',
-            'Page Name' => '',
-            'Page Url'  => '',
-            'Page Template' => '',
-            'Page Page Id' => '',
-            'Default Child Template' => '',
-            'Page Order Value'  => '',
-            'Is Link (0 or 1)'  => '',
-            'Is Live (0 or 1)' => '',
-            'In Sitemap (0 or 1)' => '',
-            'Container for Group Id'  => '',
-            'Container Url Priority'  => '',
-            'Canonical Parent Page Id' => '',
-            'Group Ids (Comma Separated)' => ''
-        ];
-    }
+    protected $_templateIds;
 
     /**
      * @return array
@@ -46,17 +29,19 @@ class PagesImport extends AbstractImport
     public function fieldMap()
     {
         return [
-            'Page Id' => ['Page', 'id'],
+            'Page Id' => [['Page', 'id'], ['PageLang', 'page_id']],
             'Page Name' => ['PageLang', 'name'],
             'Page Url' => ['PageLang', 'url'],
-            'Page Template' => ['Page', 'template'],
-            'Page Page Id' => ['Page', 'parent'],
-            'Default Child Template' => ['Page', 'id'],
+            'Page Live Version' => ['PageLang', 'live_version'],
+            'Page Language Id' => ['PageLang', 'language_id'],
+            'Page Template' => '_setTemplate',
+            'Parent Page Id' => ['Page', 'parent'],
+            'Default Child Template' => ['Page', 'child_template'],
             'Page Order Value' => ['Page', 'order'],
             'Is Link (0 or 1)' => ['Page', 'link'],
             'Is Live (0 or 1)' => ['Page', 'live'],
             'In Sitemap (0 or 1)' => ['Page', 'sitemap'],
-            'Container for Group Id' => ['', 'group_container'],
+            'Container for Group Id' => ['Page', 'group_container'],
             'Container Url Priority' => ['Page', 'group_container_url_priority'],
             'Canonical Parent Page Id' => ['Page', 'canonical_parent'],
             'Group Ids (Comma Separated)' => '_addGroups'
@@ -66,24 +51,43 @@ class PagesImport extends AbstractImport
     /**
      * @return array
      */
+    public function validateRules()
+    {
+        return [
+            'Page Id' => 'required',
+            'Page Name' => 'required',
+            'Page Url'  => 'required'
+        ];
+    }
+
+    /**
+     * @return array
+     */
     public function defaultsIfBlank()
     {
         return [
-            'Page Id' => '',
-            'Page Name' => '',
-            'Page Url'  => '',
-            'Page Template' => '',
-            'Page Page Id' => '',
-            'Default Child Template' => '',
-            'Page Order Value'  => '',
-            'Is Link (0 or 1)'  => '',
-            'Is Live (0 or 1)' => '',
-            'In Sitemap (0 or 1)' => '',
-            'Container for Group Id'  => '',
-            'Container Url Priority'  => '',
-            'Canonical Parent Page Id' => '',
-            'Group Ids (Comma Separated)' => ''
+            'Page Language Id' => config('coaster::frontend.language'),
+            'Page Live Version' => 1,
+            'Page Page Id' => 0,
+            'Default Child Template' => 0,
+            'Page Order Value'  => 1000,
+            'Is Link (0 or 1)'  => 0,
+            'Is Live (0 or 1)' => 1,
+            'In Sitemap (0 or 1)' => 1,
+            'Container for Group Id'  => 0,
+            'Container Url Priority'  => 0,
+            'Canonical Parent Page Id' => 0
         ];
+    }
+
+    public function run()
+    {
+        $this->_templateIds = [];
+        $templates = Template::where('theme_id', '=', $this->_additionalData['theme']->id)->get();
+        foreach ($templates as $template) {
+            $this->_templateIds[$template->template] = $template->id;
+        }
+        return parent::run();
     }
 
     /**
@@ -96,13 +100,23 @@ class PagesImport extends AbstractImport
         $mappedName = $this->_fieldMap[$importFieldName];
         if ($importFieldData !== '') {
             if (is_array($mappedName)) {
-                $model = '_current' . $mappedName[0];
-                $attribute = $mappedName[1];
-                $this->$model->$attribute = $importFieldData;
+                $mapToAttributes = is_array($mappedName[0]) ? $mappedName : [$mappedName];
+                foreach ($mapToAttributes as $mapToAttribute) {
+                    list($model, $attribute) = $mapToAttribute;
+                    $this->{'_current'.$model}->$attribute = $importFieldData;
+                }
             } else {
                 $this->$mappedName($importFieldData);
             }
         }
+    }
+
+    /**
+     * @param $templateName
+     */
+    protected function _setTemplate($templateName)
+    {
+        $this->_currentPage->template = array_key_exists($templateName, $this->_templateIds) ? $this->_templateIds[$templateName] : config('coaster::admin.default_template');
     }
 
     /**
