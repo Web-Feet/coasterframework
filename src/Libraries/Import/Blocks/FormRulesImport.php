@@ -69,7 +69,7 @@ class FormRulesImport extends AbstractImport
         $existingRules = BlockFormRule::all();
         if (!$existingRules->isEmpty()) {
             foreach ($existingRules as $existingRule) {
-                if (!isset($databaseRules[$existingRule->form_template])) {
+                if (!array_key_exists($existingRule->form_template, $this->_formTemplateRules)) {
                     $this->_formTemplateRules[$existingRule->form_template] = [];
                 }
                 $this->_formTemplateRules[$existingRule->form_template][$existingRule->field] = $existingRule;
@@ -97,22 +97,19 @@ class FormRulesImport extends AbstractImport
      */
     protected function _startRowImport()
     {
-        $this->_currentFormRule = new BlockFormRule;
         $formTemplate = trim($this->_importCurrentRow['Form Template']);
         $formField = trim($this->_importCurrentRow['Field']);
-        if (array_key_exists($formTemplate, $this->_formTemplateRules)) {
-            if (!array_key_exists($formTemplate, $this->_formTemplateRulesToDelete)) {
-                $this->_formTemplateRulesToDelete[$formTemplate] = $this->_formTemplateRules[$formTemplate];
-            }
-            if (array_key_exists($formField, $this->_formTemplateRules[$formTemplate])) {
-                unset($this->_formTemplateRulesToDelete[$formTemplate][$formField]);
-            } else {
-                $this->_formTemplateRules[$formTemplate][$formField] = new BlockFormRule;
-            }
-        } else {
-            $this->_formTemplateRules[$formTemplate] = [$formField => new BlockFormRule];
+        if (!array_key_exists($formTemplate, $this->_formTemplateRules)) {
+            $this->_formTemplateRules[$formTemplate] = [];
+        }
+        if (!array_key_exists($formField, $this->_formTemplateRules[$formTemplate])) {
+            $this->_formTemplateRules[$formTemplate][$formField] = new BlockFormRule;
         }
         $this->_currentFormRule = $this->_formTemplateRules[$formTemplate][$formField];
+        if (!array_key_exists($formTemplate, $this->_formTemplateRulesToDelete)) {
+            $this->_formTemplateRulesToDelete[$formTemplate] = $this->_formTemplateRules[$formTemplate];
+        }
+        unset($this->_formTemplateRulesToDelete[$formTemplate][$formField]);
     }
 
     /**

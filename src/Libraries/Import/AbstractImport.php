@@ -72,6 +72,7 @@ abstract class AbstractImport
         $this->_importFileRequired = $requiredFile;
         $this->_importData = $this->_importData();
         $this->_fieldMap = $this->fieldMap();
+        $this->_hasBeenValidated = false;
         $this->_validationErrors = [];
         $this->_validationRules = $this->validateRules();
         $this->_customValidationColumnNames =$this->_customValidationColumnNames();
@@ -155,9 +156,12 @@ abstract class AbstractImport
         return [];
     }
 
+    /**
+     * @return bool
+     */
     public function run()
     {
-        if ($this->_hasBeenValidated || $this->validate()) {
+        if ($this->validate()) {
             foreach ($this->_importData as $importRow) {
                 $this->_importCurrentRow = $importRow;
                 $this->_startRowImport();
@@ -201,31 +205,34 @@ abstract class AbstractImport
      */
     public function validate()
     {
-        if ($this->_importFileRequired && $this->_importData === false) {
-            $this->_validationErrors[] = 'A required import file is missing or not readable: ' . $this->_importFile;
-            return false;
-        }
-        if ($this->_validationRules) {
-            // do column checks first to reduce number of overall checks
-            $skipFieldValidation = $this->_validateColumns();
-            foreach ($this->_importData as $row => $importRow) {
-                try {
-                    $rules = $this->_validationRules;
-                    foreach ($skipFieldValidation as $skipField) {
-                        unset($importRow[$skipField]);
-                        unset($rules[$skipField]);
-                    }
-                    Validator::make($importRow, $rules, [], $this->_customValidationColumnNames)->validate();
-                } catch (ValidationException $e) {
-                    foreach ($e->validator->getMessageBag()->toArray() as $errorMessages) {
-                        foreach ($errorMessages as $errorMessage) {
-                            $this->_validationErrors[] = 'Data row '.($row+1).': ' . $errorMessage;
+        if (!$this->_hasBeenValidated) {
+            if ($this->_importFileRequired && $this->_importData === false) {
+                $this->_validationErrors[] = 'A required import file is missing or not readable: ' . $this->_importFile;
+                return false;
+            }
+            if ($this->_validationRules) {
+                // do column checks first to reduce number of overall checks
+                $skipFieldValidation = $this->_validateColumns();
+                foreach ($this->_importData as $row => $importRow) {
+                    try {
+                        $rules = $this->_validationRules;
+                        foreach ($skipFieldValidation as $skipField) {
+                            unset($importRow[$skipField]);
+                            unset($rules[$skipField]);
+                        }
+                        Validator::make($importRow, $rules, [], $this->_customValidationColumnNames)->validate();
+                    } catch (ValidationException $e) {
+                        foreach ($e->validator->getMessageBag()->toArray() as $errorMessages) {
+                            foreach ($errorMessages as $errorMessage) {
+                                $this->_validationErrors[] = 'Data row ' . ($row + 1) . ': ' . $errorMessage;
+                            }
                         }
                     }
                 }
             }
+            $this->_hasBeenValidated = empty($this->_validationErrors);
         }
-        return $this->_hasBeenValidated = empty($this->_validationErrors);
+        return $this->_hasBeenValidated;
     }
 
     /**

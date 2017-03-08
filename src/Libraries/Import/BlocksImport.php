@@ -102,7 +102,7 @@ class BlocksImport extends AbstractImport
 
     public function run()
     {
-        if (array_key_exists('theme', $this->_additionalData) && parent::run()) {
+        if (array_key_exists('theme', $this->_additionalData) && $this->validate()) {
             $theme = $this->_additionalData['theme'];
 
             $categoryImport = new \CoasterCms\Libraries\Import\Blocks\CategoryImport(
@@ -111,8 +111,19 @@ class BlocksImport extends AbstractImport
             );
             $categoryImport->run();
 
+            $formRulesImport = new \CoasterCms\Libraries\Import\Blocks\FormRulesImport(
+                base_path('resources/views/themes/' . $theme->theme . '/import/blocks/form_rules.csv'),
+                false
+            );
+            $formRulesImport->run();
+
             $this->_processFiles(); // TODO move block import funcs from block updater and eventually replace it with this file
 
+            $selectOptionsImport = new \CoasterCms\Libraries\Import\Blocks\SelectOptionImport(
+                base_path('resources/views/themes/' . $theme->theme . '/import/blocks/select_options.csv'),
+                false
+            );
+            $selectOptionsImport->run();
         }
     }
 

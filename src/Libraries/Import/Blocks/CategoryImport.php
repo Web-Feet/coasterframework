@@ -53,8 +53,8 @@ class CategoryImport extends AbstractImport
     {
         $existingCategories = BlockCategory::all();
         if (!$existingCategories->isEmpty()) {
-            foreach (BlockCategory::all() as $category) {
-                $this->_blockCategoryIds[trim(strtolower($category->name))] = $category;
+            foreach ($existingCategories as $category) {
+                $this->_blockCategoryIds[strtolower($category->name)] = $category;
             }
         } else {
             $this->_blockCategoryIds = [];
