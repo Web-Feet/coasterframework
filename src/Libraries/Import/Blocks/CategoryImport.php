@@ -9,7 +9,7 @@ class CategoryImport extends AbstractImport
     /**
      * @var array
      */
-    protected $_blockCategoryIds;
+    protected $_blockCategoryByName;
 
     /**
      * @var BlockCategory
@@ -19,80 +19,59 @@ class CategoryImport extends AbstractImport
     /**
      * @return array
      */
-    public function validateRules()
-    {
-        return [
-            'Block Category' => 'required',
-        ];
-    }
-
-    /**
-     * @return array
-     */
     public function fieldMap()
     {
         return [
-            'Block Category' => 'name',
-            'Category Order' => 'order'
+            'Block Category' => [
+                'mapTo' => 'name',
+                'mapFn' => '_toLower',
+                'validate' => 'required'
+            ],
+            'Category Order' => [
+                'mapTo' =>'order'
+            ]
         ];
-    }
-
-    /**
-     * @return bool
-     */
-    public function run()
-    {
-        $this->_loadExisting();
-        return parent::run();
     }
 
     /**
      *
      */
-    protected function _loadExisting()
+    protected function _beforeRun()
     {
         $existingCategories = BlockCategory::all();
         if (!$existingCategories->isEmpty()) {
             foreach ($existingCategories as $category) {
-                $this->_blockCategoryIds[strtolower($category->name)] = $category;
+                $this->_blockCategoryByName[strtolower($category->name)] = $category;
             }
         } else {
-            $this->_blockCategoryIds = [];
+            $this->_blockCategoryByName = [];
         }
     }
-
-    /**
-     * @param string $importFieldName
-     * @param string $importFieldData
-     */
-    protected function _importField($importFieldName, $importFieldData)
-    {
-        $importFieldData = trim($importFieldData);
-        $mappedName = $this->_fieldMap[$importFieldName];
-        if ($importFieldData !== '') {
-            if ($mappedName == 'name') {
-                $importFieldData = strtolower($importFieldData);
-            }
-            $this->_currentBlockCategory->$mappedName = $importFieldData;
-        }
-    }
-
     /**
      *
      */
-    protected function _startRowImport()
+    protected function _beforeRowImport()
     {
         $categoryName = trim(strtolower($this->_importCurrentRow['Block Category']));
-        if (!array_key_exists($categoryName, $this->_blockCategoryIds)) {
-            $this->_blockCategoryIds[$categoryName] = new BlockCategory;
+        if (!array_key_exists($categoryName, $this->_blockCategoryByName)) {
+            $this->_blockCategoryByName[$categoryName] = new BlockCategory;
         }
-        $this->_currentBlockCategory = $this->_blockCategoryIds[$categoryName];
+        $this->_currentBlockCategory = $this->_blockCategoryByName[$categoryName];
+    }
+
+    /**
+     * @param array $importInfo
+     * @param string $importFieldData
+     */
+    protected function _mapTo($importInfo, $importFieldData)
+    {
+        $this->_currentBlockCategory->{$importInfo['mapTo']} = $importFieldData;
     }
 
     /**
      *
      */
-    protected function _endRowImport()
+    protected function _afterRowImport()
     {
         $this->_currentBlockCategory->save();
     }
@@ -102,7 +81,7 @@ class CategoryImport extends AbstractImport
      */
     public function getBlockCategoriesByName()
     {
-        return $this->_blockCategoryIds;
+        return $this->_blockCategoryByName;
     }
 
 }

@@ -3,7 +3,6 @@
 use CoasterCms\Libraries\Import\AbstractImport;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockSelectOption;
-use CoasterCms\Models\PageGroupPage;
 
 class SelectOptionImport extends AbstractImport
 {
@@ -26,34 +25,23 @@ class SelectOptionImport extends AbstractImport
     /**
      * @return array
      */
-    public function validateRules()
-    {
-        return [
-            'Block Name' => 'required',
-            'Option' => 'required',
-            'Value' => 'required'
-        ];
-    }
-
-    /**
-     * @return array
-     */
     public function fieldMap()
     {
         return [
-            'Block Name' => 'id',
-            'Option' => 'option',
-            'Value' => 'value'
+            'Block Name' => [
+                'mapTo' => 'id',
+                'mapFn' => '_mapName',
+                'validate' => 'required'
+                ],
+            'Option' => [
+                'mapTo' => 'option',
+                'validate' => 'required'
+                ],
+            'Value' => [
+                'mapTo' => 'value',
+                'validate' => 'required'
+            ]
         ];
-    }
-
-    /**
-     * @return bool
-     */
-    public function run()
-    {
-        $this->_loadExisting();
-        return parent::run();
     }
 
     /**
@@ -79,7 +67,7 @@ class SelectOptionImport extends AbstractImport
     /**
      *
      */
-    protected function _loadExisting()
+    protected function _beforeRun()
     {
         $existingOptions = BlockSelectOption::all();
         if (!$existingOptions->isEmpty()) {
@@ -95,25 +83,9 @@ class SelectOptionImport extends AbstractImport
     }
 
     /**
-     * @param string $importFieldName
-     * @param string $importFieldData
-     */
-    protected function _importField($importFieldName, $importFieldData)
-    {
-        $importFieldData = trim($importFieldData);
-        $mappedName = $this->_fieldMap[$importFieldName];
-        if ($importFieldData !== '') {
-            if ($mappedName == 'name') {
-                $importFieldData = $this->_blockNamesToIds[$importFieldData];
-            }
-            $this->_blockSelectOptions->$mappedName = $importFieldData;
-        }
-    }
-
-    /**
      *
      */
-    protected function _startRowImport()
+    protected function _beforeRowImport()
     {
         $blockId = $this->_blockNamesToIds[trim($this->_importCurrentRow['Block Name'])];
         $value = trim($this->_importCurrentRow['Value']);
@@ -127,9 +99,27 @@ class SelectOptionImport extends AbstractImport
     }
 
     /**
+     * @param array $importInfo
+     * @param string $importFieldData
+     */
+    protected function _mapTo($importInfo, $importFieldData)
+    {
+        $this->_currentSelectOption->{$importInfo['mapTo']} = $importFieldData;
+    }
+
+    /**
+     * @param string $importFieldData
+     * @return string
+     */
+    protected function _mapName($importFieldData)
+    {
+        return $this->_blockNamesToIds[$importFieldData];
+    }
+
+    /**
      *
      */
-    protected function _endRowImport()
+    protected function _afterRowImport()
     {
         $this->_currentSelectOption->save();
     }

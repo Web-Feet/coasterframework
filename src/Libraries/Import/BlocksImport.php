@@ -2,6 +2,8 @@
 
 use CoasterCms\Helpers\Cms\Page\PageLoaderDummy;
 use CoasterCms\Libraries\Builder\PageBuilder;
+use CoasterCms\Models\BlockCategory;
+use CoasterCms\Models\Theme;
 use View;
 
 class BlocksImport extends AbstractImport
@@ -23,33 +25,9 @@ class BlocksImport extends AbstractImport
     protected $_categoryImport;
 
     /**
-     * BlocksImport constructor.
-     * @param $importFile
-     * @param bool $requiredFile
+     * @var BlockCategory[]
      */
-    public function __construct($importFile, $requiredFile = true)
-    {
-        parent::__construct($importFile, $requiredFile);
-        $this->_blockSettings = [];
-    }
-
-    /**
-     * @return array
-     */
-    public function validateRules()
-    {
-        return [
-            'Block Name' => 'required',
-            'Block Label' => '',
-            'Block Note' => '',
-            'Block Category' => '',
-            'Block Type' => '',
-            'Global (show in site-wide)' => '',
-            'Global (show in pages)' => '',
-            'Templates' => '',
-            'Block Order' => ''
-        ];
-    }
+    protected $_blockCategoriesByName;
 
     /**
      * @return array
@@ -57,74 +35,119 @@ class BlocksImport extends AbstractImport
     public function fieldMap()
     {
         return [
-            'Block Name' => 'name',
-            'Block Label' => 'label',
-            'Block Note' => 'note',
-            'Block Category' => 'category_id',
-            'Block Type' => 'type',
-            'Global (show in site-wide)' => 'global_site',
-            'Global (show in pages)' => 'global_pages',
-            'Templates' => 'templates',
-            'Block Order' => 'order'
+            'Block Name' => [
+                'mapTo' => 'name',
+                'mapFn' => '_toLowerTrim',
+                'validate' => 'required'
+            ],
+            'Block Label' => [
+                'mapTo' => 'label'
+            ],
+            'Block Note' => [
+                'mapTo' => 'note'
+            ],
+            'Block Category' => [
+                'mapTo' => 'category_id',
+                'mapFn' => '_toCategoryId'
+            ],
+            'Block Type' => [
+                'mapTo' => 'type'
+            ],
+            'Global (show in site-wide)' => [
+                'mapTo' => 'global_site',
+                'mapFn' => '_toBool'
+            ],
+            'Global (show in pages)' => [
+                'mapTo' => 'global_pages',
+                'mapFn' => '_toBool'
+            ],
+            'Templates' => [
+                'mapTo' => 'templates'
+            ],
+            'Block Order' => [
+                'mapTo' => 'order'
+            ],
         ];
     }
 
     /**
-     * @param string $importFieldName
-     * @param string $importFieldData
+     * @return bool
      */
-    protected function _importField($importFieldName, $importFieldData)
+    public function validate()
     {
-        $importFieldData = trim($importFieldData);
-        $mappedName = $this->_fieldMap[$importFieldName];
-        if ($importFieldData !== '') {
-            if (in_array($mappedName, ['global_site', 'global_pages'])) {
-                $importFieldData = (empty($importFieldData) || strtolower($importFieldData) == 'false' || strtolower($importFieldData) == 'no' || strtolower($importFieldData) == 'n');
-            }
-            if ($mappedName == 'name') {
-                $importFieldData = strtolower($importFieldData);
-            }
-            if (!empty($blockSettings['category_id'])) { // TODO
-                $blockSettings['category_id'] = $this->_getBlockCategoryIdFromName($blockSettings['category_id']);
-            }
-
-            $this->_blockSettings[$this->_currentBlockName][$mappedName] = $importFieldData;
+        if (!array_key_exists('theme', $this->_additionalData) || !is_a($this->_additionalData['theme'], Theme::class)) {
+            $this->_validationErrors[] = 'Theme must be specified before blocks can be imported';
         }
+        return parent::validate();
     }
 
     /**
      *
      */
-    protected function _startRowImport()
+    protected function _beforeRun()
     {
-        $this->_currentBlockName = $this->_importCurrentRow['Block Name'];
+        $categoryImport = new \CoasterCms\Libraries\Import\Blocks\CategoryImport(
+            base_path('resources/views/themes/' . $this->_additionalData['theme']->theme . '/import/blocks/categories.csv'),
+            false
+        );
+        $categoryImport->run();
+        $this->_blockCategoriesByName = $categoryImport->getBlockCategoriesByName();
+        $formRulesImport = new \CoasterCms\Libraries\Import\Blocks\FormRulesImport(
+            base_path('resources/views/themes/' . $this->_additionalData['theme']->theme . '/import/blocks/form_rules.csv'),
+            false
+        );
+        $formRulesImport->run();
+        $this->_blockSettings = [];
     }
 
-    public function run()
+    /**
+     *
+     */
+    protected function _beforeRowImport()
     {
-        if (array_key_exists('theme', $this->_additionalData) && $this->validate()) {
-            $theme = $this->_additionalData['theme'];
+        $this->_currentBlockName = $this->_toLowerTrim($this->_importCurrentRow['Block Name']);
+        $this->_blockSettings[$this->_currentBlockName] = [];
+    }
 
-            $categoryImport = new \CoasterCms\Libraries\Import\Blocks\CategoryImport(
-                base_path('resources/views/themes/' . $theme->theme . '/import/blocks/categories.csv'),
-                false
-            );
-            $categoryImport->run();
-
-            $formRulesImport = new \CoasterCms\Libraries\Import\Blocks\FormRulesImport(
-                base_path('resources/views/themes/' . $theme->theme . '/import/blocks/form_rules.csv'),
-                false
-            );
-            $formRulesImport->run();
-
-            $this->_processFiles(); // TODO move block import funcs from block updater and eventually replace it with this file
-
-            $selectOptionsImport = new \CoasterCms\Libraries\Import\Blocks\SelectOptionImport(
-                base_path('resources/views/themes/' . $theme->theme . '/import/blocks/select_options.csv'),
-                false
-            );
-            $selectOptionsImport->run();
+    /**
+     * @param array $importInfo
+     * @param string $importFieldData
+     */
+    protected function _mapTo($importInfo, $importFieldData)
+    {
+        if ($importFieldData !== '') {
+            $this->_blockSettings[$this->_currentBlockName][$importInfo['mapTo']] = $importFieldData;
         }
+    }
+
+    /**
+     * @param string $importFieldData
+     * @return string
+     */
+    protected function _toCategoryId($importFieldData)
+    {
+        if (!array_key_exists($importFieldData, $this->_blockCategoriesByName)) {
+            $newBlockCategory = new BlockCategory;
+            $newBlockCategory->name = trim($importFieldData);
+            $newBlockCategory->order = 0;
+            $newBlockCategory->save();
+            $this->_blockCategoriesByName[$newBlockCategory->name] = $newBlockCategory;
+        }
+        return $this->_blockCategoriesByName[$importFieldData];
+    }
+
+    /**
+     *
+     */
+    protected function _afterRun()
+    {
+        $this->_processFiles(); // TODO move block import funcs from block updater and eventually replace it with this file
+
+        $selectOptionsImport = new \CoasterCms\Libraries\Import\Blocks\SelectOptionImport(
+            base_path('resources/views/themes/' . $this->_additionalData['theme']->theme . '/import/blocks/select_options.csv'),
+            false
+        );
+        $selectOptionsImport->run();
     }
 
     /**
@@ -164,7 +187,5 @@ class BlocksImport extends AbstractImport
             }
         }
     }
-
-
 
 }

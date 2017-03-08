@@ -54,11 +54,6 @@ abstract class AbstractImport
     /**
      * @var array
      */
-    protected $_defaultsIfBlank;
-
-    /**
-     * @var array
-     */
     protected $_additionalData;
 
     /**
@@ -76,7 +71,6 @@ abstract class AbstractImport
         $this->_validationErrors = [];
         $this->_validationRules = $this->validateRules();
         $this->_customValidationColumnNames =$this->_customValidationColumnNames();
-        $this->_defaultsIfBlank = $this->defaultsIfBlank();
     }
 
     /**
@@ -127,9 +121,10 @@ abstract class AbstractImport
                 return $importData;
             } catch (\Exception $e) {
                 $this->_validationErrors[] = 'CSV format error, number of columns in the header row does not match for some data rows';
+                return false;
             }
         }
-        return false;
+        return [];
     }
 
     /**
@@ -145,59 +140,9 @@ abstract class AbstractImport
      */
     public function validateRules()
     {
-        return [];
-    }
-
-    /**
-     * @return array
-     */
-    public function defaultsIfBlank()
-    {
-        return [];
-    }
-
-    /**
-     * @return bool
-     */
-    public function run()
-    {
-        if ($this->validate()) {
-            foreach ($this->_importData as $importRow) {
-                $this->_importCurrentRow = $importRow;
-                $this->_startRowImport();
-                foreach ($this->_fieldMap as $importFieldName => $importTo) {
-                    $importFieldData = array_key_exists($importFieldName, $importRow) ? $importRow[$importFieldName] : '';
-                    $importFieldData = ($importFieldData === '' && array_key_exists($importFieldName, $this->_defaultsIfBlank)) ? $this->_defaultsIfBlank[$importFieldName] : $importFieldData;
-                    $this->_importField($importFieldName, $importFieldData);
-                }
-                $this->_endRowImport();
-            }
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     *
-     */
-    protected function _startRowImport()
-    {
-    }
-
-    /**
-     *
-     */
-    protected function _endRowImport()
-    {
-    }
-
-    /**
-     * @param string $importColumn
-     * @param string $importFieldData
-     */
-    protected function _importField($importColumn, $importFieldData)
-    {
+        return array_map(function($field) {
+            return array_key_exists('validate', $field) ? $field['validate'] : '';
+        }, $this->fieldMap());
     }
 
     /**
@@ -240,7 +185,7 @@ abstract class AbstractImport
      */
     protected function _validateColumns()
     {
-        if ($requiredRules = $this->_getRequiredColumns()) {
+        if ($this->_importData && $requiredRules = $this->_getRequiredColumns()) {
             $firstDataRow = current($this->_importData) ?: [];
             try {
                 Validator::make($firstDataRow, $requiredRules, [], $this->_customValidationColumnNames)->validate();
@@ -275,6 +220,136 @@ abstract class AbstractImport
     public function getValidationErrors()
     {
         return $this->_validationErrors;
+    }
+
+    /**
+     * @return bool
+     */
+    public function run()
+    {
+        if ($this->validate()) {
+            $this->_beforeRun();
+            foreach ($this->_importData as $importRow) {
+                $this->_importCurrentRow = $importRow;
+                $this->_beforeRowMap();
+                foreach ($this->_fieldMap as $importFieldName => $importInfo) {
+                    $importFieldData = array_key_exists($importFieldName, $importRow) ? $importRow[$importFieldName] : '';
+                    $importFieldData = $this->_mapFn($importInfo, $importFieldData);
+                    $importFieldData = $this->_setDefaultIfBlank($importInfo, $importFieldData);
+                    if (array_key_exists('mapTo', $importInfo)) {
+                        $this->_mapTo($importInfo, $importFieldData);
+                    }
+                }
+                $this->_afterRowMap();
+            }
+            $this->_afterRun();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     *
+     */
+    protected function _beforeRun()
+    {
+    }
+
+    /**
+     *
+     */
+    protected function _beforeRowMap()
+    {
+    }
+
+    /**
+     * @param array $importInfo
+     * @param string $importFieldData
+     * @return string
+     */
+    protected function _setDefaultIfBlank($importInfo, $importFieldData)
+    {
+        if ($importFieldData === '' && array_key_exists('default', $importInfo)) {
+            return is_callable($importInfo['default']) ? call_user_func($importInfo['default']) : $importInfo['default'];
+        }
+        return $importFieldData;
+    }
+
+    /**
+     * @param array $importInfo
+     * @param string $importFieldData
+     * @return string
+     */
+    protected function _mapFn($importInfo, $importFieldData)
+    {
+        if (array_key_exists('mapFn', $importInfo)) {
+            if ($importInfo['mapFn']) {
+                return $this->{$importInfo['mapFn']}($importFieldData);
+            }
+            return $importFieldData;
+        }
+        return $this->_mapDefaultFn($importFieldData);
+    }
+
+    /**
+     * @param string $importFieldData
+     * @return string
+     */
+    protected function _mapDefaultFn($importFieldData)
+    {
+        return trim($importFieldData);
+    }
+
+    /**
+     * @param string $importColumn
+     * @param string $importFieldData
+     */
+    protected function _mapTo($importColumn, $importFieldData)
+    {
+    }
+
+    /**
+     *
+     */
+    protected function _afterRowMap()
+    {
+    }
+
+    /**
+     *
+     */
+    protected function _afterRun()
+    {
+    }
+
+    /**
+     * @param string $importFieldData
+     * @return string
+     */
+    protected function _toLower($importFieldData)
+    {
+        return strtolower($importFieldData);
+    }
+
+    /**
+     * @param string $importFieldData
+     * @return string
+     */
+    protected function _toLowerTrim($importFieldData)
+    {
+        return strtolower(trim($importFieldData));
+    }
+
+    /**
+     * @param string $importFieldData
+     * @return bool
+     */
+    protected function _toBool($importFieldData)
+    {
+        if ($importFieldData !== '') {
+            return (empty($importFieldData) || strtolower($importFieldData) == 'false' || strtolower($importFieldData) == 'no' || strtolower($importFieldData) == 'n');
+        }
     }
 
 }

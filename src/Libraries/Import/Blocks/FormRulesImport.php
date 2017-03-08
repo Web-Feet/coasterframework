@@ -24,47 +24,28 @@ class FormRulesImport extends AbstractImport
     /**
      * @return array
      */
-    public function validateRules()
-    {
-        return [
-            'Form Template' => 'required',
-            'Field' => 'required',
-            'Rule' => 'required'
-        ];
-    }
-
-    /**
-     * @return array
-     */
     public function fieldMap()
     {
         return [
-            'Form Template' => 'form_template',
-            'Field' => 'field',
-            'Rule' => 'rule'
+            'Form Template' => [
+                'mapTo' => 'form_template',
+                'validate' => 'required'
+                ],
+            'Field' => [
+                'mapTo' => 'field',
+                'validate' => 'required'
+                ],
+            'Rule' => [
+                'mapTo' => 'rule',
+                'validate' => 'required'
+            ]
         ];
-    }
-
-    /**
-     * When adding form rules clear all previous rules for any conflicting form_templates
-     * @return bool
-     */
-    public function run()
-    {
-        $this->_loadExisting();
-        $this->_formTemplateRulesToDelete = [];
-        if ($hasRun = parent::run()) {
-            foreach ($this->_formTemplateRulesToDelete as $template => $fields) {
-                self::where('form_template', '=', $template)->whereIn('field', array_keys($fields))->delete();
-            }
-        }
-        return $hasRun;
     }
 
     /**
      *
      */
-    protected function _loadExisting()
+    protected function _beforeRun()
     {
         $existingRules = BlockFormRule::all();
         if (!$existingRules->isEmpty()) {
@@ -77,25 +58,13 @@ class FormRulesImport extends AbstractImport
         } else {
             $this->_formTemplateRules = [];
         }
-    }
-
-    /**
-     * @param string $importFieldName
-     * @param string $importFieldData
-     */
-    protected function _importField($importFieldName, $importFieldData)
-    {
-        $importFieldData = trim($importFieldData);
-        $mappedName = $this->_fieldMap[$importFieldName];
-        if ($importFieldData !== '') {
-            $this->_currentFormRule->$mappedName = $importFieldData;
-        }
+        $this->_formTemplateRulesToDelete = [];
     }
 
     /**
      *
      */
-    protected function _startRowImport()
+    protected function _beforeRowImport()
     {
         $formTemplate = trim($this->_importCurrentRow['Form Template']);
         $formField = trim($this->_importCurrentRow['Field']);
@@ -113,11 +82,30 @@ class FormRulesImport extends AbstractImport
     }
 
     /**
+     * @param array $importInfo
+     * @param string $importFieldData
+     */
+    protected function _mapTo($importInfo, $importFieldData)
+    {
+        $this->_currentFormRule->{$importInfo['mapTo']} = $importFieldData;
+    }
+
+    /**
      *
      */
-    protected function _endRowImport()
+    protected function _afterRowImport()
     {
         $this->_currentFormRule->save();
+    }
+
+    /**
+     * When adding form rules clear all previous rules for any conflicting form_templates
+     */
+    protected function _afterRun()
+    {
+        foreach ($this->_formTemplateRulesToDelete as $template => $fields) {
+            self::where('form_template', '=', $template)->whereIn('field', array_keys($fields))->delete();
+        }
     }
 
     /**

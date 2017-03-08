@@ -34,119 +34,106 @@ class PagesImport extends AbstractImport
     public function fieldMap()
     {
         return [
-            'Page Id' => ['Page', 'id'],
-            'Page Name' => ['PageLang', 'name'],
-            'Page Url' => ['PageLang', 'url'],
-            'Page Live Version' => ['PageLang', 'live_version'],
-            'Page Language Id' => ['PageLang', 'language_id'],
-            'Page Template' => '_setTemplate',
-            'Parent Page Id' => ['Page', 'parent'],
-            'Default Child Template' => ['Page', 'child_template'],
-            'Page Order Value' => ['Page', 'order'],
-            'Is Link (0 or 1)' => ['Page', 'link'],
-            'Is Live (0 or 1)' => ['Page', 'live'],
-            'In Sitemap (0 or 1)' => ['Page', 'sitemap'],
-            'Container for Group Id' => ['Page', 'group_container'],
-            'Container Url Priority' => ['Page', 'group_container_url_priority'],
-            'Canonical Parent Page Id' => ['Page', 'canonical_parent'],
-            'Group Ids (Comma Separated)' => '_addGroups'
+            'Page Id' => [
+                'mapTo' => ['Page', 'id'],
+            ],
+            'Page Name' => [
+                'mapTo' => ['PageLang', 'name'],
+                'validate' => 'required'
+            ],
+            'Page Url' => [
+                'mapTo' => ['PageLang', 'url'],
+                'validate' => 'required'
+            ],
+            'Page Live Version' => [
+                'mapTo' => ['PageLang', 'live_version'],
+                'default' => 1
+            ],
+            'Page Language Id' => [
+                'mapTo' => ['PageLang', 'language_id'],
+                'default' => config('coaster::frontend.language')
+            ],
+            'Page Template' => [
+                'mapTo' => ['Page', 'template'],
+                'mapFn' => '_mapTemplate'
+            ],
+            'Parent Page Id' => [
+                'mapTo' => ['Page', 'parent'],
+                'default' => 0
+            ],
+            'Default Child Template' => [
+                'mapTo' => ['Page', 'child_template'],
+                'default' => 0
+            ],
+            'Page Order Value' => [
+                'mapTo' => ['Page', 'order'],
+                'default' => 1000
+            ],
+            'Is Link (0 or 1)' => [
+                'mapTo' => ['Page', 'link'],
+                'default' => 0
+            ],
+            'Is Live (0 or 1)' => [
+                'mapTo' => ['Page', 'live'],
+                'default' => 1
+            ],
+            'In Sitemap (0 or 1)' => [
+                'mapTo' => ['Page', 'sitemap'],
+                'default' => 1
+            ],
+            'Container for Group Id' => [
+                'mapTo' => ['Page', 'group_container'],
+                'default' => 0
+            ],
+            'Container Url Priority' => [
+                'mapTo' => ['Page', 'group_container_url_priority'],
+                'default' => 0
+            ],
+            'Canonical Parent Page Id' => [
+                'mapTo' => ['Page', 'canonical_parent'],
+                'default' => 0
+            ],
+            'Group Ids (Comma Separated)' => [
+                'mapFn' => '_mapGroups'
+            ]
         ];
     }
 
     /**
-     * @return array
+     *
      */
-    public function validateRules()
-    {
-        return [
-            'Page Name' => 'required',
-            'Page Url'  => 'required'
-        ];
-    }
-
-    /**
-     * @return array
-     */
-    public function defaultsIfBlank()
-    {
-        return [
-            'Page Language Id' => config('coaster::frontend.language'),
-            'Page Live Version' => 1,
-            'Parent Page Id' => 0,
-            'Default Child Template' => 0,
-            'Page Order Value'  => 1000,
-            'Is Link (0 or 1)'  => 0,
-            'Is Live (0 or 1)' => 1,
-            'In Sitemap (0 or 1)' => 1,
-            'Container for Group Id'  => 0,
-            'Container Url Priority'  => 0,
-            'Canonical Parent Page Id' => 0
-        ];
-    }
-
-    public function run()
+    protected function _beforeRun()
     {
         $this->_templateIds = [];
         $templates = Template::where('theme_id', '=', $this->_additionalData['theme']->id)->get();
         foreach ($templates as $template) {
             $this->_templateIds[$template->template] = $template->id;
         }
-        return parent::run();
-    }
-
-    /**
-     * @param string $importFieldName
-     * @param string $importFieldData
-     */
-    protected function _importField($importFieldName, $importFieldData)
-    {
-        $importFieldData = trim($importFieldData);
-        $mappedName = $this->_fieldMap[$importFieldName];
-        if ($importFieldData !== '') {
-            if (is_array($mappedName)) {
-                list($model, $attribute) = $mappedName;
-                $this->{'_current'.$model}->$attribute = $importFieldData;
-            } else {
-                $this->$mappedName($importFieldData);
-            }
-        }
-    }
-
-    /**
-     * @param $templateName
-     */
-    protected function _setTemplate($templateName)
-    {
-        $this->_currentPage->template = array_key_exists($templateName, $this->_templateIds) ? $this->_templateIds[$templateName] : config('coaster::admin.default_template');
-    }
-
-    /**
-     * @param $groupIds
-     */
-    protected function _addGroups($groupIds)
-    {
-        $groupIds = $groupIds ? explode(',', $groupIds) : [];
-        foreach ($groupIds as $groupId) {
-            $newPageGroupPage = new PageGroupPage;
-            $newPageGroupPage->group_id = $groupId;
-            $this->_newPageGroupPages[] = $newPageGroupPage;
-        }
     }
 
     /**
      *
      */
-    protected function _startRowImport()
+    protected function _beforeRowMap()
     {
         $this->_currentPage = new Page;
         $this->_currentPageLang = new PageLang;
-        $this->_newPageGroupPages = [];
+    }
+
+    /**
+     * @param array $importInfo
+     * @param string $importFieldData
+     */
+    protected function _mapTo($importInfo, $importFieldData)
+    {
+        list($model, $attribute) = $importInfo['mapTo'];
+        $this->{'_current'.$model}->$attribute = $importFieldData;
     }
 
     /**
      *
      */
-    protected function _endRowImport()
+    protected function _afterRowMap()
     {
         $this->_currentPage->save();
         $this->_currentPageLang->page_id = $this->_currentPage->id;
@@ -156,6 +143,30 @@ class PagesImport extends AbstractImport
             $newPageGroupPage->save();
         }
         PageVersion::add_new($this->_currentPage->id);
+    }
+
+    /**
+     * @param string $importFieldData
+     * @return string
+     */
+    protected function _mapTemplate($importFieldData)
+    {
+        $templateName = trim($importFieldData);
+        return array_key_exists($templateName, $this->_templateIds) ? $this->_templateIds[$templateName] : config('coaster::admin.default_template');
+    }
+
+    /**
+     * @param $importFieldData
+     */
+    protected function _mapGroups($importFieldData)
+    {
+        $this->_newPageGroupPages = [];
+        $groupIds = $importFieldData ? explode(',', $importFieldData) : [];
+        foreach ($groupIds as $groupId) {
+            $newPageGroupPage = new PageGroupPage;
+            $newPageGroupPage->group_id = $groupId;
+            $this->_newPageGroupPages[] = $newPageGroupPage;
+        }
     }
 
 }

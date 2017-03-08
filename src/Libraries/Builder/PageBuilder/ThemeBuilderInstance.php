@@ -10,6 +10,7 @@ use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\Menu;
 use CoasterCms\Models\Page;
+use CoasterCms\Models\Theme;
 use View;
 
 class ThemeBuilderInstance extends PageBuilderInstance
@@ -443,6 +444,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
     {
         $blocksImportFile = base_path('resources/views/themes/' . $this->theme . '/import/blocks.csv');
         $blockImport = new BlocksImport($blocksImportFile, false);
+        $blockImport->setAdditionalData(['theme' => Theme::where(['theme' => $this->theme])->first()]);
 
         if (!$blockImport->validate()) {
             dd('Error with data in: '.$blocksImportFile, $blockImport->getValidationErrors());
@@ -450,58 +452,6 @@ class ThemeBuilderInstance extends PageBuilderInstance
 
         $blockImport->run();
         $this->blockSettings = $blockImport->getSettings();
-
-        foreach ($this->blockSettings as $block => &$blockSettings) {
-            if (!empty($blockSettings['category_id'])) {
-                $blockSettings['category_id'] = $this->_getBlockCategoryIdFromName($blockSettings['category_id']);
-            }
-        }
-    }
-
-    /**
-     * @param $categoryName
-     * @return mixed
-     */
-    protected function _getBlockCategoryIdFromName($categoryName)
-    {
-        if (!isset($this->blockCategoryIds)) {
-
-            foreach (BlockCategory::all() as $category) {
-                $this->blockCategoryIds[trim(strtolower($category->name))] = $category;
-            }
-
-            $categoryCsv = base_path('resources/views/themes/' . $this->theme . '/import/blocks/categories.csv');
-            if (file_exists($categoryCsv) && ($fileHandle = fopen($categoryCsv, 'r')) !== false) {
-                $row = 0;
-                while (($data = fgetcsv($fileHandle)) !== false) {
-                    if ($row++ == 0 && $data[0] == 'Block Category') continue;
-                    if (!empty($data[0])) {
-                        list($name, $order) = $data;
-                        if (empty($this->blockCategoryIds[trim(strtolower($name))])) {
-                            $newBlockCategory = new BlockCategory;
-                            $newBlockCategory->name = trim($name);
-                            $newBlockCategory->order = $order;
-                            $newBlockCategory->save();
-                            $this->blockCategoryIds[trim(strtolower($name))] = $newBlockCategory;
-                        } else {
-                            $this->blockCategoryIds[trim(strtolower($name))]->order = $order;
-                            $this->blockCategoryIds[trim(strtolower($name))]->save();
-                        }
-                    }
-                }
-                fclose($fileHandle);
-            }
-        }
-
-        if (empty($this->blockCategoryIds[trim(strtolower($categoryName))])) {
-            $newBlockCategory = new BlockCategory;
-            $newBlockCategory->name = trim($categoryName);
-            $newBlockCategory->order = 0;
-            $newBlockCategory->save();
-            $this->blockCategoryIds[trim(strtolower($categoryName))] = $newBlockCategory;
-        }
-
-        return $this->blockCategoryIds[trim(strtolower($categoryName))]->id;
     }
 
     /**
