@@ -359,13 +359,14 @@ abstract class AbstractImport
 
     /**
      * @param string $importFieldData
-     * @return bool
+     * @return bool|null
      */
     protected function _toBool($importFieldData)
     {
         if ($importFieldData !== '') {
-            return (empty($importFieldData) || strtolower($importFieldData) == 'false' || strtolower($importFieldData) == 'no' || strtolower($importFieldData) == 'n');
+            return (empty($importFieldData) || strtolower($importFieldData) == 'true' || strtolower($importFieldData) == 'yes' || strtolower($importFieldData) == 'y');
         }
+        return null;
     }
 
 }
