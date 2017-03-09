@@ -85,7 +85,7 @@ class SelectOptionImport extends AbstractImport
     /**
      *
      */
-    protected function _beforeRowImport()
+    protected function _beforeRowMap()
     {
         $blockId = $this->_blockNamesToIds[trim($this->_importCurrentRow['Block Name'])];
         $value = trim($this->_importCurrentRow['Value']);
@@ -119,7 +119,7 @@ class SelectOptionImport extends AbstractImport
     /**
      *
      */
-    protected function _afterRowImport()
+    protected function _afterRowMap()
     {
         $this->_currentSelectOption->save();
     }

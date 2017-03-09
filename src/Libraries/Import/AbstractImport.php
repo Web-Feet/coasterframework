@@ -90,6 +90,22 @@ abstract class AbstractImport
     }
 
     /**
+     * @return array
+     */
+    public function getImportData()
+    {
+        return $this->_importData;
+    }
+
+    /**
+     * @param $importData
+     */
+    public function setImportData($importData)
+    {
+        $this->_importData = $importData;
+    }
+
+    /**
      * @param array $row
      * @param int $column
      * @param array $headerRow

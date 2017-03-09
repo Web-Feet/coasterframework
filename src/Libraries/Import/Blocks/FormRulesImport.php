@@ -47,6 +47,8 @@ class FormRulesImport extends AbstractImport
      */
     protected function _beforeRun()
     {
+        $this->_formTemplateRules = [];
+        $this->_formTemplateRulesToDelete = [];
         $existingRules = BlockFormRule::all();
         if (!$existingRules->isEmpty()) {
             foreach ($existingRules as $existingRule) {
@@ -55,16 +57,13 @@ class FormRulesImport extends AbstractImport
                 }
                 $this->_formTemplateRules[$existingRule->form_template][$existingRule->field] = $existingRule;
             }
-        } else {
-            $this->_formTemplateRules = [];
         }
-        $this->_formTemplateRulesToDelete = [];
     }
 
     /**
      *
      */
-    protected function _beforeRowImport()
+    protected function _beforeRowMap()
     {
         $formTemplate = trim($this->_importCurrentRow['Form Template']);
         $formField = trim($this->_importCurrentRow['Field']);
@@ -93,7 +92,7 @@ class FormRulesImport extends AbstractImport
     /**
      *
      */
-    protected function _afterRowImport()
+    protected function _afterRowMap()
     {
         $this->_currentFormRule->save();
     }

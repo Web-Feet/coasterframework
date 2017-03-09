@@ -15,50 +15,16 @@ use View;
 
 class ThemeBuilderInstance extends PageBuilderInstance
 {
-    /**
-     * @var string
-     */
-    protected $currentRepeaterBlockName;
-
-    /**
-     * @var string
-     */
-    protected $categoryView;
 
     /**
      * @var array
      */
-    protected $repeaterTemplates;
-
-    /**
-     * @var BlockCategory[]
-     */
-    protected $blockCategoryIds;
-
-    /**
-     * @var bool
-     */
-    protected $loadOverrideFile;
+    public $errors;
 
     /**
      * @var array
      */
-    public $repeaterBlocks;
-
-    /**
-     * @var array
-     */
-    public $selectBlocks;
-
-    /**
-     * @var array
-     */
-    public $formRules;
-
-    /**
-     * @var array
-     */
-    public $blockSettings;
+    public $blockData;
 
     /**
      * @var array
@@ -68,12 +34,22 @@ class ThemeBuilderInstance extends PageBuilderInstance
     /**
      * @var array
      */
-    public $coreTemplates;
+    public $otherBlocks;
 
     /**
      * @var array
      */
-    public $errors;
+    protected $_renderPath;
+
+    /**
+     * @var array
+     */
+    protected $_repeaterTemplates;
+
+    /**
+     * @var Menu[]
+     */
+    protected $_existingMenus;
 
     /**
      * @ int
@@ -83,33 +59,61 @@ class ThemeBuilderInstance extends PageBuilderInstance
     /**
      * ThemeBuilderInstance constructor.
      * @param PageLoader $pageLoader
-     * @param bool $loadOverrideFile
+     * @param array $blockData
      */
-    public function __construct(PageLoader $pageLoader, $loadOverrideFile = false)
+    public function __construct(PageLoader $pageLoader, $blockData = [])
     {
         parent::__construct($pageLoader);
-        $this->loadOverrideFile = $loadOverrideFile;
-        $this->categoryView = '';
-        $this->currentRepeaterBlockName = '';
         $this->errors = [];
 
         // set page override so check can be made if the actual page id is ever called
         $this->pageOverride = clone $this->page;
         $this->page->id = static::DUMMY_ORIGINAL_PAGE_ID;
 
-        $this->templateBlocks = [];
-        $this->coreTemplates = ['__core_category', '__core_otherPage', '__core_repeater'];
-        foreach ($this->coreTemplates as $coreTemplate) {
-            $this->templateBlocks[$coreTemplate] = [];
-        }
+        $this->blockData = $blockData;
 
-        if ($this->loadOverrideFile) {
-            $this->_loadBlockOverwriteFile();
-        }
+        $this->templateBlocks = [];
+        $this->otherBlocks = [
+            'repeater' => [],
+            'category' => [],
+            'otherPage' => []
+        ];
+
+        $this->_renderPath = [];
 
         $this->_checkRepeaterTemplates();
-        $this->_checkSelectBlocks();
-        $this->_checkFormRules();
+        $this->_loadExistingMenus();
+    }
+
+    /**
+     *
+     */
+    protected function _checkRepeaterTemplates()
+    {
+        $this->_repeaterTemplates = [];
+        $repeaterPaths = [base_path('resources/views/themes/' . $this->theme . '/blocks/repeater')];
+        $repeaterPaths[] = $repeaterPaths[0].'s';
+        foreach ($repeaterPaths as $repeaterPath) {
+            if (is_dir($repeaterPath)) {
+                foreach (scandir($repeaterPath) as $repeaterFile) {
+                    if ($repeaterTemplate = explode('.', $repeaterFile)[0]) {
+                        $this->_repeaterTemplates[] = $repeaterTemplate;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     *
+     */
+    protected function _loadExistingMenus()
+    {
+        $menus = Menu::all();
+        $this->_existingMenus = [];
+        foreach ($menus as $menu) {
+            $this->_existingMenus[$menu->name] = $menu;
+        }
     }
 
     /**
@@ -162,54 +166,32 @@ class ThemeBuilderInstance extends PageBuilderInstance
     }
 
     /**
-     * @param string $block_name
+     * @param string $blockName
      * @param array $options
      * @param string $fn
      * @return mixed|string
      */
-    protected function _block($block_name, $options = [], $fn = 'display')
+    protected function _block($blockName, $options = [], $fn = 'display')
     {
         if ($this->_importIgnore($options)) {
             return $this->_returnValue('', $options);
         }
 
-        $block_name = strtolower($block_name);
-
-        // get block type
-        /** @var Block $block */
-        $block = Block::preloadClone($block_name);
-        $block->name = $block_name;
-        if (isset($this->blockSettings[$block_name]['type'])) {
-            $block->type = $this->blockSettings[$block_name]['type'];
-        }
-        if (!$block->type) {
-            if (in_array(empty($options['view']) ? $block_name : $options['view'], $this->repeaterTemplates)) {
-                $block->type = 'repeater';
-                $this->blockSettings[$block_name]['type'] = 'repeater';
-            } else {
-                $block->type = BlockUpdater::typeGuess($block_name);
-            }
-        }
-
-        // set block note
-        if (!empty($options['importNote'])) {
-            if (!isset($this->blockSettings[$block_name])) {
-                $this->blockSettings[$block_name] = [];
-            }
-            if (!isset($this->blockSettings[$block_name]['note'])) {
-                $this->blockSettings[$block_name]['note'] = $options['importNote'];
+        // load block details
+        $block = Block::preload($blockName);
+        $block->name = $blockName;
+        if (array_key_exists($blockName, $this->blockData)) {
+            foreach ($this->blockData[$blockName] as $field => $value) {
+                $block->$field = $value;
             }
         }
 
         // set version
         $options['version'] = empty($options['version']) ? 0 : $options['version'];
 
-        // set current repeater (so can track which blocks are used by this repeater)
-        if ($block->type == 'repeater') {
-            $parentRepeater = (string) $this->currentRepeaterBlockName;
-            $this->currentRepeaterBlockName = $block_name;
-        }
-
+        // render block
+        $this->_setType($block, $options);
+        $this->_renderPath[] = ['block_' . $block->type => $block->name];
         // always use blank block content for processing blocks for consistency
         if ($fn == 'display') {
             // displayDummy does not require any block content
@@ -218,73 +200,165 @@ class ThemeBuilderInstance extends PageBuilderInstance
             // use blank data for the other functions
             $output = $block->getTypeObject()->$fn('', $options);
         }
+        array_pop($this->_renderPath);
 
-        // reset repeater block name after rendering repeater view
-        if (isset($parentRepeater)) {
-            $this->currentRepeaterBlockName = $parentRepeater;
-        }
+        // add block to template array based on where it has been found
+        $this->_addToTemplate($block, $options);
 
-        // if in a normal template (only if no page_id set or using the original page_id)
-        if (!array_key_exists('page_id', $options) || $options['page_id'] === static::DUMMY_ORIGINAL_PAGE_ID) {
-            if ($this->currentRepeaterBlockName) {
-                // if in a repeater template
-                if (!isset($this->repeaterBlocks[$this->currentRepeaterBlockName])) {
-                    $this->repeaterBlocks[$this->currentRepeaterBlockName] = [];
-                }
-                if (!in_array($block_name, $this->repeaterBlocks[$this->currentRepeaterBlockName])) {
-                    $this->repeaterBlocks[$this->currentRepeaterBlockName][] = $block_name;
-                }
-                $template = '__core_repeater';
-            } elseif ($this->categoryView) {
-                $template = '__core_category';
-            } else {
-                $template = $this->template;
+        // set block note
+        if (!empty($options['importNote'])) {
+            if (!isset($this->blockData[$blockName])) {
+                $this->blockData[$blockName] = [];
             }
-        } else {
-            $template = '__core_otherPage';
-        }
-
-        // add block to template
-        if (!isset($this->templateBlocks[$template])) {
-            $this->templateBlocks[$template] = [];
-        }
-        if (!in_array($block_name, $this->templateBlocks[$template])) {
-            $this->templateBlocks[$template][] = $block_name;
+            if (!isset($this->blockData[$blockName]['note'])) {
+                $this->blockData[$blockName]['note'] = $options['importNote'];
+            }
         }
 
         return $this->_returnValue($output, $options);
     }
 
     /**
-     * @param $menu_name
+     * @param $menuName
      * @param array $options
      * @return string
      */
-    public function menu($menu_name, $options = [])
+    public function menu($menuName, $options = [])
     {
-        if (!isset($this->loadMenus)) {
-            $menus = Menu::all();
-            $this->loadMenus = [];
-            foreach ($menus as $menu) {
-                $this->loadMenus[$menu->name] = $menu;
-            }
-        }
-        if (empty($this->loadMenus[$menu_name])) {
+        $this->_renderPath[] = ['menu' => $menuName];
+        if (!in_array($menuName, $this->_existingMenus)) {
             $menuView = 'themes.' . $this->theme . '.menus.' . (!empty($options['view'])?$options['view']:'default');
-            $subLevel = 1;
-            while (View::exists($menuView.'.submenu_'.$subLevel)) {
+            $subLevel = 0;
+            while (View::exists($menuView . '.submenu_' . ($subLevel+1))) {
                 $subLevel++;
             }
-            $subLevel--;
             $newMenu = new Menu;
-            $newMenu->label = ucwords(str_replace('_', ' ', $menu_name));
-            $newMenu->name = $menu_name;
+            $newMenu->label = ucwords(str_replace('_', ' ', $menuName));
+            $newMenu->name = $menuName;
             $newMenu->max_sublevel = $subLevel;
             $newMenu->save();
-            $this->loadMenus[$newMenu->name] = $newMenu;
+            $this->_existingMenus[$menuName] = $newMenu;
         }
-        $options['menu'] = $this->loadMenus[$menu_name];
-        return MenuBuilder::customMenu([], 0, 1, 0, $options);
+        $options['menu'] = $this->_existingMenus[$menuName];
+        $renderedMenu = MenuBuilder::customMenu([], 0, 1, 0, $options);
+        array_pop($this->_renderPath);
+        return $renderedMenu;
+    }
+
+    /**
+     * @param $options
+     * @return string
+     */
+    protected function _renderCategoryWithoutPageData($options)
+    {
+        if ($this->_importIgnore($options)) {
+            return '';
+        }
+
+        $view = !empty($options['view']) ? $options['view'] : 'default';
+        $loop = 0; // avoid getting stuck in loop
+        foreach ($this->_renderPath as $renderItem) {
+            if (array_key_exists('category', $renderItem) && $renderItem['category'] == $view) {
+                $loop++;
+            }
+        }
+
+        if ($loop < 5) {
+            $this->_renderPath[] = ['category' => $view];
+            $list = View::make(
+                'themes.' . $this->theme . '.categories.' . $view . '.page',
+                ['page' => new PageDetails(1), 'category_id' => 1, 'is_first' => true, 'is_last' => true, 'count' => 1, 'total' => 1]
+            )->render();
+            $output = View::make('themes.' . $this->theme . '.categories.' . $view . '.pages_wrap',
+                ['pages' => $list, 'pagination' => '', 'links' => '', 'content' => '', 'category_id' => 1, 'total' => 1, 'html_content' => '', 'search_query' => '']
+            )->render();
+            array_pop($this->_renderPath);
+        } else {
+            $output = '';
+        }
+
+        return $output;
+    }
+
+    /**
+     * @param Block $block
+     * @param array $options
+     */
+    protected function _setType(&$block, $options)
+    {
+        if (!$block->type) {
+            $view = empty($options['view']) ? $block->name : $options['view'];
+            if (in_array($view, $this->_repeaterTemplates)) {
+                $block->type = 'repeater';
+                $this->blockData[$block->name]['type'] = 'repeater';
+            } else {
+                $block->type = BlockUpdater::typeGuess($block->name);
+            }
+        }
+    }
+
+    /**
+     * @param Block $block
+     * @param array $options
+     */
+    protected function _addToTemplate($block, $options)
+    {
+        if (!array_key_exists('page_id', $options) || $options['page_id'] === static::DUMMY_ORIGINAL_PAGE_ID) {
+            if ($inRepeaterBlockName = $this->_inRepeaterView()) {
+                // block in a repeater template
+                if (!array_key_exists($inRepeaterBlockName, $this->otherBlocks['repeater'])) {
+                    $this->otherBlocks['repeater'][$inRepeaterBlockName] = [];
+                }
+                if (!in_array($block->name, $this->otherBlocks['repeater'][$inRepeaterBlockName])) {
+                    $this->otherBlocks['repeater'][$inRepeaterBlockName][] = $block->name;
+                }
+            } elseif ($categoryViews = $this->_inCategoryView()) {
+                // block in dynamic category view (could be based on page id, search, etc.)
+                if (!array_key_exists($block->name, $this->otherBlocks['category'])) {
+                    $this->otherBlocks['category'][$block->name] = [];
+                }
+                $this->otherBlocks['category'][$block->name] = array_unique(array_merge($categoryViews, $this->otherBlocks['category'][$block->name]));
+            } else {
+                // block definitely in template
+                if (!array_key_exists($this->template, $this->templateBlocks)) {
+                    $this->templateBlocks[$this->template] = [];
+                }
+                if (!in_array($block->name, $this->templateBlocks[$this->template])) {
+                    $this->templateBlocks[$this->template][] = $block->name;
+                }
+            }
+        } else {
+            // if a page has been specified and it's not the same as the original page id
+            $this->otherBlocks['otherPage'][] = $block->name;
+        }
+    }
+
+    /**
+     * @return string
+     */
+    protected function _inCategoryView()
+    {
+        $renderItems = [];
+        foreach ($this->_renderPath as $renderItem) {
+            if (array_key_exists('category', $renderItem)) {
+                $renderItems[] = $renderItem['category'];
+            }
+        }
+        return array_unique($renderItems);
+    }
+
+    /**
+     * @return string
+     */
+    protected function _inRepeaterView()
+    {
+        $renderPath = array_reverse($this->_renderPath);
+        foreach ($renderPath as $renderItem) {
+            if (array_key_exists('block_repeater', $renderItem)) {
+                return $renderItem['block_repeater'];
+            }
+        }
+        return '';
     }
 
     /**
@@ -333,128 +407,6 @@ class ThemeBuilderInstance extends PageBuilderInstance
     }
 
     /**
-     * @param $options
-     * @return string
-     */
-    protected function _renderCategoryWithoutPageData($options)
-    {
-        if ($this->_importIgnore($options)) {
-            return '';
-        }
-
-        $view = !empty($options['view'])?$options['view']:'default';
-
-        $catView = 'currentCategory=';
-
-        if (!isset($this->categoryView) || $this->categoryView != $catView . $view) {
-
-            $tmp = $this->categoryView;
-            $this->categoryView = $catView . $view;
-
-            $list = View::make(
-                'themes.' . $this->theme . '.categories.' . $view . '.page',
-                ['page' => new PageDetails(1), 'category_id' => 1, 'is_first' => true, 'is_last' => true, 'count' => 1, 'total' => 1]
-            )->render();
-
-            $output = View::make('themes.' . $this->theme . '.categories.' . $view . '.pages_wrap',
-                ['pages' => $list, 'pagination' => '', 'links' => '', 'content' => '', 'category_id' => 1, 'total' => 1, 'html_content' => '', 'search_query' => '']
-            )->render();
-
-            $this->categoryView = $tmp;
-
-        } else {
-            $output = '';
-        }
-
-        return $output;
-    }
-
-    /**
-     *
-     */
-    protected function _checkRepeaterTemplates()
-    {
-        $this->currentRepeaterBlockName = '';
-        $this->repeaterTemplates = [];
-        $this->repeaterBlocks = [];
-
-        $repeaterPaths = [base_path('resources/views/themes/' . $this->theme . '/blocks/repeater')];
-        $repeaterPaths[] = $repeaterPaths[0].'s';
-        foreach ($repeaterPaths as $repeaterPath) {
-            if (is_dir($repeaterPath)) {
-                foreach (scandir($repeaterPath) as $repeaterFile) {
-                    if ($repeaterTemplate = explode('.', $repeaterFile)[0]) {
-                        $this->repeaterTemplates[] = $repeaterTemplate;
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     *
-     */
-    protected function _checkSelectBlocks()
-    {
-        $this->selectBlocks = [];
-
-        $selectOptions = base_path('resources/views/themes/' . $this->theme . '/import/blocks/select_options.csv');
-        if (file_exists($selectOptions) && ($fileHandle = fopen($selectOptions, 'r')) !== false) {
-            $row = 0;
-            while (($data = fgetcsv($fileHandle)) !== false) {
-                if ($row++ == 0 && $data[0] == 'Block Name') {
-                    continue;
-                }
-                if (!isset($this->selectBlocks[$data[0]])) {
-                    $this->selectBlocks[$data[0]] = [];
-                }
-                $this->selectBlocks[$data[0]][$data[2]] = $data[1];
-            }
-            fclose($fileHandle);
-        }
-    }
-
-    /**
-     *
-     */
-    protected function _checkFormRules()
-    {
-        $this->formRules = [];
-
-        $formRules = base_path('resources/views/themes/' . $this->theme . '/import/blocks/form_rules.csv');
-        if (file_exists($formRules) && ($fileHandle = fopen($formRules, 'r')) !== false) {
-            $row = 0;
-            while (($data = fgetcsv($fileHandle)) !== false) {
-                if ($row++ == 0 && $data[0] == 'Form Template') {
-                    continue;
-                }
-                if (!isset($this->formRules[$data[0]])) {
-                    $this->formRules[$data[0]] = [];
-                }
-                $this->formRules[$data[0]][$data[1]] = $data[2];
-            }
-            fclose($fileHandle);
-        }
-    }
-
-    /**
-     *
-     */
-    protected function _loadBlockOverwriteFile()
-    {
-        $blocksImportFile = base_path('resources/views/themes/' . $this->theme . '/import/blocks.csv');
-        $blockImport = new BlocksImport($blocksImportFile, false);
-        $blockImport->setAdditionalData(['theme' => Theme::where(['theme' => $this->theme])->first()]);
-
-        if (!$blockImport->validate()) {
-            dd('Error with data in: '.$blocksImportFile, $blockImport->getValidationErrors());
-        }
-
-        $blockImport->run();
-        $this->blockSettings = $blockImport->getSettings();
-    }
-
-    /**
      * @param string $name
      * @param array $arguments
      * @return mixed|string
@@ -467,21 +419,23 @@ class ThemeBuilderInstance extends PageBuilderInstance
             $blockType = strtolower(substr($name, 6));
             if (!empty($validTypes[$blockType])) {
                 $blockName = $arguments[0];
-                if (!isset($this->blockSettings[$blockName])) {
-                    $this->blockSettings[$blockName] = [];
+                if (!isset($this->blockData[$blockName])) {
+                    $this->blockData[$blockName] = [];
                 }
-                if (!isset($this->blockSettings[$blockName]['type'])) {
-                    $this->blockSettings[$blockName]['type'] = $blockType;
+                if (!isset($this->blockData[$blockName]['type'])) {
+                    $this->blockData[$blockName]['type'] = $blockType;
                 }
             }
         }
         try {
             return parent::__call($name, $arguments);
         } catch (PageBuilderException $e) {
-            $error = $e->getMessage() . ' (themes.' . $this->theme . '.templates.' . $this->template;
-            $error .= $this->categoryView ? ' ' . $this->categoryView : $this->categoryView;
-            $error .= $this->currentRepeaterBlockName ? ' ' . $this->currentRepeaterBlockName : $this->currentRepeaterBlockName;
-            $error .= ')';
+            $renderItems = [];
+            foreach ($this->_renderPath as $renderItem) {
+                $renderItems[] = implode('=>', $renderItem);
+            }
+            $appendRenderItems = $renderItems ? ' [' . implode(',', $renderItems) . ']' : '';
+            $error = $e->getMessage() . ' (themes.' . $this->theme . '.templates.' . $this->template  . $appendRenderItems . ')';
             $this->errors[] = $error;
             throw new PageBuilderException($error);
         }

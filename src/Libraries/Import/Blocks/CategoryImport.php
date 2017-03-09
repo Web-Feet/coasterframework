@@ -50,7 +50,7 @@ class CategoryImport extends AbstractImport
     /**
      *
      */
-    protected function _beforeRowImport()
+    protected function _beforeRowMap()
     {
         $categoryName = trim(strtolower($this->_importCurrentRow['Block Category']));
         if (!array_key_exists($categoryName, $this->_blockCategoryByName)) {
@@ -71,7 +71,7 @@ class CategoryImport extends AbstractImport
     /**
      *
      */
-    protected function _afterRowImport()
+    protected function _afterRowMap()
     {
         $this->_currentBlockCategory->save();
     }

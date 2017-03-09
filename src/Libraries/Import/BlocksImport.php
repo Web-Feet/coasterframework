@@ -12,7 +12,7 @@ class BlocksImport extends AbstractImport
     /**
      * @var array
      */
-    protected $_blockSettings;
+    protected $_blockData;
 
     /**
      * @var string
@@ -62,11 +62,14 @@ class BlocksImport extends AbstractImport
                 'mapFn' => '_toBool'
             ],
             'Templates' => [
-                'mapTo' => 'templates'
+                'mapFn' => '_mapTemplates'
             ],
             'Block Order' => [
                 'mapTo' => 'order'
             ],
+            'Block Active' => [
+                'mapTo' => 'active'
+            ]
         ];
     }
 
@@ -103,10 +106,10 @@ class BlocksImport extends AbstractImport
     /**
      *
      */
-    protected function _beforeRowImport()
+    protected function _beforeRowMap()
     {
         $this->_currentBlockName = $this->_toLowerTrim($this->_importCurrentRow['Block Name']);
-        $this->_blockSettings[$this->_currentBlockName] = [];
+        $this->_blockData[$this->_currentBlockName] = [];
     }
 
     /**
@@ -116,7 +119,7 @@ class BlocksImport extends AbstractImport
     protected function _mapTo($importInfo, $importFieldData)
     {
         if ($importFieldData !== '') {
-            $this->_blockSettings[$this->_currentBlockName][$importInfo['mapTo']] = $importFieldData;
+            $this->_blockData[$this->_currentBlockName][$importInfo['mapTo']] = $importFieldData;
         }
     }
 
@@ -133,7 +136,16 @@ class BlocksImport extends AbstractImport
             $newBlockCategory->save();
             $this->_blockCategoriesByName[$newBlockCategory->name] = $newBlockCategory;
         }
-        return $this->_blockCategoriesByName[$importFieldData];
+        return $this->_blockCategoriesByName[$importFieldData]->id;
+    }
+
+    /**
+     * @param string $importFieldData
+     * @return mixed
+     */
+    protected function _mapTemplates($importFieldData)
+    {
+        return $importFieldData;
     }
 
     /**
@@ -150,42 +162,37 @@ class BlocksImport extends AbstractImport
         $selectOptionsImport->run();
     }
 
-    /**
-     * @return array
-     */
-    public function getSettings()
+    protected function _processFiles()
     {
-        return $this->_blockSettings;
-    }
+        $themeName = $this->_additionalData['theme']->theme;
+        $themePath = base_path('resources/views/themes/' . $themeName . '/templates');
 
-    protected function _processFiles($overwriteFile = true)
-    {
-        if (!empty($this->_additionalData['theme'])) {
+        PageBuilder::setClass(PageBuilder\ThemeBuilderInstance::class, [$this->_blockData], PageLoaderDummy::class, [$themeName]);
 
-            $themeModel = $this->_additionalData['theme'];
-            $themePath = base_path('resources/views/themes/' . $themeModel->theme . '/templates');
+        if (is_dir($themePath)) {
 
-            // TODO change overwrite option
-            PageBuilder::setClass(PageBuilder\ThemeBuilderInstance::class, [$overwriteFile], PageLoaderDummy::class, [$themeModel->theme]);
-
-            if (is_dir($themePath)) {
-
-                foreach (scandir($themePath) as $templateFile) {
-                    if (($templateName = explode('.', $templateFile)[0]) && !is_dir($themePath.'/'.$templateFile)) {
-                        PageBuilder::setData('template', $templateName);
-                        View::make('themes.' . $themeModel->theme . '.templates.' . $templateName)->render();
-                    }
+            foreach (scandir($themePath) as $templateFile) {
+                $templateName = current(explode('.', $templateFile));
+                if ($templateName && !is_dir($themePath . '/' . $templateFile)) {
+                    PageBuilder::setData('template', $templateName);
+                    View::make('themes.' . $themeName . '.templates.' . $templateName)->render();
                 }
-
-                if ($errors = PageBuilder::getData('errors')) {
-                    echo 'Could not complete block import, errors found in theme:'; dd($errors);
-                }
-
-
-                // get data
-
             }
+
+            if ($errors = PageBuilder::getData('errors')) {
+                echo 'Could not complete block import, errors found in theme:'; dd($errors);
+            }
+
+            $this->_blockData = PageBuilder::getData('blockData');
+            $this->_templateBlocks = PageBuilder::getData('templateBlocks');
+            $this->_otherBlocks = PageBuilder::getData('otherBlocks'); // blocks not directly linked to a template
+
+            // get data
+
+            dd(1, $this);
+
         }
+
     }
 
 }
