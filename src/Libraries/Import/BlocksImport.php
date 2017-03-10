@@ -2,6 +2,7 @@
 
 use CoasterCms\Helpers\Cms\Page\PageLoaderDummy;
 use CoasterCms\Libraries\Builder\PageBuilder;
+use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\Theme;
 use View;
@@ -271,6 +272,8 @@ class BlocksImport extends AbstractImport
      */
     protected function _makeGuessesOnMissingData()
     {
+        $this->_loadMissingBlockDataFromDb();
+
         // apply simple defaults
         foreach ($this->_blockData as $blockName => &$details) {
             $details += [
@@ -295,6 +298,23 @@ class BlocksImport extends AbstractImport
             }
             if (!array_key_exists('show_in_pages', $this->_blockGlobals[$blockName])) {
                 $this->_blockGlobals[$blockName]['show_in_pages'] = 0;
+            }
+        }
+    }
+
+    /**
+     *
+     */
+    protected function _loadMissingBlockDataFromDb()
+    {
+        foreach ($this->_blockData as $blockName => &$blockData) {
+            $block = Block::preload($blockName);
+            if ($block->exists) {
+                foreach ($block->getAttributes() as $field => $value) {
+                    if (!array_key_exists($field, $blockData)) {
+                        $blockData[$field] = $block->$field;
+                    }
+                }
             }
         }
     }
@@ -386,7 +406,14 @@ class BlocksImport extends AbstractImport
 
     protected function _saveBlockData()
     {
-        // TODO
+        foreach ($this->_blockData as $blockName => $blockData) {
+            $block = Block::preload($blockName);
+            foreach ($blockData as $field => $value) {
+                $block->$field = $value;
+            }
+            $block->save();
+        }
+        // TODO save template changes
         dd(1, $this);
     }
 
