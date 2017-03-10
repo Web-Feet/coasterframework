@@ -22,6 +22,11 @@ class FormRulesImport extends AbstractImport
     protected $_formTemplateRulesToDelete;
 
     /**
+     *
+     */
+    const IMPORT_FILE_DEFAULT = 'blocks/form_rules.csv';
+
+    /**
      * @return array
      */
     public function fieldMap()

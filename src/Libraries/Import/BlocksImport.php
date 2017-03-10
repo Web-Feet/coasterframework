@@ -119,17 +119,11 @@ class BlocksImport extends AbstractImport
      */
     protected function _beforeRun()
     {
-        $categoryImport = new \CoasterCms\Libraries\Import\Blocks\CategoryImport(
-            base_path('resources/views/themes/' . $this->_additionalData['theme']->theme . '/import/blocks/categories.csv'),
-            false
-        );
-        $categoryImport->run();
+        $categoryImport = new \CoasterCms\Libraries\Import\Blocks\CategoryImport;
+        $categoryImport->setTheme($this->_additionalData['theme'])->run();
         $this->_blockCategoriesByName = $categoryImport->getBlockCategoriesByName();
-        $formRulesImport = new \CoasterCms\Libraries\Import\Blocks\FormRulesImport(
-            base_path('resources/views/themes/' . $this->_additionalData['theme']->theme . '/import/blocks/form_rules.csv'),
-            false
-        );
-        $formRulesImport->run();
+        $formRulesImport = new \CoasterCms\Libraries\Import\Blocks\FormRulesImport();
+        $formRulesImport->setTheme($this->_additionalData['theme'])->run();
         $this->_loadTemplateList();
         $this->_blockData = [];
         $this->_blockGlobals = [];
@@ -225,11 +219,8 @@ class BlocksImport extends AbstractImport
     {
         $this->_processFiles(); // TODO move block import funcs from block updater and eventually replace it with this file
 
-        $selectOptionsImport = new \CoasterCms\Libraries\Import\Blocks\SelectOptionImport(
-            base_path('resources/views/themes/' . $this->_additionalData['theme']->theme . '/import/blocks/select_options.csv'),
-            false
-        );
-        $selectOptionsImport->run();
+        $selectOptionsImport = new \CoasterCms\Libraries\Import\Blocks\SelectOptionImport;
+        $selectOptionsImport->setTheme($this->_additionalData['theme'])->run();
     }
 
     protected function _processFiles()
@@ -247,11 +238,19 @@ class BlocksImport extends AbstractImport
                 echo 'Could not complete block import, errors found in theme:'; dd($errors);
             }
 
+            foreach ($this->_blockData as $blockName => $blockData) {
+                PageBuilder::block($blockName); // run all blocks from import csv as they may not have be found in the template files
+            }
+
             $this->_blockData = PageBuilder::getData('blockData');
             $this->_blockTemplates = PageBuilder::getData('blockTemplates');
             $this->_blockOtherViews = PageBuilder::getData('blockOtherViews'); // blocks not directly linked to a template
 
+            // set block data guesses (only type will have been definitely set by this point as it is required in block render)
             $this->_processFileBlocks();
+
+            // TODO
+            $this->_saveBlockData();
 
             dd(1, $this);
         }
@@ -259,23 +258,39 @@ class BlocksImport extends AbstractImport
 
     protected function _processFileBlocks()
     {
-        // set type guesses
+        // apply simple defaults
+        foreach ($this->_blockData as $blockName => &$details) {
+            $details += [
+                'name' => $blockName,
+                'label' => ucwords(str_replace('_', ' ', $blockName)),
+                'active' => 1,
+                'search_weight' => 1,
+                'note' => ''
+            ];
+        }
 
         // set order guesses
 
+        // set category_id guesses
+
         // set global guesses
         $totalTemplates = count($this->_templateList);
-        foreach ($this->_blockTemplates as $block => $templates) {
-            if (!array_key_exists($block, $this->_blockGlobals)) {
-                $this->_blockGlobals[$block] = [];
+        foreach ($this->_blockTemplates as $blockName => $templates) {
+            if (!array_key_exists($blockName, $this->_blockGlobals)) {
+                $this->_blockGlobals[$blockName] = [];
             }
-            if (!array_key_exists('show_in_global', $this->_blockGlobals[$block])) {
-                $this->_blockGlobals[$block]['show_in_global'] = ((count($templates) / $totalTemplates) >= 0.7) ? 1 : 0;
+            if (!array_key_exists('show_in_global', $this->_blockGlobals[$blockName])) {
+                $this->_blockGlobals[$blockName]['show_in_global'] = ((count($templates) / $totalTemplates) >= 0.7) ? 1 : 0;
             }
-            if (!array_key_exists('show_in_pages', $this->_blockGlobals[$block])) {
-                $this->_blockGlobals[$block]['show_in_pages'] = 0;
+            if (!array_key_exists('show_in_pages', $this->_blockGlobals[$blockName])) {
+                $this->_blockGlobals[$blockName]['show_in_pages'] = 0;
             }
         }
+    }
+
+    protected function _saveBlockData()
+    {
+        
     }
 
 }

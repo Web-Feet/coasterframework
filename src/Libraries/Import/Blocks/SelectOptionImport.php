@@ -23,6 +23,11 @@ class SelectOptionImport extends AbstractImport
     protected $_blockNamesToIds;
 
     /**
+     *
+     */
+    const IMPORT_FILE_DEFAULT = 'blocks/select_options.csv';
+
+    /**
      * @return array
      */
     public function fieldMap()
@@ -125,11 +130,15 @@ class SelectOptionImport extends AbstractImport
     }
 
     /**
+     * Can be run before import without validation checks (also returns existing db entries)
      * @return array
      */
-    public function getBlockIdsWithOptions()
+    public function getSelectBlockNames()
     {
-        return array_keys($this->_blockSelectOptions);
+        $importBlockNames = array_map(function ($data) {return array_key_exists('Block Name', $data) ? $data['Block Name'] : '';}, $this->_importData);
+        $importBlockNames = array_filter($importBlockNames);
+        $currentBlockNames = BlockSelectOption::blockNamesWithOptions()->toArray();
+        return array_unique(array_merge($importBlockNames, $currentBlockNames));
     }
 
 }

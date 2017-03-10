@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Libraries\Import;
 
+use CoasterCms\Models\Theme;
 use Illuminate\Validation\ValidationException;
 use Validator;
 
@@ -57,11 +58,16 @@ abstract class AbstractImport
     protected $_additionalData;
 
     /**
+     *
+     */
+    const IMPORT_FILE_DEFAULT = '';
+
+    /**
      * AbstractImport constructor.
      * @param string $importFile
      * @param bool $requiredFile
      */
-    public function __construct($importFile, $requiredFile = true)
+    public function __construct($importFile = '', $requiredFile = false)
     {
         $this->_importFile = $importFile;
         $this->_importFileRequired = $requiredFile;
@@ -71,6 +77,24 @@ abstract class AbstractImport
         $this->_validationErrors = [];
         $this->_validationRules = $this->validateRules();
         $this->_customValidationColumnNames =$this->_customValidationColumnNames();
+    }
+
+    /**
+     * @param Theme|int $theme
+     * @return $this
+     */
+    public function setTheme($theme)
+    {
+        if (is_a($theme, Theme::class)) {
+            $this->_additionalData['theme'] = $theme;
+        } elseif (is_int($theme)) {
+            $this->_additionalData['theme'] = Theme::find($theme);
+        } else {
+            $this->_additionalData['theme'] = Theme::where(['theme' => $theme])->first();
+        }
+        $this->_importFile = base_path('resources/views/themes/' . $this->_additionalData['theme']->theme . '/import/' . static::IMPORT_FILE_DEFAULT);
+        $this->_importData();
+        return $this;
     }
 
     /**
@@ -129,7 +153,7 @@ abstract class AbstractImport
      */
     protected function _importData()
     {
-        if (file_exists($this->_importFile) && is_readable($this->_importFile)) {
+        if (file_exists($this->_importFile) && !is_dir($this->_importFile) && is_readable($this->_importFile)) {
             $importData = array_map('str_getcsv', file($this->_importFile));
             $headerRow = array_shift($importData);
             try {

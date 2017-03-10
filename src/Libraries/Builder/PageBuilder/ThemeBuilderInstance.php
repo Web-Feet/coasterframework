@@ -1,16 +1,12 @@
 <?php namespace CoasterCms\Libraries\Builder\PageBuilder;
 
 use CoasterCms\Exceptions\PageBuilderException;
-use CoasterCms\Helpers\Cms\Theme\BlockUpdater;
 use CoasterCms\Helpers\Cms\Page\PageLoader;
 use CoasterCms\Libraries\Builder\MenuBuilder;
 use CoasterCms\Libraries\Builder\ViewClasses\PageDetails;
-use CoasterCms\Libraries\Import\BlocksImport;
+use CoasterCms\Libraries\Import\Blocks\SelectOptionImport;
 use CoasterCms\Models\Block;
-use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\Menu;
-use CoasterCms\Models\Page;
-use CoasterCms\Models\Theme;
 use View;
 
 class ThemeBuilderInstance extends PageBuilderInstance
@@ -20,6 +16,11 @@ class ThemeBuilderInstance extends PageBuilderInstance
      * @var array
      */
     public $errors;
+
+    /**
+     * @var array
+     */
+    public $originalBlockData;
 
     /**
      * @var array
@@ -47,6 +48,11 @@ class ThemeBuilderInstance extends PageBuilderInstance
     protected $_repeaterTemplates;
 
     /**
+     * @var array
+     */
+    protected $_blocksWithSelectOptions;
+
+    /**
      * @var Menu[]
      */
     protected $_existingMenus;
@@ -70,6 +76,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
         $this->pageOverride = clone $this->page;
         $this->page->id = static::DUMMY_ORIGINAL_PAGE_ID;
 
+        $this->originalBlockData = $blockData;
         $this->blockData = $blockData;
 
         $this->blockTemplates = [];
@@ -82,6 +89,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
         $this->_renderPath = [];
 
         $this->_checkRepeaterTemplates();
+        $this->_checkBlocksWithSelectOptions();
         $this->_loadExistingMenus();
     }
 
@@ -102,6 +110,15 @@ class ThemeBuilderInstance extends PageBuilderInstance
                 }
             }
         }
+    }
+
+    /**
+     *
+     */
+    protected function _checkBlocksWithSelectOptions()
+    {
+        $selectImport = new SelectOptionImport();
+        $this->_blocksWithSelectOptions = $selectImport->setTheme($this->theme)->getSelectBlockNames();
     }
 
     /**
@@ -177,6 +194,10 @@ class ThemeBuilderInstance extends PageBuilderInstance
             return $this->_returnValue('', $options);
         }
 
+        if (!array_key_exists($blockName, $this->blockData)) {
+            $this->blockData[$blockName] = [];
+        }
+
         // load block details
         $block = Block::preload($blockName);
         $block->name = $blockName;
@@ -207,10 +228,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
 
         // set block note
         if (!empty($options['importNote'])) {
-            if (!isset($this->blockData[$blockName])) {
-                $this->blockData[$blockName] = [];
-            }
-            if (!isset($this->blockData[$blockName]['note'])) {
+            if (!array_key_exists('note', $this->blockData[$blockName])) {
                 $this->blockData[$blockName]['note'] = $options['importNote'];
             }
         }
@@ -286,14 +304,39 @@ class ThemeBuilderInstance extends PageBuilderInstance
      */
     protected function _setType(&$block, $options)
     {
-        if (!$block->type) {
+        if (!$block->type && !array_key_exists('type', $this->blockData[$block->name])) {
             $view = empty($options['view']) ? $block->name : $options['view'];
             if (in_array($view, $this->_repeaterTemplates)) {
                 $block->type = 'repeater';
-                $this->blockData[$block->name]['type'] = 'repeater';
             } else {
-                $block->type = BlockUpdater::typeGuess($block->name);
+                $typesArr = [
+                    'video' => ['vid'],
+                    'text' => ['text', 'desc', 'keywords', 'intro', 'address', 'html', 'lead'],
+                    'richtext' => ['richtext', 'content'],
+                    'image' => ['image', 'img', 'banner', 'logo'],
+                    'link' => ['link', 'url'],
+                    'datetime' => ['date', 'datetime'],
+                    'string' => ['link_text', 'caption', 'title'],
+                    'form' => ['form', 'contact'],
+                    'select' => ['select'],
+                    'selectmultiple' => ['selectmultiple', 'multipleselect'],
+                    'selectpage' => ['selectpage'],
+                    'selectpages' => ['selectpages']
+                ];
+                $typeFound = 'string';
+                foreach ($typesArr as $type => $matches) {
+                    foreach ($matches as $match) {
+                        if (stristr($block, $match)) {
+                            $typeFound = $type;
+                        }
+                    }
+                }
+                if (strpos($typeFound, 'select') === false && array_key_exists($block->name, $this->_blocksWithSelectOptions)) {
+                    $typeFound = 'select';
+                }
+                $block->type = $typeFound;
             }
+            $this->blockData[$block->name]['type'] = $block->type;
         }
     }
 
@@ -422,7 +465,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
                 if (!isset($this->blockData[$blockName])) {
                     $this->blockData[$blockName] = [];
                 }
-                if (!isset($this->blockData[$blockName]['type'])) {
+                if (!array_key_exists('type', $this->originalBlockData[$blockName])) {
                     $this->blockData[$blockName]['type'] = $blockType;
                 }
             }

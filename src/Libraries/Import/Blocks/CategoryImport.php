@@ -17,6 +17,11 @@ class CategoryImport extends AbstractImport
     protected $_currentBlockCategory;
 
     /**
+     *
+     */
+    const IMPORT_FILE_DEFAULT = 'blocks/categories.csv';
+
+    /**
      * @return array
      */
     public function fieldMap()
