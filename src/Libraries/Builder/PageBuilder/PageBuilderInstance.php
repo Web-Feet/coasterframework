@@ -863,6 +863,7 @@ class PageBuilderInstance
 
             $fullPageInfo = new PageDetails($page->id, $groupPageContainerId);
 
+            $tmp = $this->pageOverride;
             $this->pageOverride = $page;
 
             $list .= $this->_getRenderedView(
@@ -875,7 +876,7 @@ class PageBuilderInstance
                 $tmpCustomBlockKey = null;
             }
 
-            $this->pageOverride = null;
+            $this->pageOverride = $tmp;
         }
 
         return $this->_getRenderedView(
