@@ -156,15 +156,19 @@ class BlocksImport extends AbstractImport
      */
     protected function _toCategoryId($importFieldData)
     {
-        $importFieldData = strtolower($importFieldData);
-        if (!array_key_exists($importFieldData, $this->_blockCategoriesByName)) {
-            $newBlockCategory = new BlockCategory;
-            $newBlockCategory->name = trim($importFieldData);
-            $newBlockCategory->order = 0;
-            $newBlockCategory->save();
-            $this->_blockCategoriesByName[$newBlockCategory->name] = $newBlockCategory;
+        $importFieldData = trim($importFieldData);
+        if ($importFieldData !== '') {
+            $importFieldDataLower = strtolower($importFieldData);
+            if (!array_key_exists($importFieldDataLower, $this->_blockCategoriesByName)) {
+                $newBlockCategory = new BlockCategory;
+                $newBlockCategory->name = $importFieldData;
+                $newBlockCategory->order = 0;
+                $newBlockCategory->save();
+                $this->_blockCategoriesByName[$importFieldDataLower] = $newBlockCategory;
+            }
+            return $this->_blockCategoriesByName[$importFieldDataLower]->id;
         }
-        return $this->_blockCategoriesByName[$importFieldData]->id;
+        return '';
     }
 
     /**
@@ -217,46 +221,55 @@ class BlocksImport extends AbstractImport
      */
     protected function _afterRun()
     {
-        $this->_processFiles(); // TODO move block import funcs from block updater and eventually replace it with this file
+        PageBuilder::setClass(PageBuilder\ThemeBuilderInstance::class, [$this->_blockData], PageLoaderDummy::class, [$this->_additionalData['theme']->theme]);
+        $this->_renderThemeFiles();
+        $this->_renderCsvBlocks();
+
+        // load extra data from rendering blocks
+        $this->_blockData = PageBuilder::getData('blockData');
+        $this->_blockTemplates = PageBuilder::getData('blockTemplates');
+        $this->_blockOtherViews = PageBuilder::getData('blockOtherViews'); // blocks not directly linked to a template
+
+        // set block data guesses (only type will have been definitely set by this point as it is required in block render)
+        $this->_makeGuessesOnMissingData();
+
+        // save all imported block / template data
+        $this->_saveBlockData();
 
         $selectOptionsImport = new \CoasterCms\Libraries\Import\Blocks\SelectOptionImport;
         $selectOptionsImport->setTheme($this->_additionalData['theme'])->run();
     }
 
-    protected function _processFiles()
+    /**
+     * Get all extra block data from theme files
+     */
+    protected function _renderThemeFiles()
     {
         if ($this->_templateList) {
-
-            // load themebuilder instance and render all templates with page dummy data
-            PageBuilder::setClass(PageBuilder\ThemeBuilderInstance::class, [$this->_blockData], PageLoaderDummy::class, [$this->_additionalData['theme']->theme]);
             foreach ($this->_templateList as $templateName) {
                 PageBuilder::setData('template', $templateName);
                 View::make('themes.' . $this->_additionalData['theme']->theme . '.templates.' . $templateName)->render();
             }
-
             if ($errors = PageBuilder::getData('errors')) {
                 echo 'Could not complete block import, errors found in theme:'; dd($errors);
             }
-
-            foreach ($this->_blockData as $blockName => $blockData) {
-                PageBuilder::block($blockName); // run all blocks from import csv as they may not have be found in the template files
-            }
-
-            $this->_blockData = PageBuilder::getData('blockData');
-            $this->_blockTemplates = PageBuilder::getData('blockTemplates');
-            $this->_blockOtherViews = PageBuilder::getData('blockOtherViews'); // blocks not directly linked to a template
-
-            // set block data guesses (only type will have been definitely set by this point as it is required in block render)
-            $this->_processFileBlocks();
-
-            // TODO
-            $this->_saveBlockData();
-
-            dd(1, $this);
         }
     }
 
-    protected function _processFileBlocks()
+    /**
+     * Run all blocks from import csv as they may not have be found and rendered in the theme files
+     */
+    protected function _renderCsvBlocks()
+    {
+        foreach ($this->_blockData as $blockName => $blockData) {
+            PageBuilder::block($blockName);
+        }
+    }
+
+    /**
+     *
+     */
+    protected function _makeGuessesOnMissingData()
     {
         // apply simple defaults
         foreach ($this->_blockData as $blockName => &$details) {
@@ -268,10 +281,8 @@ class BlocksImport extends AbstractImport
                 'note' => ''
             ];
         }
-
-        // set order guesses
-
-        // set category_id guesses
+        // TODO set order guesses
+        $this->_categoryIdGuess();
 
         // set global guesses
         $totalTemplates = count($this->_templateList);
@@ -288,9 +299,95 @@ class BlocksImport extends AbstractImport
         }
     }
 
+    /**
+     *
+     */
+    protected function _categoryIdGuess()
+    {
+        // load default categories and their ids
+        $defaultCategoryIds = [];
+        $defaultCategorySearchStrings = [
+            'header' => ['head'],
+            'main' => ['main', 'default'],
+            'banner' => ['banner', 'carousel'],
+            'footer' => ['foot'],
+            'seo' => ['seo']
+        ];
+        if (!empty($this->_blockCategoriesByName)) {
+            $defaultCategoryIds['main'] = reset($this->_blockCategoriesByName)->id;
+        }
+        foreach ($this->_blockCategoriesByName as $blockName => $blockCategory) {
+            foreach ($defaultCategorySearchStrings as $defaultCategory => $searchStrings) {
+                foreach ($searchStrings as $searchString) {
+                    if (stristr($blockCategory->name, $searchString)) {
+                        $defaultCategoryIds[$defaultCategory] = $blockCategory->id;
+                    }
+                }
+            }
+        }
+
+        // if block is repeater and category_id is not set create own category
+        $extraMatches = [];
+        foreach ($this->_blockData as $blockName => $blockData) {
+            if (!array_key_exists('category_id', $blockData) && $blockData['type'] == 'repeater') {
+                $createNewCategory = true;
+                foreach ($defaultCategorySearchStrings as $defaultCategory => $searchStrings) {
+                    foreach ($searchStrings as $searchString) {
+                        if (stristr($blockName, $searchString)) {
+                            $createNewCategory = false;
+                        }
+                    }
+                }
+                if ($createNewCategory) {
+                    $categoryName = str_plural(str_replace('_', ' ', $blockName));
+                    $defaultCategorySearchStrings[$categoryName] = [];
+                    $extraMatches[strtolower($categoryName)] = [$blockName];
+                }
+            }
+        }
+
+        // if a default category is not found create it
+        $order = 0;
+        foreach ($defaultCategorySearchStrings as $defaultCategory => $searchStrings) {
+            $order += 20;
+            if (!array_key_exists($defaultCategory, $defaultCategoryIds) && !array_key_exists(strtolower($defaultCategory), $this->_blockCategoriesByName)) {
+                $newBlockCategory = new BlockCategory;
+                $newBlockCategory->name = ucwords($defaultCategory);
+                $newBlockCategory->order = $order;
+                $newBlockCategory->save();
+                $this->_blockCategoriesByName[strtolower($newBlockCategory->name)] = $newBlockCategory;
+                $defaultCategoryIds[$defaultCategory] = $newBlockCategory->id;
+            }
+        }
+
+        // find closest matching default category based on block name
+        $categoryMatches = [
+            $defaultCategoryIds['header'] => ['header_html', 'head', 'logo', 'phone', 'email'],
+            $defaultCategoryIds['banner'] => ['banner', 'carousel'],
+            $defaultCategoryIds['footer'] => ['footer_html', 'foot', 'address', 'copyright'],
+            $defaultCategoryIds['seo'] => ['meta'],
+        ];
+        foreach ($extraMatches as $categoryName => $searchStrings) {
+            $categoryMatches[$this->_blockCategoriesByName[$categoryName]->id] = $searchStrings;
+        }
+        foreach ($this->_blockData as $blockName => &$blockData) {
+            if (!array_key_exists('category_id', $blockData)) {
+                $blockData['category_id'] = $defaultCategoryIds['main'];
+                foreach ($categoryMatches as $categoryId => $searchStrings) {
+                    foreach ($searchStrings as $searchString) {
+                        if (stristr($blockName, $searchString)) {
+                            $blockData['category_id'] = $categoryId;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     protected function _saveBlockData()
     {
-        
+        // TODO
+        dd(1, $this);
     }
 
 }
