@@ -244,7 +244,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
     public function menu($menuName, $options = [])
     {
         $this->_renderPath[] = ['menu' => $menuName];
-        if (!in_array($menuName, $this->_existingMenus)) {
+        if (!array_key_exists($menuName, $this->_existingMenus)) {
             $menuView = 'themes.' . $this->theme . '.menus.' . (!empty($options['view'])?$options['view']:'default');
             $subLevel = 0;
             while (View::exists($menuView . '.submenu_' . ($subLevel+1))) {

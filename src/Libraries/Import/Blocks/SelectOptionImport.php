@@ -74,6 +74,7 @@ class SelectOptionImport extends AbstractImport
      */
     protected function _beforeRun()
     {
+        $this->_blockSelectOptions = [];
         $existingOptions = BlockSelectOption::all();
         if (!$existingOptions->isEmpty()) {
             foreach ($existingOptions as $existingOption) {
@@ -82,8 +83,6 @@ class SelectOptionImport extends AbstractImport
                 }
                 $this->_blockSelectOptions[$existingOption->block_id][$existingOption->value] = $existingOption;
             }
-        } else {
-            $this->_currentSelectOption = [];
         }
     }
 
