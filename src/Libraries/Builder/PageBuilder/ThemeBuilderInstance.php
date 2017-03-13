@@ -66,8 +66,9 @@ class ThemeBuilderInstance extends PageBuilderInstance
      * ThemeBuilderInstance constructor.
      * @param PageLoader $pageLoader
      * @param array $blockData
+     * @param array $blockTemplates
      */
-    public function __construct(PageLoader $pageLoader, $blockData = [])
+    public function __construct(PageLoader $pageLoader, $blockData = [], $blockTemplates = [])
     {
         parent::__construct($pageLoader);
         $this->errors = [];
@@ -79,7 +80,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
         $this->originalBlockData = $blockData;
         $this->blockData = $blockData;
 
-        $this->blockTemplates = [];
+        $this->blockTemplates = $blockTemplates;
         $this->blockOtherViews = [
             'repeater' => [],
             'category' => [],
