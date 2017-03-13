@@ -187,6 +187,7 @@ class BlocksImport extends AbstractImport
         if ($importFieldData !== '') {
             $templates = ($importFieldData == '*') ? $this->_templateList : explode(',', $importFieldData);
             $this->_blockTemplates[$this->_currentBlockName] = array_unique(array_merge($this->_blockTemplates[$this->_currentBlockName], $templates));
+            $this->_templateList = array_unique(array_merge($this->_templateList, $templates));
         }
     }
 
@@ -232,20 +233,28 @@ class BlocksImport extends AbstractImport
             [$this->_additionalData['theme']->theme]
         );
         $this->_renderThemeFiles();
-        $this->_renderCsvBlocks();
+        $this->_renderCsvBlocks(); // do after theme render as there is less context
 
         // load extra data from rendering blocks
         $this->_blockData = PageBuilder::getData('blockData');
         $this->_blockTemplates = PageBuilder::getData('blockTemplates');
         $this->_blockOtherViews = PageBuilder::getData('blockOtherViews'); // blocks not directly linked to a template
 
-        // save all imported block / template / repeater data
-        $this->_saveBlockData();
-        $this->_saveBlockTemplates();
-        $this->_saveBlockRepeaters();
-
-        $selectOptionsImport = new \CoasterCms\Libraries\Import\Blocks\SelectOptionImport;
-        $selectOptionsImport->setTheme($this->_additionalData['theme'])->run();
+        // fill in and missing block data (from db if poss, failing that have a guess)
+        $this->_loadMissingBlockDataFromDb();
+        foreach ($this->_blockData as $blockName => &$details) {
+            $details += [
+                'name' => $blockName,
+                'label' => ucwords(str_replace('_', ' ', $blockName)),
+                'active' => 1,
+                'search_weight' => 1,
+                'note' => ''
+            ];
+        }
+        // TODO set order guesses
+        $this->_categoryIdGuess();
+        $this->_loadMissingIsGlobalDataFromDb();
+        $this->_isGlobalGuess();
     }
 
     /**
@@ -255,8 +264,11 @@ class BlocksImport extends AbstractImport
     {
         if ($this->_templateList) {
             foreach ($this->_templateList as $templateName) {
-                PageBuilder::setData('template', $templateName);
-                View::make('themes.' . $this->_additionalData['theme']->theme . '.templates.' . $templateName)->render();
+                $templateView = 'themes.' . $this->_additionalData['theme']->theme . '.templates.' . $templateName;
+                if (View::exists($templateView)) {
+                    PageBuilder::setData('template', $templateName);
+                    View::make($templateView)->render();
+                }
             }
             if ($errors = PageBuilder::getData('errors')) {
                 echo 'Could not complete block import, errors found in theme:';
@@ -270,37 +282,9 @@ class BlocksImport extends AbstractImport
      */
     protected function _renderCsvBlocks()
     {
+        PageBuilder::setData('template', '');
         foreach ($this->_blockData as $blockName => $blockData) {
             PageBuilder::block($blockName);
-        }
-    }
-
-    /**
-     *
-     */
-    protected function _saveBlockData()
-    {
-        // fill in and missing block data
-        $this->_loadMissingBlockDataFromDb();
-        foreach ($this->_blockData as $blockName => &$details) {
-            $details += [
-                'name' => $blockName,
-                'label' => ucwords(str_replace('_', ' ', $blockName)),
-                'active' => 1,
-                'search_weight' => 1,
-                'note' => ''
-            ];
-        }
-        // TODO set order guesses
-        $this->_categoryIdGuess();
-
-        foreach ($this->_blockData as $blockName => $blockData) {
-            $block = Block::preload($blockName);
-            foreach ($blockData as $field => $value) {
-                $block->$field = $value;
-            }
-            $block->save();
-            $this->_blockData[$blockName]['id'] = $block->id;
         }
     }
 
@@ -409,9 +393,217 @@ class BlocksImport extends AbstractImport
     /**
      *
      */
+    protected function _loadMissingIsGlobalDataFromDb()
+    {
+        $themeBlocks = ThemeBlock::where('theme_id', '=', $this->_additionalData['theme']->id)->get()->keyBy('block_id');
+        foreach ($this->_blockData as $blockName => $blockData) {
+            if (!array_key_exists($blockName, $this->_blockGlobals)) {
+                $this->_blockGlobals[$blockName] = [];
+            }
+            $block = Block::preload($blockName);
+            if ($themeBlocks->has($block->id)) {
+                foreach (['show_in_global', 'show_in_pages'] as $field) {
+                    if (!array_key_exists($field, $this->_blockGlobals[$blockName])) {
+                        $this->_blockGlobals[$blockName][$field] = $themeBlocks[$block->id]->$field;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     *
+     */
+    protected function _isGlobalGuess()
+    {
+        $totalTemplates = count($this->_templateList);
+        foreach ($this->_blockData as $blockName => $blockData) {
+            if (!array_key_exists($blockName, $this->_blockGlobals)) {
+                $this->_blockGlobals[$blockName] = [];
+            }
+            if (!array_key_exists('show_in_global', $this->_blockGlobals[$blockName])) {
+                $templates = array_key_exists($blockName, $this->_blockTemplates) ? count($this->_blockTemplates[$blockName]) : 0;
+                $this->_blockGlobals[$blockName]['show_in_global'] = ((count($templates) / $totalTemplates) >= 0.7) ? 1 : 0;
+            }
+            if (!array_key_exists('show_in_pages', $this->_blockGlobals[$blockName])) {
+                $this->_blockGlobals[$blockName]['show_in_pages'] = 0;
+            }
+        }
+    }
+
+
+    /**
+     *
+     */
+    public function getImportTemplateData()
+    {
+        // TODO array of new/existing templates
+    }
+
+    /**
+     *
+     */
+    public function getImportBlockData()
+    {
+        $blocks = [];
+        foreach ($this->_blockData as $blockName => $blockData) {
+            $blocks[$blockName] = [
+                'block' => $blockData,
+                'global' => $this->_blockGlobals[$blockName],
+                'templates' => array_key_exists($blockName, $this->_blockTemplates) ? $this->_blockTemplates[$blockName] : [],
+                'other_view' => []
+            ];
+            foreach ($this->_blockOtherViews as $view => $blocksInView) {
+                if (array_key_exists($blockName, $blocksInView)) {
+                    $blocks[$blockName]['other_view'][$view] = $blocksInView[$blockName];
+                }
+            }
+        }
+        return $blocks;
+    }
+
+    /**
+     *
+     */
+    public function getImportBlockChanges()
+    {
+        $updateBox = [];
+        $colourKey = [];
+
+        $attributeChanges = [];
+        foreach ($this->_blockData as $blockName => $blockData) {
+            $block = Block::preload($blockName);
+            if ($block->exists) {
+                $attributeChanges[$blockName] = [];
+                foreach ($blockData as $field => $value) {
+                    if ($block->$field != $value) {
+                        $colourKey[$blockName] = 'update';
+                        $attributeChanges[$blockName][$field] = ['current' => $block->$field, 'new' => $value];
+                    }
+                }
+            } else {
+                $colourKey[$blockName] = 'new';
+                $attributeChanges[$blockName] = ['*' => '*'];
+            }
+        }
+
+        $templatesAdded = [];
+        $templatesRemoved = [];
+        $globalsChanged = [];
+        $themeTemplates = Template::where('theme_id', '=', $this->_additionalData['theme']->id)->get()->keyBy('id');
+        $themeTemplateIds = $themeTemplates->keys()->toArray();
+        $templateBlocks = TemplateBlock::whereIn('template_id', $themeTemplateIds)->get()->groupBy('block_id');
+        $themeBlocks = ThemeBlock::where('theme_id', '=', $this->_additionalData['theme']->id)->get()->keyBy('block_id');
+        foreach ($this->_blockData as $blockName => $blockData) {
+            $globalsChanged[$blockName] = [];
+            $blockTemplateIds = [];
+            $block = Block::preload($blockName);
+            if ($block->exists) {
+                if ($themeBlocks->has($block->id)) {
+                    $blockTemplateIds = array_diff($themeTemplateIds, explode(',', $themeBlocks[$block->id]->exclude_templates));
+                } elseif ($templateBlocks->has($block->id)) {
+                    $blockTemplateIds = $templateBlocks->has($block->id) ? $templateBlocks[$block->id]->keyBy('template_id')->keys()->toArray() : [];
+                }
+                foreach ($this->_blockGlobals[$blockName] as $field => $newValue) {
+                    $currentValue = $themeBlocks->has($block->id) ? $themeBlocks[$block->id]->$field : 0;
+                    if ($newValue != $currentValue) {
+                        $updateBox[$blockName] = 1;
+                        $colourKey[$blockName] = 'update';
+                        $globalsChanged[$blockName][$field] = ['current' => $currentValue, 'new' => $newValue];
+                    }
+                }
+            }
+            $blockTemplateNames = array_map(function ($templateId) use ($themeTemplates) {
+                return $themeTemplates[$templateId]->template;
+            }, $blockTemplateIds);
+            $newTemplates = array_key_exists($blockName, $this->_blockTemplates) ? $this->_blockTemplates[$blockName] : [];
+            $templatesAdded[$blockName] = array_diff($newTemplates, $blockTemplateNames);
+            $templatesRemoved[$blockName] = array_diff($blockTemplateNames, $newTemplates);
+            if ($templatesRemoved[$blockName] || $templatesAdded[$blockName]) {
+                $colourKey[$blockName] = 'update';
+                $updateBox[$blockName] = 1;
+            }
+        }
+
+        $repeaterChildrenAdded = [];
+        $repeaterChildrenRemoved = [];
+        $existingRepeaters = BlockRepeater::get()->keyBy('block_id');
+        foreach ($this->_blockOtherViews['repeater'] as $blockName => $newChildBlockNames) {
+            $existingChildBlockNames = [];
+            $block = Block::preload($blockName);
+            if ($block->exists && $existingRepeaters->has($block->id)) {
+                $existingChildBlockIds = explode(',', $existingRepeaters[$block->id]->blocks);
+                foreach ($existingChildBlockIds as $existingChildBlockId) {
+                    $childBlock = Block::preload($existingChildBlockId);
+                    if ($childBlock->exists) {
+                        $existingChildBlockNames[] = $childBlock->name;
+                    }
+                }
+                $existingChildBlockNames = array_unique($existingChildBlockNames);
+            }
+            $repeaterChildrenAdded[$blockName] = array_diff($newChildBlockNames, $existingChildBlockNames);
+            $repeaterChildrenRemoved[$blockName] = array_diff($existingChildBlockNames, $newChildBlockNames);
+            if ($repeaterChildrenAdded[$blockName] || $repeaterChildrenRemoved[$blockName]) {
+                $colourKey[$blockName] = 'update';
+                $updateBox[$blockName] = 1;
+            }
+        }
+
+        // TODO set key to info on category/otherpage
+
+        // TODO load existing db blocks not used (in missing data ?) and mark for deletion here
+
+        $blockChanges = [];
+        foreach ($this->_blockData as $blockName => $blockData) {
+            $blockChanges[$blockName] = [
+                'block' => $attributeChanges[$blockName],
+                'global' => $globalsChanged[$blockName],
+                'templates_added' => $templatesAdded[$blockName],
+                'templates_removed' => $templatesRemoved[$blockName],
+                'repeater_children_added' => array_key_exists($blockName, $repeaterChildrenAdded) ? $repeaterChildrenAdded[$blockName] : [],
+                'repeater_children_removed' => array_key_exists($blockName, $repeaterChildrenRemoved) ? $repeaterChildrenRemoved[$blockName] : [],
+                'save_template_changes' => array_key_exists($blockName, $updateBox) ? $updateBox[$blockName] : 0,
+                'key' => array_key_exists($blockName, $colourKey) ? $colourKey[$blockName] : 'none' // new, update, delete, info
+            ];
+        }
+
+        return $blockChanges;
+    }
+
+    /**
+     *
+     */
+    public function save()
+    {
+        $this->_saveBlockData();
+        $this->_saveBlockTemplates();
+        $this->_saveBlockRepeaters();
+
+        // run import for select blocks (can only be run after blocks have been saved as it saves a block_id)
+        $selectOptionsImport = new \CoasterCms\Libraries\Import\Blocks\SelectOptionImport;
+        $selectOptionsImport->setTheme($this->_additionalData['theme'])->run();
+    }
+
+    /**
+     *
+     */
+    protected function _saveBlockData()
+    {
+        foreach ($this->_blockData as $blockName => $blockData) {
+            $block = Block::preload($blockName);
+            foreach ($blockData as $field => $value) {
+                $block->$field = $value;
+            }
+            $block->save();
+            $this->_blockData[$blockName]['id'] = $block->id;
+        }
+    }
+
+    /**
+     *
+     */
     protected function _saveBlockTemplates()
     {
-        $this->_isGlobalGuess();
         $themeTemplates = $this->_saveNewTemplates();
         $themeTemplateIds = $themeTemplates->keyBy('id')->keys()->toArray();
         $templateBlocks = TemplateBlock::whereIn('template_id', $themeTemplateIds)->get()->groupBy('block_id');
@@ -445,27 +637,6 @@ class BlocksImport extends AbstractImport
                 $deleteTemplateIds = array_diff($existingTemplateIds, $newTemplateIds);
                 TemplateBlock::where('block_id', '=', $blockData['id'])->whereIn('template_id', $deleteTemplateIds)->delete();
                 ThemeBlock::where('block_id', '=', $blockData['id'])->where('theme_id', '=', $this->_additionalData['theme']->id)->delete();
-            }
-        }
-    }
-
-    /**
-     *
-     */
-    protected function _isGlobalGuess()
-    {
-        // set global guesses
-        $totalTemplates = count($this->_templateList);
-        foreach ($this->_blockData as $blockName => $blockData) {
-            if (!array_key_exists($blockName, $this->_blockGlobals)) {
-                $this->_blockGlobals[$blockName] = [];
-            }
-            if (!array_key_exists('show_in_global', $this->_blockGlobals[$blockName])) {
-                $templates = array_key_exists($blockName, $this->_blockTemplates) ? count($this->_blockTemplates[$blockName]) : 0;
-                $this->_blockGlobals[$blockName]['show_in_global'] = ((count($templates) / $totalTemplates) >= 0.7) ? 1 : 0;
-            }
-            if (!array_key_exists('show_in_pages', $this->_blockGlobals[$blockName])) {
-                $this->_blockGlobals[$blockName]['show_in_pages'] = 0;
             }
         }
     }

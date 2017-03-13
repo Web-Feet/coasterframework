@@ -362,7 +362,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
                     $this->blockOtherViews['category'][$block->name] = [];
                 }
                 $this->blockOtherViews['category'][$block->name] = array_unique(array_merge($categoryViews, $this->blockOtherViews['category'][$block->name]));
-            } else {
+            } elseif ($this->template) {
                 // block definitely in template
                 if (!array_key_exists($block->name, $this->blockTemplates)) {
                     $this->blockTemplates[$block->name] = [];
@@ -373,7 +373,10 @@ class ThemeBuilderInstance extends PageBuilderInstance
             }
         } else {
             // if a page has been specified and it's not the same as the original page id
-            $this->blockOtherViews['otherPage'][] = $block->name;
+            if (!array_key_exists($block->name, $this->blockOtherViews['otherPage'])) {
+                $this->blockOtherViews['otherPage'][$block->name] = [];
+            }
+            $this->blockOtherViews['otherPage'][$block->name] = array_unique(array_merge([$options['page_id']], $this->blockOtherViews['otherPage'][$block->name]));
         }
     }
 
