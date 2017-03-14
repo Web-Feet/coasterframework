@@ -96,7 +96,7 @@ class BlocksImport extends AbstractImport
      */
     public function validate()
     {
-        if (!array_key_exists('theme', $this->_additionalData) || !is_a($this->_additionalData['theme'], Theme::class)) {
+        if (($this->_additionalData && !array_key_exists('theme', $this->_additionalData)) || !is_a($this->_additionalData['theme'], Theme::class)) {
             $this->_validationErrors[] = 'Theme must be specified before blocks can be imported';
         }
         return parent::validate();
@@ -470,8 +470,8 @@ class BlocksImport extends AbstractImport
         $themeTemplateIds = $themeTemplates->keys()->toArray();
         $templateBlocks = TemplateBlock::whereIn('template_id', $themeTemplateIds)->get()->groupBy('block_id');
         $themeBlocks = ThemeBlock::where('theme_id', '=', $this->_additionalData['theme']->id)->get()->keyBy('block_id');
-        foreach ($themeBlocks as $themeBlock) {
-            $currentBlock = Block::preload($themeBlock->id);
+        foreach ($themeBlocks as $blockId => $themeBlock) {
+            $currentBlock = Block::preload($blockId);
             if ($currentBlock->exists) {
                 $currentBlocks[$currentBlock->name] = [
                     'block' => $currentBlock->getAttributes(),

@@ -466,10 +466,10 @@ class ThemeBuilderInstance extends PageBuilderInstance
             $blockType = strtolower(substr($name, 6));
             if (!empty($validTypes[$blockType])) {
                 $blockName = $arguments[0];
-                if (!isset($this->blockData[$blockName])) {
+                if (!array_key_exists($blockName, $this->blockData)) {
                     $this->blockData[$blockName] = [];
                 }
-                if (!array_key_exists('type', $this->originalBlockData[$blockName])) {
+                if (!(array_key_exists($blockName, $this->originalBlockData) && array_key_exists('type', $this->originalBlockData[$blockName]))) {
                     $this->blockData[$blockName]['type'] = $blockType;
                 }
             }
