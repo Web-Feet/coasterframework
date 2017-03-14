@@ -200,7 +200,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
         }
 
         // load block details
-        $block = Block::preload($blockName);
+        $block = Block::preloadClone($blockName);
         $block->name = $blockName;
         if (array_key_exists($blockName, $this->blockData)) {
             foreach ($this->blockData[$blockName] as $field => $value) {
