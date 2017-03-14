@@ -82,9 +82,10 @@ class ThemeBuilderInstance extends PageBuilderInstance
 
         $this->blockTemplates = $blockTemplates;
         $this->blockOtherViews = [
-            'repeater' => [],
+            'repeaters' => [],
+            'repeater_children' => [],
             'category' => [],
-            'otherPage' => []
+            'other_page' => []
         ];
 
         $this->_renderPath = [];
@@ -350,11 +351,18 @@ class ThemeBuilderInstance extends PageBuilderInstance
         if (!array_key_exists('page_id', $options) || $options['page_id'] === static::DUMMY_ORIGINAL_PAGE_ID) {
             if ($inRepeaterBlockName = $this->_inRepeaterView()) {
                 // block in a repeater template
-                if (!array_key_exists($inRepeaterBlockName, $this->blockOtherViews['repeater'])) {
-                    $this->blockOtherViews['repeater'][$inRepeaterBlockName] = [];
+                if (!array_key_exists($block->name, $this->blockOtherViews['repeaters'])) {
+                    $this->blockOtherViews['repeaters'][$block->name] = [];
                 }
-                if (!in_array($block->name, $this->blockOtherViews['repeater'][$inRepeaterBlockName])) {
-                    $this->blockOtherViews['repeater'][$inRepeaterBlockName][] = $block->name;
+                if (!in_array($inRepeaterBlockName, $this->blockOtherViews['repeaters'][$block->name])) {
+                    $this->blockOtherViews['repeaters'][$block->name][] = $inRepeaterBlockName;
+                }
+                // block set as child block of repeater
+                if (!array_key_exists($inRepeaterBlockName, $this->blockOtherViews['repeater_children'])) {
+                    $this->blockOtherViews['repeater_children'][$inRepeaterBlockName] = [];
+                }
+                if (!in_array($block->name, $this->blockOtherViews['repeater_children'][$inRepeaterBlockName])) {
+                    $this->blockOtherViews['repeater_children'][$inRepeaterBlockName][] = $block->name;
                 }
             } elseif ($categoryViews = $this->_inCategoryView()) {
                 // block in dynamic category view (could be based on page id, search, etc.)
@@ -373,10 +381,10 @@ class ThemeBuilderInstance extends PageBuilderInstance
             }
         } else {
             // if a page has been specified and it's not the same as the original page id
-            if (!array_key_exists($block->name, $this->blockOtherViews['otherPage'])) {
-                $this->blockOtherViews['otherPage'][$block->name] = [];
+            if (!array_key_exists($block->name, $this->blockOtherViews['other_page'])) {
+                $this->blockOtherViews['other_page'][$block->name] = [];
             }
-            $this->blockOtherViews['otherPage'][$block->name] = array_unique(array_merge([$options['page_id']], $this->blockOtherViews['otherPage'][$block->name]));
+            $this->blockOtherViews['other_page'][$block->name] = array_unique(array_merge([$options['page_id']], $this->blockOtherViews['other_page'][$block->name]));
         }
     }
 

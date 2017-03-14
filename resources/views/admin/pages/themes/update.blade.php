@@ -15,24 +15,28 @@
         <li>If both the options above are checked, the block will appear in both pages and site-wide content.</li>
     </ul>
     <div class="row">
-      <div class="col-md-4 well-sm">
-        <h4>Summary:</h4>
-        <p><b>Templates Found:</b> {{ $templateList }}</p>
-        <p><b>Number of blocks found:</b> {{ count($blocksData) }}</p>
-      </div>
-      <div class="col-md-8 well-sm">
-      <h4>Key:</h4>
-        <ul>
-            <li class="well-sm bg-success">Newly found blocks that aren't currently in the theme are highlighted green.</li>
-            <li class="well-sm bg-warning">Existing theme blocks that have template changes and repeater blocks with changes to their repeaters template are highlighted yellow.</li>
-            <li class="well-sm bg-danger">Blocks that are no longer found in the theme templates are highlighted red.</li>
-            <li class="well-sm bg-info">For blocks that rely on a page_id or page data, the templates can't be determined exactly and they are highlighted blue.</li>
-            <li class="well well-sm">Blocks with no changes detected.</li>
-        </ul>
-      </div>
+        <div class="col-md-4 well-sm">
+            <h4>Summary:</h4>
+            <p><b>Templates Found:</b> </p>
+            <p><b>Number of blocks found:</b> </p>
+        </div>
+        <div class="col-md-8 well-sm">
+            <h4>Key:</h4>
+            <ul>
+                <li class="well-sm bg-success">Newly found blocks that aren't currently in the theme are highlighted green.</li>
+                <li class="well-sm bg-warning">Existing theme blocks that have template changes and repeater blocks with changes to their repeaters template are highlighted yellow.</li>
+                <li class="well-sm bg-danger">Blocks that are no longer found in the theme templates are highlighted red.</li>
+                <li class="well-sm bg-info">For blocks that rely on a page_id or page data, the templates can't be determined exactly and they are highlighted blue.</li>
+                <li class="well well-sm">Blocks with no changes detected.</li>
+            </ul>
+        </div>
     </div>
 
     {!! Form::open() !!}
+
+    <div class="form-group">
+        {!! Form::submit('Update Blocks', ['class' => 'btn btn-primary']) !!}
+    </div>
 
     <div class="table-responsive">
         <table id="themes-table" class="table table-striped table-bordered">
@@ -50,19 +54,87 @@
             </thead>
 
             <tbody>
-            <?php $rowClasses = [1 => 'success', 2 => 'danger', 3 => 'warning', 4 => 'info', 5 => '']; ?>
-            @foreach($blocksData as $block => $blockData)
-                <tr class="{{ isset($blockData['rowClass'])?$rowClasses[$blockData['rowClass']]:'' }}">
-                    <td>{!! ($blockData['run_template_update'] >= 0)?Form::checkbox('block['.$block.'][run_template_update]', 1, $blockData['run_template_update'], ['class' => 'form-control run-template-updates']):'' !!}</td>
-                    <td><i class="glyphicon glyphicon-info-sign block_note" data-note="{{ $block }}_note"></i> {!! $blockData['name'] !!}</td>
-                    <td>{!! Form::text('block['.$block.'][label]', $blockData['label'], ['class' => 'form-control']) !!}</td>
-                    <td>{!! ($blockData['run_template_update'] >= 0)?Form::select('block['.$block.'][category_id]', $categoryList, $blockData['category_id'], ['class' => 'form-control']):'' !!}</td>
-                    <td>{!! Form::select('block['.$block.'][type]', $typeList, $blockData['type'], ['class' => 'form-control']) !!}</td>
-                    <td>{!! ($blockData['run_template_update'] >= 0)?Form::checkbox('block['.$block.'][global_site]', 1, $blockData['global_site'], ['class' => 'form-control based-on-template-updates']):'' !!}</td>
-                    <td>{!! ($blockData['run_template_update'] >= 0)?Form::checkbox('block['.$block.'][global_pages]', 1, $blockData['global_pages'], ['class' => 'form-control based-on-template-updates']):'' !!}</td>
+            <?php $rowClasses = ['new' => 'success', 'delete' => 'danger', 'update' => 'warning', 'info' => 'info', 'none' => '']; ?>
+            @foreach($blockChanges as $blockName => $dataGroups)
+                <?php
+                $dataFrom = empty($dataGroups['block']['import']) ? 'current' : 'import';
+                $toAdd = empty($dataGroups['templates']['current']) && empty($dataGroups['other_view']['current']['repeaters']);
+                $toDelete = empty($dataGroups['block']['import']);
+                ?>
+                <tr class="{{ $rowClasses[$dataGroups['display_class']] }}">
+                    <td>{!! ($dataGroups['update_templates_default'] >= 0)?Form::checkbox('block['.$blockName.'][update_templates_default]', 1, $dataGroups['update_templates_default'], ['class' => 'form-control run-template-updates']):'' !!}</td>
+                    <td><i class="glyphicon glyphicon-info-sign block_note" data-note="{{ $blockName }}_note"></i> {!! $dataGroups['block'][$dataFrom]['name'] !!}</td>
+                    <td>{!! Form::text('block['.$blockName.'][label]', $dataGroups['block'][$dataFrom]['label'], ['class' => 'form-control']) !!}</td>
+                    <td>{!! ($dataGroups['update_templates_default'] >= 0)?Form::select('block['.$blockName.'][category_id]', $categoryList, $dataGroups['block'][$dataFrom]['category_id'], ['class' => 'form-control']):'' !!}</td>
+                    <td>{!! Form::select('block['.$blockName.'][type]', $typeList, $dataGroups['block'][$dataFrom]['type'], ['class' => 'form-control']) !!}</td>
+                    <td>{!! ($dataGroups['update_templates_default'] >= 0)?Form::checkbox('block['.$blockName.'][show_in_global]', 1, $dataGroups['global'][$dataFrom]['show_in_global'], ['class' => 'form-control based-on-template-updates']):'' !!}</td>
+                    <td>{!! ($dataGroups['update_templates_default'] >= 0)?Form::checkbox('block['.$blockName.'][show_in_pages]', 1, $dataGroups['global'][$dataFrom]['show_in_pages'], ['class' => 'form-control based-on-template-updates']):'' !!}</td>
                 </tr>
-                <tr class="hidden" id="{{ $block }}_note">
-                    <td colspan="7">{!! !empty($blockData['updates'])?'<b>Updates: </b>'.$blockData['updates'].'<br />':'' !!}<b>Found in templates: </b>{!! $blockData['templates'] !!}</td>
+                <tr class="hidden" id="{{ $blockName }}_note">
+                    <td colspan="7" style="padding-bottom: 20px">
+                        <div class="col-sm-6">
+                            <h4>Current Info</h4>
+                            @if ($toAdd)
+                                This is a block is not currently in the theme.<br />
+                            @else
+                                @if (!empty($dataGroups['templates']['current']))
+                                    @if (!empty($dataGroups['global']['current']['show_in_pages']) || !empty($dataGroups['global']['current']['show_in_global']))
+                                        <?php
+                                        $themeBlocks = [];
+                                        if(!empty($dataGroups['global']['current']['show_in_pages'])) {
+                                            $themeBlocks[] = 'pages';
+                                        }
+                                        if(!empty($dataGroups['global']['current']['show_in_global'])) {
+                                            $themeBlocks[] = 'site-wide content';
+                                        }
+                                        ?>
+                                        This is a theme block that is shown in {{ implode(' and ', $themeBlocks) }}.<br /><br />
+                                    @endif
+                                    <b>Currently in templates:</b> {!! implode(', ', $dataGroups['templates']['current']) !!}<br />
+                                @endif
+                                @if (!empty($dataGroups['other_view']['current']['repeaters']))
+                                    <b>Currently used by repeater blocks:</b> {!! implode(', ', $dataGroups['other_view']['current']['repeaters']) !!}<br />
+                                @endif
+                            @endif
+                            @if (!empty($dataGroups['other_view']['current']['repeater_children']))
+                                <b>Has repeater child blocks:</b> {!! implode(', ', $dataGroups['other_view']['current']['repeater_children']) !!}<br />
+                            @endif
+                            @if (!empty($dataGroups['block']['current']))
+                                <br />
+                                @foreach($dataGroups['block']['current'] as $field => $value)
+                                    <b>{{ ucwords(str_replace('_', ' ', $field)) }}</b>: <i>{{ $value }}</i><br />
+                                @endforeach
+                            @else
+                                Also this block does not exist in the database.
+                            @endif
+                        </div>
+                        <div class="col-sm-6">
+                            <h4>Updates found</h4>
+                            @if ($toDelete)
+                                Block not found in theme anymore.<br />
+                                Once the templates are updated the block will be removed from this list.
+                            @else
+                                @if ($addedToTemplates = array_diff($dataGroups['templates']['import'], $dataGroups['templates']['current']))
+                                    <b>Added From Templates:</b> {!! implode(',', $addedToTemplates) !!}<br />
+                                @endif
+                                @if ($removedFromTemplates = array_diff($dataGroups['templates']['current'], $dataGroups['templates']['import']))
+                                    <b>Removed From Templates:</b> {!! implode(',', $removedFromTemplates) !!}<br />
+                                @endif
+                                @if ($addedToRepeaterTemplates = array_diff($dataGroups['other_view']['import']['repeaters'], $dataGroups['other_view']['current']['repeaters']))
+                                    <b>Used by repeater blocks:</b> {!! implode(',', $addedToRepeaterTemplates) !!}<br />
+                                @endif
+                                @if ($removedFromRepeaterTemplates = array_diff($dataGroups['other_view']['current']['repeaters'], $dataGroups['other_view']['import']['repeaters']))
+                                    <b>No longer used by repeater blocks:</b> {!! implode(',', $removedFromRepeaterTemplates) !!}<br />
+                                @endif
+                                <br />
+                                @foreach($dataGroups['block']['current'] as $field => $currentValue)
+                                    @if ($dataGroups['block']['import'][$field] != $currentValue)
+                                        <b>{{ ucwords(str_replace('_', ' ', $field)) }}</b>: <i>{{ $currentValue }}</i> => <i>{{ $dataGroups['block']['import'][$field] }}</i><br />
+                                    @endif
+                                @endforeach
+                            @endif
+                        </div>
+                    </td>
                 </tr>
             @endforeach
             </tbody>
@@ -77,6 +149,7 @@
     {!! Form::close() !!}
 
 @section('scripts')
+
     <script type="text/javascript">
         function disable_template_settings() {
             $(this).parent().parent().find('.based-on-template-updates').attr('disabled', !$(this).is(':checked'));

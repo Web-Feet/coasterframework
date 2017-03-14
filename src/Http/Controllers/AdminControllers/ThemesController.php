@@ -4,6 +4,7 @@ use Auth;
 use CoasterCms\Helpers\Cms\Theme\BlockUpdater;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Libraries\Builder\AssetBuilder;
+use CoasterCms\Libraries\Import\BlocksImport;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\BlockBeacon;
@@ -186,15 +187,16 @@ class ThemesController extends Controller
     public function getUpdate($themeId)
     {
         $theme = Theme::find($themeId);
-        BlockUpdater::processFiles($theme);
+        $blocksImport = new BlocksImport(base_path('blocks.csv'));
+        $blocksImport->setTheme($theme)->run();
 
         $this->layoutData['content'] = View::make('coaster::pages.themes.update',
             [
                 'theme' => $theme,
-                'blocksData' => BlockUpdater::getMainTableData(),
+                'blockChanges' => $blocksImport->getImportBlockChanges(),
                 'typeList' => $this->_typeList(),
                 'categoryList' => $this->_categoryList(),
-                'templateList' => BlockUpdater::getTemplateList()
+                'templateList' => []
             ]
         );
     }
