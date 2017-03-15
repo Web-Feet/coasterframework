@@ -501,7 +501,6 @@ class BlocksImport extends AbstractImport
         $blockIds = array_map(function($currentBlock) {
             return $currentBlock['block']['id'];
         }, $currentBlocks);
-        $inRepeaters = [];
         $currentRepeaters = BlockRepeater::whereIn('block_id', $blockIds)->get()->keyBy('block_id');
         foreach ($currentRepeaters as $blockId => $currentRepeater) {
             $currentRepeaterBlock = Block::preload($blockId);
@@ -513,14 +512,15 @@ class BlocksImport extends AbstractImport
                     if ($currentRepeaterChildBlock->exists) {
                         $currentRepeaterChildBlockNames[] = $currentRepeaterChildBlock->name;
                         if (!array_key_exists($currentRepeaterChildBlock->name, $currentBlocks)) {
-                            $currentBlocks[$currentRepeaterChildBlock->name] = [
-                                'block' => $currentRepeaterChildBlock->getAttributes()
-                            ];
+                            $currentBlocks[$currentRepeaterChildBlock->name]['block'] = $currentRepeaterChildBlock->getAttributes();
                         }
-                        if (!array_key_exists($currentRepeaterChildBlock->name, $inRepeaters)) {
-                            $inRepeaters[$currentRepeaterChildBlock->name] = [];
+                        if (!array_key_exists('other_view', $currentBlocks[$currentRepeaterChildBlock->name])) {
+                            $currentBlocks[$currentRepeaterChildBlock->name]['other_view'] = [];
                         }
-                        $inRepeaters[$currentRepeaterChildBlock->name][] = $currentRepeaterBlock->name;
+                        if (!array_key_exists('repeaters', $currentBlocks[$currentRepeaterChildBlock->name]['other_view'])) {
+                            $currentBlocks[$currentRepeaterChildBlock->name]['other_view']['repeaters'] = [];
+                        }
+                        $currentBlocks[$currentRepeaterChildBlock->name]['other_view']['repeaters'][] = $currentRepeaterBlock->name;
                     }
                 }
                 $currentBlocks[$currentRepeaterBlock->name]['other_view']['repeater_children'] = $currentRepeaterChildBlockNames;
@@ -546,8 +546,6 @@ class BlocksImport extends AbstractImport
             if (!array_key_exists('other_view', $dataGroups)) {
                 $currentBlocks[$blockName]['other_view'] = [];
             }
-            $currentBlocks[$blockName]['other_view']['repeaters'] = array_key_exists($blockName, $inRepeaters) ? $inRepeaters[$blockName] : [];
-            $currentBlocks[$blockName]['other_view'] += ['repeater_children' => []];
             unset($currentBlocks[$blockName]['block']['created_at']);
             unset($currentBlocks[$blockName]['block']['updated_at']);
         }
@@ -574,22 +572,22 @@ class BlocksImport extends AbstractImport
                             if ($currentBlockData[$field] != $value) {
                                 $blockChanges[$blockName]['display_class'] = 'update';
                                 if ($dataGroup == 'global') {
-                                    $blockChanges[$blockName]['update_templates_default'] = 1;
+                                    $blockChanges[$blockName]['update_templates'] = 1;
                                 }
                             }
                         }
                     }
                     if ($dataGroup == 'templates' && (array_diff($currentBlockData, $importBlockData) || array_diff($importBlockData, $currentBlockData))) {
                         $blockChanges[$blockName]['display_class'] = 'update';
-                        $blockChanges[$blockName]['update_templates_default'] = 1;
+                        $blockChanges[$blockName]['update_templates'] = 1;
                     }
                     if ($dataGroup == 'other_view') {
-                        foreach (['repeaters', 'repeater_children'] as $attribute) {
+                        foreach (['repeater_children'] as $attribute) {
                             $currentRepeaterData = array_key_exists($attribute, $currentBlockData) ? $currentBlockData[$attribute] : [];
                             $importRepeaterData = array_key_exists($attribute, $importBlockData) ? $importBlockData[$attribute] : [];
                             if ((array_diff($currentRepeaterData, $importRepeaterData) || array_diff($importRepeaterData, $currentRepeaterData))) {
                                 $blockChanges[$blockName]['display_class'] = 'update';
-                                $blockChanges[$blockName]['update_templates_default'] = 1;
+                                $blockChanges[$blockName]['update_templates'] = 1;
                             }
                         }
                     }
@@ -604,12 +602,6 @@ class BlocksImport extends AbstractImport
                             unset($currentBlockData['updated_at']);
                         }
                     }
-                    if ($dataGroup == 'other_view') {
-                        $currentBlockData = [
-                            'repeaters' => [],
-                            'repeater_children' => []
-                        ];
-                    }
                 }
                 $blockChanges[$blockName][$dataGroup] = ['import' => $importBlockData, 'current' => $currentBlockData];
             }
@@ -619,7 +611,9 @@ class BlocksImport extends AbstractImport
             if (!array_key_exists($blockName, $blockChanges)) {
                 foreach ($dataGroups as $dataGroup => $currentBlockData) {
                     $blockChanges[$blockName]['display_class'] = 'delete';
-                    $blockChanges[$blockName]['update_templates_default'] = 1;
+                    if ($dataGroup == 'templates' && !empty($currentBlockData)) {
+                        $blockChanges[$blockName]['update_templates'] = 1;
+                    }
                     $blockChanges[$blockName][$dataGroup] = ['import' => [], 'current' => $currentBlockData];
                 }
             }
@@ -633,10 +627,40 @@ class BlocksImport extends AbstractImport
                     }
                 }
             }
+            $canUpdateTemplates = -1;
+            foreach ($dataGroups['templates'] as $dataSet => $templates) {
+                if (!empty($templates)) {
+                    $canUpdateTemplates = 0;
+                }
+                $blockChanges[$blockName]['other_view'][$dataSet] += [
+                    'repeaters' => [],
+                    'repeater_children' => []
+                ];
+            }
             $blockChanges[$blockName]['display_class'] = array_key_exists('display_class', $dataGroups) ? $dataGroups['display_class'] : 'none';
-            $blockChanges[$blockName]['update_templates_default'] = array_key_exists('update_templates_default', $dataGroups) ? $dataGroups['update_templates_default'] : 0;
+            $blockChanges[$blockName]['update_templates'] = array_key_exists('update_templates', $dataGroups) ? $dataGroups['update_templates'] : $canUpdateTemplates;
         }
+        uasort($blockChanges, [$this, '_orderBlockChanges']);
         return $blockChanges;
+    }
+
+    /**
+     * @param $a
+     * @param $b
+     * @return int
+     */
+    protected function _orderBlockChanges($a, $b)
+    {
+        $byDisplayClass = ['new' => 1, 'update' => 2, 'delete' => 3, 'info' => 4, 'none' => 5];
+        if ($byDisplayClass[$a['display_class']] == $byDisplayClass[$b['display_class']]) {
+            if ($a['update_templates'] >= 0 && $b['update_templates'] >= 0) {
+                $nameA = !empty($a['block']['import']['name']) ? $a['block']['import']['name'] : $a['block']['current']['name'];
+                $nameB = !empty($b['block']['import']['name']) ? $b['block']['import']['name'] : $b['block']['current']['name'];
+                return strcmp($nameA, $nameB);
+            }
+            return ($a['update_templates'] < $b['update_templates']) ? 1 : -1;
+        }
+        return ($byDisplayClass[$a['display_class']] > $byDisplayClass[$b['display_class']]) ? 1 : -1;
     }
 
     /**

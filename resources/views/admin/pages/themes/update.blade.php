@@ -62,13 +62,13 @@
                 $toDelete = empty($dataGroups['block']['import']);
                 ?>
                 <tr class="{{ $rowClasses[$dataGroups['display_class']] }}">
-                    <td>{!! ($dataGroups['update_templates_default'] >= 0)?Form::checkbox('block['.$blockName.'][update_templates_default]', 1, $dataGroups['update_templates_default'], ['class' => 'form-control run-template-updates']):'' !!}</td>
+                    <td>{!! ($dataGroups['update_templates'] >= 0)?Form::checkbox('block['.$blockName.'][update_templates]', 1, $dataGroups['update_templates'], ['class' => 'form-control run-template-updates']):'' !!}</td>
                     <td><i class="glyphicon glyphicon-info-sign block_note" data-note="{{ $blockName }}_note"></i> {!! $dataGroups['block'][$dataFrom]['name'] !!}</td>
                     <td>{!! Form::text('block['.$blockName.'][label]', $dataGroups['block'][$dataFrom]['label'], ['class' => 'form-control']) !!}</td>
-                    <td>{!! ($dataGroups['update_templates_default'] >= 0)?Form::select('block['.$blockName.'][category_id]', $categoryList, $dataGroups['block'][$dataFrom]['category_id'], ['class' => 'form-control']):'' !!}</td>
+                    <td>{!! ($dataGroups['update_templates'] >= 0)?Form::select('block['.$blockName.'][category_id]', $categoryList, $dataGroups['block'][$dataFrom]['category_id'], ['class' => 'form-control']):'' !!}</td>
                     <td>{!! Form::select('block['.$blockName.'][type]', $typeList, $dataGroups['block'][$dataFrom]['type'], ['class' => 'form-control']) !!}</td>
-                    <td>{!! ($dataGroups['update_templates_default'] >= 0)?Form::checkbox('block['.$blockName.'][show_in_global]', 1, $dataGroups['global'][$dataFrom]['show_in_global'], ['class' => 'form-control based-on-template-updates']):'' !!}</td>
-                    <td>{!! ($dataGroups['update_templates_default'] >= 0)?Form::checkbox('block['.$blockName.'][show_in_pages]', 1, $dataGroups['global'][$dataFrom]['show_in_pages'], ['class' => 'form-control based-on-template-updates']):'' !!}</td>
+                    <td>{!! ($dataGroups['update_templates'] >= 0)?Form::checkbox('block['.$blockName.'][show_in_global]', 1, $dataGroups['global'][$dataFrom]['show_in_global'], ['class' => 'form-control based-on-template-updates']):'' !!}</td>
+                    <td>{!! ($dataGroups['update_templates'] >= 0)?Form::checkbox('block['.$blockName.'][show_in_pages]', 1, $dataGroups['global'][$dataFrom]['show_in_pages'], ['class' => 'form-control based-on-template-updates']):'' !!}</td>
                 </tr>
                 <tr class="hidden" id="{{ $blockName }}_note">
                     <td colspan="7" style="padding-bottom: 20px">
@@ -97,7 +97,7 @@
                                 @endif
                             @endif
                             @if (!empty($dataGroups['other_view']['current']['repeater_children']))
-                                <b>Has repeater child blocks:</b> {!! implode(', ', $dataGroups['other_view']['current']['repeater_children']) !!}<br />
+                                <b>Current repeater child blocks:</b> {!! implode(', ', $dataGroups['other_view']['current']['repeater_children']) !!}<br />
                             @endif
                             @if (!empty($dataGroups['block']['current']))
                                 <br />
@@ -111,22 +111,40 @@
                         <div class="col-sm-6">
                             <h4>Updates found</h4>
                             @if ($toDelete)
-                                Block not found in theme anymore.<br />
-                                Once the templates are updated the block will be removed from this list.
-                            @else
-                                @if ($addedToTemplates = array_diff($dataGroups['templates']['import'], $dataGroups['templates']['current']))
-                                    <b>Added From Templates:</b> {!! implode(',', $addedToTemplates) !!}<br />
-                                @endif
-                                @if ($removedFromTemplates = array_diff($dataGroups['templates']['current'], $dataGroups['templates']['import']))
-                                    <b>Removed From Templates:</b> {!! implode(',', $removedFromTemplates) !!}<br />
-                                @endif
-                                @if ($addedToRepeaterTemplates = array_diff($dataGroups['other_view']['import']['repeaters'], $dataGroups['other_view']['current']['repeaters']))
-                                    <b>Used by repeater blocks:</b> {!! implode(',', $addedToRepeaterTemplates) !!}<br />
-                                @endif
-                                @if ($removedFromRepeaterTemplates = array_diff($dataGroups['other_view']['current']['repeaters'], $dataGroups['other_view']['import']['repeaters']))
-                                    <b>No longer used by repeater blocks:</b> {!! implode(',', $removedFromRepeaterTemplates) !!}<br />
-                                @endif
-                                <br />
+                                Block not found in theme anymore.<br /><br />
+                            @endif
+                            @if ($addedToTemplates = array_diff($dataGroups['templates']['import'], $dataGroups['templates']['current']))
+                                <b>Added from templates:</b> {!! implode(', ', $addedToTemplates) !!}<br />
+                            @endif
+                            @if ($removedFromTemplates = array_diff($dataGroups['templates']['current'], $dataGroups['templates']['import']))
+                                <b>Removed from templates:</b> {!! implode(', ', $removedFromTemplates) !!}<br />
+                            @endif
+                            @if ($addedRepeaterChildren = array_diff($dataGroups['other_view']['import']['repeater_children'], $dataGroups['other_view']['current']['repeater_children']))
+                                <b>Repeater child blocks added:</b> {!! implode(', ', $addedRepeaterChildren) !!}<br />
+                            @endif
+                            @if ($removedRepeaterChildren = array_diff($dataGroups['other_view']['current']['repeater_children'], $dataGroups['other_view']['import']['repeater_children']))
+                                <b>Repeater child blocks removed:</b> {!! implode(', ', $removedRepeaterChildren) !!}<br />
+                            @endif
+                            @if ($addedToRepeaterTemplates = array_diff($dataGroups['other_view']['import']['repeaters'], $dataGroups['other_view']['current']['repeaters']))
+                                <b>Added to repeater blocks</b>: {!! implode(', ', $addedToRepeaterTemplates) !!}<br />
+                            @endif
+                            @if ($removedFromRepeaterTemplates = array_diff($dataGroups['other_view']['current']['repeaters'], $dataGroups['other_view']['import']['repeaters']))
+                                <b>Removed from repeater blocks</b>: {!! implode(', ', $removedFromRepeaterTemplates) !!}<br />
+                            @endif
+                            @if ($toDelete)
+                                <?php
+                                $deleteText = [];
+                                if($removedFromTemplates) {
+                                    $deleteText[] = 'this blocks templates';
+                                }
+                                if($removedFromRepeaterTemplates) {
+                                    $deleteText[] = 'the repeater blocks templates';
+                                }
+                                ?>
+                                <br />Once you update {{ implode(' and ', $deleteText) }} it will be removed from this theme.<br />
+                            @endif
+                            <br />
+                            @if (!$toDelete)
                                 @foreach($dataGroups['block']['current'] as $field => $currentValue)
                                     @if ($dataGroups['block']['import'][$field] != $currentValue)
                                         <b>{{ ucwords(str_replace('_', ' ', $field)) }}</b>: <i>{{ $currentValue }}</i> => <i>{{ $dataGroups['block']['import'][$field] }}</i><br />
