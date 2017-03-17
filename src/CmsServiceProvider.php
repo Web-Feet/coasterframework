@@ -4,7 +4,6 @@ use App;
 use Auth;
 use CoasterCms\Events\Cms\LoadAuth;
 use CoasterCms\Events\Cms\LoadMiddleware;
-use CoasterCms\Events\Cms\LoadRouteFile;
 use CoasterCms\Events\Cms\SetViewPaths;
 use CoasterCms\Helpers\Cms\Install;
 use CoasterCms\Http\Middleware\AdminAuth;
@@ -81,13 +80,6 @@ class CmsServiceProvider extends ServiceProvider
         $this->loadViewsFrom($adminViews, 'coaster');
         $this->loadViewsFrom($frontendViews, 'coasterCms');
 
-        // run routes if not in console
-        $routeFile = __DIR__ . '/Http/routes.php';
-        event(new LoadRouteFile($routeFile));
-        if ($routeFile && file_exists($routeFile)) {
-            include $routeFile;
-        }
-
         // if in console and not installed, display notice
         if (App::runningInConsole() && !Install::isComplete()) {
             echo "Coaster Framework: CMS awaiting install, go to a web browser to complete installation\r\n";
@@ -103,6 +95,7 @@ class CmsServiceProvider extends ServiceProvider
     {
         $this->app->register('CoasterCms\Providers\CoasterEventsProvider');
         $this->app->register('CoasterCms\Providers\CoasterConfigProvider');
+        $this->app->register('CoasterCms\Providers\CoasterRoutesProvider');
 
         // register third party providers
         $this->app->register('Bkwld\Croppa\ServiceProvider');

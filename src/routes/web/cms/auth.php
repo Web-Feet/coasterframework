@@ -1,7 +1,7 @@
 <?php
 
 // Files override to enable hosting secure docs
-Route::get('uploads/{file_path}', ['middleware' => ['web', 'auth'], function($file_path)
+Route::get('uploads/{file_path}', function($file_path)
 {
     $file_full_path = storage_path().'/uploads/'.$file_path;
 
@@ -12,7 +12,4 @@ Route::get('uploads/{file_path}', ['middleware' => ['web', 'auth'], function($fi
     } else {
         return response('upload not found', 404);
     }
-}])->where('file_path', '.*');
-
-// catch all (rest must be cms pages)
-Route::any('{other}', ['middleware' => ['web', 'coaster.pagebuilder.init'], 'uses' => 'CoasterCms\Http\Controllers\CmsController@generatePage'])->where('other', '.*');
+})->where('file_path', '.*');
