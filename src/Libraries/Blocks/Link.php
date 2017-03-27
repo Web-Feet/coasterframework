@@ -15,7 +15,7 @@ class Link extends String_
     public function display($content, $options = [])
     {
         $content = $this->_defaultData($content);
-        $target = $content['target'] ? ' target=\"'.$content['target'].'"' : '';
+        $target = $content['target'] ? '" target="'.$content['target'] : '';
         $link = str_replace('internal://', '', $content['link'], $count);
         return (($count > 0) ? Path::getFullUrl($link) : $link) . $target;
     }
