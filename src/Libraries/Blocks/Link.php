@@ -51,7 +51,7 @@ class Link extends String_
         } else {
             $linkData['link'] = '';
         }
-        $linkData['target'] = !empty($linkData['target']) ? $linkData['target'] : '';
+        $linkData['target'] = !empty($postContent['target']) ? $postContent['target'] : '';
         return $this->save(empty($linkData['link']) ? '' : serialize($linkData));
     }
 
