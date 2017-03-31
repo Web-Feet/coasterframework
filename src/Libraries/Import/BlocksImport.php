@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Libraries\Import;
 
+use CoasterCms\Helpers\Admin\Import\BlocksCollection;
 use CoasterCms\Helpers\Cms\Page\PageLoaderDummy;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\Block;
@@ -47,7 +48,12 @@ class BlocksImport extends AbstractImport
     /**
      * @var array
      */
-    protected $_blockOtherViews;
+    protected $_blockOtherViewData;
+
+    /**
+     * @var BlocksCollection
+     */
+    protected $_blocksCollection;
 
     /**
      * @return array
@@ -130,9 +136,8 @@ class BlocksImport extends AbstractImport
         $formRulesImport = new \CoasterCms\Libraries\Import\Blocks\FormRulesImport();
         $formRulesImport->setTheme($this->_additionalData['theme'])->run();
         $this->_loadTemplateList();
-        $this->_blockData = [];
-        $this->_blockGlobals = [];
-        $this->_blockTemplates = [];
+        $this->_blocksCollection = new BlocksCollection();
+        $this->_blocksCollection->setScope('csv');
     }
 
     /**
@@ -141,7 +146,6 @@ class BlocksImport extends AbstractImport
     protected function _beforeRowMap()
     {
         $this->_currentBlockName = $this->_toLowerTrim($this->_importCurrentRow['Block Name']);
-        $this->_blockData[$this->_currentBlockName] = [];
     }
 
     /**
@@ -151,7 +155,7 @@ class BlocksImport extends AbstractImport
     protected function _mapTo($importInfo, $importFieldData)
     {
         if ($importFieldData !== '') {
-            $this->_blockData[$this->_currentBlockName][$importInfo['mapTo']] = $importFieldData;
+            $this->_blocksCollection->getBlock($this->_currentBlockName)->setBlockData([$importInfo['mapTo'] => $importFieldData]);
         }
     }
 
@@ -181,12 +185,9 @@ class BlocksImport extends AbstractImport
      */
     protected function _mapTemplates($importFieldData)
     {
-        if (!array_key_exists($this->_currentBlockName, $this->_blockTemplates)) {
-            $this->_blockTemplates[$this->_currentBlockName] = [];
-        }
         if ($importFieldData !== '') {
             $templates = ($importFieldData == '*') ? $this->_templateList : explode(',', $importFieldData);
-            $this->_blockTemplates[$this->_currentBlockName] = array_unique(array_merge($this->_blockTemplates[$this->_currentBlockName], $templates));
+            $this->_blocksCollection->getBlock($this->_currentBlockName)->addTemplates($templates);
             $this->_templateList = array_unique(array_merge($this->_templateList, $templates));
         }
     }
@@ -198,10 +199,8 @@ class BlocksImport extends AbstractImport
     protected function _mapGlobal($importFieldData, $globalSetting = '')
     {
         if ($importFieldData !== '') {
-            if (!array_key_exists($this->_currentBlockName, $this->_blockGlobals)) {
-                $this->_blockGlobals[$this->_currentBlockName] = [];
-            }
-            $this->_blockGlobals[$this->_currentBlockName][$globalSetting] = $this->_toBool($importFieldData) ? 1 : 0;
+            $value = $this->_toBool($importFieldData) ? 1 : 0;
+            $this->_blocksCollection->getBlock($this->_currentBlockName)->setGlobalData([$globalSetting => $value]);
         }
     }
 
@@ -226,19 +225,19 @@ class BlocksImport extends AbstractImport
      */
     protected function _afterRun()
     {
+        $this->_blocksCollection->setScope('file');
+
+
         PageBuilder::setClass(
             PageBuilder\ThemeBuilderInstance::class,
-            [$this->_blockData, $this->_blockTemplates],
+            [$this->_blocksCollection],
             PageLoaderDummy::class,
             [$this->_additionalData['theme']->theme]
         );
         $this->_renderThemeFiles();
-        $this->_renderCsvBlocks(); // do after theme render as there is less context
+        //$this->_renderCsvBlocks(); // do after theme render as there is less context
+        dd($this->_blocksCollection->getAggregatedBlocks());
 
-        // load extra data from rendering blocks
-        $this->_blockData = PageBuilder::getData('blockData');
-        $this->_blockTemplates = PageBuilder::getData('blockTemplates');
-        $this->_blockOtherViews = PageBuilder::getData('blockOtherViews'); // blocks not directly linked to a template
 
         // fill in and missing block data (from db if poss, failing that have a guess)
         $this->_loadMissingBlockDataFromDb();
@@ -445,25 +444,7 @@ class BlocksImport extends AbstractImport
      */
     public function getImportBlockData()
     {
-        $blocks = [];
-        foreach ($this->_blockData as $blockName => $blockData) {
-            $blocks[$blockName] = [
-                'block' => $blockData,
-                'global' => $this->_blockGlobals[$blockName],
-                'templates' => array_key_exists($blockName, $this->_blockTemplates) ? $this->_blockTemplates[$blockName] : [],
-                'other_view' => []
-            ];
-            foreach ($this->_blockOtherViews as $view => $blocksInView) {
-                if (array_key_exists($blockName, $blocksInView)) {
-                    $blocks[$blockName]['other_view'][$view] = $blocksInView[$blockName];
-                }
-            }
-            $blocks[$blockName]['other_view'] += [
-                'repeaters' => [],
-                'repeater_children' => []
-            ];
-        }
-        return $blocks;
+        return $this->_blocksCollection->getAggregatedBlocks();
     }
 
     /**
@@ -763,7 +744,7 @@ class BlocksImport extends AbstractImport
     protected function _saveBlockRepeaters()
     {
         $existingRepeaters = BlockRepeater::get()->keyBy('block_id');
-        foreach ($this->_blockOtherViews['repeater'] as $repeaterBlockName => $childBlockNames) {
+        foreach ($this->_blockOtherViewData['repeater'] as $repeaterBlockName => $childBlockNames) {
             $newRepeaterData = $existingRepeaters->has($this->_blockData[$repeaterBlockName]['id']) ? $existingRepeaters[$this->_blockData[$repeaterBlockName]['id']] : new BlockRepeater;
             $newRepeaterData->block_id = $this->_blockData[$repeaterBlockName]['id'];
             $newRepeaterData->blocks = implode(',', array_map(function($childBlockName) {

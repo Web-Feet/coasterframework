@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Libraries\Builder\PageBuilder;
 
 use CoasterCms\Exceptions\PageBuilderException;
+use CoasterCms\Helpers\Admin\Import\BlocksCollection;
 use CoasterCms\Helpers\Cms\Page\PageLoader;
 use CoasterCms\Libraries\Builder\MenuBuilder;
 use CoasterCms\Libraries\Builder\ViewClasses\PageDetails;
@@ -18,24 +19,9 @@ class ThemeBuilderInstance extends PageBuilderInstance
     public $errors;
 
     /**
-     * @var array
+     * @var BlocksCollection
      */
-    public $originalBlockData;
-
-    /**
-     * @var array
-     */
-    public $blockData;
-
-    /**
-     * @var array
-     */
-    public $blockTemplates;
-
-    /**
-     * @var array
-     */
-    public $blockOtherViews;
+    protected $_blocksCollection;
 
     /**
      * @var array
@@ -65,10 +51,9 @@ class ThemeBuilderInstance extends PageBuilderInstance
     /**
      * ThemeBuilderInstance constructor.
      * @param PageLoader $pageLoader
-     * @param array $blockData
-     * @param array $blockTemplates
+     * @param BlocksCollection $blocksCollection
      */
-    public function __construct(PageLoader $pageLoader, $blockData = [], $blockTemplates = [])
+    public function __construct(PageLoader $pageLoader, $blocksCollection)
     {
         parent::__construct($pageLoader);
         $this->errors = [];
@@ -77,16 +62,8 @@ class ThemeBuilderInstance extends PageBuilderInstance
         $this->pageOverride = clone $this->page;
         $this->page->id = static::DUMMY_ORIGINAL_PAGE_ID;
 
-        $this->originalBlockData = $blockData;
-        $this->blockData = $blockData;
-
-        $this->blockTemplates = $blockTemplates;
-        $this->blockOtherViews = [
-            'repeaters' => [],
-            'repeater_children' => [],
-            'category' => [],
-            'other_page' => []
-        ];
+        $this->_blocksCollection = $blocksCollection;
+        $this->_blocksCollection->setScope('file');
 
         $this->_renderPath = [];
 
@@ -196,17 +173,12 @@ class ThemeBuilderInstance extends PageBuilderInstance
             return $this->_returnValue('', $options);
         }
 
-        if (!array_key_exists($blockName, $this->blockData)) {
-            $this->blockData[$blockName] = [];
-        }
-
         // load block details
         $block = Block::preloadClone($blockName);
         $block->name = $blockName;
-        if (array_key_exists($blockName, $this->blockData)) {
-            foreach ($this->blockData[$blockName] as $field => $value) {
-                $block->$field = $value;
-            }
+        $aggregatedBlock = $this->_blocksCollection->getAggregatedBlock($blockName);
+        foreach ($aggregatedBlock->blockData as $field => $value) {
+            $block->$field = $value;
         }
 
         // set version
@@ -230,9 +202,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
 
         // set block note
         if (!empty($options['importNote'])) {
-            if (!array_key_exists('note', $this->blockData[$blockName])) {
-                $this->blockData[$blockName]['note'] = $options['importNote'];
-            }
+            $this->_blocksCollection->getBlock($blockName)->setBlockData(['note' => $options['importNote']]);
         }
 
         return $this->_returnValue($output, $options);
@@ -306,7 +276,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
      */
     protected function _setType(&$block, $options)
     {
-        if (!$block->type && !array_key_exists('type', $this->blockData[$block->name])) {
+        if (!$block->type) {
             $view = empty($options['view']) ? $block->name : $options['view'];
             if (in_array($view, $this->_repeaterTemplates)) {
                 $block->type = 'repeater';
@@ -338,7 +308,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
                 }
                 $block->type = $typeFound;
             }
-            $this->blockData[$block->name]['type'] = $block->type;
+            $this->_blocksCollection->getBlock($block->name)->setBlockData(['type' => $block->type]);
         }
     }
 
@@ -351,40 +321,19 @@ class ThemeBuilderInstance extends PageBuilderInstance
         if (!array_key_exists('page_id', $options) || $options['page_id'] === static::DUMMY_ORIGINAL_PAGE_ID) {
             if ($inRepeaterBlockName = $this->_inRepeaterView()) {
                 // block in a repeater template
-                if (!array_key_exists($block->name, $this->blockOtherViews['repeaters'])) {
-                    $this->blockOtherViews['repeaters'][$block->name] = [];
-                }
-                if (!in_array($inRepeaterBlockName, $this->blockOtherViews['repeaters'][$block->name])) {
-                    $this->blockOtherViews['repeaters'][$block->name][] = $inRepeaterBlockName;
-                }
+                $this->_blocksCollection->getBlock($block->name)->addRepeaterBlocks($inRepeaterBlockName);
                 // block set as child block of repeater
-                if (!array_key_exists($inRepeaterBlockName, $this->blockOtherViews['repeater_children'])) {
-                    $this->blockOtherViews['repeater_children'][$inRepeaterBlockName] = [];
-                }
-                if (!in_array($block->name, $this->blockOtherViews['repeater_children'][$inRepeaterBlockName])) {
-                    $this->blockOtherViews['repeater_children'][$inRepeaterBlockName][] = $block->name;
-                }
+                $this->_blocksCollection->getBlock($inRepeaterBlockName)->addRepeaterChildBlocks($block->name);
             } elseif ($categoryViews = $this->_inCategoryView()) {
                 // block in dynamic category view (could be based on page id, search, etc.)
-                if (!array_key_exists($block->name, $this->blockOtherViews['category'])) {
-                    $this->blockOtherViews['category'][$block->name] = [];
-                }
-                $this->blockOtherViews['category'][$block->name] = array_unique(array_merge($categoryViews, $this->blockOtherViews['category'][$block->name]));
+                $this->_blocksCollection->getBlock($block->name)->addCategoryTemplates($categoryViews);
             } elseif ($this->template) {
                 // block definitely in template
-                if (!array_key_exists($block->name, $this->blockTemplates)) {
-                    $this->blockTemplates[$block->name] = [];
-                }
-                if (!in_array($this->template, $this->blockTemplates[$block->name])) {
-                    $this->blockTemplates[$block->name][] = $this->template;
-                }
+                $this->_blocksCollection->getBlock($block->name)->addTemplates($this->template);
             }
         } else {
             // if a page has been specified and it's not the same as the original page id
-            if (!array_key_exists($block->name, $this->blockOtherViews['other_page'])) {
-                $this->blockOtherViews['other_page'][$block->name] = [];
-            }
-            $this->blockOtherViews['other_page'][$block->name] = array_unique(array_merge([$options['page_id']], $this->blockOtherViews['other_page'][$block->name]));
+            $this->_blocksCollection->getBlock($block->name)->addSpecifiedPageIds($options['page_id']);
         }
     }
 
@@ -474,12 +423,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
             $blockType = strtolower(substr($name, 6));
             if (!empty($validTypes[$blockType])) {
                 $blockName = $arguments[0];
-                if (!array_key_exists($blockName, $this->blockData)) {
-                    $this->blockData[$blockName] = [];
-                }
-                if (!(array_key_exists($blockName, $this->originalBlockData) && array_key_exists('type', $this->originalBlockData[$blockName]))) {
-                    $this->blockData[$blockName]['type'] = $blockType;
-                }
+                $this->_blocksCollection->getBlock($blockName)->setBlockData(['type' => $blockType]);
             }
         }
         try {

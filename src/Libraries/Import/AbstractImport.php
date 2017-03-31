@@ -48,6 +48,11 @@ abstract class AbstractImport
     protected $_importData;
 
     /**
+     * @var bool
+     */
+    protected $_importedData;
+
+    /**
      * @var array
      */
     protected $_importCurrentRow;
@@ -92,8 +97,10 @@ abstract class AbstractImport
         } else {
             $this->_additionalData['theme'] = Theme::where(['theme' => $theme])->first();
         }
-        $this->_importFile = base_path('resources/views/themes/' . $this->_additionalData['theme']->theme . '/import/' . static::IMPORT_FILE_DEFAULT);
-        $this->_importData();
+        if (!$this->_importedData) {
+            $this->_importFile = base_path('resources/views/themes/' . $this->_additionalData['theme']->theme . '/import/' . static::IMPORT_FILE_DEFAULT);
+            $this->_importData();
+        }
         return $this;
     }
 
@@ -158,6 +165,7 @@ abstract class AbstractImport
             $headerRow = array_shift($importData);
             try {
                 array_walk($importData, ['self', '_csvNameColumns'], $headerRow);
+                $this->_importedData = true;
                 return $importData;
             } catch (\Exception $e) {
                 $this->_validationErrors[] = 'CSV format error, number of columns in the header row does not match for some data rows';
