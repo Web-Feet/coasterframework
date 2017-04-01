@@ -52,7 +52,7 @@ class CoasterRoutesProvider extends ServiceProvider
             ->namespace($namespace . '\AdminControllers')
             ->group($routesDir . '/admin-guest.php');
 
-        Route::middleware('web')
+        Route::middleware(['web', 'coaster.admin'])
             ->prefix($adminUrl)
             ->as(rtrim($adminRouteName, '.'))
             ->namespace($namespace)
