@@ -270,7 +270,6 @@ class InstallController extends Controller
             FormMessage::add('theme', $error);
             $this->setupTheme();
         } else {
-            include __DIR__ . '/../../Http/routes/admin.php';
             Install::setInstallState('complete-welcome');
             $this->layoutData['title'] = 'Install Complete';
             $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'complete']);
