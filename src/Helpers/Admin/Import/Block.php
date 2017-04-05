@@ -56,59 +56,76 @@ class Block
     /**
      * @param array $blockData
      * @param bool $overwrite
+     * @return $this
      */
     public function setBlockData($blockData = [], $overwrite = false)
     {
+        unset($blockData['created_at']);
+        unset($blockData['updated_at']);
         $this->_setArrayData($this->blockData, $blockData, $overwrite);
+        return $this;
     }
 
     /**
      * @param array $globalData
      * @param bool $overwrite
+     * @return $this
      */
     public function setGlobalData($globalData = [], $overwrite = false)
     {
+        $globalData = array_intersect_key($globalData, array_fill_keys(['show_in_global', 'show_in_pages'], ''));
         $this->_setArrayData($this->globalData, $globalData, $overwrite);
+        return $this;
     }
 
     /**
      * @param array|string $templates
+     * @return $this
      */
     public function addTemplates($templates = [])
     {
         $this->_addToUniqueArray($this->templates, $templates);
+        return $this;
     }
 
     /**
      * @param array|string $repeaterBlocks
+     * @return $this
      */
     public function addRepeaterBlocks($repeaterBlocks = [])
     {
         $this->_addToUniqueArray($this->inRepeaterBlocks, $repeaterBlocks);
+        return $this;
     }
 
     /**
      * @param array|string $repeaterChildBlocks
+     * @return $this
      */
     public function addRepeaterChildBlocks($repeaterChildBlocks = [])
     {
         $this->_addToUniqueArray($this->repeaterChildBlocks, $repeaterChildBlocks);
+        return $this;
     }
 
     /**
      * @param array|string $categoryTemplates
+     * @return $this
      */
     public function addCategoryTemplates($categoryTemplates = [])
     {
         $this->_addToUniqueArray($this->inCategoryTemplates, $categoryTemplates);
+        return $this;
     }
 
     /**
      * @param array|string $specifiedPageIds
+     * @return $this
      */
     public function addSpecifiedPageIds($specifiedPageIds = [])
     {
         $this->_addToUniqueArray($this->specifiedPageIds, $specifiedPageIds);
+        return $this;
     }
 
     /**
@@ -117,8 +134,8 @@ class Block
      */
     public function combine(Block $block)
     {
-        $this->setGlobalData($block->blockData);
-        $this->setBlockData($block->globalData);
+        $this->setBlockData($block->blockData, false);
+        $this->setGlobalData($block->globalData, false);
         $this->addTemplates($block->templates);
         $this->addRepeaterBlocks($block->inRepeaterBlocks);
         $this->addRepeaterChildBlocks($block->repeaterChildBlocks);
@@ -132,7 +149,7 @@ class Block
      */
     protected function _addToUniqueArray(&$array, $items)
     {
-        $items = is_array($items) ? $items : [$items];
+        $items = is_array($items) ? array_values($items) : [$items];
         $array = array_unique(array_merge($array, $items));
     }
 

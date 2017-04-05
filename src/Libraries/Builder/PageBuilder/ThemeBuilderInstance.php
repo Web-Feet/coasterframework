@@ -174,8 +174,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
         }
 
         // load block details
-        $block = Block::preloadClone($blockName);
-        $block->name = $blockName;
+        $block = new Block();
         $aggregatedBlock = $this->_blocksCollection->getAggregatedBlock($blockName);
         foreach ($aggregatedBlock->blockData as $field => $value) {
             $block->$field = $value;
@@ -308,7 +307,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
                 }
                 $block->type = $typeFound;
             }
-            $this->_blocksCollection->getBlock($block->name)->setBlockData(['type' => $block->type]);
+            $this->_blocksCollection->getBlock($block->name, 'guess')->setBlockData(['type' => $block->type]);
         }
     }
 
@@ -423,7 +422,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
             $blockType = strtolower(substr($name, 6));
             if (!empty($validTypes[$blockType])) {
                 $blockName = $arguments[0];
-                $this->_blocksCollection->getBlock($blockName)->setBlockData(['type' => $blockType]);
+                $this->_blocksCollection->getBlock($blockName, 'block_')->setBlockData(['type' => $blockType]);
             }
         }
         try {

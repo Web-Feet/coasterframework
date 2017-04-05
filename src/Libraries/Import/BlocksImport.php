@@ -154,7 +154,7 @@ class BlocksImport extends AbstractImport
      */
     protected function _mapTo($importInfo, $importFieldData)
     {
-        if ($importFieldData !== '') {
+        if ($importFieldData !== '' && $this->_currentBlockName !== '') {
             $this->_blocksCollection->getBlock($this->_currentBlockName)->setBlockData([$importInfo['mapTo'] => $importFieldData]);
         }
     }
@@ -185,7 +185,7 @@ class BlocksImport extends AbstractImport
      */
     protected function _mapTemplates($importFieldData)
     {
-        if ($importFieldData !== '') {
+        if ($importFieldData !== '' && $this->_currentBlockName !== '') {
             $templates = ($importFieldData == '*') ? $this->_templateList : explode(',', $importFieldData);
             $this->_blocksCollection->getBlock($this->_currentBlockName)->addTemplates($templates);
             $this->_templateList = array_unique(array_merge($this->_templateList, $templates));
@@ -198,7 +198,7 @@ class BlocksImport extends AbstractImport
      */
     protected function _mapGlobal($importFieldData, $globalSetting = '')
     {
-        if ($importFieldData !== '') {
+        if ($importFieldData !== '' && $this->_currentBlockName !== '') {
             $value = $this->_toBool($importFieldData) ? 1 : 0;
             $this->_blocksCollection->getBlock($this->_currentBlockName)->setGlobalData([$globalSetting => $value]);
         }
@@ -225,8 +225,73 @@ class BlocksImport extends AbstractImport
      */
     protected function _afterRun()
     {
-        $this->_blocksCollection->setScope('file');
+        // load data from db, doesn't have priority over data found in theme files but can be useful in guesses
+        $this->_loadDbData();
+        // theme render (includes type guess in themebuilder)
+        $this->_renderThemeFiles();
+        // guess the missing data
+        $this->_guessMissingData();
+        dd($this->_blocksCollection->getAggregatedBlocks());
+    }
 
+    /**
+     * @param string $scope
+     */
+    public function _loadDbData($scope = 'db')
+    {
+        $this->_blocksCollection->setScope($scope);
+        $themeTemplates = Template::where('theme_id', '=', $this->_additionalData['theme']->id)->get();
+        $templateBlocks = TemplateBlock::whereIn('template_id', $themeTemplates->pluck('id')->toArray())->get()->groupBy('block_id');
+        $themeBlocks = ThemeBlock::where('theme_id', '=', $this->_additionalData['theme']->id)->get()->keyBy('block_id');
+        foreach ($themeBlocks as $blockId => $themeBlock) {
+            $currentBlock = Block::preload($blockId);
+            if ($currentBlock->exists) {
+                $this->_blocksCollection->getBlock($currentBlock->name)
+                    ->setBlockData($currentBlock->getAttributes())
+                    ->setGlobalData($themeBlock->getAttributes())
+                    ->addTemplates($themeTemplates->except(explode(',', $themeBlock->exclude_templates))->pluck('template')->toArray());
+            }
+        }
+        foreach ($templateBlocks as $blockId => $templateBlock) {
+            $currentBlock = Block::preload($blockId);
+            if (!$themeBlocks->has($blockId) && $currentBlock->exists) {
+                $this->_blocksCollection->getBlock($currentBlock->name)
+                    ->setBlockData($currentBlock->getAttributes())
+                    ->setGlobalData(['show_in_global' => 0, 'show_in_pages' => 0])
+                    ->addTemplates($themeTemplates->whereIn('id', $templateBlock->pluck('template_id')->toArray())->pluck('template')->toArray());
+            }
+        }
+        $blockIds = array_map(function(\CoasterCms\Helpers\Admin\Import\Block $currentBlock) {
+            return $currentBlock->blockData['id'];
+        }, $this->_blocksCollection->getBlocks('db'));
+        $currentRepeaters = BlockRepeater::whereIn('block_id', $blockIds)->get()->keyBy('block_id');
+        foreach ($currentRepeaters as $blockId => $currentRepeater) {
+            $currentRepeaterBlock = Block::preload($blockId);
+            if ($currentRepeaterBlock->exists) {
+                $currentRepeaterChildBlockIds = explode(',', $currentRepeater->blocks);
+                $currentRepeaterChildBlockNames = [];
+                foreach ($currentRepeaterChildBlockIds as $currentRepeaterChildBlockId) {
+                    $currentRepeaterChildBlock = Block::preload($currentRepeaterChildBlockId);
+                    if ($currentRepeaterChildBlock->exists) {
+                        $currentRepeaterChildBlockNames[] = $currentRepeaterChildBlock->name;
+                        $this->_blocksCollection->getBlock($currentRepeaterChildBlock->name)
+                            ->setBlockData($currentRepeaterChildBlock->getAttributes())
+                            ->setGlobalData(['show_in_global' => 0, 'show_in_pages' => 0])
+                            ->addRepeaterBlocks($currentRepeaterBlock->name);
+                    }
+                }
+                $this->_blocksCollection->getBlock($currentRepeaterBlock->name)->addRepeaterChildBlocks($currentRepeaterChildBlockNames);
+            }
+        }
+    }
+
+    /**
+     * Get all extra block data from theme files
+     * @param string $scope
+     */
+    protected function _renderThemeFiles($scope = 'file')
+    {
+        $this->_blocksCollection->setScope($scope);
 
         PageBuilder::setClass(
             PageBuilder\ThemeBuilderInstance::class,
@@ -234,33 +299,6 @@ class BlocksImport extends AbstractImport
             PageLoaderDummy::class,
             [$this->_additionalData['theme']->theme]
         );
-        $this->_renderThemeFiles();
-        //$this->_renderCsvBlocks(); // do after theme render as there is less context
-        dd($this->_blocksCollection->getAggregatedBlocks());
-
-
-        // fill in and missing block data (from db if poss, failing that have a guess)
-        $this->_loadMissingBlockDataFromDb();
-        foreach ($this->_blockData as $blockName => &$details) {
-            $details += [
-                'name' => $blockName,
-                'label' => ucwords(str_replace('_', ' ', $blockName)),
-                'active' => 1,
-                'search_weight' => 1,
-                'note' => ''
-            ];
-        }
-        // TODO set order guesses
-        $this->_categoryIdGuess();
-        $this->_loadMissingIsGlobalDataFromDb();
-        $this->_isGlobalGuess();
-    }
-
-    /**
-     * Get all extra block data from theme files
-     */
-    protected function _renderThemeFiles()
-    {
         if ($this->_templateList) {
             foreach ($this->_templateList as $templateName) {
                 $templateView = 'themes.' . $this->_additionalData['theme']->theme . '.templates.' . $templateName;
@@ -274,6 +312,9 @@ class BlocksImport extends AbstractImport
                 dd($errors);
             }
         }
+
+        // make sure every csv block is rendered & better after theme render as there is less context
+        $this->_renderCsvBlocks();
     }
 
     /**
@@ -282,32 +323,40 @@ class BlocksImport extends AbstractImport
     protected function _renderCsvBlocks()
     {
         PageBuilder::setData('template', '');
-        foreach ($this->_blockData as $blockName => $blockData) {
+        foreach ($this->_blocksCollection->getBlocks('csv') as $blockName => $importBlock) {
             PageBuilder::block($blockName);
         }
     }
 
     /**
-     *
+     * @param string $scope
      */
-    protected function _loadMissingBlockDataFromDb()
+    protected function _guessMissingData($scope = 'guess')
     {
-        foreach ($this->_blockData as $blockName => &$blockData) {
-            $block = Block::preload($blockName);
-            if ($block->exists) {
-                foreach ($block->getAttributes() as $field => $value) {
-                    if (!array_key_exists($field, $blockData) && !in_array($field, ['updated_at', 'created_at'])) {
-                        $blockData[$field] = $block->$field;
-                    }
-                }
-            }
+        $this->_blocksCollection->setScope($scope);
+        $allBlockData = $this->_blocksCollection->getAggregatedBlocks();
+        foreach ($allBlockData as $blockName => $importBlock) {
+            $this->_blocksCollection->getBlock($blockName)
+                ->setBlockData([
+                    'label' => ucwords(str_replace('_', ' ', $blockName)),
+                    'active' => 1,
+                    'search_weight' => 1,
+                    'note' => '',
+                    'order' => 100
+                ])
+                ->setGlobalData([
+                    'show_in_global' => ((count($importBlock->templates) / count($this->_templateList)) >= 0.7) ? 1 : 0,
+                    'show_in_pages' => 0
+                ]);
         }
+        $this->_categoryIdGuess($allBlockData);
+        // TODO set order guesses
     }
 
     /**
-     *
+     * @param \CoasterCms\Helpers\Admin\Import\Block[] $allBlockData
      */
-    protected function _categoryIdGuess()
+    protected function _categoryIdGuess($allBlockData)
     {
         // load default categories and their ids
         $defaultCategoryIds = [];
@@ -333,8 +382,8 @@ class BlocksImport extends AbstractImport
 
         // if block is repeater and category_id is not set create own category
         $extraMatches = [];
-        foreach ($this->_blockData as $blockName => $blockData) {
-            if (!array_key_exists('category_id', $blockData) && $blockData['type'] == 'repeater') {
+        foreach ($allBlockData as $blockName => $importBlock) {
+            if (!array_key_exists('category_id', $importBlock->blockData) && $importBlock->blockData['type'] == 'repeater') {
                 $createNewCategory = true;
                 foreach ($defaultCategorySearchStrings as $defaultCategory => $searchStrings) {
                     foreach ($searchStrings as $searchString) {
@@ -375,61 +424,20 @@ class BlocksImport extends AbstractImport
         foreach ($extraMatches as $categoryName => $searchStrings) {
             $categoryMatches[$this->_blockCategoriesByName[$categoryName]->id] = $searchStrings;
         }
-        foreach ($this->_blockData as $blockName => &$blockData) {
-            if (!array_key_exists('category_id', $blockData)) {
-                $blockData['category_id'] = $defaultCategoryIds['main'];
+        foreach ($allBlockData as $blockName => $importBlock) {
+            if (!array_key_exists('category_id', $importBlock->blockData)) {
+                $guessedCategoryId = $defaultCategoryIds['main'];
                 foreach ($categoryMatches as $categoryId => $searchStrings) {
                     foreach ($searchStrings as $searchString) {
                         if (stristr($blockName, $searchString)) {
-                            $blockData['category_id'] = $categoryId;
+                            $guessedCategoryId = $categoryId;
                         }
                     }
                 }
+                $this->_blocksCollection->getBlock($blockName)->setBlockData(['category_id' => $guessedCategoryId]);
             }
         }
     }
-
-    /**
-     *
-     */
-    protected function _loadMissingIsGlobalDataFromDb()
-    {
-        $themeBlocks = ThemeBlock::where('theme_id', '=', $this->_additionalData['theme']->id)->get()->keyBy('block_id');
-        foreach ($this->_blockData as $blockName => $blockData) {
-            if (!array_key_exists($blockName, $this->_blockGlobals)) {
-                $this->_blockGlobals[$blockName] = [];
-            }
-            $block = Block::preload($blockName);
-            if ($themeBlocks->has($block->id)) {
-                foreach (['show_in_global', 'show_in_pages'] as $field) {
-                    if (!array_key_exists($field, $this->_blockGlobals[$blockName])) {
-                        $this->_blockGlobals[$blockName][$field] = $themeBlocks[$block->id]->$field;
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     *
-     */
-    protected function _isGlobalGuess()
-    {
-        $totalTemplates = count($this->_templateList);
-        foreach ($this->_blockData as $blockName => $blockData) {
-            if (!array_key_exists($blockName, $this->_blockGlobals)) {
-                $this->_blockGlobals[$blockName] = [];
-            }
-            if (!array_key_exists('show_in_global', $this->_blockGlobals[$blockName])) {
-                $templates = array_key_exists($blockName, $this->_blockTemplates) ? count($this->_blockTemplates[$blockName]) : 0;
-                $this->_blockGlobals[$blockName]['show_in_global'] = ((count($templates) / $totalTemplates) >= 0.7) ? 1 : 0;
-            }
-            if (!array_key_exists('show_in_pages', $this->_blockGlobals[$blockName])) {
-                $this->_blockGlobals[$blockName]['show_in_pages'] = 0;
-            }
-        }
-    }
-
 
     /**
      *
@@ -440,208 +448,11 @@ class BlocksImport extends AbstractImport
     }
 
     /**
-     * @return array
+     * @return BlocksCollection
      */
-    public function getImportBlockData()
+    public function getBlocksCollection()
     {
-        return $this->_blocksCollection->getAggregatedBlocks();
-    }
-
-    /**
-     * @return array
-     */
-    public function getCurrentBlockData()
-    {
-        $currentBlocks = [];
-        $globalSettings = ['show_in_global', 'show_in_pages'];
-        $themeTemplates = Template::where('theme_id', '=', $this->_additionalData['theme']->id)->get()->keyBy('id');
-        $themeTemplateIds = $themeTemplates->keys()->toArray();
-        $templateBlocks = TemplateBlock::whereIn('template_id', $themeTemplateIds)->get()->groupBy('block_id');
-        $themeBlocks = ThemeBlock::where('theme_id', '=', $this->_additionalData['theme']->id)->get()->keyBy('block_id');
-        foreach ($themeBlocks as $blockId => $themeBlock) {
-            $currentBlock = Block::preload($blockId);
-            if ($currentBlock->exists) {
-                $currentBlocks[$currentBlock->name] = [
-                    'block' => $currentBlock->getAttributes(),
-                    'templates' =>array_diff($themeTemplateIds, explode(',', $themeBlock->exclude_templates))
-                ];
-                foreach ($globalSettings as $globalSetting) {
-                    $currentBlocks[$currentBlock->name]['global'][$globalSetting] = $themeBlock->$globalSetting;
-                }
-            }
-        }
-        foreach ($templateBlocks as $blockId => $templateBlock) {
-            $currentBlock = Block::preload($blockId);
-            if ($currentBlock->exists && !array_key_exists($currentBlock->name, $currentBlocks)) {
-                $currentBlocks[$currentBlock->name] = [
-                    'block' => $currentBlock->getAttributes(),
-                    'templates' => $templateBlock->keyBy('template_id')->keys()->toArray()
-                ];
-            }
-        }
-        $blockIds = array_map(function($currentBlock) {
-            return $currentBlock['block']['id'];
-        }, $currentBlocks);
-        $currentRepeaters = BlockRepeater::whereIn('block_id', $blockIds)->get()->keyBy('block_id');
-        foreach ($currentRepeaters as $blockId => $currentRepeater) {
-            $currentRepeaterBlock = Block::preload($blockId);
-            if ($currentRepeaterBlock->exists) {
-                $currentRepeaterChildBlockIds = explode(',', $currentRepeater->blocks);
-                $currentRepeaterChildBlockNames = [];
-                foreach ($currentRepeaterChildBlockIds as $currentRepeaterChildBlockId) {
-                    $currentRepeaterChildBlock = Block::preload($currentRepeaterChildBlockId);
-                    if ($currentRepeaterChildBlock->exists) {
-                        $currentRepeaterChildBlockNames[] = $currentRepeaterChildBlock->name;
-                        if (!array_key_exists($currentRepeaterChildBlock->name, $currentBlocks)) {
-                            $currentBlocks[$currentRepeaterChildBlock->name]['block'] = $currentRepeaterChildBlock->getAttributes();
-                        }
-                        if (!array_key_exists('other_view', $currentBlocks[$currentRepeaterChildBlock->name])) {
-                            $currentBlocks[$currentRepeaterChildBlock->name]['other_view'] = [];
-                        }
-                        if (!array_key_exists('repeaters', $currentBlocks[$currentRepeaterChildBlock->name]['other_view'])) {
-                            $currentBlocks[$currentRepeaterChildBlock->name]['other_view']['repeaters'] = [];
-                        }
-                        $currentBlocks[$currentRepeaterChildBlock->name]['other_view']['repeaters'][] = $currentRepeaterBlock->name;
-                    }
-                }
-                $currentBlocks[$currentRepeaterBlock->name]['other_view']['repeater_children'] = $currentRepeaterChildBlockNames;
-            }
-        }
-        foreach ($currentBlocks as $blockName => $dataGroups) {
-            if (!array_key_exists('global', $dataGroups)) {
-                foreach ($globalSettings as $globalSetting) {
-                    $currentBlocks[$blockName]['global'][$globalSetting] = 0;
-                }
-            }
-            if (!array_key_exists('templates', $dataGroups)) {
-                $currentBlocks[$blockName]['templates'] = [];
-            } else {
-                $templateNames = [];
-                foreach ($dataGroups['templates'] as $templateId) {
-                    if ($themeTemplates->has($templateId)) {
-                        $templateNames[] = $themeTemplates[$templateId]->template;
-                    }
-                }
-                $currentBlocks[$blockName]['templates'] = $templateNames;
-            }
-            if (!array_key_exists('other_view', $dataGroups)) {
-                $currentBlocks[$blockName]['other_view'] = [];
-            }
-            unset($currentBlocks[$blockName]['block']['created_at']);
-            unset($currentBlocks[$blockName]['block']['updated_at']);
-        }
-        return $currentBlocks;
-    }
-
-    /**
-     *
-     */
-    public function getImportBlockChanges()
-    {
-        $currentBlocks = $this->getCurrentBlockData();
-        $importBlocks = $this->getImportBlockData();
-        $blockChanges = [];
-        // all imported block to create or update
-        foreach ($importBlocks as $blockName => $dataGroups) {
-            $blockChanges[$blockName] = [];
-            foreach ($dataGroups as $dataGroup => $importBlockData) {
-                $blockChanges[$blockName][$dataGroup] = [];
-                if (array_key_exists($blockName, $currentBlocks)) {
-                    $currentBlockData = array_key_exists($dataGroup, $currentBlocks[$blockName]) ? $currentBlocks[$blockName][$dataGroup] : [];
-                    if (in_array($dataGroup, ['block', 'global'])) {
-                        foreach ($importBlockData as $field => $value) {
-                            if ($currentBlockData[$field] != $value) {
-                                $blockChanges[$blockName]['display_class'] = 'update';
-                                if ($dataGroup == 'global') {
-                                    $blockChanges[$blockName]['update_templates'] = 1;
-                                }
-                            }
-                        }
-                    }
-                    if ($dataGroup == 'templates' && (array_diff($currentBlockData, $importBlockData) || array_diff($importBlockData, $currentBlockData))) {
-                        $blockChanges[$blockName]['display_class'] = 'update';
-                        $blockChanges[$blockName]['update_templates'] = 1;
-                    }
-                    if ($dataGroup == 'other_view') {
-                        foreach (['repeater_children'] as $attribute) {
-                            $currentRepeaterData = array_key_exists($attribute, $currentBlockData) ? $currentBlockData[$attribute] : [];
-                            $importRepeaterData = array_key_exists($attribute, $importBlockData) ? $importBlockData[$attribute] : [];
-                            if ((array_diff($currentRepeaterData, $importRepeaterData) || array_diff($importRepeaterData, $currentRepeaterData))) {
-                                $blockChanges[$blockName]['display_class'] = 'update';
-                                $blockChanges[$blockName]['update_templates'] = 1;
-                            }
-                        }
-                    }
-                } else {
-                    $blockChanges[$blockName]['display_class'] = 'new';
-                    $currentBlockData = [];
-                    if ($dataGroup == 'block') {
-                        $block = Block::preload($blockName);
-                        if ($block->exists) {
-                            $currentBlockData = $block->getAttributes();
-                            unset($currentBlockData['created_at']);
-                            unset($currentBlockData['updated_at']);
-                        }
-                    }
-                }
-                $blockChanges[$blockName][$dataGroup] = ['import' => $importBlockData, 'current' => $currentBlockData];
-            }
-        }
-        // any blocks not found in the import
-        foreach ($currentBlocks as $blockName => $dataGroups) {
-            if (!array_key_exists($blockName, $blockChanges)) {
-                foreach ($dataGroups as $dataGroup => $currentBlockData) {
-                    $blockChanges[$blockName]['display_class'] = 'delete';
-                    if ($dataGroup == 'templates' && !empty($currentBlockData)) {
-                        $blockChanges[$blockName]['update_templates'] = 1;
-                    }
-                    $blockChanges[$blockName][$dataGroup] = ['import' => [], 'current' => $currentBlockData];
-                }
-            }
-        }
-        // update defaults and set info class on blocks found in views that could not be matched to a template
-        foreach ($blockChanges as $blockName => $dataGroups) {
-            if (!array_key_exists('display_class', $dataGroups)) {
-                foreach ($dataGroups['other_view'] as $dataSet => $otherView) {
-                    if (!empty($otherView['category']) || !empty($otherView['other_page'])) {
-                        $blockChanges[$blockName]['display_class'] = 'info';
-                    }
-                }
-            }
-            $canUpdateTemplates = -1;
-            foreach ($dataGroups['templates'] as $dataSet => $templates) {
-                if (!empty($templates)) {
-                    $canUpdateTemplates = 0;
-                }
-                $blockChanges[$blockName]['other_view'][$dataSet] += [
-                    'repeaters' => [],
-                    'repeater_children' => []
-                ];
-            }
-            $blockChanges[$blockName]['display_class'] = array_key_exists('display_class', $dataGroups) ? $dataGroups['display_class'] : 'none';
-            $blockChanges[$blockName]['update_templates'] = array_key_exists('update_templates', $dataGroups) ? $dataGroups['update_templates'] : $canUpdateTemplates;
-        }
-        uasort($blockChanges, [$this, '_orderBlockChanges']);
-        return $blockChanges;
-    }
-
-    /**
-     * @param $a
-     * @param $b
-     * @return int
-     */
-    protected function _orderBlockChanges($a, $b)
-    {
-        $byDisplayClass = ['new' => 1, 'update' => 2, 'delete' => 3, 'info' => 4, 'none' => 5];
-        if ($byDisplayClass[$a['display_class']] == $byDisplayClass[$b['display_class']]) {
-            if ($a['update_templates'] >= 0 && $b['update_templates'] >= 0) {
-                $nameA = !empty($a['block']['import']['name']) ? $a['block']['import']['name'] : $a['block']['current']['name'];
-                $nameB = !empty($b['block']['import']['name']) ? $b['block']['import']['name'] : $b['block']['current']['name'];
-                return strcmp($nameA, $nameB);
-            }
-            return ($a['update_templates'] < $b['update_templates']) ? 1 : -1;
-        }
-        return ($byDisplayClass[$a['display_class']] > $byDisplayClass[$b['display_class']]) ? 1 : -1;
+        return $this->_blocksCollection;
     }
 
     /**
