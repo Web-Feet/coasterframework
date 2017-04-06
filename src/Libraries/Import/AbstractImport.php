@@ -76,6 +76,7 @@ abstract class AbstractImport
     {
         $this->_importFile = $importFile;
         $this->_importFileRequired = $requiredFile;
+        $this->_importedData = false;
         $this->_importData = $this->_importData();
         $this->_fieldMap = $this->fieldMap();
         $this->_hasBeenValidated = false;
@@ -97,9 +98,9 @@ abstract class AbstractImport
         } else {
             $this->_additionalData['theme'] = Theme::where(['theme' => $theme])->first();
         }
-        if (!$this->_importedData) {
+        if (!$this->_importedData && $this->_additionalData['theme']) {
             $this->_importFile = base_path('resources/views/themes/' . $this->_additionalData['theme']->theme . '/import/' . static::IMPORT_FILE_DEFAULT);
-            $this->_importData();
+            $this->_importData = $this->_importData();
         }
         return $this;
     }

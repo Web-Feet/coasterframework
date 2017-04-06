@@ -10,6 +10,7 @@ use CoasterCms\Models\Template;
 use CoasterCms\Models\TemplateBlock;
 use CoasterCms\Models\Theme;
 use CoasterCms\Models\ThemeBlock;
+use Illuminate\Database\Eloquent\Collection;
 use View;
 
 class BlocksImport extends AbstractImport
@@ -31,29 +32,14 @@ class BlocksImport extends AbstractImport
     protected $_templateList;
 
     /**
-     * @var array
-     */
-    protected $_blockData;
-
-    /**
-     * @var array
-     */
-    protected $_blockGlobals;
-
-    /**
-     * @var array
-     */
-    protected $_blockTemplates;
-
-    /**
-     * @var array
-     */
-    protected $_blockOtherViewData;
-
-    /**
      * @var BlocksCollection
      */
     protected $_blocksCollection;
+
+    /**
+     *
+     */
+    const IMPORT_FILE_DEFAULT = 'blocks.csv';
 
     /**
      * @return array
@@ -98,6 +84,18 @@ class BlocksImport extends AbstractImport
     }
 
     /**
+     * BlocksImport constructor.
+     * @param string $importFile
+     * @param bool $requiredFile
+     */
+    public function __construct($importFile = '', $requiredFile = false)
+    {
+        parent::__construct($importFile, $requiredFile);
+        $this->_blocksCollection = new BlocksCollection();
+        $this->_blocksCollection->setScope('csv');
+    }
+
+    /**
      * @return bool
      */
     public function validate()
@@ -136,8 +134,6 @@ class BlocksImport extends AbstractImport
         $formRulesImport = new \CoasterCms\Libraries\Import\Blocks\FormRulesImport();
         $formRulesImport->setTheme($this->_additionalData['theme'])->run();
         $this->_loadTemplateList();
-        $this->_blocksCollection = new BlocksCollection();
-        $this->_blocksCollection->setScope('csv');
     }
 
     /**
@@ -231,7 +227,6 @@ class BlocksImport extends AbstractImport
         $this->_renderThemeFiles();
         // guess the missing data
         $this->_guessMissingData();
-        dd($this->_blocksCollection->getAggregatedBlocks());
     }
 
     /**
@@ -460,9 +455,9 @@ class BlocksImport extends AbstractImport
      */
     public function save()
     {
-        $this->_saveBlockData();
-        $this->_saveBlockTemplates();
-        $this->_saveBlockRepeaters();
+        $allBlockData = $this->_saveBlockData($this->_blocksCollection->getAggregatedBlocks()); // should have block ids after
+        $this->_saveBlockTemplates($allBlockData);
+        $this->_saveBlockRepeaters($allBlockData);
 
         // run import for select blocks (can only be run after blocks have been saved as it saves a block_id)
         $selectOptionsImport = new \CoasterCms\Libraries\Import\Blocks\SelectOptionImport;
@@ -470,70 +465,72 @@ class BlocksImport extends AbstractImport
     }
 
     /**
-     *
+     * @param \CoasterCms\Helpers\Admin\Import\Block[] $allBlockData
+     * @return \CoasterCms\Helpers\Admin\Import\Block[]
      */
-    protected function _saveBlockData()
+    protected function _saveBlockData($allBlockData)
     {
-        foreach ($this->_blockData as $blockName => $blockData) {
+        foreach ($allBlockData as $blockName => $importBlock) {
             $block = Block::preload($blockName);
-            foreach ($blockData as $field => $value) {
+            foreach ($importBlock->blockData as $field => $value) {
                 $block->$field = $value;
             }
             $block->save();
-            $this->_blockData[$blockName]['id'] = $block->id;
+            $this->_blocksCollection->getBlock($blockName, 'db')->setBlockData($block->getAttributes());
         }
+        return $this->_blocksCollection->getAggregatedBlocks(); // return regenerated aggregated blocks
     }
 
     /**
-     *
+     * @param \CoasterCms\Helpers\Admin\Import\Block[] $allBlockData
      */
-    protected function _saveBlockTemplates()
+    protected function _saveBlockTemplates($allBlockData)
     {
-        $themeTemplates = $this->_saveNewTemplates();
-        $themeTemplateIds = $themeTemplates->keyBy('id')->keys()->toArray();
+        $themeTemplates = $this->_saveNewTemplates($allBlockData);
+        $themeTemplateIds = $themeTemplates->pluck('id')->toArray();
         $templateBlocks = TemplateBlock::whereIn('template_id', $themeTemplateIds)->get()->groupBy('block_id');
         $themeBlocks = ThemeBlock::where('theme_id', '=', $this->_additionalData['theme']->id)->get()->keyBy('block_id');
 
-        foreach ($this->_blockData as $blockName => $blockData) {
-            $newTemplates = array_key_exists($blockName, $this->_blockTemplates) ? $this->_blockTemplates[$blockName] : [];
+        foreach ($allBlockData as $blockName => $importBlock) {
             $newTemplateIds = array_map(function ($template) use ($themeTemplates) {
                 return $themeTemplates[$template]->id;
-            }, $newTemplates);
-            if ($this->_blockGlobals[$blockName]['show_in_global'] || $this->_blockGlobals[$blockName]['show_in_pages']) {
+            }, $importBlock->templates);
+            if ($importBlock->globalData['show_in_global'] || $importBlock->globalData['show_in_pages']) {
                 // save as a theme block (& remove template blocks)
-                $themeBlock = $themeBlocks->has($blockData['id']) ? $themeBlocks[$blockData['id']] : new ThemeBlock;
+                $themeBlock = $themeBlocks->has($importBlock->blockData['id']) ? $themeBlocks[$importBlock->blockData['id']] : new ThemeBlock;
                 $themeBlock->theme_id = $this->_additionalData['theme']->id;
-                $themeBlock->block_id = $blockData['id'];
+                $themeBlock->block_id = $importBlock->blockData['id'];
                 $themeBlock->exclude_templates = implode(',', array_diff($themeTemplateIds, $newTemplateIds));
-                $themeBlock->show_in_global = $this->_blockGlobals[$blockName]['show_in_global'];
-                $themeBlock->show_in_pages = $this->_blockGlobals[$blockName]['show_in_pages'];
+                $themeBlock->show_in_global = $importBlock->globalData['show_in_global'];
+                $themeBlock->show_in_pages = $importBlock->globalData['show_in_pages'];
                 $themeBlock->save();
-                TemplateBlock::where('block_id', '=', $blockData['id'])->whereIn('template_id', $themeTemplateIds)->delete();
+                TemplateBlock::where('block_id', '=', $importBlock->blockData['id'])->whereIn('template_id', $themeTemplateIds)->delete();
             } else {
                 // save a template blocks (& remove theme block)
-                $existingTemplateIds = $templateBlocks->has($blockData['id']) ? $templateBlocks[$blockData['id']]->keyBy('template_id')->keys()->toArray() : [];
+                $existingTemplateIds = $templateBlocks->has($importBlock->blockData['id']) ? $templateBlocks[$importBlock->blockData['id']]->pluck('template_id')->toArray() : [];
                 $addTemplateIds = array_diff($newTemplateIds, $existingTemplateIds);
                 foreach ($addTemplateIds as $templateId) {
                     $newTemplateBlock = new TemplateBlock;
-                    $newTemplateBlock->block_id = $blockData['id'];
+                    $newTemplateBlock->block_id = $importBlock->blockData['id'];
                     $newTemplateBlock->template_id = $templateId;
                     $newTemplateBlock->save();
                 }
                 $deleteTemplateIds = array_diff($existingTemplateIds, $newTemplateIds);
-                TemplateBlock::where('block_id', '=', $blockData['id'])->whereIn('template_id', $deleteTemplateIds)->delete();
-                ThemeBlock::where('block_id', '=', $blockData['id'])->where('theme_id', '=', $this->_additionalData['theme']->id)->delete();
+                TemplateBlock::where('block_id', '=', $importBlock->blockData['id'])->whereIn('template_id', $deleteTemplateIds)->delete();
+                ThemeBlock::where('block_id', '=', $importBlock->blockData['id'])->where('theme_id', '=', $this->_additionalData['theme']->id)->delete();
             }
         }
     }
 
     /**
-     *
+     * @param \CoasterCms\Helpers\Admin\Import\Block[] $allBlockData
+     * @return Collection
      */
-    protected function _saveNewTemplates()
+    protected function _saveNewTemplates($allBlockData)
     {
         $themeTemplates = Template::where('theme_id', '=', $this->_additionalData['theme']->id)->get()->keyBy('template');
-        foreach ($this->_blockTemplates as $block => $templates) {
-            foreach ($templates as $template) {
+        foreach ($allBlockData as $blockName => $importBlock) {
+            foreach ($importBlock->templates as $template) {
                 if (!$themeTemplates->has($template)) {
                     $newTemplate = new Template;
                     $newTemplate->theme_id = $this->_additionalData['theme']->id;
@@ -550,18 +547,22 @@ class BlocksImport extends AbstractImport
     }
 
     /**
-     *
+     * @param \CoasterCms\Helpers\Admin\Import\Block[] $allBlockData
      */
-    protected function _saveBlockRepeaters()
+    protected function _saveBlockRepeaters($allBlockData)
     {
         $existingRepeaters = BlockRepeater::get()->keyBy('block_id');
-        foreach ($this->_blockOtherViewData['repeater'] as $repeaterBlockName => $childBlockNames) {
-            $newRepeaterData = $existingRepeaters->has($this->_blockData[$repeaterBlockName]['id']) ? $existingRepeaters[$this->_blockData[$repeaterBlockName]['id']] : new BlockRepeater;
-            $newRepeaterData->block_id = $this->_blockData[$repeaterBlockName]['id'];
-            $newRepeaterData->blocks = implode(',', array_map(function($childBlockName) {
-                return $this->_blockData[$childBlockName]['id'];
-            }, $childBlockNames));
-            $newRepeaterData->save();
+        foreach ($allBlockData as $blockName => $importBlock) {
+            $newRepeaterData = $existingRepeaters->has($importBlock->blockData['id']) ? $existingRepeaters[$importBlock->blockData['id']] : new BlockRepeater;
+            $newRepeaterData->block_id = $importBlock->blockData['id'];
+            $newRepeaterData->blocks = implode(',', array_map(function ($childBlockName) use ($allBlockData) {
+                return $allBlockData[$childBlockName]->blockData['id'];
+            }, $importBlock->repeaterChildBlocks));
+            if ($newRepeaterData->blocks) {
+                $newRepeaterData->save();
+            } else {
+                $newRepeaterData->delete();
+            }
         }
     }
 

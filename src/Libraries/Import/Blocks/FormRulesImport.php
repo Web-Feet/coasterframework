@@ -108,7 +108,7 @@ class FormRulesImport extends AbstractImport
     protected function _afterRun()
     {
         foreach ($this->_formTemplateRulesToDelete as $template => $fields) {
-            self::where('form_template', '=', $template)->whereIn('field', array_keys($fields))->delete();
+            BlockFormRule::where('form_template', '=', $template)->whereIn('field', array_keys($fields))->delete();
         }
     }
 

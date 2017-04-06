@@ -186,14 +186,16 @@ class ThemesController extends Controller
 
     public function getUpdate($themeId)
     {
-        $theme = Theme::find($themeId);
-        $blocksImport = new BlocksImport(base_path('blocks.csv'));
+        $theme = Theme::find($themeId) ?: new Theme();
+        $blocksImport = new BlocksImport();
         $blocksImport->setTheme($theme)->run();
+        $importBlocks = $blocksImport->getBlocksCollection();
 
         $this->layoutData['content'] = View::make('coaster::pages.themes.update',
             [
                 'theme' => $theme,
-                'blockChanges' => $blocksImport->getImportBlockChanges(),
+                'importBlocks' => $importBlocks,
+                'importBlocksList' => $importBlocks->getBlockListInfo(),
                 'typeList' => $this->_typeList(),
                 'categoryList' => $this->_categoryList(),
                 'templateList' => []
