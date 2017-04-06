@@ -19,11 +19,6 @@ class BlocksCollection
     protected $_scopes;
 
     /**
-     * @var Block[]
-     */
-    protected $_cachedAggregated;
-
-    /**
      * BlocksCollection constructor.
      */
     public function __construct()
@@ -31,6 +26,7 @@ class BlocksCollection
         $this->_blocks = [];
         $this->_scope = 'file';
         $this->_scopes = [
+            'form' => 150,
             'csv' => 100,
             'block_' => 60,
             'file' => 50,
@@ -145,6 +141,15 @@ class BlocksCollection
     }
 
     /**
+     * @return array
+     */
+    public function getScopes()
+    {
+        return $this->_scopes;
+    }
+
+    /**
+     * Return scopes with order values
      * @param array $scopes
      * @return array
      */
@@ -159,32 +164,6 @@ class BlocksCollection
         } else {
             return $this->_scopes;
         }
-    }
-
-    /**
-     * @param bool $force
-     * @return Block[]
-     */
-    protected function _cachedAggregated($force = false)
-    {
-        if ($force || !isset($this->_cachedAggregated)) {
-            $this->_cachedAggregated = $this->getAggregatedBlocks();
-        }
-        return $this->_cachedAggregated;
-    }
-
-    /**
-     * @param string $blockName
-     * @param bool $force
-     * @return Block
-     */
-    protected function _cachedAggregatedBlock($blockName, $force = false)
-    {
-        $aggregatedBlocks = $this->_cachedAggregated($force);
-        if (array_key_exists($blockName, $aggregatedBlocks)) {
-            return $aggregatedBlocks[$blockName];
-        }
-        return new Block(['name' => $blockName]);
     }
 
     /**
@@ -221,7 +200,7 @@ class BlocksCollection
             if (!($importBlock->templates || $importBlock->inRepeaterBlocks || $importBlock->inCategoryTemplates || $importBlock->specifiedPageIds)) {
                 $blockList[$blockName]['display_class'] = 'delete';
             } elseif (!($currentBlock->templates || $currentBlock->inRepeaterBlocks || $currentBlock->inCategoryTemplates || $currentBlock->specifiedPageIds)) {
-                $blockList[$blockName]['display_class'] = 'new';
+                $blockList[$blockName]['display_class'] = ($blockList[$blockName]['display_class'] == 'info') ? 'info' : 'new';
             } elseif ($this->hasChanges($importBlock, 'globalData')) {
                 $blockList[$blockName]['display_class'] = 'update';
                 $blockList[$blockName]['update_templates'] = 1;

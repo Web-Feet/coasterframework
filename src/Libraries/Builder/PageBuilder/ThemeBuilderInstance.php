@@ -175,6 +175,14 @@ class ThemeBuilderInstance extends PageBuilderInstance
 
         // load block details
         $block = new Block();
+        $dbBlock = Block::preload($blockName);
+        if ($dbBlock->exists) { // if block exists in db then load data
+            $checkDb = $this->_blocksCollection->getBlock($blockName, 'db');
+            if (count($checkDb->blockData) == 1) { // if block data not loaded from db
+                $checkDb->setBlockData($dbBlock->getAttributes())
+                    ->setGlobalData(['show_in_global' => 0, 'show_in_pages' => 0]);
+            }
+        }
         $aggregatedBlock = $this->_blocksCollection->getAggregatedBlock($blockName);
         foreach ($aggregatedBlock->blockData as $field => $value) {
             $block->$field = $value;

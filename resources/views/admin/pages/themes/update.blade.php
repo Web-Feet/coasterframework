@@ -17,8 +17,8 @@
     <div class="row">
         <div class="col-md-4 well-sm">
             <h4>Summary:</h4>
-            <p><b>Templates Found:</b> </p>
-            <p><b>Number of blocks found:</b> </p>
+            <p><b>Templates Used:</b> </p>
+            <p><b>Number of blocks found:</b> {{ count($importBlocksList) }}</p>
         </div>
         <div class="col-md-8 well-sm">
             <h4>Key:</h4>
@@ -63,35 +63,36 @@
                 <tr class="{{ $rowClasses[$listInfo['display_class']] }}">
                     <td>{!! ($listInfo['update_templates'] >= 0)?Form::checkbox('block['.$blockName.'][update_templates]', 1, $listInfo['update_templates'], ['class' => 'form-control run-template-updates']):'' !!}</td>
                     <td><i class="glyphicon glyphicon-info-sign block_note" data-note="{{ $blockName }}_note"></i> {!! $blockName !!}</td>
-                    <td>{!! Form::text('block['.$blockName.'][label]', $importBlock->blockData['label'], ['class' => 'form-control']) !!}</td>
-                    <td>{!! ($listInfo['update_templates'] >= 0)?Form::select('block['.$blockName.'][category_id]', $categoryList, $importBlock->blockData['category_id'], ['class' => 'form-control']):'' !!}</td>
-                    <td>{!! Form::select('block['.$blockName.'][type]', $typeList, $importBlock->blockData['type'], ['class' => 'form-control']) !!}</td>
-                    <td>{!! ($listInfo['update_templates'] >= 0)?Form::checkbox('block['.$blockName.'][show_in_global]', 1, $importBlock->globalData['show_in_global'], ['class' => 'form-control based-on-template-updates']):'' !!}</td>
-                    <td>{!! ($listInfo['update_templates'] >= 0)?Form::checkbox('block['.$blockName.'][show_in_pages]', 1, $importBlock->globalData['show_in_pages'], ['class' => 'form-control based-on-template-updates']):'' !!}</td>
+                    <td>{!! Form::text('block['.$blockName.'][blockData][label]', $importBlock->blockData['label'], ['class' => 'form-control']) !!}</td>
+                    <td>{!! ($listInfo['update_templates'] >= 0)?Form::select('block['.$blockName.'][blockData][category_id]', $categoryList, $importBlock->blockData['category_id'], ['class' => 'form-control']):'' !!}</td>
+                    <td>{!! Form::select('block['.$blockName.'][blockData][type]', $typeList, $importBlock->blockData['type'], ['class' => 'form-control']) !!}</td>
+                    <td>{!! ($listInfo['update_templates'] >= 0)?Form::checkbox('block['.$blockName.'][globalData][show_in_global]', 1, $importBlock->globalData['show_in_global'], ['class' => 'form-control based-on-template-updates']):'' !!}</td>
+                    <td>{!! ($listInfo['update_templates'] >= 0)?Form::checkbox('block['.$blockName.'][globalData][show_in_pages]', 1, $importBlock->globalData['show_in_pages'], ['class' => 'form-control based-on-template-updates']):'' !!}</td>
                 </tr>
                 <tr class="hidden" id="{{ $blockName }}_note">
                     <td colspan="7" style="padding-bottom: 20px">
                         <div class="col-sm-6">
                             <h4>Current Info (From Database)</h4>
                             @if ($listInfo['display_class'] == 'new')
-                                This is a block is not currently in the theme.<br />
+                                This is a block is not currently in the theme.<br /><br />
                             @else
-                                @if ($currentBlock->templates)
-                                    @if ($globalData = array_filter($currentBlock->globalData))
-                                        This is a theme block that is shown in
-                                            {{ implode(' and ', array_intersect_key(['show_in_pages' => 'pages', 'show_in_global' => 'site-wide content'], $globalData)) }}.<br /><br />
-                                    @endif
-                                    <b>In templates:</b> {!! implode(', ', $currentBlock->templates) !!}<br />
+                                @if ($globalData = array_filter($currentBlock->globalData))
+                                    This is a theme block that is shown in {{ implode(' and ', array_intersect_key(['show_in_pages' => 'pages', 'show_in_global' => 'site-wide content'], $globalData)) }}.<br /><br />
                                 @endif
-                                @if ($currentBlock->inRepeaterBlocks)
-                                    <b>Used by repeater blocks:</b> {!! implode(', ', $currentBlock->inRepeaterBlocks) !!}<br />
+                                @if ($currentBlock->templates || $currentBlock->inRepeaterBlocks)
+                                    @if ($currentBlock->templates)
+                                        <b>In templates:</b> {!! implode(', ', $currentBlock->templates) !!}<br />
+                                    @endif
+                                    @if ($currentBlock->inRepeaterBlocks)
+                                        <b>In repeater blocks:</b> {!! implode(', ', $currentBlock->inRepeaterBlocks) !!}<br />
+                                    @endif
+                                    <br />
                                 @endif
                             @endif
                             @if ($currentBlock->repeaterChildBlocks)
-                                <b>Repeater child blocks:</b> {!! implode(', ', $currentBlock->repeaterChildBlocks) !!}<br />
+                                <b>Has repeater child blocks:</b> {!! implode(', ', $currentBlock->repeaterChildBlocks) !!}<br /><br />
                             @endif
                             @if (count($currentBlock->blockData) > 1)
-                                <br />
                                 @foreach($currentBlock->blockData as $field => $value)
                                     <b>{{ ucwords(str_replace('_', ' ', $field)) }}</b>: <i>{{ $value }}</i><br />
                                 @endforeach
@@ -101,6 +102,21 @@
                         </div>
                         <div class="col-sm-6">
                             <h4>Updates found</h4>
+                            @if ($importBlock->inCategoryTemplates || $importBlock->specifiedPageIds)
+                                Found some instances where the template could not be determined:<br />
+                                @if ($importBlock->inCategoryTemplates)
+                                    <b>Found in category templates:</b> {!! implode(', ', $importBlock->inCategoryTemplates) !!}<br />
+                                @endif
+                                @if ($importBlock->specifiedPageIds)
+                                    <b>Using set page ids:</b> {!! implode(', ', $importBlock->specifiedPageIds) !!}<br />
+                                @endif
+                                <br />
+                            @endif
+                            @if ($updatedGlobalValues = $importBlocks->updatedValues($importBlock, 'globalData'))
+                                @foreach($updatedGlobalValues as $field => $changedValues)
+                                    <b>{{ ucwords(str_replace('_', ' ', $field)) }}</b>: <i>{{ $changedValues['old'] }}</i> => <i>{{ $changedValues['new'] }}</i><br />
+                                @endforeach
+                            @endif
                             @if ($addedToTemplates = $importBlocks->newElements($importBlock, 'templates'))
                                 <b>Added to templates:</b> {!! implode(', ', $addedToTemplates) !!}<br />
                             @endif
@@ -120,13 +136,18 @@
                                 <b>Removed from repeater blocks</b>: {!! implode(', ', $removedFromRepeaterTemplates) !!}<br />
                             @endif
                             @if ($listInfo['display_class'] == 'delete')
-                                Once you update the templates on {{ implode(' and ', array_keys(array_filter([
-                                    'this block' => $currentBlock->templates,
-                                    'the repeater blocks above' => $currentBlock->inRepeaterBlocks
-                                ]))) }} it will be removed from this theme.<br />
-                            @elseif ($addedToTemplates || $removedFromTemplates || $addedToRepeaterTemplates || $removedFromRepeaterTemplates)
+                                @if ($listInfo['update_templates'] >= 0 || $removedFromTemplates || $removedFromRepeaterTemplates)
+                                    Once you update the templates on {{ implode(' and ', array_keys(array_filter([
+                                        'this block' => $currentBlock->templates,
+                                        'the repeater blocks above' => $currentBlock->inRepeaterBlocks
+                                    ]))) }} it will be removed from this theme.<br />
+                                @else
+                                    Block declared, but not found in files.<br />
+                                    To delete remove the declaration (possibly in the import csv).
+                                @endif
+                            @elseif ($addedToTemplates || $removedFromTemplates || $addedToRepeaterTemplates || $removedFromRepeaterTemplates || $updatedGlobalValues)
                                 Changes will be saved when templates on {{ implode(' and ', array_keys(array_filter([
-                                    'this block' => $addedToTemplates || $removedFromTemplates,
+                                    'this block' => $addedToTemplates || $removedFromTemplates  || $updatedGlobalValues,
                                     'the repeater blocks above' => $addedToRepeaterTemplates || $removedFromRepeaterTemplates
                                 ]))) }} are updated.<br />
                             @endif
@@ -134,10 +155,10 @@
                                 <br />
                             @endif
                             @if ($listInfo['display_class'] != 'delete' && $updatedValues = $importBlocks->updatedValues($importBlock, 'blockData'))
+                                Data changes will always be saved on update.<br />
                                 @foreach($updatedValues as $field => $changedValues)
                                     <b>{{ ucwords(str_replace('_', ' ', $field)) }}</b>: <i>{{ $changedValues['old'] }}</i> => <i>{{ $changedValues['new'] }}</i><br />
                                 @endforeach
-                                Data changes will always be saved on update.
                             @endif
                         </div>
                     </td>

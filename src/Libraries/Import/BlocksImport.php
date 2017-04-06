@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Libraries\Import;
 
 use CoasterCms\Helpers\Admin\Import\BlocksCollection;
+use CoasterCms\Helpers\Cms\File\Directory;
 use CoasterCms\Helpers\Cms\Page\PageLoaderDummy;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\Block;
@@ -221,10 +222,12 @@ class BlocksImport extends AbstractImport
      */
     protected function _afterRun()
     {
-        // load data from db, doesn't have priority over data found in theme files but can be useful in guesses
+        // load data from db for blocks in theme, doesn't have priority over data found in theme files but can be useful in guesses
         $this->_loadDbData();
         // theme render (includes type guess in themebuilder)
         $this->_renderThemeFiles();
+        // load database repeater data (quicker to do at end as additional db blocks may have been loaded in the render above)
+        $this->_loadDbRepeaterData();
         // guess the missing data
         $this->_guessMissingData();
     }
@@ -232,7 +235,7 @@ class BlocksImport extends AbstractImport
     /**
      * @param string $scope
      */
-    public function _loadDbData($scope = 'db')
+    protected function _loadDbData($scope = 'db')
     {
         $this->_blocksCollection->setScope($scope);
         $themeTemplates = Template::where('theme_id', '=', $this->_additionalData['theme']->id)->get();
@@ -256,12 +259,20 @@ class BlocksImport extends AbstractImport
                     ->addTemplates($themeTemplates->whereIn('id', $templateBlock->pluck('template_id')->toArray())->pluck('template')->toArray());
             }
         }
+    }
+
+    /**
+     * @param string $scope
+     */
+    protected function _loadDbRepeaterData($scope = 'db')
+    {
+        $this->_blocksCollection->setScope($scope);
         $blockIds = array_map(function(\CoasterCms\Helpers\Admin\Import\Block $currentBlock) {
             return $currentBlock->blockData['id'];
         }, $this->_blocksCollection->getBlocks('db'));
-        $currentRepeaters = BlockRepeater::whereIn('block_id', $blockIds)->get()->keyBy('block_id');
+        $currentRepeaters = BlockRepeater::whereIn('block_id', $blockIds)->get();
         foreach ($currentRepeaters as $blockId => $currentRepeater) {
-            $currentRepeaterBlock = Block::preload($blockId);
+            $currentRepeaterBlock = Block::preload($currentRepeater->block_id);
             if ($currentRepeaterBlock->exists) {
                 $currentRepeaterChildBlockIds = explode(',', $currentRepeater->blocks);
                 $currentRepeaterChildBlockNames = [];
@@ -451,11 +462,12 @@ class BlocksImport extends AbstractImport
     }
 
     /**
-     *
+     * @param array $updateTemplates
      */
-    public function save()
+    public function save($updateTemplates)
     {
         $allBlockData = $this->_saveBlockData($this->_blocksCollection->getAggregatedBlocks()); // should have block ids after
+        $allBlockData = array_intersect_key($allBlockData, array_filter($updateTemplates));
         $this->_saveBlockTemplates($allBlockData);
         $this->_saveBlockRepeaters($allBlockData);
 
@@ -555,8 +567,8 @@ class BlocksImport extends AbstractImport
         foreach ($allBlockData as $blockName => $importBlock) {
             $newRepeaterData = $existingRepeaters->has($importBlock->blockData['id']) ? $existingRepeaters[$importBlock->blockData['id']] : new BlockRepeater;
             $newRepeaterData->block_id = $importBlock->blockData['id'];
-            $newRepeaterData->blocks = implode(',', array_map(function ($childBlockName) use ($allBlockData) {
-                return $allBlockData[$childBlockName]->blockData['id'];
+            $newRepeaterData->blocks = implode(',', array_map(function ($childBlockName) {
+                return $this->_blocksCollection->getBlock($childBlockName, 'db')->blockData['id'];
             }, $importBlock->repeaterChildBlocks));
             if ($newRepeaterData->blocks) {
                 $newRepeaterData->save();
@@ -564,6 +576,23 @@ class BlocksImport extends AbstractImport
                 $newRepeaterData->delete();
             }
         }
+    }
+
+    /**
+     *
+     */
+    public function cleanCsv()
+    {
+       // TODO remove data found in other scopes from csv
+        $scopes = $this->_blocksCollection->getScopes();
+        unset($scopes['csv']);
+        $importBlocks = $this->_blocksCollection->getAggregatedBlocks(array_keys($scopes));
+        $csvBlocks = $this->_blocksCollection->getBlocks('csv');
+
+
+
+
+        //Directory::remove(pathinfo($this->_importFile, PATHINFO_DIRNAME) . '/blocks');
     }
 
 }

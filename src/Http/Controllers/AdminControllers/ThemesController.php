@@ -205,19 +205,32 @@ class ThemesController extends Controller
 
     public function postUpdate($themeId)
     {
-        $blocks = Request::input('block');
-        $theme = Theme::find($themeId);
+        $postBlocks = Request::input('block');
+        $theme = Theme::find($themeId) ?: new Theme();
+        $blocksImport = new BlocksImport();
+        $blocksImport->setTheme($theme)->run();
+        $importBlocks = $blocksImport->getBlocksCollection();
 
-        if (!empty($blocks)) {
-            BlockUpdater::updateTheme($theme, $blocks);
+        $importBlocks->setScope('form'); // all form data has priority
+        $updateTemplates = [];
+        foreach ($postBlocks as $blockName => $postData) {
+            $updateTemplates[$blockName] = array_key_exists('update_templates', $postData) ? $postData['update_templates'] : 0;
+            $postData['globalData'] = array_key_exists('globalData', $postData) ? $postData['globalData'] : [];
+            $postData['globalData'] += [
+                'show_in_global' => 0,
+                'show_in_pages' => 0
+            ];
+            $importBlocks->getBlock($blockName)
+                ->setBlockData($postData['blockData'])
+                ->setGlobalData($postData['globalData']);
         }
+        $blocksImport->save($updateTemplates);
+        $blocksImport->cleanCsv();
 
-        $this->layoutData['content'] = View::make('coaster::pages.themes.update',
-            [
-                'theme' => $theme,
-                'saved' => true
-            ]
-        );
+        $this->layoutData['content'] = View::make('coaster::pages.themes.update', [
+            'theme' => $theme,
+            'saved' => true
+        ]);
     }
 
     public function getForms($template = null)

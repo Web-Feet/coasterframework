@@ -29,7 +29,6 @@ class CategoryImport extends AbstractImport
         return [
             'Block Category' => [
                 'mapTo' => 'name',
-                'mapFn' => '_toLower',
                 'validate' => 'required'
             ],
             'Category Order' => [
