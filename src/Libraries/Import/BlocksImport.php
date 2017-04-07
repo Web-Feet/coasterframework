@@ -49,37 +49,40 @@ class BlocksImport extends AbstractImport
     {
         return [
             'Block Name' => [
-                'mapTo' => 'name',
+                'mapTo' => ['setBlockData', 'name'],
                 'mapFn' => '_toLowerTrim',
                 'validate' => 'required'
             ],
             'Block Label' => [
-                'mapTo' => 'label'
+                'mapTo' => ['setBlockData', 'label']
             ],
             'Block Note' => [
-                'mapTo' => 'note'
+                'mapTo' => ['setBlockData', 'note']
             ],
             'Block Category' => [
-                'mapTo' => 'category_id',
+                'mapTo' => ['setBlockData', 'category_id'],
                 'mapFn' => '_toCategoryId'
             ],
             'Block Type' => [
-                'mapTo' => 'type'
+                'mapTo' => ['setBlockData', 'type']
             ],
             'Global (show in site-wide)' => [
-                'mapFn' => '_mapGlobalSiteWide'
+                'mapTo' => ['setGlobalData', 'show_in_global'],
+                'mapFn' => '_toBoolInt'
             ],
             'Global (show in pages)' => [
-                'mapFn' => '_mapGlobalPages'
+                'mapTo' => ['setGlobalData', 'show_in_pages'],
+                'mapFn' => '_toBoolInt'
             ],
             'Templates' => [
+                'mapTo' => 'addTemplates',
                 'mapFn' => '_mapTemplates'
             ],
             'Block Order' => [
-                'mapTo' => 'order'
+                'mapTo' => ['setBlockData', 'order']
             ],
             'Block Active' => [
-                'mapTo' => 'active'
+                'mapTo' => ['setBlockData', 'active']
             ]
         ];
     }
@@ -152,7 +155,15 @@ class BlocksImport extends AbstractImport
     protected function _mapTo($importInfo, $importFieldData)
     {
         if ($importFieldData !== '' && $this->_currentBlockName !== '') {
-            $this->_blocksCollection->getBlock($this->_currentBlockName)->setBlockData([$importInfo['mapTo'] => $importFieldData]);
+            $importBlock = $this->_blocksCollection->getBlock($this->_currentBlockName);
+            $importInfo['mapTo'] = is_array($importInfo['mapTo']) ? $importInfo['mapTo'] : [$importInfo['mapTo']];
+            if (count($importInfo['mapTo']) == 2) {
+                list($function, $field) = $importInfo['mapTo'];
+                $importBlock->$function([$field => $importFieldData]);
+            } else {
+                $function = reset($importInfo['mapTo']);
+                $importBlock->$function($importFieldData);
+            }
         }
     }
 
@@ -179,42 +190,16 @@ class BlocksImport extends AbstractImport
 
     /**
      * @param string $importFieldData
+     * @return string
      */
     protected function _mapTemplates($importFieldData)
     {
         if ($importFieldData !== '' && $this->_currentBlockName !== '') {
             $templates = ($importFieldData == '*') ? $this->_templateList : explode(',', $importFieldData);
-            $this->_blocksCollection->getBlock($this->_currentBlockName)->addTemplates($templates);
             $this->_templateList = array_unique(array_merge($this->_templateList, $templates));
+            return $templates;
         }
-    }
-
-    /**
-     * @param string $importFieldData
-     * @param string $globalSetting
-     */
-    protected function _mapGlobal($importFieldData, $globalSetting = '')
-    {
-        if ($importFieldData !== '' && $this->_currentBlockName !== '') {
-            $value = $this->_toBool($importFieldData) ? 1 : 0;
-            $this->_blocksCollection->getBlock($this->_currentBlockName)->setGlobalData([$globalSetting => $value]);
-        }
-    }
-
-    /**
-     * @param string $importFieldData
-     */
-    protected function _mapGlobalPages($importFieldData)
-    {
-        $this->_mapGlobal($importFieldData, 'show_in_pages');
-    }
-
-    /**
-     * @param string $importFieldData
-     */
-    protected function _mapGlobalSiteWide($importFieldData)
-    {
-        $this->_mapGlobal($importFieldData, 'show_in_global');
+        return '';
     }
 
     /**
@@ -269,7 +254,7 @@ class BlocksImport extends AbstractImport
         $this->_blocksCollection->setScope($scope);
         $blockIds = array_map(function(\CoasterCms\Helpers\Admin\Import\Block $currentBlock) {
             return $currentBlock->blockData['id'];
-        }, $this->_blocksCollection->getBlocks('db'));
+        }, $this->_blocksCollection->getBlocks($scope));
         $currentRepeaters = BlockRepeater::whereIn('block_id', $blockIds)->get();
         foreach ($currentRepeaters as $blockId => $currentRepeater) {
             $currentRepeaterBlock = Block::preload($currentRepeater->block_id);
@@ -583,16 +568,61 @@ class BlocksImport extends AbstractImport
      */
     public function cleanCsv()
     {
-       // TODO remove data found in other scopes from csv
-        $scopes = $this->_blocksCollection->getScopes();
-        unset($scopes['csv']);
-        $importBlocks = $this->_blocksCollection->getAggregatedBlocks(array_keys($scopes));
-        $csvBlocks = $this->_blocksCollection->getBlocks('csv');
-
-
-
-
-        //Directory::remove(pathinfo($this->_importFile, PATHINFO_DIRNAME) . '/blocks');
+        if ($this->_importData) {
+            $scopes = $this->_blocksCollection->getScopes();
+            unset($scopes['csv']);
+            $importBlocks = $this->_blocksCollection->getAggregatedBlocks(array_keys($scopes));
+            $fieldMap = $this->fieldMap();
+            $newCsvData = [array_keys(reset($this->_importData))];
+            $blockCategories = BlockCategory::get()->keyBy('id');
+            foreach ($this->_importData as $importRowData) {
+                $importBlock = $importBlocks[$importRowData['Block Name']];
+                $hasUpdates = false;
+                $updatedFields = [];
+                foreach ($importRowData as $importField => $importValue) {
+                    $fieldData = '';
+                    if ($importField == 'Block Name') {
+                        $fieldData = $importValue;
+                    } elseif ($importValue !== '') {
+                        $mapData = $fieldMap[$importField];
+                        if (count($mapData['mapTo']) == 2) {
+                            list($function, $field) = $mapData['mapTo'];
+                            $property = lcfirst(substr($function, 3));
+                            $fieldData = $this->_blocksCollection->updatedValue($importBlock, $property, $field, 'csv') ?: '';
+                        } else {
+                            $property = str_replace(['addTemplates'], ['templates'], $mapData['mapTo']);
+                            $fieldData = $this->_blocksCollection->changedElements($importBlock, $property, 'csv') ?: '';
+                        }
+                        if ($fieldData !== '') {
+                            $hasUpdates = true;
+                            if (array_key_exists('mapFn', $mapData)) {
+                                switch ($mapData['mapFn']) {
+                                    case '_mapTemplates':
+                                        $fieldData = ($importValue == '*') ? '*' : implode(',', $fieldData);
+                                        break;
+                                    case '_toBoolInt':
+                                        $fieldData = $fieldData ? 'yes' : 'no';
+                                        break;
+                                    case '_toCategoryId':
+                                        $fieldData = $blockCategories->has($fieldData) ? $blockCategories->get($fieldData)->name : '';
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                    $updatedFields[] = $fieldData;
+                }
+                if ($hasUpdates) {
+                    $newCsvData[] = $updatedFields + [0 => $importRowData['Block Name']];
+                }
+            }
+            $importFileHandle = fopen($this->_importFile, 'w');
+            foreach ($newCsvData as $newCsvRow) {
+                fputcsv($importFileHandle, $newCsvRow);
+            }
+            fclose($importFileHandle);
+        }
+        Directory::remove(pathinfo($this->_importFile, PATHINFO_DIRNAME) . '/blocks');
     }
 
 }

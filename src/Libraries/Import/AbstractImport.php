@@ -399,7 +399,19 @@ abstract class AbstractImport
         if ($importFieldData !== '') {
             return (empty($importFieldData) || strtolower($importFieldData) == 'true' || strtolower($importFieldData) == 'yes' || strtolower($importFieldData) == 'y');
         }
-        return null;
+        return '';
+    }
+
+    /**
+     * @param string $importFieldData
+     * @return bool|null
+     */
+    protected function _toBoolInt($importFieldData)
+    {
+        if ($importFieldData !== '') {
+            return $this->_toBool($importFieldData) ? 1 : 0;
+        }
+        return '';
     }
 
 }

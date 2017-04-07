@@ -151,7 +151,7 @@
                                     'the repeater blocks above' => $addedToRepeaterTemplates || $removedFromRepeaterTemplates
                                 ]))) }} are updated.<br />
                             @endif
-                            @if ($addedToTemplates || $removedFromTemplates || $addedRepeaterChildren || $removedRepeaterChildren || $addedToRepeaterTemplates || $removedFromRepeaterTemplates)
+                            @if ($addedToTemplates || $removedFromTemplates || $addedRepeaterChildren || $removedRepeaterChildren || $addedToRepeaterTemplates || $removedFromRepeaterTemplates || $updatedGlobalValues)
                                 <br />
                             @endif
                             @if ($listInfo['display_class'] != 'delete' && $updatedValues = $importBlocks->updatedValues($importBlock, 'blockData'))

@@ -230,48 +230,63 @@ class BlocksCollection
     /**
      * @param Block $importBlock
      * @param string $property
+     * @param string $compareToScope
      * @return bool
      */
-    public function hasChanges($importBlock, $property)
+    public function hasChanges($importBlock, $property, $compareToScope = 'db')
     {
         $associativeProperties = ['blockData', 'globalData'];
         if (in_array($property, $associativeProperties)) {
             return (bool) $this->updatedValues($importBlock, $property);
         } else {
-            return $this->newElements($importBlock, $property) || $this->deletedElements($importBlock, $property);
+            return (bool) $this->changedElements($importBlock, $property, $compareToScope);
         }
     }
 
     /**
      * @param Block $importBlock
      * @param string $property
+     * @param string $compareToScope
      * @return array
      */
-    public function newElements($importBlock, $property)
+    public function changedElements($importBlock, $property, $compareToScope = 'db')
     {
-        $currentBlock = $this->getBlock($importBlock->blockData['name'], 'db');
+        return array_merge($this->newElements($importBlock, $property, $compareToScope), $this->deletedElements($importBlock, $property, $compareToScope));
+    }
+
+    /**
+     * @param Block $importBlock
+     * @param string $property
+     * @param string $compareToScope
+     * @return array
+     */
+    public function newElements($importBlock, $property, $compareToScope = 'db')
+    {
+        $currentBlock = $this->getBlock($importBlock->blockData['name'], $compareToScope);
         return array_diff($importBlock->$property, $currentBlock->$property);
     }
 
     /**
      * @param Block $importBlock
      * @param string $property
+     * @param string $compareToScope
      * @return array
      */
-    public function deletedElements($importBlock, $property)
+    public function deletedElements($importBlock, $property, $compareToScope = 'db')
     {
-        $currentBlock = $this->getBlock($importBlock->blockData['name'], 'db');
+        $currentBlock = $this->getBlock($importBlock->blockData['name'], $compareToScope);
         return array_diff($currentBlock->$property, $importBlock->$property);
     }
 
     /**
      * @param Block $importBlock
      * @param string $property
+     * @param string $compareToScope
      * @return array
      */
-    public function updatedValues($importBlock, $property)
+    public function updatedValues($importBlock, $property, $compareToScope = 'db')
     {
-        $currentBlock = $this->getBlock($importBlock->blockData['name'], 'db');
+        $currentBlock = $this->getBlock($importBlock->blockData['name'], $compareToScope);
         $updateValues = [];
         foreach ($importBlock->$property as $field => $importValue) {
             $currentValue = array_key_exists($field, $currentBlock->$property) ? $currentBlock->$property[$field] : '';
@@ -292,6 +307,21 @@ class BlocksCollection
             }
         }
         return $updateValues;
+    }
+
+    /**
+     * @param Block $importBlock
+     * @param string $property
+     * @param string $field
+     * @param string $compareToScope
+     * @return bool
+     */
+    public function updatedValue($importBlock, $property, $field, $compareToScope = 'db')
+    {
+        $currentBlock = $this->getBlock($importBlock->blockData['name'], $compareToScope);
+        $currentValue = array_key_exists($field, $currentBlock->$property) ? $currentBlock->$property[$field] : '';
+        $importValue = array_key_exists($field, $importBlock->$property) ? $importBlock->$property[$field] : '';
+        return $currentValue == $importValue ? false : $importValue;
     }
 
 }
