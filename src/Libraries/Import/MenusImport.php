@@ -61,6 +61,15 @@ class MenusImport extends AbstractImport
     }
 
     /**
+     *
+     */
+    protected function _afterRun()
+    {
+        $menuItems = new Menus\MenuItemsImport();
+        $menuItems->run();
+    }
+
+    /**
      * @param string $importFieldData
      * @return string
      */

@@ -1,5 +1,7 @@
-<?php namespace CoasterCms\Libraries\Import;
+<?php namespace CoasterCms\Libraries\Import\Menus;
 
+use CoasterCms\Libraries\Import\AbstractImport;
+use CoasterCms\Models\Menu;
 use CoasterCms\Models\MenuItem;
 use CoasterCms\Models\Page;
 
@@ -67,7 +69,7 @@ class MenuItemsImport extends AbstractImport
      */
     protected function _beforeRun()
     {
-        $this->_menusByName = Page::get()->keyBy('name');
+        $this->_menusByName = Menu::get()->keyBy('name');
         $this->_pageIds = Page::get(['id'])->pluck('id')->toArray();
     }
 

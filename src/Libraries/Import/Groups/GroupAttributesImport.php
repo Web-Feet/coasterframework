@@ -1,5 +1,6 @@
-<?php namespace CoasterCms\Libraries\Import;
+<?php namespace CoasterCms\Libraries\Import\Groups;
 
+use CoasterCms\Libraries\Import\AbstractImport;
 use CoasterCms\Models\PageGroupAttribute;
 use CoasterCms\Models\Template;
 

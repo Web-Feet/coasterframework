@@ -71,6 +71,15 @@ class GroupsImport extends AbstractImport
     }
 
     /**
+     *
+     */
+    protected function _afterRun()
+    {
+        $groupAttributes = new Groups\GroupAttributesImport();
+        $groupAttributes->run();
+    }
+
+    /**
      * @param string $importFieldData
      * @return string
      */

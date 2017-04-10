@@ -1,5 +1,6 @@
-<?php namespace CoasterCms\Libraries\Import;
+<?php namespace CoasterCms\Libraries\Import\Content;
 
+use CoasterCms\Libraries\Import\AbstractImport;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\PageBlock;
 use CoasterCms\Models\PageBlockDefault;
