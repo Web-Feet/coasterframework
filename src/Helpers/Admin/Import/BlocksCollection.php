@@ -99,6 +99,7 @@ class BlocksCollection
                 if (array_key_exists($scope, $this->_blocks[$blockName])) {
                     if ($scope == 'db') {
                         $aggregatedData->setBlockData($this->_blocks[$blockName][$scope]->blockData);
+                        $aggregatedData->setGlobalData($this->_blocks[$blockName][$scope]->globalData);
                     } else {
                         $aggregatedData->combine($this->_blocks[$blockName][$scope]);
                     }
