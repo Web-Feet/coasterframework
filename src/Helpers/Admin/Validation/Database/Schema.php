@@ -7,4 +7,10 @@ class Schema {
         call_user_func($cb, new Blueprint($tableName));
 	}
 
+    public static function rename($from, $to)
+    {
+        Column::$instances[$to] = Column::$instances[$from];
+        unset(Column::$instances[$from]);
+    }
+
 }
