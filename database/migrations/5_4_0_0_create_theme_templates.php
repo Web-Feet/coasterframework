@@ -30,25 +30,28 @@ class CreateThemeTemplates extends Migration
         $templates = DB::table('templates')->get();
         foreach ($templates as $template) {
             if (array_key_exists($template->template, $templatesFound)) {
-                if (!array_key_exists($template->template, $templatesFound)) {
-                    $convertToTemplateIds[$templatesFound[$template->template]] = [];
+                if (!array_key_exists($templatesFound[$template->template]->id, $convertToTemplateIds)) {
+                    $convertToTemplateIds[$templatesFound[$template->template]->id] = [];
                 }
-                $convertToTemplateIds[$templatesFound[$template->template]][] = $template->id;
+                $convertToTemplateIds[$templatesFound[$template->template]->id][] = $template->id;
                 $deleteTemplateIds[] = $template->id;
-                $template->id = $templatesFound[$template->template];
-
             } else {
-                $templatesFound[$template->template] = $template->id;
+                $templatesFound[$template->template] = $template;
             }
-            $template->template_id = $template->id;
-            $themeTemplates[$template->theme_id . '.' . $template->template] = array_diff_key((array) $template, array_fill_keys(['id', 'template'], ''));
+            $themeTemplate = array_diff_key((array) $template, array_fill_keys(['id', 'template'], ''));
+            foreach (['label', 'child_template', 'hidden'] as $attribute) {
+                if ($templatesFound[$template->template]->$attribute == $themeTemplate[$attribute]) {
+                    $themeTemplate[$attribute] = null;
+                }
+            }
+            $themeTemplate['template_id'] = $templatesFound[$template->template]->id;
+            $themeTemplates[] = $themeTemplate;
         }
 
         $convertTemplateIds = [];
         foreach ($convertToTemplateIds as $mainTemplateId => $convertIds) {
             DB::table('template_blocks')->whereIn('template_id', $convertIds)->update(['template_id' => $mainTemplateId]);
             $convertTemplateIds = $convertTemplateIds + array_fill_keys($convertIds, $mainTemplateId);
-
         }
 
         $themeBlocks = DB::table('theme_blocks')->get();
