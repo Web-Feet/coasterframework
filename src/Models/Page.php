@@ -527,16 +527,17 @@ class Page extends Eloquent
         }
 
         //template
+        $theme = Theme::find(config('coaster::frontend.theme'));
         if (empty($this->template)) {
             $this->template = config('coaster::admin.default_template');
             $parentPage = static::find($this->parent);
-            if ($parentPage && $parentTemplate = Template::find($parentPage->template)) {
+            if ($parentPage && $parentTemplate = $theme->templateById($parentPage->template)) {
                 $this->template = $parentTemplate->child_template;
             }
         }
-        $templateData = Template::find($this->template);
+        $templateData = $theme->templateById($this->template);
         $templates = Theme::get_template_list($this->template);
-        $templateSelectHidden = !empty($templateData) ? $templateData->hidden : false;
+        $templateSelectHidden = (bool) $templateData->getAttribute('hidden');
 
         // menu selection
         $menus = Menu::all();

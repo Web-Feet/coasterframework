@@ -26,19 +26,14 @@ class CreateThemeTemplates extends Migration
         $themeTemplates = [];
         $deleteTemplateIds = [];
         $templatesFound = [];
-        $convertToTemplateIds = [];
         $templates = DB::table('templates')->get();
         foreach ($templates as $template) {
             if (array_key_exists($template->template, $templatesFound)) {
-                if (!array_key_exists($templatesFound[$template->template]->id, $convertToTemplateIds)) {
-                    $convertToTemplateIds[$templatesFound[$template->template]->id] = [];
-                }
-                $convertToTemplateIds[$templatesFound[$template->template]->id][] = $template->id;
                 $deleteTemplateIds[] = $template->id;
             } else {
                 $templatesFound[$template->template] = $template;
             }
-            $themeTemplate = array_diff_key((array) $template, array_fill_keys(['id', 'template'], ''));
+            $themeTemplate = array_diff_key((array) $template, array_fill_keys(['template'], ''));
             foreach (['label', 'child_template', 'hidden'] as $attribute) {
                 if ($templatesFound[$template->template]->$attribute == $themeTemplate[$attribute]) {
                     $themeTemplate[$attribute] = null;
@@ -48,27 +43,17 @@ class CreateThemeTemplates extends Migration
             $themeTemplates[] = $themeTemplate;
         }
 
-        $convertTemplateIds = [];
-        foreach ($convertToTemplateIds as $mainTemplateId => $convertIds) {
-            DB::table('template_blocks')->whereIn('template_id', $convertIds)->update(['template_id' => $mainTemplateId]);
-            $convertTemplateIds = $convertTemplateIds + array_fill_keys($convertIds, $mainTemplateId);
-        }
-
-        $themeBlocks = DB::table('theme_blocks')->get();
-        foreach ($themeBlocks as $themeBlock) {
-            if ($themeBlock->exclude_templates) {
-                $templates = explode(',', $themeBlock->exclude_templates);
-                $templatesBase = array_combine($templates, $templates);
-                $templates = array_unique(array_intersect_key($convertTemplateIds, $templatesBase) + $templatesBase);
-                DB::table('theme_blocks')->where('id', '=', $themeBlock->id)->update(['exclude_templates' => implode(',', $templates)]);
-            }
-        }
-
-
+        Schema::rename('template_blocks', 'theme_template_blocks');
         DB::table('theme_templates')->insert($themeTemplates);
         DB::table('templates')->whereIn('id', $deleteTemplateIds)->delete();
         Schema::table('templates', function(Blueprint $table) {
             $table->dropColumn('theme_id');
+        });
+        Schema::table('theme_blocks', function(Blueprint $table) {
+            $table->renameColumn('exclude_templates', 'exclude_theme_templates');
+        });
+        Schema::table('theme_template_blocks', function(Blueprint $table) {
+            $table->renameColumn('template_id', 'theme_template_id');
         });
     }
 

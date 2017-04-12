@@ -4,6 +4,11 @@ use CoasterCms\Helpers\Cms\File\Csv;
 use CoasterCms\Helpers\Cms\Theme\BlockUpdater;
 use CoasterCms\Helpers\Cms\File\Directory;
 use CoasterCms\Helpers\Cms\File\Zip;
+use CoasterCms\Libraries\Import\BlocksImport;
+use CoasterCms\Libraries\Import\ContentImport;
+use CoasterCms\Libraries\Import\GroupsImport;
+use CoasterCms\Libraries\Import\MenusImport;
+use CoasterCms\Libraries\Import\PagesImport;
 use DB;
 use Eloquent;
 use Request;
@@ -17,38 +22,37 @@ Class Theme extends Eloquent
 
     public function templates()
     {
-        return $this->hasMany('CoasterCms\Models\Template');
+        return $this->belongsToMany('CoasterCms\Models\Template', 'theme_templates')
+            ->withPivot('label', 'child_template')
+            ->addSelect('templates.id')
+            ->addSelect('templates.template')
+            ->addSelect(DB::raw('IF (`theme_templates`.`label` IS NOT NULL, `theme_templates`.`label`, `templates`.`label`) as label'))
+            ->addSelect(DB::raw('IF (`theme_templates`.`child_template` IS NOT NULL, `theme_templates`.`child_template`, `templates`.`child_template`) as child_template'))
+            ->addSelect(DB::raw('IF (`theme_templates`.`hidden` IS NOT NULL, `theme_templates`.`hidden`, `templates`.`hidden`) as hidden'))
+            ->addSelect('templates.updated_at')
+            ->addSelect('templates.created_at');
+    }
+
+    public function templateById($templateId)
+    {
+        return $this->templates()->where('templates.id', '=', $templateId)->first();
     }
 
     public function blocks()
     {
-        return $this->belongsToMany('CoasterCms\Models\Block', 'theme_blocks')->withPivot('show_in_pages', 'exclude_templates', 'show_in_global')->where('active', '=', 1)->orderBy('order', 'asc');
+        return $this->belongsToMany('CoasterCms\Models\Block', 'theme_blocks')->withPivot('show_in_pages', 'exclude_theme_templates', 'show_in_global')->where('active', '=', 1)->orderBy('order', 'asc');
     }
 
     public static function get_template_list($includeTemplate = 0)
     {
-        $templates = array();
-        $theme = self::find(config('coaster::frontend.theme'));
-        if (!empty($theme)) {
-            foreach ($theme->templates()->where('hidden', '=', 0)->get() as $template) {
+        $templates = [];
+        if ($theme = static::find(config('coaster::frontend.theme'))) {
+            foreach ($theme->templates()->having('hidden', '=', 0)->get() as $template) {
                 $templates[$template->id] = !empty($template->label) ? $template->label : $template->template;
-                $templateFile[$template->template] = $template->id;
             }
         }
-        // fix template issues on theme switching
-        if (!empty($includeTemplate) && empty($templates[$includeTemplate])) {
-            $includeTemplateModel = Template::find($includeTemplate);
-            if (empty($includeTemplateModel)) {
-                $templates[$includeTemplate] = 'Non existent template';
-            } else {
-                $altTheme = Theme::find($includeTemplateModel->theme_id);
-                $altThemeName = $altTheme ? $altTheme->theme : 'Non Existent';
-                if (!empty($templateFile[$includeTemplateModel->template])) {
-                    $templates[$includeTemplate] = $templates[$templateFile[$includeTemplateModel->template]] . ' (warning - from \''.$altThemeName.'\' theme, frontend will use template from \''.$theme->theme.'\' theme)';
-                } else {
-                    $templates[$includeTemplate] = (!empty($includeTemplateModel->label) ? $includeTemplateModel->label : $includeTemplateModel->template) . ' (error - from \''.$altThemeName.'\' theme, choose other template from current theme)';
-                }
-            }
+        if ($includeTemplate && !array_key_exists($includeTemplate, $templates)) {
+            $templates[$includeTemplate] = 'Hidden or non existent template (ID: '.$includeTemplate.')';
         }
         asort($templates);
         return $templates;
@@ -62,8 +66,8 @@ Class Theme extends Eloquent
         if (!empty($selected_theme)) {
             $theme_blocks = $selected_theme->blocks()->get();
             foreach ($theme_blocks as $theme_block) {
-                if ($in_pages && !empty($theme_block->pivot->exclude_templates)) {
-                    $ex_templates = explode(",", $theme_block->pivot->exclude_templates);
+                if ($in_pages && !empty($theme_block->pivot->exclude_theme_templates)) {
+                    $ex_templates = explode(",", $theme_block->pivot->exclude_theme_templates);
                     if (!empty($ex_templates) && in_array($template, $ex_templates)) {
                         $theme_block->pivot->show_in_pages = 0;
                     }
@@ -271,8 +275,8 @@ Class Theme extends Eloquent
 
             // install theme blocks and templates
             try {
-                BlockUpdater::updateTheme($newTheme);
-                Directory::remove($themePath.'/import/blocks');
+                $blocksImport = new BlocksImport();
+                $blocksImport->setTheme($newTheme)->run();
             } catch (\Exception $e) {
                 $newTheme->delete();
                 return ['error' => 1, 'response' => $e->getMessage()];
@@ -281,11 +285,16 @@ Class Theme extends Eloquent
             // install pages and page block data
             if (!empty($options['withPageData'])) {
                 try {
-                    self::_pageImportData($newTheme);
-                    Directory::remove($themePath.'/import/pages');
-                    if (file_exists($themePath.'/import/pages.csv')) {
-                        unlink($themePath . '/import/pages.csv');
-                    }
+
+                    $pagesImport = new PagesImport();
+                    $pagesImport->run();
+                    $pagesImport = new GroupsImport();
+                    $pagesImport->run();
+                    $pagesImport = new MenusImport();
+                    $pagesImport->run();
+                    $pagesImport = new ContentImport();
+                    $pagesImport->run();
+
                 } catch (\Exception $e) {
                     return ['error' => 1, 'response' => $e->getMessage()];
                 }
@@ -316,15 +325,8 @@ Class Theme extends Eloquent
             if ($theme->id == config('coaster::frontend.theme')) {
                 return 0;
             }
-            $templates = Template::where('theme_id', '=', $theme->id)->get();
-            if (!$templates->isEmpty()) {
-                $templateIds = [];
-                foreach ($templates as $template) {
-                    $templateIds[] = $template->id;
-                }
-                TemplateBlock::whereIn('template_id', $templateIds)->delete();
-            }
-            Template::where('theme_id', '=', $theme->id)->delete();
+            ThemeTemplateBlock::where('theme_id', '=', $theme->id)->delete();
+            ThemeTemplate::where('theme_id', '=', $theme->id)->delete();
             ThemeBlock::where('theme_id', '=', $theme->id)->delete();
             $theme->delete();
         }

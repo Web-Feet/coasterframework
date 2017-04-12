@@ -18,6 +18,7 @@ use CoasterCms\Models\PagePublishRequests;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\PageVersionSchedule;
 use CoasterCms\Models\Template;
+use CoasterCms\Models\ThemeTemplate;
 use Request;
 use Response;
 use View;
@@ -147,7 +148,7 @@ class PagesController extends AdminController
 
         // load blocks content
         if ($page->link == 0) {
-            $blocks = Template::template_blocks(config('coaster::frontend.theme'), $page->template);
+            $blocks = ThemeTemplate::templateBlocks(config('coaster::frontend.theme'), $page->template);
             $blocks_content = PageBlock::preloadPage($pageId, $versionData['editing']);
             list($tab_headers, $tab_contents) = Block::getTabs($blocks, $blocks_content, $page->id);
         } else {

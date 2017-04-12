@@ -8,9 +8,10 @@ use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\BlockRepeater;
 use CoasterCms\Models\Template;
-use CoasterCms\Models\TemplateBlock;
 use CoasterCms\Models\Theme;
 use CoasterCms\Models\ThemeBlock;
+use CoasterCms\Models\ThemeTemplate;
+use CoasterCms\Models\ThemeTemplateBlock;
 use Illuminate\Database\Eloquent\Collection;
 use View;
 
@@ -223,25 +224,28 @@ class BlocksImport extends AbstractImport
     protected function _loadDbData($scope = 'db')
     {
         $this->_blocksCollection->setScope($scope);
-        $themeTemplates = Template::where('theme_id', '=', $this->_additionalData['theme']->id)->get();
-        $templateBlocks = TemplateBlock::whereIn('template_id', $themeTemplates->pluck('id')->toArray())->get()->groupBy('block_id');
+        $allTemplates = Template::get();
+        $themeTemplates = ThemeTemplate::where('theme_id', '=', $this->_additionalData['theme']->id)->get();
+        $themeTemplateBlocks = ThemeTemplateBlock::whereIn('theme_template_id', $themeTemplates->pluck('id')->toArray())->get()->groupBy('block_id');
         $themeBlocks = ThemeBlock::where('theme_id', '=', $this->_additionalData['theme']->id)->get()->keyBy('block_id');
         foreach ($themeBlocks as $blockId => $themeBlock) {
             $currentBlock = Block::preload($blockId);
             if ($currentBlock->exists) {
+                $templateIds = $themeTemplates->except(explode(',', $themeBlock->exclude_theme_templates))->pluck('template_id')->toArray();
                 $this->_blocksCollection->getBlock($currentBlock->name)
                     ->setBlockData($currentBlock->getAttributes())
                     ->setGlobalData($themeBlock->getAttributes())
-                    ->addTemplates($themeTemplates->except(explode(',', $themeBlock->exclude_templates))->pluck('template')->toArray());
+                    ->addTemplates($allTemplates->whereIn('id', $templateIds)->pluck('template')->toArray());
             }
         }
-        foreach ($templateBlocks as $blockId => $templateBlock) {
+        foreach ($themeTemplateBlocks as $blockId => $themeTemplateBlock) {
             $currentBlock = Block::preload($blockId);
             if (!$themeBlocks->has($blockId) && $currentBlock->exists) {
+                $templateIds = $themeTemplates->whereIn('id', $themeTemplateBlock->pluck('theme_template_id')->toArray())->pluck('template_id')->toArray();
                 $this->_blocksCollection->getBlock($currentBlock->name)
                     ->setBlockData($currentBlock->getAttributes())
                     ->setGlobalData(['show_in_global' => 0, 'show_in_pages' => 0])
-                    ->addTemplates($themeTemplates->whereIn('id', $templateBlock->pluck('template_id')->toArray())->pluck('template')->toArray());
+                    ->addTemplates($allTemplates->whereIn('id', $templateIds)->pluck('template')->toArray());
             }
         }
     }
@@ -483,60 +487,70 @@ class BlocksImport extends AbstractImport
      */
     protected function _saveBlockTemplates($allBlockData)
     {
-        $themeTemplates = $this->_saveNewTemplates($allBlockData);
+        $allTemplates = Template::get()->keyBy('template');
+        $themeTemplates = $this->_saveNewThemeTemplates($allTemplates, $allBlockData);
         $themeTemplateIds = $themeTemplates->pluck('id')->toArray();
-        $templateBlocks = TemplateBlock::whereIn('template_id', $themeTemplateIds)->get()->groupBy('block_id');
+        $themeTemplateBlocks = ThemeTemplateBlock::whereIn('theme_template_id', $themeTemplateIds)->get()->groupBy('block_id');
         $themeBlocks = ThemeBlock::where('theme_id', '=', $this->_additionalData['theme']->id)->get()->keyBy('block_id');
 
         foreach ($allBlockData as $blockName => $importBlock) {
-            $newTemplateIds = array_map(function ($template) use ($themeTemplates) {
-                return $themeTemplates[$template]->id;
+            $newTemplateIds = array_map(function ($template) use ($allTemplates) {
+                return $allTemplates[$template]->id;
             }, $importBlock->templates);
+            $newThemeTemplateIds = $themeTemplates->whereIn('template_id', $newTemplateIds)->pluck('id')->toArray();
             if ($importBlock->globalData['show_in_global'] || $importBlock->globalData['show_in_pages']) {
                 // save as a theme block (& remove template blocks)
                 $themeBlock = $themeBlocks->has($importBlock->blockData['id']) ? $themeBlocks[$importBlock->blockData['id']] : new ThemeBlock;
                 $themeBlock->theme_id = $this->_additionalData['theme']->id;
                 $themeBlock->block_id = $importBlock->blockData['id'];
-                $themeBlock->exclude_templates = implode(',', array_diff($themeTemplateIds, $newTemplateIds));
+                $themeBlock->exclude_theme_templates = implode(',', array_diff($themeTemplateIds, $newThemeTemplateIds));
                 $themeBlock->show_in_global = $importBlock->globalData['show_in_global'];
                 $themeBlock->show_in_pages = $importBlock->globalData['show_in_pages'];
                 $themeBlock->save();
-                TemplateBlock::where('block_id', '=', $importBlock->blockData['id'])->whereIn('template_id', $themeTemplateIds)->delete();
+                ThemeTemplateBlock::where('block_id', '=', $importBlock->blockData['id'])->whereIn('theme_template_id', $themeTemplateIds)->delete();
             } else {
                 // save a template blocks (& remove theme block)
-                $existingTemplateIds = $templateBlocks->has($importBlock->blockData['id']) ? $templateBlocks[$importBlock->blockData['id']]->pluck('template_id')->toArray() : [];
-                $addTemplateIds = array_diff($newTemplateIds, $existingTemplateIds);
-                foreach ($addTemplateIds as $templateId) {
-                    $newTemplateBlock = new TemplateBlock;
+                $existingThemeTemplateIds = $themeTemplateBlocks->has($importBlock->blockData['id']) ? $themeTemplateBlocks[$importBlock->blockData['id']]->pluck('theme_template_id')->toArray() : [];
+                $addThemeTemplateIds = array_diff($newThemeTemplateIds, $existingThemeTemplateIds);
+                foreach ($addThemeTemplateIds as $addThemeTemplateId) {
+                    $newTemplateBlock = new ThemeTemplateBlock;
                     $newTemplateBlock->block_id = $importBlock->blockData['id'];
-                    $newTemplateBlock->template_id = $templateId;
+                    $newTemplateBlock->theme_template_id = $addThemeTemplateId;
                     $newTemplateBlock->save();
                 }
-                $deleteTemplateIds = array_diff($existingTemplateIds, $newTemplateIds);
-                TemplateBlock::where('block_id', '=', $importBlock->blockData['id'])->whereIn('template_id', $deleteTemplateIds)->delete();
+                $deleteThemeTemplateIds = array_diff($existingThemeTemplateIds, $newThemeTemplateIds);
+                ThemeTemplateBlock::where('block_id', '=', $importBlock->blockData['id'])->whereIn('theme_template_id', $deleteThemeTemplateIds)->delete();
                 ThemeBlock::where('block_id', '=', $importBlock->blockData['id'])->where('theme_id', '=', $this->_additionalData['theme']->id)->delete();
             }
         }
     }
 
     /**
+     * @param Collection $allTemplates
      * @param \CoasterCms\Helpers\Admin\Import\Block[] $allBlockData
      * @return Collection
      */
-    protected function _saveNewTemplates($allBlockData)
+    protected function _saveNewThemeTemplates($allTemplates, $allBlockData)
     {
-        $themeTemplates = Template::where('theme_id', '=', $this->_additionalData['theme']->id)->get()->keyBy('template');
+        $themeTemplates = ThemeTemplate::where('theme_id', '=', $this->_additionalData['theme']->id)->get()->keyBy('template_id');
         foreach ($allBlockData as $blockName => $importBlock) {
             foreach ($importBlock->templates as $template) {
-                if (!$themeTemplates->has($template)) {
+                if (!$allTemplates->has($template)) {
                     $newTemplate = new Template;
-                    $newTemplate->theme_id = $this->_additionalData['theme']->id;
                     $newTemplate->template = $template;
                     $newTemplate->label = ucwords(str_replace('_', ' ', $template)) . ' Template';
                     $newTemplate->child_template = 0;
                     $newTemplate->hidden = 0;
                     $newTemplate->save();
-                    $themeTemplates[$template] = $newTemplate;
+                    $allTemplates[$newTemplate->template] = $newTemplate;
+                }
+                if (!$themeTemplates->has($allTemplates[$template]->id)) {
+                    $newThemeTemplate = new ThemeTemplate;
+                    $newThemeTemplate->theme_id = $this->_additionalData['theme']->id;
+                    $newThemeTemplate->template_id = $allTemplates[$template]->id;
+                    $newThemeTemplate->save();
+                    $themeTemplates->add($newThemeTemplate);
+                    $themeTemplates[$newThemeTemplate->template_id] = $newThemeTemplate;
                 }
             }
         }

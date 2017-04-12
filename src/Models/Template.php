@@ -24,11 +24,6 @@ class Template extends Eloquent
         return self::preload($template_id)->template;
     }
 
-    public function blocks()
-    {
-        return $this->belongsToMany('CoasterCms\Models\Block', 'template_blocks')->where('active', '=', 1)->orderBy('order', 'asc');
-    }
-
     public static function getTemplateIds($templates) {
         $validTemplates = [];
         foreach ($templates as $templateIdentifier) {
@@ -40,45 +35,17 @@ class Template extends Eloquent
         return $validTemplates;
     }
 
-    public static function template_blocks($theme, $template)
-    {
-        $blocks = Theme::theme_blocks($theme, $template);
-        $selected_template = self::find($template);
-        if (!empty($selected_template)) {
-            $template_blocks = $selected_template->blocks()->get();
-            foreach ($template_blocks as $template_block) {
-                if (!isset($blocks[$template_block->category_id])) {
-                    $blocks[$template_block->category_id] = array();
-                }
-                $blocks[$template_block->category_id][$template_block->id] = $template_block;
-            }
-        }
-
-        // order theme/template blocks properly
-        foreach ($blocks as $cat_id => $block_cat) {
-            uasort($blocks[$cat_id], array('self', 'order_blocks'));
-        }
-
-        return $blocks;
-    }
-
-    private static function order_blocks($a, $b)
-    {
-        if ($a == $b) {
-            return 0;
-        }
-        return ($a->order < $b->order) ? -1 : 1;
-    }
-
     public static function blocks_of_type($type)
     {
         $numb_type = array();
-        $block_ids = Block::getBlockIdsOfType($type);
-        if (!empty($block_ids)) {
-            $sw = ThemeBlock::whereIn('block_id', $block_ids)->where('show_in_pages', '=', 1)->count();
-            $templates = TemplateBlock::whereIn('block_id', $block_ids)->groupBy('template_id')->get(array('template_id', DB::raw('count(*) as type')));
-            foreach ($templates as $template) {
-                $numb_type[$template->template_id] = $sw + $template->type;
+        $blockIds = Block::getBlockIdsOfType($type);
+        if (!empty($blockIds)) {
+            $sw = ThemeBlock::where('theme_id', '=', config('coaster::frontend.theme'))
+                ->whereIn('block_id', $blockIds)->where('show_in_pages', '=', 1)->count();
+            $themeTemplates = ThemeTemplate::where('theme_id', '=', config('coaster::frontend.theme'))
+                ->with(['blocks' => function ($q) use($blockIds) { $q->whereIn('block_id', $blockIds); }])->get();
+            foreach ($themeTemplates as $themeTemplate) {
+                $numb_type[$themeTemplate->template_id] = $sw + $themeTemplate->blocks->count();
             }
         }
         return $numb_type;

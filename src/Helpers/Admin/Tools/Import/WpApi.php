@@ -6,7 +6,7 @@ use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Page;
-use CoasterCms\Models\TemplateBlock;
+use CoasterCms\Models\ThemeTemplateBlock;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\PageBlockRepeaterData;
 use CoasterCms\Models\PageGroup;
@@ -85,9 +85,9 @@ class WpApi
       Block::unguard();
       $block = Block::firstOrCreate(['name' => $name, 'label' => ucwords($label), 'note' => $note, 'category_id' => 1, 'type' => $type]);
       Block::reguard();
-      TemplateBlock::unguard();
-      TemplateBlock::firstOrCreate(['template_id' => $this->getTemplateId('item_template'), 'block_id' => $block->id]);
-      TemplateBlock::reguard();
+      ThemeTemplateBlock::unguard();
+      ThemeTemplateBlock::firstOrCreate(['theme_template_id' => $this->getTemplateId('item_template'), 'block_id' => $block->id]);
+      ThemeTemplateBlock::reguard();
       $this->blocks[$name] = $block;
       return $block;
     }
