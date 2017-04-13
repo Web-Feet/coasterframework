@@ -480,7 +480,7 @@ class BlocksImport extends AbstractImport
                 $block->$field = $value;
             }
             $block->save();
-            $this->_blocksCollection->getBlock($blockName, 'db')->setBlockData($block->getAttributes());
+            $this->_blocksCollection->getBlock($blockName, 'db')->setBlockData($block->getAttributes(), true);
         }
         return $this->_blocksCollection->getAggregatedBlocks(); // return regenerated aggregated blocks
     }
@@ -552,7 +552,6 @@ class BlocksImport extends AbstractImport
                     $newThemeTemplate->theme_id = $this->_additionalData['theme']->id;
                     $newThemeTemplate->template_id = $allTemplates[$template]->id;
                     $newThemeTemplate->save();
-                    $themeTemplates->add($newThemeTemplate);
                     $themeTemplates[$newThemeTemplate->template_id] = $newThemeTemplate;
                 }
             }

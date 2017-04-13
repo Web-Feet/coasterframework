@@ -282,6 +282,7 @@ Class Theme extends Eloquent
             }
             try {
                 $blocksImport->save(true);
+                $blocksImport->cleanCsv();
             } catch (\Exception $e) {
                 $newTheme->delete();
                 return ['error' => 1, 'response' => $e->getMessage()];
