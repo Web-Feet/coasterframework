@@ -244,7 +244,7 @@ class InstallController extends Controller
         }
 
         $this->layoutData['title'] = 'Install Theme';
-        $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'theme', 'themes' => $themes, 'defaultTheme' => 'coaster2016']);
+        $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'theme', 'themes' => $themes, 'defaultTheme' => 'coaster2017']);
     }
 
     public function installTheme()
