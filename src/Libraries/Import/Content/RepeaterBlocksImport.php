@@ -82,7 +82,7 @@ class RepeaterBlocksImport extends AbstractImport
     protected function _mapTo($importInfo, $importFieldData)
     {
         list($model, $attribute) = $importInfo['mapTo'];
-        if ($model == 'PageBlockRepeaterRows') {
+        if ($model == 'PageBlockRepeaterData') {
             $this->_currentRepeaterBlock->$attribute = $importFieldData;
         } else {
             $this->_currentRepeaterRow->$attribute = $importFieldData;

@@ -4,6 +4,7 @@ use CoasterCms\Libraries\Import\AbstractImport;
 use CoasterCms\Models\Menu;
 use CoasterCms\Models\MenuItem;
 use CoasterCms\Models\Page;
+use Illuminate\Database\Eloquent\Collection;
 
 class MenuItemsImport extends AbstractImport
 {
@@ -13,7 +14,7 @@ class MenuItemsImport extends AbstractImport
     protected $_pageIds;
 
     /**
-     * @var array
+     * @var Collection
      */
     protected $_menusByName;
 
@@ -25,7 +26,7 @@ class MenuItemsImport extends AbstractImport
     /**
      *
      */
-    const IMPORT_FILE_DEFAULT = 'pages/menus_items.csv';
+    const IMPORT_FILE_DEFAULT = 'pages/menu_items.csv';
 
     /**
      * @return array
@@ -149,7 +150,7 @@ class MenuItemsImport extends AbstractImport
      */
     protected function _convertToMenuId($importFieldData)
     {
-        if ($importFieldData !== '' && array_key_exists($importFieldData, $this->_menusByName)) {
+        if ($importFieldData !== '' && $this->_menusByName->has($importFieldData)) {
             return $this->_menusByName[$importFieldData]->id;
         }
         return '';

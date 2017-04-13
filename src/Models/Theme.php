@@ -274,9 +274,14 @@ Class Theme extends Eloquent
             $newTheme->save();
 
             // install theme blocks and templates
+            $blocksImport = new BlocksImport();
+            $blocksImport->setTheme($newTheme)->run();
+            if ($errors = $blocksImport->getErrorMessages()) {
+                $newTheme->delete();
+                return ['error' => 1, 'response' => $errors];
+            }
             try {
-                $blocksImport = new BlocksImport();
-                $blocksImport->setTheme($newTheme)->run();
+                $blocksImport->save(true);
             } catch (\Exception $e) {
                 $newTheme->delete();
                 return ['error' => 1, 'response' => $e->getMessage()];
@@ -284,19 +289,21 @@ Class Theme extends Eloquent
 
             // install pages and page block data
             if (!empty($options['withPageData'])) {
-                try {
-
-                    $pagesImport = new PagesImport();
-                    $pagesImport->run();
-                    $pagesImport = new GroupsImport();
-                    $pagesImport->run();
-                    $pagesImport = new MenusImport();
-                    $pagesImport->run();
-                    $pagesImport = new ContentImport();
-                    $pagesImport->run();
-
-                } catch (\Exception $e) {
-                    return ['error' => 1, 'response' => $e->getMessage()];
+                $errors = [];
+                $path = base_path('resources/views/themes/' . $newTheme->theme . '/import/');
+                $importClasses = [
+                    PagesImport::class,
+                    GroupsImport::class,
+                    MenusImport::class,
+                    ContentImport::class
+                ];
+                foreach ($importClasses as $importClass) {
+                    $importObject = new $importClass($path);
+                    $importObject->run();
+                    $errors = array_merge($errors, $importObject->getErrorMessages());
+                }
+                if ($errors) {
+                    return ['error' => 1, 'response' => $errors];
                 }
             }
 
@@ -325,7 +332,7 @@ Class Theme extends Eloquent
             if ($theme->id == config('coaster::frontend.theme')) {
                 return 0;
             }
-            ThemeTemplateBlock::where('theme_id', '=', $theme->id)->delete();
+            ThemeTemplateBlock::whereIn('theme_template_id', ThemeTemplate::where('theme_id', '=', $theme->id)->get()->pluck('id')->toArray())->delete();
             ThemeTemplate::where('theme_id', '=', $theme->id)->delete();
             ThemeBlock::where('theme_id', '=', $theme->id)->delete();
             $theme->delete();
@@ -753,258 +760,6 @@ Class Theme extends Eloquent
         fclose($pagesCsv);
         fclose($pageBlocksCsv);
         fclose($repeaterBlocksCsv);
-    }
-
-    public static function _pageImportData($theme)
-    {
-        $importPath = $themePath = base_path() . '/resources/views/themes/'.$theme->theme.'/import/';
-
-        if (is_dir($importPath)) {
-
-            // wipe data
-            DB::table((new Page)->getTable())->truncate();
-            DB::table((new PageLang)->getTable())->truncate();
-            DB::table((new PageVersion)->getTable())->truncate();
-            DB::table((new PagePublishRequests())->getTable())->truncate();
-            DB::table((new PageGroup)->getTable())->truncate();
-            DB::table((new PageGroupAttribute)->getTable())->truncate();
-            DB::table((new PageGroupPage)->getTable())->truncate();
-            DB::table((new Menu)->getTable())->truncate();
-            DB::table((new MenuItem)->getTable())->truncate();
-            DB::table((new PageBlockDefault)->getTable())->truncate();
-            DB::table((new PageBlock)->getTable())->truncate();
-            DB::table((new PageBlockRepeaterData)->getTable())->truncate();
-            DB::table((new PageBlockRepeaterRows)->getTable())->truncate();
-
-            $templateIds = [];
-            $templates = Template::where('theme_id', '=', $theme->id)->get();
-            foreach ($templates as $template) {
-                $templateIds[$template->template] = $template->id;
-            }
-
-            $blockIds = [];
-            $blocks = Block::all();
-            foreach ($blocks as $block) {
-                $blockIds[$block->name] = $block->id;
-            }
-
-            $pagesCsv = $importPath . 'pages.csv';
-            $groupsCsv = $importPath . 'pages/groups.csv';
-            $groupAttributesCsv = $importPath . 'pages/group_attributes.csv';
-            $menusCsv = $importPath . 'pages/menus.csv';
-            $menuItemsCsv = $importPath . 'pages/menu_items.csv';
-            $pageBlocksCsv = $importPath . 'pages/page_blocks.csv';
-            $repeaterBlocksCsv = $importPath . 'pages/repeater_blocks.csv';
-
-            // checks
-            $error = 'pages data not imported, invalid columns in: ';
-            if (!$pagesFileHandle = Csv::check($pagesCsv, 14)) {
-                if (file_exists($pagesCsv)) {
-                    if ($pagesFileHandle = Csv::check($pagesCsv, 12)) {
-                        // TODO individual column checks + defaults for optional columns
-                        $defaultTheme = true;
-                    } else {
-                        throw new \Exception($error . $pagesCsv);
-                    }
-                }
-            }
-            if (!$groupsHandle = Csv::check($groupsCsv, 5)) {
-                if (file_exists($groupsCsv)) {
-                    throw new \Exception($error . $groupsCsv);
-                }
-            }
-            if (!$groupAttributesHandle = Csv::check($groupAttributesCsv, 6)) {
-                if (file_exists($groupAttributesCsv)) {
-                    throw new \Exception($error . $groupAttributesCsv);
-                }
-            }
-            if (!$menusHandle = Csv::check($menusCsv, 3)) {
-                if (file_exists($menusCsv)) {
-                    throw new \Exception($error . $menusCsv);
-                }
-            }
-            if (!$menuItemsCsvHandle = Csv::check($menuItemsCsv, 7)) {
-                if (file_exists($menuItemsCsv)) {
-                    if (!($menuItemsCsv = Csv::check($pagesCsv, 5))) {
-                        throw new \Exception($error . $menuItemsCsv);
-                    }
-                }
-            }
-            if (!$pageBlocksCsvHandle = Csv::check($pageBlocksCsv, 3)) {
-                if (file_exists($pageBlocksCsv)) {
-                    throw new \Exception($error . $pageBlocksCsv);
-                }
-            }
-            if (!$repeaterBlocksCsvHandle = Csv::check($repeaterBlocksCsv, 4)) {
-                if (file_exists($repeaterBlocksCsv)) {
-                    throw new \Exception($error . $repeaterBlocksCsv);
-                }
-            }
-
-            // add pages
-            if ($pagesFileHandle) {
-                $row = 0;
-                while (($data = fgetcsv($pagesFileHandle)) !== false) {
-                    if ($row++ == 0 && $data[0] == 'Page Id') continue;
-                    if (isset($defaultTheme)) {
-                        $data = array_merge($data, ['', '']);
-                    }
-                    list($pageId, $pageName, $pageUrl, $templateName, $parentId, $defaultChildTemplateName, $order, $link, $live, $sitemap, $groupContainer, $groupContainerUrlPriority, $canonicalParentPageId, $groupIds) = $data;
-                    $newPage = new Page;
-                    $newPage->id = $pageId;
-                    $newPage->template = !empty($templateIds[$templateName]) ? $templateIds[$templateName] : 0;
-                    $newPage->parent = $parentId ?: 0;
-                    $newPage->child_template = !empty($templateIds[$defaultChildTemplateName]) ? $templateIds[$defaultChildTemplateName] : 0;
-                    $newPage->order = $order;
-                    $newPage->link = $link;
-                    $newPage->live = $live;
-                    $newPage->sitemap = $sitemap;
-                    $newPage->group_container = $groupContainer ?: 0;
-                    $newPage->group_container_url_priority = $groupContainerUrlPriority ?: 0;
-                    $newPage->canonical_parent = $canonicalParentPageId ?: 0;
-                    $newPage->save();
-                    $newPageLang = new PageLang;
-                    $newPageLang->page_id = $pageId;
-                    $newPageLang->language_id = Language::current();
-                    $newPageLang->name = $pageName;
-                    $newPageLang->url = $pageUrl;
-                    $newPageLang->live_version = 1;
-                    $newPageLang->save();
-                    PageVersion::add_new($pageId);
-                    $groupIds = trim($groupIds);
-                    $groupIds = $groupIds ? explode(',', $groupIds) : [];
-                    foreach ($groupIds as $groupId) {
-                        $newPageGroupPage = new PageGroupPage;
-                        $newPageGroupPage->page_id = $pageId;
-                        $newPageGroupPage->group_id = $groupId;
-                        $newPageGroupPage->save();
-                    }
-                }
-            }
-
-            // add page groups
-            if ($groupsHandle) {
-                $row = 0;
-                while (($data = fgetcsv($groupsHandle)) !== false) {
-                    if ($row++ == 0 && $data[0] == 'Group Id') continue;
-                    list($groupId, $groupName, $itemName, $defaultContainerPageId, $defaultTemplate) = $data;
-                    $newGroup = new PageGroup;
-                    $newGroup->id = $groupId;
-                    $newGroup->name = $groupName;
-                    $newGroup->item_name = $itemName;
-                    $newGroup->url_priority = $defaultContainerPageId;
-                    $newGroup->default_template = !empty($templateIds[$defaultTemplate]) ? $templateIds[$defaultTemplate] : 0;
-                    $newGroup->save();
-                }
-            }
-            if ($groupAttributesHandle) {
-                $row = 0;
-                while (($data = fgetcsv($groupAttributesHandle)) !== false) {
-                    if ($row++ == 0 && $data[0] == 'Attribute Id') continue;
-                    list($attributeId, $groupId, $blockName, $orderPriority, $orderDir, $filerByBlockName) = $data;
-                    $newGroupAttribute = new PageGroupAttribute;
-                    $newGroupAttribute->id = $attributeId;
-                    $newGroupAttribute->group_id = $groupId;
-                    $newGroupAttribute->item_block_id = !empty($blockIds[$blockName]) ? $blockIds[$blockName] : 0;
-                    $newGroupAttribute->item_block_order_priority = $orderPriority;
-                    $newGroupAttribute->item_block_order_dir = ($orderDir == 'desc' ? $orderDir : 'asc');
-                    $newGroupAttribute->filter_by_block_id = !empty($blockIds[$filerByBlockName]) ? $blockIds[$filerByBlockName] : 0;
-                    $newGroupAttribute->save();
-                }
-            }
-
-            // add menus
-            if ($menusHandle) {
-                $menuIds = [];
-                $row = 0;
-                while (($data = fgetcsv($menusHandle)) !== false) {
-                    if ($row++ == 0 && $data[0] == 'Menu Identifier') continue;
-                    list($name, $label, $maxSublevel) = $data;
-                    $newMenu = new Menu;
-                    $newMenu->label = $label;
-                    $newMenu->name = $name;
-                    $newMenu->max_sublevel = $maxSublevel;
-                    $newMenu->save();
-                    $menuIds[$name] = $newMenu->id;
-                }
-            }
-            if ($menuItemsCsvHandle) {
-                $row = 0;
-                while (($data = fgetcsv($menuItemsCsvHandle)) !== false) {
-                    if ($row++ == 0 && $data[0] == 'Menu Identifier') continue;
-                    if (count($data) == 5) $data = array_merge($data, ['', '']);
-                    list($menuIdentifier, $pageId, $order, $subLevels, $customName, $customPageNames, $hiddenPages) = $data;
-                    if (!empty($menuIds[$menuIdentifier])) {
-                        $newMenuItem = new MenuItem;
-                        $newMenuItem->menu_id = $menuIds[$menuIdentifier];
-                        $newMenuItem->page_id = $pageId;
-                        $newMenuItem->order = $order;
-                        $newMenuItem->sub_levels = $subLevels;
-                        $newMenuItem->custom_name = $customName;
-                        $newMenuItem->custom_page_names = $customPageNames;
-                        $newMenuItem->hidden_pages = $hiddenPages;
-                        $newMenuItem->save();
-                    }
-                }
-            }
-
-            // add page content
-            if ($pageBlocksCsvHandle) {
-                $row = 0;
-                while (($data = fgetcsv($pageBlocksCsvHandle)) !== false) {
-                    if ($row++ == 0 && $data[0] == 'Page Id') continue;
-                    list($pageId, $blockName, $content) = $data;
-                    if (!empty($blockIds[$blockName])) {
-                        if ($pageId) {
-                            $newPageBlock = new PageBlock;
-                            $newPageBlock->page_id = $pageId;
-                        } else {
-                            $newPageBlock = new PageBlockDefault;
-                        }
-                        $newPageBlock->block_id = $blockIds[$blockName];
-                        $newPageBlock->version = 1;
-                        $newPageBlock->content = $content;
-                        $newPageBlock->save();
-                    }
-                }
-            }
-            if ($repeaterBlocksCsvHandle) {
-                $row = 0;
-                $existingRepeaterRowKeys = [];
-                while (($data = fgetcsv($repeaterBlocksCsvHandle)) !== false) {
-                    if ($row++ == 0 && $data[0] == 'Repeater Id') continue;
-                    list($repeaterId, $repeaterRowId, $blockName, $content) = $data;
-                    if (!empty($blockIds[$blockName])) {
-                        if ($decodedContent = json_decode($content)) {
-                            if (!is_string($decodedContent)) {
-                                $content = serialize($decodedContent);
-                            }
-                        }
-                        if (!isset($existingRepeaterRowKeys[$repeaterId . '-' . $repeaterRowId])) {
-                            $newRepeaterRow = new PageBlockRepeaterRows;
-                            $newRepeaterRow->repeater_id = $repeaterId;
-                            $newRepeaterRow->row_id = $repeaterRowId;
-                            $newRepeaterRow->save();
-                            $existingRepeaterRowKeys[$repeaterId . '-' . $repeaterRowId] = $newRepeaterRow->id;
-                            $newRepeaterData = new PageBlockRepeaterData;
-                            $newRepeaterData->row_key = $existingRepeaterRowKeys[$repeaterId . '-' . $repeaterRowId];
-                            $newRepeaterData->block_id = 0;
-                            $newRepeaterData->version = 1;
-                            $newRepeaterData->content = $repeaterRowId;
-                            $newRepeaterData->save();
-                        }
-                        $newRepeaterData = new PageBlockRepeaterData;
-                        $newRepeaterData->row_key = $existingRepeaterRowKeys[$repeaterId . '-' . $repeaterRowId];
-                        $newRepeaterData->block_id = $blockIds[$blockName];
-                        $newRepeaterData->version = 1;
-                        $newRepeaterData->content = $content;
-                        $newRepeaterData->save();
-                    }
-                }
-            }
-
-            PageSearchData::updateAllSearchData();
-        }
     }
 
 }

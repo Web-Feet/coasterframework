@@ -38,7 +38,7 @@ class PageBlocksImport extends AbstractImport
             ],
             'Language Id' => [
                 'mapTo' => 'language_id',
-                'default' => config('coaster.frontend.language')
+                'default' => config('coaster::frontend.language')
             ],
             'Version Id' => [
                 'mapTo' => 'version',

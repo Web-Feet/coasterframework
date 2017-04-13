@@ -20,17 +20,22 @@ abstract class AbstractImport
     /**
      * @var array
      */
-    protected $_validationErrors;
-
-    /**
-     * @var array
-     */
     protected $_customValidationColumnNames;
 
     /**
      * @var bool
      */
     protected $_hasBeenValidated;
+
+    /**
+     * @var \Exception[]
+     */
+    protected $_importErrors;
+
+    /**
+     * @var string
+     */
+    protected $_importPath;
 
     /**
      * @var string
@@ -69,20 +74,25 @@ abstract class AbstractImport
 
     /**
      * AbstractImport constructor.
-     * @param string $importFile
+     * @param string $importPath
      * @param bool $requiredFile
      */
-    public function __construct($importFile = '', $requiredFile = false)
+    public function __construct($importPath = '', $requiredFile = false)
     {
-        $this->_importFile = $importFile;
+        $this->_importErrors = [];
+        if (file_exists($importPath)) {
+            $this->_importFile = rtrim($importPath, '/') . (is_dir($importPath) ? '/' . static::IMPORT_FILE_DEFAULT : '');
+        } else {
+            $this->_importFile = '';
+        }
+        $this->_importPath = $importPath;
         $this->_importFileRequired = $requiredFile;
         $this->_importedData = false;
         $this->_importData = $this->_importData();
         $this->_fieldMap = $this->fieldMap();
         $this->_hasBeenValidated = false;
-        $this->_validationErrors = [];
         $this->_validationRules = $this->validateRules();
-        $this->_customValidationColumnNames =$this->_customValidationColumnNames();
+        $this->_customValidationColumnNames = $this->_customValidationColumnNames();
     }
 
     /**
@@ -138,16 +148,6 @@ abstract class AbstractImport
     }
 
     /**
-     * @param array $row
-     * @param int $column
-     * @param array $headerRow
-     */
-    protected function _csvNameColumns(&$row, $column, $headerRow)
-    {
-        $row = array_combine($headerRow, $row);
-    }
-
-    /**
      * @return array
      */
     protected function _customValidationColumnNames()
@@ -161,19 +161,22 @@ abstract class AbstractImport
      */
     protected function _importData()
     {
+        $importData = [];
         if (file_exists($this->_importFile) && !is_dir($this->_importFile) && is_readable($this->_importFile)) {
-            $importData = array_map('str_getcsv', file($this->_importFile));
-            $headerRow = array_shift($importData);
-            try {
-                array_walk($importData, ['self', '_csvNameColumns'], $headerRow);
+            if (($handle = fopen($this->_importFile, 'r')) !== false) {
+                $headerRow = [];
+                while (($importRow = fgetcsv($handle, 1000, ',')) !== false) {
+                    if (!$headerRow) {
+                        $headerRow = $importRow;
+                    } else {
+                        $importData[] = array_combine($headerRow, $importRow);
+                    }
+                }
+                fclose($handle);
                 $this->_importedData = true;
-                return $importData;
-            } catch (\Exception $e) {
-                $this->_validationErrors[] = 'CSV format error, number of columns in the header row does not match for some data rows';
-                return false;
             }
         }
-        return [];
+        return $importData;
     }
 
     /**
@@ -200,12 +203,12 @@ abstract class AbstractImport
     public function validate()
     {
         if (!$this->_hasBeenValidated) {
-            if ($this->_importFileRequired && $this->_importData === false) {
-                $this->_validationErrors[] = 'A required import file is missing or not readable: ' . $this->_importFile;
+            if ($this->_importFileRequired && $this->_importedData === false) {
+                $this->_importErrors[] = new \Exception('A required import file is missing or not readable: ' . $this->_importFile);
                 return false;
             }
             if ($this->_validationRules) {
-                // do column checks first to reduce number of overall checks
+                // do basic validation on column first (if fails then skip row checks for that column)
                 $skipFieldValidation = $this->_validateColumns();
                 foreach ($this->_importData as $row => $importRow) {
                     try {
@@ -218,13 +221,13 @@ abstract class AbstractImport
                     } catch (ValidationException $e) {
                         foreach ($e->validator->getMessageBag()->toArray() as $errorMessages) {
                             foreach ($errorMessages as $errorMessage) {
-                                $this->_validationErrors[] = 'Data row ' . ($row + 1) . ': ' . $errorMessage;
+                                $this->_importErrors[] = new \Exception('Data row ' . ($row + 1) . ': ' . $errorMessage);
                             }
                         }
                     }
                 }
             }
-            $this->_hasBeenValidated = empty($this->_validationErrors);
+            $this->_hasBeenValidated = empty($this->_importErrors);
         }
         return $this->_hasBeenValidated;
     }
@@ -241,7 +244,7 @@ abstract class AbstractImport
             } catch (ValidationException $e) {
                 $errorBag = $e->validator->getMessageBag();
                 foreach ($errorBag->toArray() as $presentMessage) {
-                    $this->_validationErrors[] = $presentMessage[0];
+                    $this->_importErrors[] = new \Exception($presentMessage[0]);
                 }
                 return $errorBag->keys();
             }
@@ -266,9 +269,17 @@ abstract class AbstractImport
     /**
      * @return array
      */
-    public function getValidationErrors()
+    public function getErrors()
     {
-        return $this->_validationErrors;
+        return $this->_importErrors;
+    }
+
+    /**
+     * @return array
+     */
+    public function getErrorMessages()
+    {
+        return array_map(function (\Exception $e) {return $e->getMessage();}, $this->_importErrors);
     }
 
     /**
@@ -277,21 +288,40 @@ abstract class AbstractImport
     public function run()
     {
         if ($this->validate()) {
-            $this->_beforeRun();
-            foreach ($this->_importData as $importRow) {
-                $this->_importCurrentRow = $importRow;
-                $this->_beforeRowMap();
-                foreach ($this->_fieldMap as $importFieldName => $importInfo) {
-                    $importFieldData = array_key_exists($importFieldName, $importRow) ? $importRow[$importFieldName] : '';
-                    $importFieldData = $this->_mapFn($importInfo, $importFieldData);
-                    $importFieldData = $this->_setDefaultIfBlank($importInfo, $importFieldData);
-                    if (array_key_exists('mapTo', $importInfo)) {
-                        $this->_mapTo($importInfo, $importFieldData);
-                    }
-                }
-                $this->_afterRowMap();
+            try {
+                $this->_beforeRun();
+            } catch (\Exception $e) {
+                $this->_importErrors[] = $e;
             }
-            $this->_afterRun();
+            foreach ($this->_importData as $importRow) {
+                try {
+                    $this->_importCurrentRow = $importRow;
+                    $this->_beforeRowMap();
+                    foreach ($this->_fieldMap as $importFieldName => $importInfo) {
+                        $tryFieldNames = array_merge([$importFieldName], array_key_exists('aliases', $importInfo) ? $importInfo['aliases'] : []);
+                        $importFieldData = '';
+                        foreach ($tryFieldNames as $tryFieldName) {
+                            if (array_key_exists($tryFieldName, $importRow)) {
+                                $importFieldData = $importRow[$tryFieldName];
+                                break;
+                            }
+                        }
+                        $importFieldData = $this->_mapFn($importInfo, $importFieldData);
+                        $importFieldData = $this->_setDefaultIfBlank($importInfo, $importFieldData);
+                        if (array_key_exists('mapTo', $importInfo)) {
+                            $this->_mapTo($importInfo, $importFieldData);
+                        }
+                    }
+                    $this->_afterRowMap();
+                } catch (\Exception $e) {
+                    $this->_importErrors[] = $e;
+                }
+            }
+            try {
+                $this->_afterRun();
+            } catch (\Exception $e) {
+                $this->_importErrors[] = $e;
+            }
             return true;
         } else {
             return false;

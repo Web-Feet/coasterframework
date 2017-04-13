@@ -3,8 +3,10 @@
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageGroupPage;
 use CoasterCms\Models\PageLang;
+use CoasterCms\Models\PagePublishRequests;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\Template;
+use Illuminate\Support\Facades\DB;
 
 class PagesImport extends AbstractImport
 {
@@ -27,6 +29,11 @@ class PagesImport extends AbstractImport
      * @var array
      */
     protected $_templateIds;
+
+    /**
+     *
+     */
+    const IMPORT_FILE_DEFAULT = 'pages.csv';
 
     /**
      * @return array
@@ -104,8 +111,15 @@ class PagesImport extends AbstractImport
      */
     protected function _beforeRun()
     {
+        // wipe data
+        DB::table((new Page)->getTable())->truncate();
+        DB::table((new PageLang)->getTable())->truncate();
+        DB::table((new PageVersion)->getTable())->truncate();
+        DB::table((new PageGroupPage)->getTable())->truncate();
+        DB::table((new PagePublishRequests)->getTable())->truncate();
+
         $this->_templateIds = [];
-        $templates = Template::where('theme_id', '=', $this->_additionalData['theme']->id)->get();
+        $templates = Template::get();
         foreach ($templates as $template) {
             $this->_templateIds[$template->template] = $template->id;
         }

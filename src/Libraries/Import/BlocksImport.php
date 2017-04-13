@@ -106,7 +106,7 @@ class BlocksImport extends AbstractImport
     public function validate()
     {
         if (($this->_additionalData && !array_key_exists('theme', $this->_additionalData)) || !is_a($this->_additionalData['theme'], Theme::class)) {
-            $this->_validationErrors[] = 'Theme must be specified before blocks can be imported';
+            $this->_importErrors[] = new \Exception('Theme must be specified before blocks can be imported');
         }
         return parent::validate();
     }
@@ -135,9 +135,11 @@ class BlocksImport extends AbstractImport
     {
         $categoryImport = new \CoasterCms\Libraries\Import\Blocks\CategoryImport;
         $categoryImport->setTheme($this->_additionalData['theme'])->run();
+        $this->_importErrors = array_merge($this->_importErrors, $categoryImport->getErrors());
         $this->_blockCategoriesByName = $categoryImport->getBlockCategoriesByName();
         $formRulesImport = new \CoasterCms\Libraries\Import\Blocks\FormRulesImport();
         $formRulesImport->setTheme($this->_additionalData['theme'])->run();
+        $this->_importErrors = array_merge($this->_importErrors, $formRulesImport->getErrors());
         $this->_loadTemplateList();
     }
 
@@ -451,18 +453,19 @@ class BlocksImport extends AbstractImport
     }
 
     /**
-     * @param array $updateTemplates
+     * @param array|bool $updateTemplates
      */
     public function save($updateTemplates)
     {
         $allBlockData = $this->_saveBlockData($this->_blocksCollection->getAggregatedBlocks()); // should have block ids after
-        $allBlockData = array_intersect_key($allBlockData, array_filter($updateTemplates));
+        $allBlockData = is_array($updateTemplates) ? array_intersect_key($allBlockData, array_filter($updateTemplates)) : ($updateTemplates ? $allBlockData : []);
         $this->_saveBlockTemplates($allBlockData);
         $this->_saveBlockRepeaters($allBlockData);
 
         // run import for select blocks (can only be run after blocks have been saved as it saves a block_id)
         $selectOptionsImport = new \CoasterCms\Libraries\Import\Blocks\SelectOptionImport;
         $selectOptionsImport->setTheme($this->_additionalData['theme'])->run();
+        $this->_importErrors = array_merge($this->_importErrors, $selectOptionsImport->getErrors());
     }
 
     /**

@@ -1,7 +1,9 @@
 <?php namespace CoasterCms\Libraries\Import;
 
 use CoasterCms\Models\PageGroup;
+use CoasterCms\Models\PageGroupAttribute;
 use CoasterCms\Models\Template;
+use Illuminate\Support\Facades\DB;
 
 class GroupsImport extends AbstractImport
 {
@@ -35,7 +37,8 @@ class GroupsImport extends AbstractImport
             ],
             'Url Priority' => [
                 'mapTo' => 'url_priority',
-                'default' => 50
+                'default' => 50,
+                'aliases' => ['Url Priority (Default: 50)']
             ],
             'Default Template' => [
                 'mapTo' => 'default_template',
@@ -43,6 +46,16 @@ class GroupsImport extends AbstractImport
                 'default' => 0
             ]
         ];
+    }
+
+    /**
+     *
+     */
+    protected function _beforeRun()
+    {
+        // wipe data
+        DB::table((new PageGroup)->getTable())->truncate();
+        DB::table((new PageGroupAttribute)->getTable())->truncate();
     }
 
     /**
@@ -75,8 +88,9 @@ class GroupsImport extends AbstractImport
      */
     protected function _afterRun()
     {
-        $groupAttributes = new Groups\GroupAttributesImport();
+        $groupAttributes = new Groups\GroupAttributesImport($this->_importPath, $this->_importFileRequired);
         $groupAttributes->run();
+        $this->_importErrors = array_merge($this->_importErrors, $groupAttributes->getErrors());
     }
 
     /**

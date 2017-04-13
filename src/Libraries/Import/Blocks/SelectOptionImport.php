@@ -58,7 +58,7 @@ class SelectOptionImport extends AbstractImport
             foreach ($this->_importData as $rowData) {
                 $block = Block::preload($rowData['Block Name']);
                 if (!$block->exists) {
-                    $this->_validationErrors[] = 'Block not found under name: '. $rowData['Block Name'];
+                    $this->_importErrors[] = new \Exception('Block not found under name: '. $rowData['Block Name']);
                     $isValid = false;
                 } else {
                     $this->_blockNamesToIds[$block->name] = $block->id;

@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Libraries\Import\Groups;
 
 use CoasterCms\Libraries\Import\AbstractImport;
+use CoasterCms\Models\Block;
 use CoasterCms\Models\PageGroupAttribute;
 use CoasterCms\Models\Template;
 
@@ -14,7 +15,7 @@ class GroupAttributesImport extends AbstractImport
     /**
      *
      */
-    const IMPORT_FILE_DEFAULT = 'pages/groups.csv';
+    const IMPORT_FILE_DEFAULT = 'pages/group_attributes.csv';
 
     /**
      * @return array
@@ -22,26 +23,30 @@ class GroupAttributesImport extends AbstractImport
     public function fieldMap()
     {
         return [
-            'Group Id' => [
+            'Attribute Id' => [
                 'mapTo' => 'id',
                 'validate' => 'required'
             ],
-            'Group Name' => [
-                'mapTo' => 'name',
+            'Group Id' => [
+                'mapTo' => 'group_id',
                 'validate' => 'required'
             ],
-            'Group Item Name' => [
-                'mapTo' => 'item_name',
+            'Block Name' => [
+                'mapTo' => 'item_block_id',
+                'mapFn' => '_toBlockId',
                 'validate' => 'required'
             ],
-            'Url Priority' => [
-                'mapTo' => 'url_priority',
-                'default' => 50
+            'Order Priority' => [
+                'mapTo' => 'item_block_order_priority',
+                'aliases' => ['Order Priority (0 for no ordering)']
             ],
-            'Default Template' => [
-                'mapTo' => 'default_template',
-                'mapFn' => '_convertToTemplateId',
-                'default' => 0
+            'Order Dir' => [
+                'mapTo' => 'item_block_order_dir',
+                'aliases' => ['Order Dir (asc/desc)']
+            ],
+            'Container Filter by Block Name' => [
+                'mapTo' => 'filter_by_block_id',
+                'mapFn' => '_toBlockId'
             ]
         ];
     }
@@ -75,12 +80,12 @@ class GroupAttributesImport extends AbstractImport
      * @param string $importFieldData
      * @return string
      */
-    protected function _convertToTemplateId($importFieldData)
+    protected function _toBlockId($importFieldData)
     {
         if ($importFieldData !== '') {
-            $template = Template::preload(trim($importFieldData));
-            if ($template->exists) {
-                return $template->id;
+            $block = Block::preload(trim($importFieldData));
+            if ($block->exists) {
+                return $block->id;
             }
         }
         return 0;

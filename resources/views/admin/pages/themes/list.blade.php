@@ -66,7 +66,10 @@
                         if (typeof r == 'object' && r.error == 0) {
                             location.reload();
                         } else {
-                            cms_alert('danger', 'An error occurred installing the theme: <br />'+ r.response.replace("\r\n", '<br />'));
+                            var responses = (typeof r.response == 'string') ? [r.response] : r.response;
+                            for (var i = 0; i < responses.length; i++) {
+                                cms_alert('danger', 'An error occurred installing the theme: <br />'+ responses[i].replace("\r\n", '<br />'));
+                            }
                         }
                     }, error: function() {
                         cms_alert('danger', 'An error occurred installing the theme: <br />'+r.response.replace("\r\n", '<br />'));

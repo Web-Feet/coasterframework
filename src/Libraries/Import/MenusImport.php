@@ -1,6 +1,8 @@
 <?php namespace CoasterCms\Libraries\Import;
 
 use CoasterCms\Models\Menu;
+use CoasterCms\Models\MenuItem;
+use Illuminate\Support\Facades\DB;
 
 class MenusImport extends AbstractImport
 {
@@ -29,10 +31,20 @@ class MenusImport extends AbstractImport
                 'mapFn' => '_setNameIfNull'
             ],
             'Menu Max Sublevels' => [
-                'mapTo' => 'max_sublevels',
+                'mapTo' => 'max_sublevel',
                 'default' => 0
             ],
         ];
+    }
+
+    /**
+     *
+     */
+    protected function _beforeRun()
+    {
+        // wipe data
+        DB::table((new Menu)->getTable())->truncate();
+        DB::table((new MenuItem)->getTable())->truncate();
     }
 
     /**
@@ -65,8 +77,9 @@ class MenusImport extends AbstractImport
      */
     protected function _afterRun()
     {
-        $menuItems = new Menus\MenuItemsImport();
+        $menuItems = new Menus\MenuItemsImport($this->_importPath, $this->_importFileRequired);
         $menuItems->run();
+        $this->_importErrors = array_merge($this->_importErrors, $menuItems->getErrors());
     }
 
     /**
