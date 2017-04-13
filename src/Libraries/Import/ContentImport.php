@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Libraries\Import;
 
+use CoasterCms\Models\Block;
 use CoasterCms\Models\PageBlock;
 use CoasterCms\Models\PageBlockDefault;
 use CoasterCms\Models\PageBlockRepeaterData;
@@ -19,6 +20,8 @@ class ContentImport extends AbstractImport
         DB::table((new PageBlock)->getTable())->truncate();
         DB::table((new PageBlockRepeaterData)->getTable())->truncate();
         DB::table((new PageBlockRepeaterRows)->getTable())->truncate();
+
+        Block::preload('', true); // fix block_id issue on install import
 
         $pageBlocks = new Content\PageBlocksImport($this->_importPath, $this->_importFileRequired);
         $pageBlocks->run();
