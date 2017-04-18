@@ -297,14 +297,20 @@ class BlocksImport extends AbstractImport
             [$this->_additionalData['theme']->theme]
         );
         if ($this->_templateList) {
+            $errors = [];
             foreach ($this->_templateList as $templateName) {
                 $templateView = 'themes.' . $this->_additionalData['theme']->theme . '.templates.' . $templateName;
                 if (View::exists($templateView)) {
                     PageBuilder::setData('template', $templateName);
-                    View::make($templateView)->render();
+                    try {
+                        View::make($templateView)->render();
+                    } catch (\Exception $e) {
+                        $errors[] = $e->getMessage();
+                    }
                 }
             }
-            if ($errors = PageBuilder::getData('errors')) {
+            $errors = array_merge($errors, PageBuilder::getData('errors'));
+            if ($errors) {
                 echo 'Could not complete block import, errors found in theme:';
                 dd($errors);
             }
