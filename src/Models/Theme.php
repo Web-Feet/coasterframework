@@ -22,13 +22,15 @@ Class Theme extends Eloquent
 
     public function templates()
     {
+        $templatesTable = DB::getTablePrefix() . (new Template)->getTable();
+        $themeTemplatesTable = DB::getTablePrefix() . (new ThemeTemplate)->getTable();
         return $this->belongsToMany('CoasterCms\Models\Template', 'theme_templates')
             ->withPivot('label', 'child_template')
             ->addSelect('templates.id')
             ->addSelect('templates.template')
-            ->addSelect(DB::raw('IF (`theme_templates`.`label` IS NOT NULL, `theme_templates`.`label`, `templates`.`label`) as label'))
-            ->addSelect(DB::raw('IF (`theme_templates`.`child_template` IS NOT NULL, `theme_templates`.`child_template`, `templates`.`child_template`) as child_template'))
-            ->addSelect(DB::raw('IF (`theme_templates`.`hidden` IS NOT NULL, `theme_templates`.`hidden`, `templates`.`hidden`) as hidden'))
+            ->addSelect(DB::raw('IF (`'.$themeTemplatesTable.'`.`label` IS NOT NULL, `'.$themeTemplatesTable.'`.`label`, `'.$templatesTable.'`.`label`) as label'))
+            ->addSelect(DB::raw('IF (`'.$themeTemplatesTable.'`.`child_template` IS NOT NULL, `'.$themeTemplatesTable.'`.`child_template`, `'.$templatesTable.'`.`child_template`) as child_template'))
+            ->addSelect(DB::raw('IF (`'.$themeTemplatesTable.'`.`hidden` IS NOT NULL, `'.$themeTemplatesTable.'`.`hidden`, `'.$templatesTable.'`.`hidden`) as hidden'))
             ->addSelect('templates.updated_at')
             ->addSelect('templates.created_at');
     }

@@ -536,9 +536,8 @@ class Page extends Eloquent
             }
         }
         $templates = Theme::get_template_list($this->template);
-        if ($theme) {
-            $templateData = $theme->templateById($this->template);
-            $templateSelectHidden = (bool)$templateData->getAttribute('hidden');
+        if ($theme && $templateData = $theme->templateById($this->template)) {
+            $templateSelectHidden = (bool) $templateData->getAttribute('hidden');
         } else {
             $templateSelectHidden = false;
         }
