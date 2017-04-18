@@ -1,11 +1,28 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
 use CoasterCms\Libraries\Builder\PageBuilder;
+use CoasterCms\Models\Block;
 use URL;
 use View;
 
 class Image extends String_
 {
+
+    /**
+     * @var string
+     */
+    protected $_renderDataName = 'image';
+
+    /**
+     * Image constructor.
+     * @param Block $block
+     */
+    public function __construct(Block $block)
+    {
+        parent::__construct($block);
+        $this->_displayViewDirs[] = 'images';
+    }
+
     /**
      * Display image, image can be cropped with croppa
      * @param string $content
@@ -50,7 +67,7 @@ class Image extends String_
             $imageData->file = $imageData->original;
         }
 
-        return $this->_renderDisplayView($options, ['image' => $imageData]);
+        return $this->_renderDisplayView($options, $imageData);
     }
 
     /**

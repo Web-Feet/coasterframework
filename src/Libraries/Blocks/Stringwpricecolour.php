@@ -12,7 +12,7 @@ class Stringwpricecolour extends String_
      */
     public function display($content, $options = [])
     {
-        return $this->_renderDisplayView($options, ['data' => $this->_defaultData($content)]);
+        return $this->_renderDisplayView($options, $this->_defaultData($content));
     }
 
     /**

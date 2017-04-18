@@ -647,12 +647,13 @@ class PageBuilderInstance
                 }
             }
 
-            // return raw data
-            if (isset($options['raw']) && $options['raw']) {
-                return $blockData;
-            }
         } else {
             return 'block not found';
+        }
+
+        // return raw data
+        if (isset($options['raw']) && $options['raw']) {
+            return $blockData;
         }
 
         // set version that data has been grabbed for (0 = latest)

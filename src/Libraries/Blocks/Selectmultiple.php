@@ -2,6 +2,17 @@
 
 class Selectmultiple extends Select
 {
+
+    /**
+     * @var string
+     */
+    protected $_renderDataName = 'options';
+
+    /**
+     * @var string
+     */
+    protected $_renderRepeatedItemName = 'option';
+
     /**
      * Unserialize string to php array before returning
      * @param string $content
@@ -10,7 +21,7 @@ class Selectmultiple extends Select
      */
     public function display($content, $options = [])
     {
-        return $this->_renderDisplayView($options, ['options' => $this->_defaultData($content)]);
+        return $this->_renderDisplayView($options, $this->_defaultData($content));
     }
 
     /**

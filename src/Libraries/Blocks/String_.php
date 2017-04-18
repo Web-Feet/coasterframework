@@ -21,32 +21,47 @@ class String_
     /**
      * @var array
      */
-    protected $_editViewData;
+    protected $_editViewData = [];
 
     /**
      * @var bool
      */
-    protected $_isSaved;
+    protected $_isSaved = false;
 
     /**
      * @var string
      */
-    protected $_contentSaved;
+    protected $_contentSaved = '';
 
     /**
      * @var array
      */
-    protected $_displayViewPriorities;
+    protected $_displayViewDirs = [];
 
     /**
      * @var array
      */
-    protected $_processedDisplayView;
+    protected $_displayViewFiles = [];
 
     /**
      * @var array
      */
-    protected $_processedDisplayViewLog;
+    protected $_displayViewCache = [];
+
+    /**
+     * @var array
+     */
+    protected $_displayViewLog = [];
+
+    /**
+     * @var string
+     */
+    protected $_renderDataName = 'data';
+
+    /**
+     * @var string
+     */
+    protected $_renderRepeatedItemName = 'data';
 
     /**
      * String_ constructor.
@@ -55,11 +70,8 @@ class String_
     public function __construct(Block $block)
     {
         $this->_block = clone $block;
-        $this->_editViewData = [];
-        $this->_isSaved = false;
-        $this->_contentSaved = '';
-        $this->_processedDisplayView = [];
-        $this->_displayViewPriorities = array_filter([$this->_block->name, 'default']);
+        $this->_displayViewDirs = [strtolower($this->_block->type)];
+        $this->_displayViewFiles = array_filter([$this->_block->name, 'default']);
     }
 
     /**
@@ -113,107 +125,93 @@ class String_
 
     /**
      * Return display block view path
-     * @param string|array $view
+     * @param string $view
+     * @param string $suffix
      * @return string
      */
-    public function displayView($view = '')
+    public function displayView($view = '', $suffix = '')
     {
-        if (is_array($view)) {
-            $viewSuffix = !empty($view['view_suffix']) ? $view['view_suffix'] : '';
-            $view = !empty($view['view']) ? $view['view'] : '';
-        } else {
-            $viewSuffix = '';
-        }
-        $pView = $view . '#' . $viewSuffix;
-        if (!array_key_exists($pView, $this->_processedDisplayView)) {
-            $this->_processedDisplayView[$pView] = '';
-            if ($view) {
-                array_unshift($this->_displayViewPriorities, $view);
-            }
+        $viewTag = $view . ($suffix ?  '#' . $suffix : '');
+        if (!array_key_exists($viewTag, $this->_displayViewCache)) {
+            $this->_displayViewCache[$viewTag] = '';
             $viewRootPath = 'themes.' . PageBuilder::getData('theme') . '.blocks.';
-            $oldPaths = [
-                'repeater' => 'repeaters',
-                'video' => 'videos',
-                'image' => 'images',
-                'form' => 'forms',
-            ];
-            $this->_block->type = strtolower($this->_block->type);
-            $blockFolders = [$this->_block->type];
-            if (array_key_exists($this->_block->type, $oldPaths)) {
-                $blockFolders[] = $oldPaths[$this->_block->type];
-            }
-            foreach ($blockFolders as $blockFolder) {
-                $viewPath = $viewRootPath . $blockFolder . '.';
-                foreach ($this->_displayViewPriorities as $viewPriority) {
-                    $this->_processedDisplayViewLog[] = $viewPath . $viewPriority . $viewSuffix;
-                    if (View::exists($viewPath . $viewPriority . $viewSuffix)) {
-                        $this->_processedDisplayView[$pView] = $viewPath . $viewPriority . $viewSuffix;
-                        break;
+            $viewFiles = $view ? array_merge([$view], $this->_displayViewFiles) : $this->_displayViewFiles;
+            foreach ($this->_displayViewDirs as $viewDir) {
+                foreach ($viewFiles as $viewFile) {
+                    $this->_displayViewLog[] = $viewRootPath . $viewDir . '.' . $viewFile . $suffix;
+                    if (View::exists(end($this->_displayViewLog))) {
+                        $this->_displayViewCache[$viewTag] = end($this->_displayViewLog);
+                        break 2;
                     }
                 }
             }
         }
-        return $this->_processedDisplayView[$pView];
+        return $this->_displayViewCache[$viewTag];
+    }
+
+    /**
+     * @param array $options
+     * @return string
+     */
+    public function displayViewOptions($options)
+    {
+        $view = array_key_exists('view', $options) ? $options['view'] : '';
+        $suffix = array_key_exists('view_suffix', $options) ? $options['view_suffix'] : '';
+        return $this->displayView($view, $suffix);
     }
 
     /**
      * Return rendered display block view
-     * @param string|array $view
+     * @param array $options
      * @param array $data
-     * @param string $itemName
+     * @param bool $returnRaw
      * @return string
      */
-    protected function _renderDisplayView($view, $data = [], $itemName = 'item')
+    protected function _renderDisplayView($options, $data = [], $returnRaw = false)
     {
-        if ($displayView = $this->displayView($view)) {
-            if (is_array($view)) {
-                if (!empty($view['repeated_view'])) {
-                    return $this->_renderRepeatedDisplayView($displayView, $data, $itemName);
-                }
-            }
+        if (array_key_exists('repeated_view', $options) && $options['repeated_view']) {
+            return $this->_renderRepeatedDisplayView($options, $data);
+        } elseif ($displayView = $this->displayViewOptions($options)) {
+            $data = is_array($data) ? $data + [$this->_renderDataName => $data] : [$this->_renderDataName => $data];
             return View::make($displayView, $data)->render();
+        } elseif ($returnRaw && is_string($data)) {
+            return $data;
         } else {
-            $error = 'Template not found for ' . $this->_block->type . ' block: ' . $this->_block->name;
-            foreach ($this->_processedDisplayViewLog as $k => $viewNotFound) {
-                $error .= '<br />Tried #' . ($k+1) . ' ' . $viewNotFound;
-            }
-            return $error;
+            return $this->_renderDisplayViewNotFoundError();
         }
     }
 
     /**
-     * @param string|array $view
+     * @param array $options
      * @param array $data
-     * @param string $itemName
      * @return string
      */
-    protected function _renderRepeatedDisplayView($view, $data = [], $itemName = 'item')
+    protected function _renderRepeatedDisplayView($options, $data = [])
     {
-        if ($displayView = $this->displayView($view)) {
+        if ($displayView = $this->displayViewOptions($options)) {
             $renderedContent = '';
-            $dataArray = reset($data); // first array item is data to iterate over
-            if (!empty($dataArray) && is_array($dataArray)) {
+            if (!empty($data) && is_array($data)) {
                 $i = 1;
                 $j = 1;
                 $isFirst = true;
-                $total = count($dataArray);
-                $columns = !empty($view['columns']) ? $view['columns'] : 1;
-                $showColumns = !empty($view['show_columns']) ? $view['show_columns'] : [1];
+                $total = count($data);
+                $columns = !empty($options['columns']) ? $options['columns'] : 1;
+                $showColumns = !empty($options['show_columns']) ? $options['show_columns'] : [1];
                 $maxIndex = $total % $columns;
                 $lastElement = $total - $maxIndex + max(array_filter($showColumns, function ($var) use ($maxIndex) {return $var <= $maxIndex;}) ?: [0]);
-                foreach ($dataArray as $dataItemId => $dataItem) {
+                foreach ($data as $dataItemId => $dataItem) {
                     if (in_array((($i-1) % $columns)+1, $showColumns)) {
                         $isLast = ($i == $lastElement);
                         $itemData = [
-                            $itemName => $dataItem, // first array item should be the iterated data
-                            $itemName . '_id' => $dataItemId,
+                            $this->_renderRepeatedItemName => $dataItem, // first array item should be the iterated data
+                            $this->_renderRepeatedItemName . '_id' => $dataItemId,
                             'is_first' => $isFirst,
                             'is_last' => $isLast,
                             'count' => $j,
                             'count_all' => $i,
                             'total' => $total
-                        ];
-                        $renderedContent .= $this->_renderRepeatedDisplayViewItem($displayView, $itemData + $data);
+                        ] + $options;
+                        $renderedContent .= $this->_renderRepeatedDisplayViewItem($displayView, $itemData);
                         $isFirst = false;
                         $j++;
                     }
@@ -222,7 +220,7 @@ class String_
             }
             return $renderedContent;
         } else {
-            return $this->_renderDisplayView($view);
+            return $this->_renderDisplayViewNotFoundError();
         }
     }
 
@@ -234,6 +232,18 @@ class String_
     protected function _renderRepeatedDisplayViewItem($displayView, $data = [])
     {
         return View::make($displayView, $data)->render();
+    }
+
+    /**
+     * @return string
+     */
+    protected function _renderDisplayViewNotFoundError()
+    {
+        $error = 'Template not found for ' . $this->_block->type . ' block: ' . $this->_block->name;
+        foreach ($this->_displayViewLog as $k => $viewNotFound) {
+            $error .= '<br />Tried #' . ($k+1) . ' ' . $viewNotFound;
+        }
+        return $error;
     }
 
     /**

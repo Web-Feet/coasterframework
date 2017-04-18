@@ -5,6 +5,7 @@ use CoasterCms\Helpers\Cms\Email;
 use CoasterCms\Helpers\Cms\View\FormWrap;
 use CoasterCms\Libraries\Builder\FormMessage;
 use CoasterCms\Libraries\Builder\PageBuilder;
+use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockFormRule;
 use CoasterCms\Models\FormSubmission;
 use CoasterCms\Models\Page;
@@ -22,6 +23,16 @@ class Form extends String_
     public static $blockSettings = ['Manage form input validation rules' => 'themes/forms'];
 
     /**
+     * Repeater constructor.
+     * @param Block $block
+     */
+    public function __construct(Block $block)
+    {
+        parent::__construct($block);
+        $this->_displayViewDirs[] = 'forms';
+    }
+
+    /**
      * Display form view
      * @param string $content
      * @param array $options
@@ -30,8 +41,8 @@ class Form extends String_
     public function display($content, $options = [])
     {
         $formData = $this->_defaultData($content);
-        $options['view'] = !empty($options['view']) ? $options['view'] : $formData->template;
-        return FormWrap::view($this->_block, $options, $this->displayView($options), ['form_data' => $formData]);
+        $view = !empty($options['view']) ? $options['view'] : $formData->template;
+        return FormWrap::view($this->_block, $options, $this->displayView($view), ['form_data' => $formData]);
     }
 
     /**

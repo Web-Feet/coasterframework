@@ -12,6 +12,17 @@ use View;
 
 class Gallery extends String_
 {
+
+    /**
+     * @var string
+     */
+    protected $_renderDataName = 'images';
+
+    /**
+     * @var string
+     */
+    protected $_renderRepeatedItemName = 'image';
+
     /**
      * @param string $content
      * @param array $options
@@ -26,7 +37,7 @@ class Gallery extends String_
             }
         }
 
-        return $this->_renderDisplayView($options, ['images' => $galleryData], 'image');
+        return $this->_renderDisplayView($options, $galleryData);
     }
 
     /**
@@ -40,7 +51,7 @@ class Gallery extends String_
         $image->order = '';
         $image->path = '';
         $image->file = '';
-        return $this->_renderDisplayView($options, ['images' => [$image]], 'image');
+        return $this->_renderDisplayView($options, [$image]);
     }
 
     /**
@@ -55,7 +66,7 @@ class Gallery extends String_
     /**
      * Return valid form data
      * @param $content
-     * @return \stdClass
+     * @return array
      */
     protected function _defaultData($content)
     {
