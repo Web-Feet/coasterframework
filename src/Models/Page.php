@@ -535,9 +535,13 @@ class Page extends Eloquent
                 $this->template = $parentTemplate->child_template;
             }
         }
-        $templateData = $theme->templateById($this->template);
         $templates = Theme::get_template_list($this->template);
-        $templateSelectHidden = (bool) $templateData->getAttribute('hidden');
+        if ($theme) {
+            $templateData = $theme->templateById($this->template);
+            $templateSelectHidden = (bool)$templateData->getAttribute('hidden');
+        } else {
+            $templateSelectHidden = false;
+        }
 
         // menu selection
         $menus = Menu::all();
