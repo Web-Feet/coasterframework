@@ -155,8 +155,9 @@ abstract class AbstractBlock
         if (array_key_exists('repeated_view', $options) && $options['repeated_view']) {
             return $this->_renderRepeatedDisplayView($options, $data);
         } elseif ($displayView = $this->displayViewOptions($options)) {
-            $data = is_array($data) ? $data + [$this->_renderDataName => $data] : [$this->_renderDataName => $data];
-            return View::make($displayView, $data)->render();
+            $viewData = [$this->_renderDataName => $data, 'data' => $data];
+            $viewData = is_array($data) ? $data + $viewData : $viewData;
+            return View::make($displayView, $viewData)->render();
         } elseif ($returnRaw) {
             return (string) $data;
         } else {
@@ -186,7 +187,9 @@ abstract class AbstractBlock
                     if (in_array((($i-1) % $columns)+1, $showColumns)) {
                         $isLast = ($i == $lastElement);
                         $itemData = [
-                            $this->_renderRepeatedItemName => $dataItem, // first array item should be the iterated data
+                            'data' => $dataItem,
+                            'data_id' => $dataItemId,
+                            $this->_renderRepeatedItemName => $dataItem,
                             $this->_renderRepeatedItemName . '_id' => $dataItemId,
                             'is_first' => $isFirst,
                             'is_last' => $isLast,
