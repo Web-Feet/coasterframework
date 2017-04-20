@@ -16,7 +16,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Request;
 use Validator;
 
-class Repeater extends String_
+class Repeater extends AbstractBlock
 {
     /**
      * @var bool

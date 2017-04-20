@@ -15,7 +15,7 @@ use Response;
 use Session;
 use Validator;
 
-class Form extends String_
+class Form extends AbstractBlock
 {
     /**
      * @var array

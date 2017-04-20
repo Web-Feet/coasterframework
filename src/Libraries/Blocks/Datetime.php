@@ -3,7 +3,7 @@
 use Carbon\Carbon;
 use CoasterCms\Helpers\Cms\DateTimeHelper;
 
-class Datetime extends String_
+class Datetime extends AbstractBlock
 {
     /**
      * Extra format options (either php format or coaster presets coaster.short/coaster.long)
@@ -19,7 +19,7 @@ class Datetime extends String_
             }
             $content = (new Carbon($content))->format($options['format']);
         }
-        return $content;
+        return parent::display($content, $options);
     }
 
     /**

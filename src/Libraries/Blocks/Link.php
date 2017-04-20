@@ -4,7 +4,7 @@ use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Models\Page;
 use URL;
 
-class Link extends String_
+class Link extends AbstractBlock
 {
     /**
      * Display image link (target attribute appended to end or link if exists)
@@ -17,7 +17,8 @@ class Link extends String_
         $content = $this->_defaultData($content);
         $target = $content['target'] ? '" target="'.$content['target'] : '';
         $link = str_replace('internal://', '', $content['link'], $count);
-        return (($count > 0) ? Path::getFullUrl($link) : $link) . $target;
+        $content = (($count > 0) ? Path::getFullUrl($link) : $link) . $target;
+        return parent::display($content, $options);
     }
 
     /**

@@ -10,7 +10,7 @@ use Request;
 use URL;
 use View;
 
-class Gallery extends String_
+class Gallery extends AbstractBlock
 {
 
     /**

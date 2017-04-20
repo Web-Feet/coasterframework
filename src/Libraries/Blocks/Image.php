@@ -5,7 +5,7 @@ use CoasterCms\Models\Block;
 use URL;
 use View;
 
-class Image extends String_
+class Image extends AbstractBlock
 {
 
     /**

@@ -16,7 +16,8 @@ class Selectuser extends Select
         if (is_numeric($content)) {
             $user = User::find($content);
         }
-        return !empty($user) && $user->getName() ? $user->getName() : $content;
+        $content = !empty($user) && $user->getName() ? $user->getName() : $content;
+        return parent::display($content, $options);
     }
 
     /**
