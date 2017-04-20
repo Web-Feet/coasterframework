@@ -294,7 +294,7 @@ class Block extends Eloquent
             $blockData = null;
         }
         if ($globalFallback && is_null($blockData)) {
-            $blockData = PageBlockDefault::getBlockData($this->id, $this->_versionId);
+            $blockData = PageBlockDefault::getBlockData($this->id, 0);
         }
         return $blockData;
     }
