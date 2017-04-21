@@ -248,7 +248,8 @@ class MenuBuilder
                     $this->activeParentIds[] = $parentPage->page_id;
                 }
             }
-            $this->activePageId = (int) (PageBuilder::getData('page') ?: new Page)->id;
+            $page = PageBuilder::getData('page') ?: new Page;
+            $this->activePageId = (int) $page->id;
         }
     }
 
