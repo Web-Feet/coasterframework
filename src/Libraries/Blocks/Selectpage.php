@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
 use CoasterCms\Helpers\Cms\Page\Path;
+use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\Page;
 
@@ -27,6 +28,20 @@ class Selectpage extends Select
     public function generateSearchText($content)
     {
         return Path::getById($content)->name ?: null;
+    }
+
+    /**
+     * @param string $content
+     * @param array $options
+     * @return string
+     */
+    public function display($content, $options = [])
+    {
+        $pageOverride = PageBuilder::getData('pageOverride');
+        PageBuilder::setData('pageOverride', Page::preload($content));
+        $renderedView = parent::display($content, $options);
+        PageBuilder::setData('pageOverride', $pageOverride);
+        return $renderedView;
     }
 
 }

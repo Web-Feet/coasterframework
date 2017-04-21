@@ -59,7 +59,6 @@ class ThemeBuilderInstance extends PageBuilderInstance
         $this->errors = [];
 
         // set page override so check can be made if the actual page id is ever called
-        $this->pageOverride = clone $this->page;
         $this->page->id = static::DUMMY_ORIGINAL_PAGE_ID;
 
         $this->_blocksCollection = $blocksCollection;
@@ -325,7 +324,8 @@ class ThemeBuilderInstance extends PageBuilderInstance
      */
     protected function _addToTemplate($block, $options)
     {
-        if (!array_key_exists('page_id', $options) || $options['page_id'] === static::DUMMY_ORIGINAL_PAGE_ID) {
+        $customPageId = array_key_exists('page_id', $options) ? $options['page_id'] : $this->pageId();
+        if ($customPageId === $this->pageId(true)) {
             if ($inRepeaterBlockName = $this->_inRepeaterView()) {
                 // block in a repeater template
                 $this->_blocksCollection->getBlock($block->name)->addRepeaterBlocks($inRepeaterBlockName);
@@ -340,7 +340,8 @@ class ThemeBuilderInstance extends PageBuilderInstance
             }
         } else {
             // if a page has been specified and it's not the same as the original page id
-            $this->_blocksCollection->getBlock($block->name)->addSpecifiedPageIds($options['page_id']);
+            $customPageId = (is_null($customPageId) ? 'Content defined' : $customPageId);
+            $this->_blocksCollection->getBlock($block->name)->addSpecifiedPageIds([$customPageId]);
         }
     }
 

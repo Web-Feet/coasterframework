@@ -198,7 +198,18 @@ class BlocksImport extends AbstractImport
     protected function _mapTemplates($importFieldData)
     {
         if ($importFieldData !== '' && $this->_currentBlockName !== '') {
-            $templates = ($importFieldData == '*') ? $this->_templateList : explode(',', $importFieldData);
+            $templates = explode(',', $importFieldData);
+            $templates = in_array('*', $templates) ? array_merge($this->_templateList, $templates) : $templates;
+            $templates = array_flip(array_unique($templates));
+            foreach ($templates as $template => $i) {
+                if ($template == '*') {
+                    unset($templates[$template]);
+                } elseif (strpos($template, '-') === 0) {
+                    unset($templates[$template]);
+                    unset($templates[substr($template, 1)]);
+                }
+            }
+            $templates = array_flip($templates);
             $this->_templateList = array_unique(array_merge($this->_templateList, $templates));
             return $templates;
         }
@@ -620,7 +631,7 @@ class BlocksImport extends AbstractImport
                             if (array_key_exists('mapFn', $mapData)) {
                                 switch ($mapData['mapFn']) {
                                     case '_mapTemplates':
-                                        $fieldData = ($importValue == '*') ? '*' : implode(',', $fieldData);
+                                        $fieldData = in_array('*', explode(',', $importValue)) ? $importValue : implode(',', $fieldData);
                                         break;
                                     case '_toBoolInt':
                                         $fieldData = $fieldData ? 'yes' : 'no';

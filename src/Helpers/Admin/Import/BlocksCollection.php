@@ -218,7 +218,7 @@ class BlocksCollection
      */
     protected function _orderBlockChanges($a, $b)
     {
-        $byDisplayClass = ['new' => 1, 'update' => 2, 'delete' => 3, 'info' => 4, 'none' => 5];
+        $byDisplayClass = ['new' => 1, 'update' => 2, 'delete' => 3, 'info' => 4, 'none' => 4];
         if ($byDisplayClass[$a['display_class']] == $byDisplayClass[$b['display_class']]) {
             if ($a['update_templates'] >= 0 && $b['update_templates'] >= 0) {
                 return strcmp($a['block_name'], $b['block_name']);
