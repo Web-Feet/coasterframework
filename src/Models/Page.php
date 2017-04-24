@@ -532,7 +532,7 @@ class Page extends Eloquent
             $this->template = config('coaster::admin.default_template');
             $parentPage = static::find($this->parent);
             if ($parentPage && $parentTemplate = $theme->templateById($parentPage->template)) {
-                $this->template = $parentTemplate->child_template;
+                $this->template = $parentTemplate->child_template ?: $this->template;
             }
         }
         $templates = Theme::get_template_list($this->template);
