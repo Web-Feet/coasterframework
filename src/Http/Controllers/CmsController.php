@@ -112,7 +112,11 @@ class CmsController extends Controller
 
         } catch (CmsPageException $e) {
 
-            $this->responseContent = $e->getAlternateResponse();
+            if ($e->getAlternateResponse()) {
+                $this->responseContent = $e->getAlternateResponse();
+            } else {
+                $this->_setErrorContent($e);
+            }
 
         } catch (Exception $e) {
 
