@@ -181,11 +181,12 @@ abstract class AbstractBlock
                 $total = count($data);
                 $columns = !empty($options['columns']) ? $options['columns'] : 1;
                 $showColumns = !empty($options['show_columns']) ? $options['show_columns'] : [1];
+                $showRows = !empty($options['selected_items']) ? $options['selected_items'] : range(1, $total); // can use to display certain rows
                 $maxIndex = $total % $columns;
                 $lastElement = $total - $maxIndex + max(array_filter($showColumns, function ($var) use ($maxIndex) {return $var <= $maxIndex;}) ?: [0]);
                 foreach ($data as $dataItemId => $dataItem) {
-                    if (in_array((($i-1) % $columns)+1, $showColumns)) {
-                        $isLast = ($i == $lastElement);
+                    if (in_array((($i-1) % $columns)+1, $showColumns) && in_array($i, $showRows)) {
+                        $isLast = ($i == $lastElement || $i == max($showRows));
                         $itemData = [
                             'data' => $dataItem,
                             'data_id' => $dataItemId,
