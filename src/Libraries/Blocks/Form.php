@@ -117,7 +117,7 @@ class Form extends AbstractBlock
                     $form_submission->save();
                 }
 
-                Session::set('form_data', $form_submission);
+                Session::put('form_data', $form_submission);
                 return \redirect(PageBuilder::pageUrl($form_settings->page_to));
             } else {
                 FormMessage::set($v->messages());

@@ -9,6 +9,7 @@ use CoasterCms\Models\FormSubmission;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Template;
+use CoasterCms\Models\ThemeTemplate;
 use View;
 
 class FormsController extends Controller
@@ -18,7 +19,7 @@ class FormsController extends Controller
     {
         $page = Page::find($pageId);
         if (!empty($page)) {
-            $block_cats = Template::template_blocks(config('coaster::frontend.theme'), $page->template);
+            $block_cats = ThemeTemplate::templateBlocks(config('coaster::frontend.theme'), $page->template);
             foreach ($block_cats as $block_cat) {
                 foreach ($block_cat as $block) {
                     if ($block->type == 'form') {
