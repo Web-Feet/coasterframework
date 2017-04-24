@@ -77,7 +77,7 @@ class SystemController extends Controller
                         }
                         $value = implode(',',$newValues);
                     }
-                    $current_setting->value = $value;
+                    $current_setting->value = (string) $value;
                     $current_setting->save();
                     if (in_array($setting, ['frontend.theme', 'admin.default_template'])) {
                         Theme::templateIdUpdate();
