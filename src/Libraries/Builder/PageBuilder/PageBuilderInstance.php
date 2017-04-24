@@ -619,7 +619,7 @@ class PageBuilderInstance
         $usingGlobalContent = false;
         $blockData = null;
 
-        if (($customBlockData = $this->_getCustomBlockData($blockName)) !== null) {
+        if (($customBlockData = $this->_getCustomBlockData($blockName)) !== null && !isset($options['page_id'])) {
             // load custom block data for (is also used for repeater content)
             $blockData = $customBlockData;
         } elseif ($block->exists) {
