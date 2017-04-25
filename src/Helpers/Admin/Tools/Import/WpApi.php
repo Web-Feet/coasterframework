@@ -124,7 +124,7 @@ class WpApi
 
     public function getCategory($data, $page_id)
     {
-        $catBlock = $this->getBlock($this->category_block_name);
+        $catBlock = $this->getBlock($this->category_block_name, 'selectmultiplewnew', 'Categories', '', 2);
 
         $cats = collect($data)->collapse()->where('taxonomy', 'category')->all();
 
@@ -133,7 +133,7 @@ class WpApi
 
     private function syncTags($page, $tags)
     {
-        $tagBlock = $this->getBlock($this->tag_block_name);
+        $tagBlock = $this->getBlock($this->tag_block_name, 'selectmultiplewnew', 'Tags', '', 2);
         $tags = collect($tags)->collapse()->where('taxonomy', 'post_tag')->all();
 
         return $this->loopDataAndAddToSelectMultipleWNewBlock($tagBlock, $tags, $page->id);
@@ -329,7 +329,7 @@ class WpApi
         $res->message = 'Post '.$uporc.': '.$pageLang->name;
         $res->oldLink = $data->link;
         $res->newLink = Path::getFullUrl($page->id);
-        $res->categories = 'UPDATE RUN';
+        $res->categories =  $this->getCategory($data->_embedded->{"wp:term"}, $page->id);
         $res->tags = 'UPDATE RUN';
         $res->comments = $comments;
         $res->main_image = $this->featuredImage($data, $pageLang);
@@ -349,6 +349,7 @@ class WpApi
       $page->save();
       $page->groups()->sync([$this->group->id]);
       $comments  = $this->getComments($data, $page);
+
       $categories = $this->getCategory($data->_embedded->{"wp:term"}, $page->id);
       // Page Lang
       $pageLang->live_version = 0;
