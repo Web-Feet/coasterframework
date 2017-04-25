@@ -42,7 +42,7 @@ class Video extends String_
             }
             return $this->_renderDisplayView($options, $videoInfo);
         } else {
-            return p;
+            return '';
         }
     }
 
