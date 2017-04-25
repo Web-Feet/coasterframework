@@ -171,7 +171,9 @@ class Block extends Eloquent
                 if (is_dir($dirPath)) {
                     foreach (scandir($dirPath) as $file) {
                         if ($className = explode('.', $file)[0]) {
-                            static::_preloadAdd('blockClass', trim(strtolower($className), '_'), $classPath . $className);
+                            if (stripos($className, 'abstract') === false) {
+                                static::_preloadAdd('blockClass', trim(strtolower($className), '_'), $classPath . $className);
+                            }
                         }
                     }
                 }

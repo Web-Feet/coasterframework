@@ -168,6 +168,28 @@ class BlocksCollection
     }
 
     /**
+     * @param array $scopes
+     * @return array
+     */
+    public function getTemplates($scopes = [])
+    {
+        $scopes = $scopes ?: array_keys($this->_scopes);
+        $templateScopes = array_fill_keys(array_keys($this->_scopes), []);
+        foreach ($this->_blocks as $blockScopes) {
+            foreach ($scopes as $scope) {
+                if (array_key_exists($scope, $blockScopes)) {
+                    $templateScopes[$scope] = array_unique(array_merge($templateScopes[$scope], $blockScopes[$scope]->templates));
+                }
+            }
+        }
+        $mergedTemplates = [];
+        foreach ($scopes as $scope) {
+            $mergedTemplates = array_unique(array_merge($mergedTemplates, $templateScopes[$scope]));
+        }
+        return $mergedTemplates;
+    }
+
+    /**
      * Used in theme review view
      * Caches aggregated blocks as they are heavily used in other functions
      */

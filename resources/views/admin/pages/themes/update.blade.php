@@ -17,7 +17,7 @@
     <div class="row">
         <div class="col-md-4 well-sm">
             <h4>Summary:</h4>
-            <p><b>Templates Used:</b> </p>
+            <p><b>Templates Used:</b> {{ implode(', ', $importBlocks->getTemplates()) }}</p>
             <p><b>Number of blocks found:</b> {{ count($importBlocksList) }}</p>
         </div>
         <div class="col-md-8 well-sm">

@@ -454,14 +454,6 @@ class BlocksImport extends AbstractImport
     }
 
     /**
-     *
-     */
-    public function getImportTemplateData()
-    {
-        // TODO array of new/existing templates
-    }
-
-    /**
      * @return BlocksCollection
      */
     public function getBlocksCollection()
