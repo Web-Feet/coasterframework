@@ -8,11 +8,16 @@
 </div>
 <div class="panel-body">
   @if ( ! empty($result))
-    <pre>
-      @php
-        var_dump($result);
-      @endphp
-    </pre>
+    <dl class="">
+    @foreach ($result as $postData)
+        <dt>{!! $postData->message !!}</dt>
+        <dd>{!! $postData->oldLink !!} -> {!! $postData->newLink !!}</dd>
+        <dd>Categories: {!! $postData->categories !!}</dd>
+        <dd>Tags: {!! $postData->tags !!}</dd>
+        <dd>Comments: {!! $postData->comments !!}</dd>
+        <dd><img src="{!! $postData->main_image !!}" class="img-responsive" style="max-height:200px;" alt=""></dd>
+    @endforeach
+    </dl>
   @endif
   <div class="col-md-10">
     <div class="row">
