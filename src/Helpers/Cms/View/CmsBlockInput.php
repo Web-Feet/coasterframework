@@ -53,7 +53,8 @@ class CmsBlockInput
         }
 
         if (!empty($options['name'])) {
-            $options['submitted_data'] = Request::input($options['name']);
+            $dotName = str_replace(['[', ']'], ['.', ''], $options['name']);
+            $options['submitted_data'] = array_key_exists('submitted_data', $options) ? $options['submitted_data'] : Request::input($dotName);
             $options['field_class'] = FormMessage::getErrorClass($options['name']);
             $options['field_message'] = FormMessage::getErrorMessage($options['name']);
         }

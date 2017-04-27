@@ -1,9 +1,9 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Helpers\Cms\StringHelper;
 use CoasterCms\Helpers\Cms\View\CmsBlockInput;
 use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\Block;
+use Request;
 use View;
 
 abstract class AbstractBlock
@@ -250,12 +250,16 @@ abstract class AbstractBlock
      */
     public function edit($content)
     {
+        $dotName = str_replace(['[', ']'], ['.', ''], $this->_getInputHTMLKey());
+        $submittedData = Request::input($dotName);
         return CmsBlockInput::make($this->_block->type, $this->_editViewData + [
                 'label' => $this->_block->label,
                 'name' => $this->_getInputHTMLKey(),
                 'content' => $content,
+                'submitted_data' => $submittedData ? $this->_defaultData($submittedData) : null,
                 'note' => $this->_block->note,
-                '_block' => $this->_block
+                '_block' => $this->_block,
+                '_blockType' => $this
             ]);
     }
 
