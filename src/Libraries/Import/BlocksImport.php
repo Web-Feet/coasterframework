@@ -34,6 +34,11 @@ class BlocksImport extends AbstractImport
     protected $_templateList;
 
     /**
+     * @var array
+     */
+    protected $_renderedOrders;
+
+    /**
      * @var BlocksCollection
      */
     protected $_blocksCollection;
@@ -313,6 +318,7 @@ class BlocksImport extends AbstractImport
                 $templateView = 'themes.' . $this->_additionalData['theme']->theme . '.templates.' . $templateName;
                 if (View::exists($templateView)) {
                     PageBuilder::setData('template', $templateName);
+                    PageBuilder::setRenderPath([['template' => $templateName]]);
                     try {
                         View::make($templateView)->render();
                     } catch (\Exception $e) {
@@ -320,6 +326,7 @@ class BlocksImport extends AbstractImport
                     }
                 }
             }
+            $this->_renderedOrders = PageBuilder::getOrders();
             $errors = array_merge($errors, PageBuilder::getData('errors'));
             if ($errors) {
                 echo 'Could not complete block import, errors found in theme:';
@@ -355,8 +362,7 @@ class BlocksImport extends AbstractImport
                     'label' => ucwords(str_replace('_', ' ', $blockName)),
                     'active' => 1,
                     'search_weight' => 1,
-                    'note' => '',
-                    'order' => 100
+                    'note' => ''
                 ])
                 ->setGlobalData([
                     'show_in_global' => ((count($importBlock->templates) / count($this->_templateList)) >= 0.7) ? 1 : 0,
@@ -364,7 +370,69 @@ class BlocksImport extends AbstractImport
                 ]);
         }
         $this->_categoryIdGuess($allBlockData);
-        // TODO set order guesses
+        $allBlockData = $this->_blocksCollection->getAggregatedBlocks();
+        $this->_orderGuess($allBlockData);
+    }
+
+    /**
+     * @param \CoasterCms\Helpers\Admin\Import\Block[] $allBlockData
+     */
+    protected function _orderGuess($allBlockData)
+    {
+        $orders = [];
+        foreach ($this->_renderedOrders as $template => $blockNames) {
+            $blocksByCategory = [];
+            foreach ($blockNames as $blockName => $order) {
+                $blocksByCategory[$allBlockData[$blockName]->blockData['category_id']][$blockName] = $order;
+            }
+            foreach ($blocksByCategory as $categoryId => $blocks) {
+                $fillFrom = 0;
+                $fillTo = null;
+                $fillBlockNames = [];
+                foreach ($blocks as $blockName => $order) {
+                    if (!array_key_exists($blockName, $orders)) {
+                        if (array_key_exists('order', $allBlockData[$blockName]->blockData)) {
+                            $orders[$blockName] = $allBlockData[$blockName]->blockData['order'];
+                            $fillTo = $orders[$blockName];
+                        } else {
+                            $fillBlockNames[] = $blockName;
+                        }
+                    }
+                    if (!$fillBlockNames) {
+                        $fillFrom = $orders[$blockName];
+                    }
+                    if (!is_null($fillTo)) {
+                        $this->_fillOrders($orders, $fillBlockNames, $fillFrom, $fillTo);
+                        $fillFrom = $fillTo;
+                        $fillTo = null;
+                    }
+                }
+                if ($fillBlockNames) {
+                    $this->_fillOrders($orders, $fillBlockNames, $fillFrom, $fillFrom + 10 * (count($fillBlockNames) + 1));
+                }
+            }
+        }
+    }
+
+    /**
+     * @param array $orders
+     * @param array $fillBlockNames
+     * @param int $fillFrom
+     * @param int $fillTo
+     */
+    protected function _fillOrders(&$orders, &$fillBlockNames, $fillFrom, $fillTo)
+    {
+        if ($numberToFill = count($fillBlockNames)) {
+            $inc = $fillTo <= $fillFrom ? 10 : (($fillTo - $fillFrom) / ($numberToFill + 1));
+            foreach ($fillBlockNames as $k => $blockName) {
+                $orders[$blockName] = (int) round($fillFrom + ($k + 1) * $inc);
+                $this->_blocksCollection->getBlock($blockName)
+                    ->setBlockData([
+                        'order' => $orders[$blockName]
+                    ]);
+            }
+            $fillBlockNames = [];
+        }
     }
 
     /**

@@ -31,6 +31,11 @@ class ThemeBuilderInstance extends PageBuilderInstance
     /**
      * @var array
      */
+    protected $_renderBlockOrder;
+
+    /**
+     * @var array
+     */
     protected $_repeaterTemplates;
 
     /**
@@ -65,10 +70,19 @@ class ThemeBuilderInstance extends PageBuilderInstance
         $this->_blocksCollection->setScope('file');
 
         $this->_renderPath = [];
+        $this->_renderBlockOrder = [];
 
         $this->_checkRepeaterTemplates();
         $this->_checkBlocksWithSelectOptions();
         $this->_loadExistingMenus();
+    }
+
+    /**
+     * @param array $renderPath
+     */
+    public function setRenderPath($renderPath)
+    {
+        $this->_renderPath = $renderPath;
     }
 
     /**
@@ -205,6 +219,7 @@ class ThemeBuilderInstance extends PageBuilderInstance
 
         // add block to template array based on where it has been found
         $this->_addToTemplate($block, $options);
+        $this->_order($block->name);
 
         // set block note
         if (!empty($options['importNote'])) {
@@ -371,6 +386,33 @@ class ThemeBuilderInstance extends PageBuilderInstance
             }
         }
         return '';
+    }
+
+    /**
+     * @param string $blockName
+     */
+    protected function _order($blockName)
+    {
+        if ($this->_renderPath) {
+            $firstRenderItem = reset($this->_renderPath);
+            $template = key($firstRenderItem) . '.' . current($firstRenderItem);
+        } else {
+            $template = 'none';
+        }
+        if (!array_key_exists($template, $this->_renderBlockOrder)) {
+            $this->_renderBlockOrder[$template] = [];
+        }
+        if (!array_key_exists($blockName, $this->_renderBlockOrder[$template])) {
+            $this->_renderBlockOrder[$template][$blockName] = null;
+        }
+    }
+
+    /**
+     * @return array
+     */
+    public function getOrders()
+    {
+        return $this->_renderBlockOrder;
     }
 
     /**
