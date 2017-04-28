@@ -312,7 +312,7 @@ class BlocksCollection
         $currentBlock = $this->getBlock($importBlock->blockData['name'], $compareToScope);
         $updateValues = [];
         foreach ($importBlock->$property as $field => $importValue) {
-            $currentValue = array_key_exists($field, $currentBlock->$property) ? $currentBlock->$property[$field] : '';
+            $currentValue = array_key_exists($field, $currentBlock->$property) ? $currentBlock->{$property}[$field] : '';
             if ($currentValue != $importValue) {
                 $updateValues[$field] = [
                     'new' => $importValue,
@@ -321,7 +321,7 @@ class BlocksCollection
             }
         }
         foreach ($currentBlock->$property as $field => $currentValue) {
-            $importValue = array_key_exists($field, $importBlock->$property) ? $importBlock->$property[$field] : '';
+            $importValue = array_key_exists($field, $importBlock->$property) ? $importBlock->{$property}[$field] : '';
             if ($currentValue != $importValue) {
                 $updateValues[$field] = [
                     'new' => $importValue,
@@ -342,8 +342,8 @@ class BlocksCollection
     public function updatedValue($importBlock, $property, $field, $compareToScope = 'db')
     {
         $currentBlock = $this->getBlock($importBlock->blockData['name'], $compareToScope);
-        $currentValue = array_key_exists($field, $currentBlock->$property) ? $currentBlock->$property[$field] : '';
-        $importValue = array_key_exists($field, $importBlock->$property) ? $importBlock->$property[$field] : '';
+        $currentValue = array_key_exists($field, $currentBlock->$property) ? $currentBlock->{$property}[$field] : '';
+        $importValue = array_key_exists($field, $importBlock->$property) ? $importBlock->{$property}[$field] : '';
         return $currentValue == $importValue ? false : $importValue;
     }
 
