@@ -3,7 +3,7 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class BlockNote extends Migration
+class BlockNoteNull extends Migration
 {
     /**
      * Run the migrations.

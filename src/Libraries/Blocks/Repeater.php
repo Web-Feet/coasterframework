@@ -170,8 +170,10 @@ class Repeater extends AbstractBlock
         // if no current repeater id, reserve next new repeater id for use on save
         $repeaterId = $content ?: PageBlockRepeaterRows::nextFreeRepeaterId();
         $this->_editViewData['renderedRows'] = '';
+        $this->_editViewData['itemName'] = '';
 
         if ($repeaterBlocks = BlockRepeater::getRepeaterBlocks($this->_block->id)) {
+            $this->_editViewData['itemName'] = BlockRepeater::preload($this->_block->id)->item_name;
             // check if new or existing row needs displaying
             if ($newRow) {
                 $renderedRow = '';
