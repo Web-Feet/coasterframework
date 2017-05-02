@@ -249,7 +249,7 @@ class BlocksImport extends AbstractImport
         foreach ($themeBlocks as $blockId => $themeBlock) {
             $currentBlock = Block::preload($blockId);
             if ($currentBlock->exists) {
-                $templateIds = $themeTemplates->except(explode(',', $themeBlock->exclude_theme_templates))->pluck('template_id')->toArray();
+                $templateIds = $themeTemplates->whereNotIn('template_id', explode(',', $themeBlock->exclude_templates))->pluck('template_id')->toArray();
                 $this->_blocksCollection->getBlock($currentBlock->name)
                     ->setBlockData($currentBlock->getAttributes())
                     ->setGlobalData($themeBlock->getAttributes())
