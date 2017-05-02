@@ -8,6 +8,6 @@
         {!! Form::text($name . '[price]', $content->price, ['class' => 'form-control', 'placeholder' => '&pound;']) !!}
     </div>
     <div class="col-sm-3">
-        {!! Form::select($name . '[colour]', $content->options, $content->colour, ['class' => 'form-control '.$content->class]) !!}
+        {!! Form::select($name . '[colour]', $selectOptions, $content->colour, ['class' => 'form-control '.$selectClass]) !!}
     </div>
 </div>
