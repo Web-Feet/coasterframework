@@ -49,9 +49,6 @@ class CreateThemeTemplates extends Migration
         Schema::table('templates', function(Blueprint $table) {
             $table->dropColumn('theme_id');
         });
-        Schema::table('theme_blocks', function(Blueprint $table) {
-            $table->renameColumn('exclude_templates', 'exclude_theme_templates');
-        });
         Schema::table('theme_template_blocks', function(Blueprint $table) {
             $table->renameColumn('template_id', 'theme_template_id');
         });

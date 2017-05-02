@@ -583,7 +583,7 @@ class BlocksImport extends AbstractImport
                 $themeBlock = $themeBlocks->has($importBlock->blockData['id']) ? $themeBlocks[$importBlock->blockData['id']] : new ThemeBlock;
                 $themeBlock->theme_id = $this->_additionalData['theme']->id;
                 $themeBlock->block_id = $importBlock->blockData['id'];
-                $themeBlock->exclude_theme_templates = implode(',', array_diff($themeTemplateIds, $newThemeTemplateIds));
+                $themeBlock->exclude_templates = implode(',', array_diff($themeTemplates->pluck('template_id')->toArray(), $newTemplateIds));
                 $themeBlock->show_in_global = $importBlock->globalData['show_in_global'];
                 $themeBlock->show_in_pages = $importBlock->globalData['show_in_pages'];
                 $themeBlock->save();

@@ -42,7 +42,7 @@ Class Theme extends Eloquent
 
     public function blocks()
     {
-        return $this->belongsToMany('CoasterCms\Models\Block', 'theme_blocks')->withPivot('show_in_pages', 'exclude_theme_templates', 'show_in_global')->where('active', '=', 1)->orderBy('order', 'asc');
+        return $this->belongsToMany('CoasterCms\Models\Block', 'theme_blocks')->withPivot('show_in_pages', 'exclude_templates', 'show_in_global')->where('active', '=', 1)->orderBy('order', 'asc');
     }
 
     public static function get_template_list($includeTemplate = 0)
@@ -68,8 +68,8 @@ Class Theme extends Eloquent
         if (!empty($selected_theme)) {
             $theme_blocks = $selected_theme->blocks()->get();
             foreach ($theme_blocks as $theme_block) {
-                if ($in_pages && !empty($theme_block->pivot->exclude_theme_templates)) {
-                    $ex_templates = explode(",", $theme_block->pivot->exclude_theme_templates);
+                if ($in_pages && !empty($theme_block->pivot->exclude_templates)) {
+                    $ex_templates = explode(",", $theme_block->pivot->exclude_templates);
                     if (!empty($ex_templates) && in_array($template, $ex_templates)) {
                         $theme_block->pivot->show_in_pages = 0;
                     }
