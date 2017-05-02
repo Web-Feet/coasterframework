@@ -5,6 +5,6 @@
         <span class="help-block">{!! FormMessage::getErrorMessage($name) !!}</span>
     </div>
     <div class="col-sm-4">
-        {!! Form::text($name . '[price]', $content->price, ['class' => 'form-control', 'placeholder' => '&pound;']) !!}
+        {!! Form::text($name . '[price]', $content->price, ['class' => 'form-control', 'placeholder' => '£']) !!}
     </div>
 </div>

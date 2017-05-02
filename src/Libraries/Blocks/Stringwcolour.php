@@ -63,8 +63,8 @@ class Stringwcolour extends String_
         if (empty($content) || !is_a($content, \stdClass::class)) {
             $content = new \stdClass;
         }
-        $content->text = !empty($content->text) ? $content->text : '';
-        $content->colour = !empty($content->colour) ? $content->colour : '';
+        $content->text = isset($content->text) ? $content->text : '';
+        $content->colour = isset($content->colour) ? $content->colour : '';
         return $content;
     }
 

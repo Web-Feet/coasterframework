@@ -60,8 +60,8 @@ class Stringwprice extends String_
         if (empty($content) || !is_a($content, \stdClass::class)) {
             $content = new \stdClass;
         }
-        $content->text = !empty($content->text) ? $content->text : '';
-        $content->price = !empty($content->price) ? $content->price : 0;
+        $content->text = isset($content->text) ? $content->text : '';
+        $content->price = isset($content->price) ? $content->price : '';
         return $content;
     }
 

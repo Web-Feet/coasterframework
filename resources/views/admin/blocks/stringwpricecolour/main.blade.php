@@ -5,7 +5,7 @@
         <span class="help-block">{!! FormMessage::getErrorMessage($name) !!}</span>
     </div>
     <div class="col-sm-3">
-        {!! Form::text($name . '[price]', $content->price, ['class' => 'form-control', 'placeholder' => '&pound;']) !!}
+        {!! Form::text($name . '[price]', $content->price, ['class' => 'form-control', 'placeholder' => '£']) !!}
     </div>
     <div class="col-sm-3">
         {!! Form::select($name . '[colour]', $selectOptions, $content->colour, ['class' => 'form-control '.$selectClass]) !!}
