@@ -9,7 +9,7 @@ Route::any('install/admin-save', ['uses' => 'InstallController@saveAdminUser', '
 Route::any('install/theme', ['uses' => 'InstallController@setupTheme', 'as' => 'theme']);
 Route::any('install/theme-install', ['uses' => 'InstallController@installTheme', 'as' => 'themeInstall']);
 
-Route::any('{other?}', function($other) {
+Route::any('{other?}', function() {
     $installRoute = \CoasterCms\Helpers\Cms\Install::getRedirectRoute();
     return redirect()->route($installRoute);
 })->where('other', '.*');
