@@ -140,4 +140,17 @@ class AbstractExport
         return Template::preload($data)->template;
     }
 
+    /**
+     * Reverse of the import func so should return json
+     * @param $data
+     * @return string
+     */
+    protected function _toSerializedArray($data)
+    {
+        if ($array = @unserialize($data)) {
+            return json_encode($array);
+        }
+        return '';
+    }
+
 }

@@ -56,7 +56,7 @@ class MenuItemsImport extends AbstractImport
             ],
             'Item Page Names' => [
                 'mapTo' => 'custom_page_names',
-                'mapFn' => '_serializeNames'
+                'mapFn' => '_toSerializedArray'
             ],
             'Item Hidden Pages' => [
                 'mapTo' => 'hidden_pages',
@@ -119,27 +119,20 @@ class MenuItemsImport extends AbstractImport
     }
 
     /**
-     *
-     */
-    /**
      * @param string $importFieldData
      * @return string
      */
-    protected function _serializeNames($importFieldData)
+    protected function _toSerializedArray($importFieldData)
     {
         if ($importFieldData !== '') {
             $validPages = [];
-            $pageNamesData = explode(',', $importFieldData);
-            foreach ($pageNamesData as $pageNameData) {
-                $pageNameData = explode(':', $pageNameData, 2);
-                if (count($pageNameData) == 2) {
-                    list($pageId, $pageName )= $pageNameData;
-                    if (in_array(trim($pageId), $this->_pageIds)) {
-                        $validPages[trim($pageId)] = trim($pageName);
-                    }
+            $pages = json_decode($importFieldData, true);
+            foreach ($pages as $pageId => $pageName) {
+                if (in_array(trim($pageId), $this->_pageIds)) {
+                    $validPages[trim($pageId)] = trim($pageName);
                 }
             }
-            $importFieldData = serialize($validPages);
+            $importFieldData = parent::_toSerializedArray(json_encode($validPages));;
         }
         return $importFieldData;
     }

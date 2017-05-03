@@ -422,7 +422,7 @@ abstract class AbstractImport
 
     /**
      * @param string $importFieldData
-     * @return bool|null
+     * @return bool|string
      */
     protected function _toBool($importFieldData)
     {
@@ -434,12 +434,26 @@ abstract class AbstractImport
 
     /**
      * @param string $importFieldData
-     * @return bool|null
+     * @return int|string
      */
     protected function _toBoolInt($importFieldData)
     {
         if ($importFieldData !== '') {
             return $this->_toBool($importFieldData) ? 1 : 0;
+        }
+        return '';
+    }
+
+    /**
+     * @param string $importFieldData
+     * @return string
+     */
+    protected function _toSerializedArray($importFieldData)
+    {
+        if ($importFieldData !== '') {
+            if ($array = json_decode($importFieldData, true)) {
+                return serialize($array);
+            }
         }
         return '';
     }
