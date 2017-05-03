@@ -42,7 +42,7 @@ class GroupsImport extends AbstractImport
             ],
             'Default Template' => [
                 'mapTo' => 'default_template',
-                'mapFn' => '_convertToTemplateId',
+                'mapFn' => '_mapTemplate',
                 'default' => 0
             ]
         ];
@@ -97,7 +97,7 @@ class GroupsImport extends AbstractImport
      * @param string $importFieldData
      * @return string
      */
-    protected function _convertToTemplateId($importFieldData)
+    protected function _mapTemplate($importFieldData)
     {
         if ($importFieldData !== '') {
             $template = Template::preload(trim($importFieldData));
