@@ -81,7 +81,7 @@ class BlocksImport extends AbstractImport
                 'mapFn' => '_toBoolInt'
             ],
             'Templates' => [
-                'mapTo' => 'addTemplates',
+                'mapTo' => ['addTemplates'],
                 'mapFn' => '_mapTemplates'
             ],
             'Block Order' => [
@@ -164,14 +164,14 @@ class BlocksImport extends AbstractImport
     {
         if ($importFieldData !== '' && $this->_currentBlockName !== '') {
             $importBlock = $this->_blocksCollection->getBlock($this->_currentBlockName);
-            $importInfo['mapTo'] = is_array($importInfo['mapTo']) ? $importInfo['mapTo'] : [$importInfo['mapTo']];
             if (count($importInfo['mapTo']) == 2) {
                 list($function, $field) = $importInfo['mapTo'];
-                $importBlock->$function([$field => $importFieldData]);
+                $parameter = [$field => $importFieldData];
             } else {
                 $function = reset($importInfo['mapTo']);
-                $importBlock->$function($importFieldData);
+                $parameter = $importFieldData;
             }
+            $importBlock->$function($parameter);
         }
     }
 

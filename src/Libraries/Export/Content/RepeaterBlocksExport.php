@@ -14,8 +14,7 @@ class RepeaterBlocksExport extends AbstractExport
      * @var string
      */
     protected $_exportModel = PageBlockRepeaterData::class;
-
-
+    
     /**
      * @param array $fieldDetails
      * @return string
