@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Libraries\Export;
 
-use CoasterCms\Libraries\Import\GroupsImport;
+use CoasterCms\Libraries\Export\Groups\GroupAttributesExport;
 use CoasterCms\Models\PageGroup;
 
 class GroupsExport extends AbstractExport
@@ -12,8 +12,13 @@ class GroupsExport extends AbstractExport
     protected $_exportClass = PageGroup::class;
 
     /**
-     * @var string
+     *
      */
-    protected $_importClass = GroupsImport::class;
+    public function run()
+    {
+        parent::run();
+        $itemsExport = new GroupAttributesExport($this->_exportPath);
+        $itemsExport->run();
+    }
 
 }

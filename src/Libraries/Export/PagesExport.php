@@ -1,6 +1,5 @@
 <?php namespace CoasterCms\Libraries\Export;
 
-use CoasterCms\Libraries\Import\PagesImport;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageGroupPage;
 use CoasterCms\Models\PageLang;
@@ -12,11 +11,6 @@ class PagesExport extends AbstractExport
      * @var string
      */
     protected $_exportClass = Page::class;
-
-    /**
-     * @var string
-     */
-    protected $_importClass = PagesImport::class;
 
     /**
      * @param array $fieldDetails

@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Libraries\Export;
 
+use CoasterCms\Models\Block;
 use CoasterCms\Models\Template;
 
 class AbstractExport
@@ -47,11 +48,10 @@ class AbstractExport
     public function __construct($exportPath)
     {
         $this->_exportPath = $exportPath;
-        if ($this->_importClass) {
-            $importObject = new $this->_importClass;
-            $this->_importFieldMap = $importObject->fieldMap() ?: [];
-            $this->_exportFile = $importObject::IMPORT_FILE_DEFAULT;
-        }
+        $this->_importClass = $this->_importClass ?: str_replace('Export', 'Import', static::class);
+        $importObject = new $this->_importClass;
+        $this->_importFieldMap = $importObject->fieldMap() ?: [];
+        $this->_exportFile = $importObject::IMPORT_FILE_DEFAULT;
         $this->_exportFile = rtrim($this->_exportPath, '/') . '/' . $this->_exportFile;
     }
 
@@ -151,6 +151,15 @@ class AbstractExport
             return json_encode($array);
         }
         return '';
+    }
+
+    /**
+     * @param string $data
+     * @return string
+     */
+    protected function _toBlockId($data)
+    {
+        return Block::preload($data)->name;
     }
 
 }
