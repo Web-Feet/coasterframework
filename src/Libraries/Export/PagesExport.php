@@ -10,7 +10,7 @@ class PagesExport extends AbstractExport
     /**
      * @var string
      */
-    protected $_exportClass = Page::class;
+    protected $_exportModel = Page::class;
 
     /**
      * @param array $fieldDetails

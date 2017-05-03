@@ -9,7 +9,7 @@ class GroupsExport extends AbstractExport
     /**
      * @var string
      */
-    protected $_exportClass = PageGroup::class;
+    protected $_exportModel = PageGroup::class;
 
     /**
      *

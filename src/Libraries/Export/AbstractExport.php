@@ -9,7 +9,7 @@ class AbstractExport
     /**
      * @var string
      */
-    protected $_exportClass = '';
+    protected $_exportModel = '';
 
     /**
      * @var object
@@ -19,7 +19,17 @@ class AbstractExport
     /**
      * @var array
      */
+    protected $_exportHeader = [];
+
+    /**
+     * @var array
+     */
     protected $_exportData = [];
+
+    /**
+     * @var array
+     */
+    protected $_exportUploads = [];
 
     /**
      * @var string
@@ -71,8 +81,8 @@ class AbstractExport
      */
     protected function _loadModelData()
     {
-        $exportClass = $this->_exportClass;
-        return $exportClass::all();
+        $exportModel = $this->_exportModel;
+        return $exportModel::all();
     }
 
     /**
@@ -80,7 +90,7 @@ class AbstractExport
      */
     protected function _extractData()
     {
-        $this->_exportData[] = array_keys($this->_importFieldMap);
+        $this->_exportHeader = array_keys($this->_importFieldMap);
         $exportModelData = $this->_loadModelData();
         foreach ($exportModelData as $exportItem) {
             $fieldData = [];
@@ -125,10 +135,22 @@ class AbstractExport
         $csvFile = $exportFile ?: $this->_exportFile;
         @mkdir(dirName($csvFile), 0777, true);
         $csvHandle = fopen($csvFile, 'w');
+        fputcsv($csvHandle, $this->_exportHeader);
+         if (method_exists($this, '_orderData')) {
+             usort($this->_exportData, [$this, '_orderData']);
+         }
         foreach ($this->_exportData as $rowData) {
             fputcsv($csvHandle, $rowData);
         }
         fclose($csvHandle);
+    }
+
+    /**
+     * @return array
+     */
+    public function getUploads()
+    {
+        return array_unique($this->_exportUploads);
     }
 
     /**

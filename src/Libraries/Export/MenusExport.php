@@ -9,7 +9,7 @@ class MenusExport extends AbstractExport
     /**
      * @var string
      */
-    protected $_exportClass = Menu::class;
+    protected $_exportModel = Menu::class;
 
     /**
      *

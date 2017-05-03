@@ -9,6 +9,6 @@ class GroupAttributesExport extends AbstractExport
     /**
      * @var string
      */
-    protected $_exportClass = PageGroupAttribute::class;
+    protected $_exportModel = PageGroupAttribute::class;
 
 }
