@@ -1,31 +1,25 @@
 <?php namespace CoasterCms\Models;
 
 use Auth;
+use CoasterCms\Libraries\Traits\DataPreLoad;
 use Eloquent;
 use View;
 
 class Menu extends Eloquent
 {
+    use DataPreLoad;
 
     protected $table = 'menus';
 
     protected $_pageNames;
 
-    public static $menus = [];
-
-    public static function get_menu($menu_name)
+    /**
+     * preload by both id and name
+     * @return array
+     */
+    protected static function _preloadByColumn()
     {
-        if (empty(self::$menus)) {
-            $menus = self::all();
-            foreach ($menus as $menu) {
-                self::$menus[$menu->id] = $menu;
-                self::$menus[$menu->name] = $menu;
-            }
-        }
-        if (!empty(self::$menus[$menu_name])) {
-            return self::$menus[$menu_name];
-        }
-        return null;
+        return ['id', 'name'];
     }
 
     public function items()

@@ -53,7 +53,7 @@ class MenuBuilder
      */
     public static function menu($menuName, $options = [])
     {
-        if ($menu = Menu::get_menu($menuName)) {
+        if ($menu = Menu::preload($menuName)) {
             return (new static($menu->items()->get(), 0, 0, 1, ['menu' => $menu] + $options))->render();
         } else {
             return '';
