@@ -278,7 +278,7 @@ class BlocksImport extends AbstractImport
         $blockIds = array_map(function(\CoasterCms\Helpers\Admin\Import\Block $currentBlock) {
             return $currentBlock->blockData['id'];
         }, $this->_blocksCollection->getBlocks($scope));
-        $currentRepeaters = BlockRepeater::whereIn('block_id', $blockIds)->get();
+        $currentRepeaters = BlockRepeater::whereIn('block_id', BlockRepeater::addChildBlockIds($blockIds))->get();
         foreach ($currentRepeaters as $blockId => $currentRepeater) {
             $currentRepeaterBlock = Block::preload($currentRepeater->block_id);
             if ($currentRepeaterBlock->exists) {
