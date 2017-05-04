@@ -1,7 +1,6 @@
 <?php namespace CoasterCms\Http\Controllers\AdminControllers;
 
 use Auth;
-use CoasterCms\Helpers\Cms\Theme\BlockUpdater;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Libraries\Builder\AssetBuilder;
 use CoasterCms\Libraries\Import\BlocksImport;
