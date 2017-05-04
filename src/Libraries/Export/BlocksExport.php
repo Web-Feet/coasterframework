@@ -1,6 +1,9 @@
 <?php namespace CoasterCms\Libraries\Export;
 
 use CoasterCms\Helpers\Admin\Import\Block;
+use CoasterCms\Libraries\Export\Blocks\CategoryExport;
+use CoasterCms\Libraries\Export\Blocks\FormRulesExport;
+use CoasterCms\Libraries\Export\Blocks\SelectOptionExport;
 use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\Theme;
 
@@ -41,6 +44,22 @@ class BlocksExport extends AbstractExport
         }
         $this->_exportModelData = $importBlocks;
         return $this;
+    }
+
+    /**
+     *
+     */
+    public function run()
+    {
+        if (!$this->_exportModelData) {
+            $itemsExport = new CategoryExport($this->_exportPath);
+            $itemsExport->run();
+            $itemsExport = new FormRulesExport($this->_exportPath);
+            $itemsExport->run();
+            $itemsExport = new SelectOptionExport($this->_exportPath);
+            $itemsExport->run();
+        }
+        parent::run();
     }
 
     /**

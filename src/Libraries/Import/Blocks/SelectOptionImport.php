@@ -34,17 +34,17 @@ class SelectOptionImport extends AbstractImport
     {
         return [
             'Block Name' => [
-                'mapTo' => 'id',
-                'mapFn' => '_mapName',
+                'mapTo' => 'block_id',
+                'mapFn' => '_toBlockId',
                 'validate' => 'required'
                 ],
             'Option' => [
                 'mapTo' => 'option',
-                'validate' => 'required'
+                'validate' => 'present'
                 ],
             'Value' => [
                 'mapTo' => 'value',
-                'validate' => 'required'
+                'validate' => 'present'
             ]
         ];
     }
@@ -115,7 +115,7 @@ class SelectOptionImport extends AbstractImport
      * @param string $importFieldData
      * @return string
      */
-    protected function _mapName($importFieldData)
+    protected function _toBlockId($importFieldData)
     {
         return $this->_blockNamesToIds[$importFieldData];
     }
