@@ -44,7 +44,7 @@ class RepeaterBlocksImport extends AbstractImport
             'Block Name' => [
                 'mapTo' => ['PageBlockRepeaterData', 'block_id'],
                 'mapFn' => '_toBlockId',
-                'validate' => 'required'
+                'validate' => 'present'
             ],
             'Content' => [
                 'mapTo' => ['PageBlockRepeaterData', 'content'],

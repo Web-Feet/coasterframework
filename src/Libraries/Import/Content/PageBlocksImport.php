@@ -25,7 +25,7 @@ class PageBlocksImport extends AbstractImport
         return [
             'Page Id' => [
                 'mapTo' => 'page_id',
-                'validate' => 'required'
+                'validate' => 'present'
             ],
             'Block Name' => [
                 'mapTo' => 'block_id',
