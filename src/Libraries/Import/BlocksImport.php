@@ -4,6 +4,7 @@ use CoasterCms\Helpers\Admin\Import\BlocksCollection;
 use CoasterCms\Helpers\Cms\File\Directory;
 use CoasterCms\Helpers\Cms\Page\PageLoaderDummy;
 use CoasterCms\Libraries\Builder\PageBuilder;
+use CoasterCms\Libraries\Export\BlocksExport;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\BlockRepeater;
@@ -663,59 +664,21 @@ class BlocksImport extends AbstractImport
     {
         if ($this->_importData) {
             $scopes = $this->_blocksCollection->getScopes();
-            unset($scopes['csv']);
-            $importBlocks = $this->_blocksCollection->getAggregatedBlocks(array_keys($scopes));
-            $fieldMap = $this->fieldMap();
-            $newCsvData = [array_keys(reset($this->_importData))];
-            $blockCategories = BlockCategory::get()->keyBy('id');
-            foreach ($this->_importData as $importRowData) {
-                $importBlock = $importBlocks[$importRowData['Block Name']];
-                $hasUpdates = false;
-                $updatedFields = [];
-                foreach ($importRowData as $importField => $importValue) {
-                    $fieldData = '';
-                    if ($importField == 'Block Name') {
-                        $fieldData = $importValue;
-                    } elseif ($importValue !== '') {
-                        $mapData = $fieldMap[$importField];
-                        if (count($mapData['mapTo']) == 2) {
-                            list($function, $field) = $mapData['mapTo'];
-                            $property = lcfirst(substr($function, 3));
-                            $fieldData = $this->_blocksCollection->updatedValue($importBlock, $property, $field, 'csv') ?: '';
-                        } else {
-                            $property = str_replace(['addTemplates'], ['templates'], $mapData['mapTo']);
-                            $fieldData = $this->_blocksCollection->changedElements($importBlock, $property, 'csv') ?: '';
-                        }
-                        if ($fieldData !== '') {
-                            $hasUpdates = true;
-                            if (array_key_exists('mapFn', $mapData)) {
-                                switch ($mapData['mapFn']) {
-                                    case '_mapTemplates':
-                                        $fieldData = in_array('*', explode(',', $importValue)) ? $importValue : implode(',', $fieldData);
-                                        break;
-                                    case '_toBoolInt':
-                                        $fieldData = $fieldData ? 'yes' : 'no';
-                                        break;
-                                    case '_toCategoryId':
-                                        $fieldData = $blockCategories->has($fieldData) ? $blockCategories->get($fieldData)->name : '';
-                                        break;
-                                }
-                            }
-                        }
-                    }
-                    $updatedFields[] = $fieldData;
-                }
-                if ($hasUpdates) {
-                    $newCsvData[] = $updatedFields + [0 => $importRowData['Block Name']];
-                }
-            }
-            $importFileHandle = fopen($this->_importFile, 'w');
-            foreach ($newCsvData as $newCsvRow) {
-                fputcsv($importFileHandle, $newCsvRow);
-            }
-            fclose($importFileHandle);
+            $csvOnlyData = $this->_blocksCollection->getBlocksDiffScopes([], array_diff(array_keys($scopes), ['csv']), false);
+            $exportBlocks = new BlocksExport($this->_importFile, false);
+            $exportBlocks->setTheme($this->_additionalData['theme'])->setExportData($csvOnlyData)->run();
         }
         Directory::remove(pathinfo($this->_importFile, PATHINFO_DIRNAME) . '/blocks');
+    }
+
+    /**
+     * @return \CoasterCms\Helpers\Admin\Import\Block[]
+     */
+    public function getExportCollection()
+    {
+        $this->_loadDbData();
+        $this->_loadDbRepeaterData();
+        return $this->_blocksCollection->getBlocks('db');
     }
 
 }

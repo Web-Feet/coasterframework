@@ -116,13 +116,44 @@ class BlocksCollection
     public function getAggregatedBlocks($scopes = [])
     {
         $aggregatedBlocks = [];
-        $scopes = $this->_getScopes($scopes);
         foreach ($this->_blocks as $blockName => $blockScopes) {
-            if ($usedScopes = array_intersect_key($blockScopes, $scopes)) {
-                $aggregatedBlocks[$blockName] = $this->getAggregatedBlock($blockName, array_keys($usedScopes));
-            }
+            $aggregatedBlocks[$blockName] = $this->getAggregatedBlock($blockName, $scopes);
         }
         return $aggregatedBlocks;
+    }
+
+    /**
+     * @param string $blockName
+     * @param array $scopesA
+     * @param array $scopesB
+     * @param bool $keepEmpty
+     * @return Block
+     */
+    public function getBlocksDiffScope($blockName, $scopesA = [], $scopesB = [], $keepEmpty = true)
+    {
+        if (array_key_exists($blockName, $this->_blocks)) {
+            $scopeABlock = $this->getAggregatedBlock($blockName, $scopesA);
+            $scopeBBlock = $this->getAggregatedBlock($blockName, $scopesB);
+            return ($scopeABlock->subtract($scopeBBlock) || $keepEmpty) ? $scopeABlock : null;
+        }
+        return new Block();
+    }
+
+    /**
+     * @param array $scopesA
+     * @param array $scopesB
+     * @param bool $keepEmpty
+     * @return array
+     */
+    public function getBlocksDiffScopes($scopesA = [], $scopesB = [], $keepEmpty = true)
+    {
+        $diffBlocks = [];
+        foreach ($this->_blocks as $blockName => $blockScopes) {
+            if ($diffBlock = $this->getBlocksDiffScope($blockName, $scopesA, $scopesB, $keepEmpty)) {
+                $diffBlocks[$blockName] = $this->getBlocksDiffScope($blockName, $scopesA, $scopesB, $keepEmpty);
+            }
+        }
+        return $diffBlocks;
     }
 
     /**

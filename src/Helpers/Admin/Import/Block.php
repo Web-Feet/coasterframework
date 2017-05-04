@@ -144,6 +144,28 @@ class Block
     }
 
     /**
+     * Find any differences in the data
+     * @param Block $block
+     * @return bool
+     */
+    public function subtract(Block $block)
+    {
+        $this->blockData = array_diff_assoc($this->blockData, $block->blockData);
+        $this->globalData = array_diff_assoc($this->globalData, $block->globalData);
+        $this->templates = array_diff($this->templates, $block->templates);
+        $this->inRepeaterBlocks = array_diff($this->inRepeaterBlocks, $block->inRepeaterBlocks);
+        $this->repeaterChildBlocks = array_diff($this->repeaterChildBlocks, $block->repeaterChildBlocks);
+        $this->inCategoryTemplates = array_diff($this->inCategoryTemplates, $block->inCategoryTemplates);
+        $this->specifiedPageIds = array_diff($this->specifiedPageIds, $block->specifiedPageIds);
+        foreach ($this as $property) {
+            if ($property) {
+                return true; // has diff data
+            }
+        }
+        return false;
+    }
+
+    /**
      * @param array $array
      * @param array|string $items
      */

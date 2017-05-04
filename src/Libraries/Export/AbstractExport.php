@@ -1,15 +1,16 @@
 <?php namespace CoasterCms\Libraries\Export;
 
+use CoasterCms\Libraries\Import\AbstractImport;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\Template;
 
-class AbstractExport
+abstract class AbstractExport
 {
 
     /**
      * @var string
      */
-    protected $_exportModel = '';
+    protected $_exportModel;
 
     /**
      * @var object
@@ -34,17 +35,22 @@ class AbstractExport
     /**
      * @var string
      */
-    protected $_exportFile = '';
+    protected $_exportFile;
 
     /**
      * @var string
      */
-    protected $_exportPath = '';
+    protected $_exportPath;
 
     /**
      * @var string
      */
-    protected $_importClass = '';
+    protected $_importClass;
+
+    /**
+     * @var AbstractImport
+     */
+    protected $_importObject;
 
     /**
      * @var array
@@ -54,15 +60,15 @@ class AbstractExport
     /**
      * AbstractExport constructor.
      * @param string $exportPath
+     * @param bool $isDir
      */
-    public function __construct($exportPath)
+    public function __construct($exportPath = '', $isDir = true)
     {
-        $this->_exportPath = $exportPath;
         $this->_importClass = $this->_importClass ?: str_replace('Export', 'Import', static::class);
-        $importObject = new $this->_importClass;
-        $this->_importFieldMap = $importObject->fieldMap() ?: [];
-        $this->_exportFile = $importObject::IMPORT_FILE_DEFAULT;
-        $this->_exportFile = rtrim($this->_exportPath, '/') . '/' . $this->_exportFile;
+        $this->_importObject = new $this->_importClass;
+        $this->_importFieldMap = $this->_importObject->fieldMap() ?: [];
+        $this->_exportPath = $exportPath;
+        $this->_exportFile = $isDir ? rtrim($this->_exportPath, '/') . '/' . constant($this->_importClass.'::IMPORT_FILE_DEFAULT') : $this->_exportPath;
     }
 
     /**
@@ -81,8 +87,7 @@ class AbstractExport
      */
     protected function _loadModelData()
     {
-        $exportModel = $this->_exportModel;
-        return $exportModel::all();
+        return isset($this->_exportModel) ? call_user_func([$this->_exportModel, 'all']) : [];
     }
 
     /**
