@@ -114,6 +114,32 @@ class ThemesController extends Controller
             'edit' => Auth::action('themes.edit')
         ];
 
+        foreach ($thumbs as $thumb) {
+            $buttons = [];
+            if (isset($thumb->install)) {
+                if ($theme_auth['manage']) {
+                    $buttons[] = ['classes' => ['installTheme'], 'glyphicon' => 'cog', 'label' => 'Install'];
+                }
+            }
+            if ($theme_auth['manage']) {
+                $buttons[] = ['href' => '', 'classes' => ['activateTheme', 'activeSwitch', (isset($thumb->active)||isset($thumb->install))?'hidden':''], 'glyphicon' => 'ok', 'label' => 'Activate'];
+            }
+            if ($theme_auth['edit']) {
+                $buttons[] = ['href' => route('coaster.admin.themes.edit', ['themeId' => $thumb->id]), 'glyphicon' => 'pencil', 'label' => 'Edit'];
+            }
+            if ($theme_auth['export']) {
+                $buttons[] = ['classes' => ['exportTheme'], 'glyphicon' => 'download', 'label' => 'Export'];
+            }
+            if ($theme_auth['update']) {
+                $buttons[] = ['href' => route('coaster.admin.themes.update', ['themeId' => $thumb->id]), 'glyphicon' => 'flag', 'label' => 'Review Block Changes'];
+            }
+
+            $thumb->buttons = [];
+            foreach ($buttons as $button) {
+                $thumb->buttons[] = View::make('coaster::partials.themes.thumbs.button', $button + ['href' => '', 'classes' => [], 'glyphicon' => '', 'label' => '', 'thumb' => $thumb]);
+            }
+        }
+
         $themes_installed = View::make('coaster::partials.themes.thumbs', ['thumbs' => $thumbs, 'auth' => $theme_auth]);
 
         if (!empty(self::$_error)) {
