@@ -54,7 +54,7 @@ class WordPress extends Cms
                     $postData->content = $blogPost['post_content'];
                     $postData->fullName = ucwords(str_replace('/', ' ', config('coaster::blog.url'))) . $defaultSeparator->separator . $blogPost['post_title'];
                     $postData->fullUrl = config('coaster::blog.url') . $blogPost['post_name'];
-                    self::_addWeight($postData, $blogPost['search_weight'] + $keywordAdditionalWeight);
+                    $this->_addWeight($postData, $blogPost['search_weight'] + $keywordAdditionalWeight);
                 }
             }
         }
