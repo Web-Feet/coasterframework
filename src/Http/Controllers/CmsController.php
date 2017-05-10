@@ -7,12 +7,12 @@ use CoasterCms\Events\Cms\GeneratePage\LoadPageTemplate;
 use CoasterCms\Exceptions\CmsPageException;
 use CoasterCms\Helpers\Cms\Html\DOMDocument;
 use CoasterCms\Helpers\Cms\Page\Search;
-use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\PageRedirect;
 use CoasterCms\Models\PageVersionSchedule;
 use Exception;
 use Illuminate\Routing\Controller;
+use PageBuilder;
 use Request;
 use Response;
 use View;
@@ -158,7 +158,7 @@ class CmsController extends Controller
     protected function _getRenderedTemplate($templatePath)
     {
         if (config('coaster::frontend.cache') > 0) {
-            $cacheName = 'fpc_page' . PageBuilder::pageId();
+            $cacheName = 'fpc_page.' . PageBuilder::pageId() . '.' . crypt(serialize(Request::input()));
             $renderedTemplate = Cache::remember($cacheName, config('coaster::frontend.cache'), function () use ($templatePath) {
                 return View::make($templatePath)->render();
             });

@@ -6,6 +6,7 @@ use CoasterCms\Models\Menu;
 use CoasterCms\Models\MenuItem;
 use CoasterCms\Models\Page;
 use Illuminate\Support\Collection;
+use PageBuilder;
 use View;
 
 class MenuBuilder

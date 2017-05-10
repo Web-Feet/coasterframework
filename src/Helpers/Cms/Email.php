@@ -1,7 +1,6 @@
 <?php namespace CoasterCms\Helpers\Cms;
 
 use CoasterCms\Exceptions\CmsPageException;
-use CoasterCms\Libraries\Builder\PageBuilder;
 use Illuminate\Mail\Message;
 use Mail;
 use Validator;

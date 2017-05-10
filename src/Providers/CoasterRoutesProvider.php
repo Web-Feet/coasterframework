@@ -62,7 +62,7 @@ class CoasterRoutesProvider extends ServiceProvider
             ->namespace($namespace)
             ->group($routesDir . '/cms-auth.php');
 
-        Route::middleware(['web', 'coaster.pagebuilder.init'])
+        Route::middleware(['web'])
             ->namespace($namespace)
             ->group($routesDir . '/cms.php');
     }

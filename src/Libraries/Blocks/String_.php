@@ -1,9 +1,7 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
 use CoasterCms\Helpers\Cms\StringHelper;
-use CoasterCms\Helpers\Cms\View\CmsBlockInput;
-use CoasterCms\Libraries\Builder\PageBuilder;
-use CoasterCms\Models\Block;
+use PageBuilder;
 use View;
 
 class String_ extends AbstractBlock

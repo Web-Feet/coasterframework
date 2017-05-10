@@ -3,7 +3,7 @@
 use CoasterCms\Helpers\Admin\Import\BlocksCollection;
 use CoasterCms\Helpers\Cms\File\Directory;
 use CoasterCms\Helpers\Cms\Page\PageLoaderDummy;
-use CoasterCms\Libraries\Builder\PageBuilder;
+use CoasterCms\Libraries\Builder\PageBuilder\ThemeBuilderInstance;
 use CoasterCms\Libraries\Export\BlocksExport;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockCategory;
@@ -14,6 +14,7 @@ use CoasterCms\Models\ThemeBlock;
 use CoasterCms\Models\ThemeTemplate;
 use CoasterCms\Models\ThemeTemplateBlock;
 use Illuminate\Database\Eloquent\Collection;
+use PageBuilder;
 use View;
 
 class BlocksImport extends AbstractImport
@@ -307,19 +308,14 @@ class BlocksImport extends AbstractImport
     {
         $this->_blocksCollection->setScope($scope);
 
-        PageBuilder::setClass(
-            PageBuilder\ThemeBuilderInstance::class,
-            [$this->_blocksCollection],
-            PageLoaderDummy::class,
-            [$this->_additionalData['theme']->theme]
-        );
+        $themeBuilder = PageBuilder::make(ThemeBuilderInstance::class, [new PageLoaderDummy($this->_additionalData['theme']->theme), $this->_blocksCollection]);
         if ($this->_templateList) {
             $errors = [];
             foreach ($this->_templateList as $templateName) {
                 $templateView = 'themes.' . $this->_additionalData['theme']->theme . '.templates.' . $templateName;
                 if (View::exists($templateView)) {
-                    PageBuilder::setData('template', $templateName);
-                    PageBuilder::setRenderPath([['template' => $templateName]]);
+                    $themeBuilder->setData('template', $templateName);
+                    $themeBuilder->setRenderPath([['template' => $templateName]]);
                     try {
                         View::make($templateView)->render();
                     } catch (\Exception $e) {
@@ -327,8 +323,8 @@ class BlocksImport extends AbstractImport
                     }
                 }
             }
-            $this->_renderedOrders = PageBuilder::getOrders();
-            $errors = array_merge($errors, PageBuilder::getData('errors'));
+            $this->_renderedOrders = $themeBuilder->getOrders();
+            $errors = array_merge($errors, $themeBuilder->getData('errors'));
             if ($errors) {
                 echo 'Could not complete block import, errors found in theme:';
                 dd($errors);
@@ -336,17 +332,18 @@ class BlocksImport extends AbstractImport
         }
 
         // make sure every csv block is rendered & better after theme render as there is less context
-        $this->_renderCsvBlocks();
+        $this->_renderCsvBlocks($themeBuilder);
     }
 
     /**
      * Run all blocks from import csv as they may not have be found and rendered in the theme files
+     * @param ThemeBuilderInstance $themeBuilder
      */
-    protected function _renderCsvBlocks()
+    protected function _renderCsvBlocks($themeBuilder)
     {
-        PageBuilder::setData('template', '');
+        $themeBuilder->setData('template', '');
         foreach ($this->_blocksCollection->getBlocks('csv') as $blockName => $importBlock) {
-            PageBuilder::block($blockName);
+            $themeBuilder->block($blockName);
         }
     }
 

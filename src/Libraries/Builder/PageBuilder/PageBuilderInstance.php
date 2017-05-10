@@ -90,6 +90,11 @@ class PageBuilderInstance
     public $searchQuery;
 
     /**
+     * @var bool
+     */
+    public $cacheable;
+
+    /**
      * @var array
      */
     protected $_pageCategoryLinks;
@@ -122,6 +127,7 @@ class PageBuilderInstance
         $this->theme = $pageLoader->theme;
         $this->template = $pageLoader->template;
         $this->contentType = $pageLoader->contentType;
+        $this->cacheable = true;
 
         $this->_customBlockData = [];
         $this->_customBlockDataKey = 0;
@@ -158,12 +164,12 @@ class PageBuilderInstance
     public function canCache($setValue = null)
     {
         if (!is_null($setValue)) {
-            config('coaster::frontend.cache', $setValue);
+            $this->cacheable = (bool) $setValue;
         }
-        if (Search::searchBlockExists() || Request::input()) {
+        if (Search::searchBlockExists()) {
             return false;
         }
-        return true;
+        return $this->cacheable;
     }
 
     /**
@@ -896,6 +902,31 @@ class PageBuilderInstance
             return $this->_customBlockData[$this->_customBlockDataKey][$blockName];
         } else {
             return null;
+        }
+    }
+
+    /**
+     * @param string $varName
+     * @return mixed
+     */
+    public function getData($varName = '')
+    {
+        $varName = camel_case($varName);
+        if ($varName) {
+            return property_exists($this, $varName) ? $this->$varName : null;
+        } else {
+            return get_object_vars($this);
+        }
+    }
+
+    /**
+     * @param string $varName
+     * @param mixed $value
+     */
+    public function setData($varName, $value)
+    {
+        if ($varName && property_exists($this, $varName)) {
+            $this->$varName = $value;
         }
     }
 

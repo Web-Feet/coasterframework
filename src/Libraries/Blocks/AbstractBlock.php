@@ -1,8 +1,8 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
 use CoasterCms\Helpers\Cms\View\CmsBlockInput;
-use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\Block;
+use PageBuilder;
 use Request;
 use View;
 

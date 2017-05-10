@@ -1,9 +1,8 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
 use CoasterCms\Helpers\Cms\Page\Path;
-use CoasterCms\Libraries\Builder\PageBuilder;
+use PageBuilder;
 use CoasterCms\Libraries\Builder\ViewClasses\PageDetails;
-use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageBlock;

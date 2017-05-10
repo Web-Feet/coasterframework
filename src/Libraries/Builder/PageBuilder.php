@@ -43,90 +43,108 @@ use CoasterCms\Libraries\Builder\PageBuilder\PageBuilderInstance;
 class PageBuilder
 {
     /**
-     * @var PageBuilderInstance
+     * @var PageBuilderInstance[]
      */
-    protected static $_instance;
+    protected $_instances;
 
     /**
      * @var string
      */
-    protected static $_instanceClass;
+    protected $_activeInstance;
 
     /**
-     * @var array
+     * @var int
      */
-    protected static $_instanceArgs;
-    
+    protected $_unNamedIndex;
+
     /**
      * @var string
      */
-    protected static $_loaderClass;
+    protected $_defaultClass;
 
     /**
      * @var array
      */
-    protected static $_loaderArgs;
+    protected $_defaultArgs;
 
     /**
+     * PageBuilderFactory constructor.
+     * @param string $defaultClass
+     * @param array $defaultArgs
+     */
+    public function __construct($defaultClass = '', $defaultArgs = [])
+    {
+        $this->_defaultClass = $defaultClass;
+        $this->_defaultArgs = $defaultArgs;
+        $this->_instances = [];
+        $this->_unNamedIndex = 0;
+        $this->_activeInstance = 'default';
+    }
+
+    /**
+     * @param string $pageBuilderClass
+     * @param array $pageBuilderArgs
+     * @param bool $setActive
      * @return PageBuilderInstance
      */
-    protected static function getInstance()
+    public function make($pageBuilderClass, $pageBuilderArgs, $setActive = true)
     {
-        if (!isset(static::$_instance)) {
-            static::$_instance = new static::$_instanceClass(new static::$_loaderClass(...static::$_loaderArgs), ...static::$_instanceArgs);
-        }
-        return static::$_instance;
+        return $this->setInstance('', $pageBuilderClass, $pageBuilderArgs, $setActive);
     }
 
     /**
-     * @param string $instanceClass
-     * @param string $instanceArgs
-     * @param string $loaderClass
-     * @param array $loaderArgs
+     * @param string $activeInstance
      */
-    public static function setClass($instanceClass, $instanceArgs, $loaderClass, $loaderArgs)
+    public function switchActiveInstance($activeInstance)
     {
-        static::$_instanceClass = $instanceClass;
-        static::$_instanceArgs = $instanceArgs;
-        static::$_loaderClass = $loaderClass;
-        static::$_loaderArgs = $loaderArgs;
-        static::$_instance = null;
+        $this->_activeInstance = $activeInstance;
     }
 
     /**
-     * @param string $varName
-     * @return mixed
+     * @param string $name
+     * @return PageBuilderInstance
      */
-    public static function getData($varName = '')
+    public function getInstance($name = null)
     {
-        $varName = camel_case($varName);
-        if ($varName) {
-            return property_exists(static::getInstance(), $varName) ? static::getInstance()->$varName : null;
-        } else {
-            return get_object_vars(static::getInstance());
-        }
+        $name = is_null($name) ? $this->_activeInstance : $name;
+        return $this->setInstance($name);
     }
 
     /**
-     * @param string $varName
-     * @param mixed $value
+     * @param string $name
+     * @param string $pageBuilderClass
+     * @param array $pageBuilderArgs
+     * @param bool $setActive
+     * @return PageBuilderInstance
      */
-    public static function setData($varName, $value)
+    public function setInstance($name = '', $pageBuilderClass = '', $pageBuilderArgs = [], $setActive = true)
     {
-        if ($varName && property_exists(static::getInstance(), $varName)) {
-            static::getInstance()->$varName = $value;
+        if ($name === '') {
+            $name = $this->_unNamedIndex++;
+            while (array_key_exists($name, $this->_instances)) {
+                $name = $this->_unNamedIndex++;
+            }
         }
+        if (!array_key_exists($name, $this->_instances)) {
+            $pageBuilderArgs = ($pageBuilderClass || $pageBuilderArgs) ? $pageBuilderArgs : $this->_defaultArgs;
+            $pageBuilderClass = $pageBuilderClass ?: $this->_defaultClass;
+            $this->_instances[$name] = new $pageBuilderClass(...$pageBuilderArgs);
+        }
+        if ($setActive) {
+            $this->switchActiveInstance($name);
+        }
+        return $this->_instances[$name];
     }
 
     /**
-     * @param $method_name
+     * @param $methodName
      * @param $args
      * @return mixed
      */
-    public static function __callStatic($method_name, $args)
+    public function __call($methodName, $args)
     {
         try {
-            return call_user_func_array([static::getInstance(), $method_name], $args);
+            return call_user_func_array([$this->getInstance(), $methodName], $args);
         } catch (PageBuilderException $e) {
             return 'PageBuilder error: ' . $e->getMessage();
         }

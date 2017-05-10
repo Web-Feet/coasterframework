@@ -6,7 +6,7 @@ use CoasterCms\Helpers\Cms\View\CmsBlockInput;
 use CoasterCms\Helpers\Cms\View\FormWrap;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
 use CoasterCms\Libraries\Builder\FormMessage;
-use CoasterCms\Libraries\Builder\PageBuilder;
+use PageBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockFormRule;
 use CoasterCms\Models\BlockRepeater;

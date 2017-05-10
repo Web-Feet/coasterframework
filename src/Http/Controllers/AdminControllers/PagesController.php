@@ -269,7 +269,7 @@ class PagesController extends AdminController
                 PagePublishRequests::add($pageId, $version->version_id, Request::input('request_note'));
             }
             $version->publish();
-            Cache::forget('fpc_page'.$pageId);
+            Cache::forget('fpc_page.'.$pageId);
         }
 
         // display page edit form

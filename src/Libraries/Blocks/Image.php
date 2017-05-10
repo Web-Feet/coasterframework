@@ -1,6 +1,5 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Models\Block;
 use URL;
 use View;
