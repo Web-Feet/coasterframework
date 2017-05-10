@@ -5,7 +5,7 @@ use CoasterCms\Libraries\Builder\PageBuilder;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\ServiceProvider;
 
-class CoasterPAgeBuilderProvider extends ServiceProvider
+class CoasterPageBuilderProvider extends ServiceProvider
 {
 
     /**
