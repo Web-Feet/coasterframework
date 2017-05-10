@@ -58,6 +58,39 @@
 
     {!! Form::close() !!}
 
+@elseif ($stage == 'envCheck')
+
+    <p class="text-warning">The database config has bee saved in the .env file, however the environment variables loaded are different to what's in the .env file</p>
+
+    @if (php_sapi_name() == 'cli-server')
+        <p>If you are running artisan serve you may need to restart it.</p>
+    @endif
+
+    <p>&nbsp;</p>
+
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th>Environment Variable</th>
+            <th>Current Value</th>
+            <th>.env File Value</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach($unMatchedEnvVars as $envVar => $envValue)
+            <tr>
+                <td>{!! $envVar !!}</td>
+                <td>{!! getenv($envVar) !!}</td>
+                <td>{!! $envValue !!}</td>
+            </tr>
+        @endforeach
+        </tbody>
+    </table>
+
+    <p>&nbsp;</p>
+
+    <a href="{{ route('coaster.install.databaseMigrate', ['shipEnvCheck' => 1]) }}" class="btn btn-default">Ignore Warning</a> &nbsp; <a href="{{ route('coaster.install.databaseMigrate') }}" class="btn btn-primary">Recheck & Continue</a>
+
 @elseif ($stage == 'database')
 
     {!! Form::open(['url' => route('coaster.install.databaseSave')]) !!}

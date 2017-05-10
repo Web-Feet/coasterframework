@@ -165,25 +165,34 @@ class InstallController extends Controller
             return $this->setupDatabase();
         }
 
-        try {
-            Artisan::call('key:generate');
-        } catch (\PDOException $e) {
-            FormMessage::add('host', $e->getMessage());
-            return $this->setupDatabase();
-        }
-
         Install::setInstallState('coaster.install.databaseMigrate');
 
         return \redirect()->route('coaster.install.databaseMigrate');
     }
 
-    public function runDatabaseMigrations()
+    public function runDatabaseMigrations($skipEnvCheck = false)
     {
-        Artisan::call('migrate', ['--path' => '/vendor/web-feet/coasterframework/database/migrations']);
+        $unMatchedEnvVars = [];
+        $envFile = new Dotenv(base_path(), File::getEnvFile());
+        foreach ($envFile->load() as $env) {
+            list($envVar, $envValue) = explode('=', $env, 2);
+            $envValue = trim($envValue, '"');
+            if (getenv($envVar) !== false && getenv($envVar) != $envValue) {
+                $unMatchedEnvVars[$envVar] = $envValue;
+            }
+        }
 
-        Install::setInstallState('coaster.install.admin');
+        if (!$skipEnvCheck && $unMatchedEnvVars) {
 
-        return \redirect()->route('coaster.install.admin');
+            $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'envCheck', 'unMatchedEnvVars' => $unMatchedEnvVars]);
+
+        } else {
+            Artisan::call('migrate', ['--path' => '/vendor/web-feet/coasterframework/database/migrations']);
+
+            Install::setInstallState('coaster.install.admin');
+
+            return \redirect()->route('coaster.install.admin');
+        }
     }
 
     public function setupAdminUser()
