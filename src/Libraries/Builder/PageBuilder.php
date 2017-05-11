@@ -150,6 +150,15 @@ class PageBuilder
     }
 
     /**
+     * @param string $name
+     * @param mixed $value
+     */
+    public function __set($name, $value)
+    {
+        $this->getInstance()->$name = $value;
+    }
+
+    /**
      * @param $methodName
      * @param $args
      * @return mixed
