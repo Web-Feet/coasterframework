@@ -711,6 +711,18 @@ class PageBuilderInstance
      */
     public function blockJson($blockName, $options = [])
     {
+        if (array_key_exists('returnAll', $options) && $options['returnAll']) {
+            unset($options['returnAll']);
+            $blocksData = [];
+            $themeId = ($theme = Theme::where('theme', '=', $this->theme)->first()) ? $theme->id : 0;
+            $categoryBlocks = ThemeTemplate::templateBlocks($themeId, $this->pageTemplateId());
+            foreach ($categoryBlocks as $blockCategory => $blocks) {
+                foreach ($blocks as $block) {
+                    $blocksData += json_decode($this->blockJson($block->name, $options), true);
+                }
+            }
+            return collect($blocksData)->toJson();
+        }
         return $this->_block($blockName, $options, 'toJson');
     }
 
@@ -921,37 +933,6 @@ class PageBuilderInstance
         } else {
             return null;
         }
-    }
-
-    /**
-     * @param bool $originalPageInfo
-     * @return string
-     */
-    public function toJson($originalPageInfo = false)
-    {
-        $pageBuilderData = [];
-        $publicProperties = (new \ReflectionObject($this))->getProperties(\ReflectionProperty::IS_PUBLIC);
-        foreach ($publicProperties as $publicProperty){
-            $pageBuilderData[$publicProperty->name] = $this->{$publicProperty->name};
-        }
-
-        $themeId = ($theme = Theme::where('theme', '=', $this->theme)->first()) ? $theme->id : 0;
-        $blocksData = [];
-        $categoryBlocks = ThemeTemplate::templateBlocks($themeId, $this->pageTemplateId());
-        foreach ($categoryBlocks as $blockCategory => $blocks) {
-            foreach ($blocks as $block) {
-                $blocksData[] = json_decode($this->blockJson($block->name));
-            }
-        }
-
-        if (!$originalPageInfo) {
-            if ($pageBuilderData['pageOverride']) {
-                $pageBuilderData['page'] = $pageBuilderData['pageOverride'];
-            }
-            unset($pageBuilderData['pageLevels']);
-            unset($pageBuilderData['pageOverride']);
-        }
-        return collect($pageBuilderData + ['blocks' => $blocksData])->toJson();
     }
 
     /**
