@@ -151,7 +151,12 @@ class PageBuilderInstance
         if ($this->customTemplate) {
             return $themePath . $this->customTemplate;
         } elseif ($this->feedExtension) {
-            return $themePath . 'feed.' . $this->feedExtension . '.' . $this->template;
+            $templatePath = $themePath . 'feed.' . $this->feedExtension . '.' . $this->template;
+
+            if ( ! view()->exists($templatePath)) {
+              $templatePath = $themePath . 'feed.' . $this->feedExtension . '.default';
+            }
+            return $templatePath;
         } else {
             return $themePath . 'templates.' . $this->template;
         }
@@ -694,6 +699,17 @@ class PageBuilderInstance
     public function blockData($blockName, $options = [])
     {
         return $this->_block($blockName, $options, 'data');
+    }
+
+    /**
+     * Return data for block as json
+     * @param string $blockName
+     * @param array $options
+     * @return json string
+     */
+    public function blockJson($blockName, $options = [])
+    {
+        return $this->_block($blockName, $options, 'toJson');
     }
 
     /**

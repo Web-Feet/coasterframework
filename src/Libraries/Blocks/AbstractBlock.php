@@ -106,6 +106,18 @@ abstract class AbstractBlock
         return $this->display('', $options);
     }
 
+
+    /**
+     * Used in theme builder to render blocks as json
+     * @param array $options
+     * @return json string
+     */
+    public function toJson($content, $options = [])
+    {
+        return collect([$this->_block->name => ['block' => $this->_block->toArray(), 'data' => $this->data($content)]])->toJson();
+    }
+
+
     /**
      * Return display block view path
      * @param string $view

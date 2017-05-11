@@ -74,6 +74,32 @@ class Repeater extends AbstractBlock
     }
 
     /**
+     * Used in theme builder to render blocks as json
+     * @param array $options
+     * @return json string
+     */
+    public function toJson($content, $options = [])
+    {
+        $options = $options + ['random' => false, 'repeated_view' => true];
+        $options['repeater_id'] = $content;
+        $repeaterRows = PageBlockRepeaterData::loadRepeaterData($content, $options['version'], $options['random']);
+        $data = [];
+
+        foreach ($repeaterRows as $rowId => $rowBlockData) {
+          $data[$rowId] = ['blocks' => []];
+
+          foreach ($rowBlockData as $key => $rowContent) {
+              $block = Block::find($key);
+              $typeObject = $block->getTypeObject();
+              $tmp = json_decode($typeObject->toJson($rowContent));
+              $data[$rowId]['blocks'][] = $tmp;
+          }
+        }
+
+        return collect([$this->_block->name => ['block' => $this->_block->toArray(), 'data' => $data]])->toJson();
+    }
+
+    /**
      * Check per page values and load block info to pass to repeated view
      * @param array $options
      * @param array $repeaterRows
