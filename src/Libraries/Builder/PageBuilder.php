@@ -142,6 +142,14 @@ class PageBuilder
     }
 
     /**
+     * @param string $name
+     */
+    public function __get($name)
+    {
+        return $this->getInstance()->$name;
+    }
+
+    /**
      * @param $methodName
      * @param $args
      * @return mixed
