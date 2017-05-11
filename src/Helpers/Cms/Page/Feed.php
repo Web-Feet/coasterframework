@@ -20,7 +20,7 @@ class Feed
      */
     protected static function _getEnabledFeedExtensions()
     {
-        $extensions = isset(self::$_enabledExtensions) ? self::$_enabledExtensions : config('coaster::frontend.enabled_feed_extensions');
+        $extensions = isset(self::$_enabledExtensions) ? self::$_enabledExtensions : explode(',', config('coaster::frontend.enabled_feed_extensions'));
         return $extensions ?: [];
     }
 
