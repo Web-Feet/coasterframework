@@ -19,6 +19,8 @@ use CoasterCms\Models\PageSearchData;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\Setting;
 use CoasterCms\Models\Template;
+use CoasterCms\Models\Theme;
+use CoasterCms\Models\ThemeTemplate;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -153,8 +155,8 @@ class PageBuilderInstance
         } elseif ($this->feedExtension) {
             $templatePath = $themePath . 'feed.' . $this->feedExtension . '.' . $this->template;
 
-            if ( ! view()->exists($templatePath)) {
-              $templatePath = $themePath . 'feed.' . $this->feedExtension . '.default';
+            if (!view()->exists($templatePath)) {
+                $templatePath = $themePath . 'feed.' . $this->feedExtension . '.default';
             }
             return $templatePath;
         } else {
@@ -705,7 +707,7 @@ class PageBuilderInstance
      * Return data for block as json
      * @param string $blockName
      * @param array $options
-     * @return json string
+     * @return string json
      */
     public function blockJson($blockName, $options = [])
     {
@@ -919,6 +921,37 @@ class PageBuilderInstance
         } else {
             return null;
         }
+    }
+
+    /**
+     * @param bool $originalPageInfo
+     * @return string
+     */
+    public function toJson($originalPageInfo = false)
+    {
+        $pageBuilderData = [];
+        $publicProperties = (new \ReflectionObject($this))->getProperties(\ReflectionProperty::IS_PUBLIC);
+        foreach ($publicProperties as $publicProperty){
+            $pageBuilderData[$publicProperty->name] = $this->{$publicProperty->name};
+        }
+
+        $themeId = ($theme = Theme::where('theme', '=', $this->theme)->first()) ? $theme->id : 0;
+        $blocksData = [];
+        $categoryBlocks = ThemeTemplate::templateBlocks($themeId, $this->pageTemplateId());
+        foreach ($categoryBlocks as $blockCategory => $blocks) {
+            foreach ($blocks as $block) {
+                $blocksData[] = json_decode($this->blockJson($block->name));
+            }
+        }
+
+        if (!$originalPageInfo) {
+            if ($pageBuilderData['pageOverride']) {
+                $pageBuilderData['page'] = $pageBuilderData['pageOverride'];
+            }
+            unset($pageBuilderData['pageLevels']);
+            unset($pageBuilderData['pageOverride']);
+        }
+        return collect($pageBuilderData + ['blocks' => $blocksData])->toJson();
     }
 
     /**
