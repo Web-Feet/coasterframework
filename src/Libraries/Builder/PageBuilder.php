@@ -2,6 +2,7 @@
 
 use CoasterCms\Exceptions\PageBuilderException;
 use CoasterCms\Libraries\Builder\PageBuilder\PageBuilderInstance;
+use Illuminate\Support\Traits\Macroable;
 
 /**
  * Class PageBuilder
@@ -42,6 +43,10 @@ use CoasterCms\Libraries\Builder\PageBuilder\PageBuilderInstance;
 
 class PageBuilder
 {
+    use Macroable {
+        __call as macroCall;
+    }
+
     /**
      * @var PageBuilderInstance[]
      */
@@ -144,7 +149,11 @@ class PageBuilder
     public function __call($methodName, $args)
     {
         try {
-            return call_user_func_array([$this->getInstance(), $methodName], $args);
+            if ($this->hasMacro($methodName)) {
+                return $this->macroCall($methodName, $args);
+            } else {
+                return call_user_func_array([$this->getInstance(), $methodName], $args);
+            }
         } catch (PageBuilderException $e) {
             return 'PageBuilder error: ' . $e->getMessage();
         }
