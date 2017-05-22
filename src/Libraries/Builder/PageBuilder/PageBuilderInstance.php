@@ -328,9 +328,9 @@ class PageBuilderInstance
      * @param int $key
      * @param bool $overwrite
      */
-    public function setCustomBlockData($blockName, $content, $key = 0, $overwrite = true)
+    public function setCustomBlockData($blockName, $content, $key = null, $overwrite = true)
     {
-        $key = ($key == 0) ? $this->_customBlockDataKey : $key;
+        $key = is_null($key) ? $this->_customBlockDataKey : $key;
         if (empty($this->_customBlockData[$key])) {
             $this->_customBlockData[$key] = [];
         }
