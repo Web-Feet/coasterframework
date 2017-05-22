@@ -27,9 +27,9 @@ class PageBuilderLogger
      * @param string $key
      * @return Collection
      */
-    public function logs($key = '')
+    public function logs($key = null)
     {
-        if ($key) {
+        if (!is_null($key)) {
             return $this->_logs->pluck($key);
         }
         return $this->_logs;
@@ -47,14 +47,14 @@ class PageBuilderLogger
     }
 
     /**
-     * @param $methodName
-     * @param $args
+     * @param string $methodName
+     * @param array $args
      * @return mixed
      */
     public function __call($methodName, $args)
     {
         $logFn = 'debug';
-        $logContext = ['method' => $methodName, 'args' => $args, 'marco' => false];
+        $logContext = ['method' => $methodName, 'args' => $args, 'macro' => false];
         try {
             if ($this->hasMacro($methodName)) {
                 $logContext['macro'] = true;
