@@ -40,23 +40,25 @@ class CoasterRoutesProvider extends ServiceProvider
                 ->group($routesDir . '/install.php');
         }
 
-        Route::middleware(['web', 'coaster.admin'])
-            ->prefix($adminUrl)
-            ->as($adminRouteName)
-            ->namespace($namespace . '\AdminControllers')
-            ->group($routesDir . '/admin-auth.php');
+        if (\Request::segment(1) == rtrim($adminUrl, '/') || config('coaster::admin.always_load_routes')) {
+            Route::middleware(['web', 'coaster.admin'])
+                ->prefix($adminUrl)
+                ->as($adminRouteName)
+                ->namespace($namespace . '\AdminControllers')
+                ->group($routesDir . '/admin-auth.php');
 
-        Route::middleware(['web', 'coaster.guest'])
-            ->prefix($adminUrl)
-            ->as($adminRouteName)
-            ->namespace($namespace . '\AdminControllers')
-            ->group($routesDir . '/admin-guest.php');
+            Route::middleware(['web', 'coaster.guest'])
+                ->prefix($adminUrl)
+                ->as($adminRouteName)
+                ->namespace($namespace . '\AdminControllers')
+                ->group($routesDir . '/admin-guest.php');
 
-        Route::middleware(['web', 'coaster.admin'])
-            ->prefix($adminUrl)
-            ->as(rtrim($adminRouteName, '.'))
-            ->namespace($namespace)
-            ->group($routesDir . '/admin.php');
+            Route::middleware(['web', 'coaster.admin'])
+                ->prefix($adminUrl)
+                ->as(rtrim($adminRouteName, '.'))
+                ->namespace($namespace)
+                ->group($routesDir . '/admin.php');
+        }
 
         Route::middleware(['web', 'auth'])
             ->namespace($namespace)
