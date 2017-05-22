@@ -4,7 +4,7 @@ namespace CoasterCms\Libraries\Builder;
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @see PageBuilderFactory
+ * @see PageBuilder
  */
 class PageBuilderFacade extends Facade
 {

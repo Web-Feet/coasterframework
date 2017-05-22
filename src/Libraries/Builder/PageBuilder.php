@@ -1,8 +1,6 @@
 <?php namespace CoasterCms\Libraries\Builder;
 
-use CoasterCms\Exceptions\PageBuilderException;
 use CoasterCms\Libraries\Builder\PageBuilder\PageBuilderInstance;
-use Illuminate\Support\Traits\Macroable;
 
 /**
  * Class PageBuilder
@@ -43,9 +41,6 @@ use Illuminate\Support\Traits\Macroable;
 
 class PageBuilder
 {
-    use Macroable {
-        __call as macroCall;
-    }
 
     /**
      * @var PageBuilderInstance[]
@@ -133,29 +128,12 @@ class PageBuilder
         if (!array_key_exists($name, $this->_instances)) {
             $pageBuilderArgs = ($pageBuilderClass || $pageBuilderArgs) ? $pageBuilderArgs : $this->_defaultArgs;
             $pageBuilderClass = $pageBuilderClass ?: $this->_defaultClass;
-            $this->_instances[$name] = new $pageBuilderClass(...$pageBuilderArgs);
+            $this->_instances[$name] = new PageBuilderLogger($pageBuilderClass, $pageBuilderArgs);
         }
         if ($setActive) {
             $this->switchActiveInstance($name);
         }
         return $this->_instances[$name];
-    }
-
-    /**
-     * @param string $name
-     */
-    public function __get($name)
-    {
-        return $this->getInstance()->$name;
-    }
-
-    /**
-     * @param string $name
-     * @param mixed $value
-     */
-    public function __set($name, $value)
-    {
-        $this->getInstance()->$name = $value;
     }
 
     /**
@@ -165,15 +143,7 @@ class PageBuilder
      */
     public function __call($methodName, $args)
     {
-        try {
-            if ($this->hasMacro($methodName)) {
-                return $this->macroCall($methodName, $args);
-            } else {
-                return call_user_func_array([$this->getInstance(), $methodName], $args);
-            }
-        } catch (PageBuilderException $e) {
-            return 'PageBuilder error: ' . $e->getMessage();
-        }
+        return call_user_func_array([$this->getInstance(), $methodName], $args);
     }
 
 }

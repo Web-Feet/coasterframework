@@ -72,6 +72,7 @@ class PageLoader
         $this->customTemplate = false;
         $this->feedExtension = false;
         $this->searchQuery = false;
+        $this->searchRequired = false;
         $this->_load();
     }
 
@@ -126,7 +127,7 @@ class PageLoader
 
                     if (empty($this->pageLevels[$i])) {
                         if (($searchOffset = self::_isSearchPage($currentSegment, $parentPage)) !== false) {
-                            Search::setSearchBlockRequired();
+                            $this->searchRequired = true;
                             $this->searchQuery = implode('/', array_slice(Request::segments(), $i - 1 + $searchOffset));
                             unset($this->pageLevels[$i]);
                             $urlSegments = $i - 1;

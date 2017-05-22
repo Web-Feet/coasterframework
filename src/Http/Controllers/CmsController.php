@@ -6,7 +6,6 @@ use CoasterCms\Events\Cms\GeneratePage\LoadErrorTemplate;
 use CoasterCms\Events\Cms\GeneratePage\LoadPageTemplate;
 use CoasterCms\Exceptions\CmsPageException;
 use CoasterCms\Helpers\Cms\Html\DOMDocument;
-use CoasterCms\Helpers\Cms\Page\Search;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\PageRedirect;
 use CoasterCms\Models\PageVersionSchedule;
@@ -106,7 +105,7 @@ class CmsController extends Controller
             }
 
             // if declared as a search page, must have search block
-            if (Search::searchBlockRequired() && !Search::searchBlockExists()) {
+            if (PageBuilder::getData('searchRequired') && !PageBuilder::logs('method')->has('search')) {
                 throw new Exception('No search function implemented on this page', 404);
             }
 
@@ -158,7 +157,7 @@ class CmsController extends Controller
     protected function _getRenderedTemplate($templatePath)
     {
         if (config('coaster::frontend.cache') > 0) {
-            $cacheName = 'fpc_page.' . PageBuilder::pageId() . '.' . crypt(serialize(Request::input()));
+            $cacheName = 'fpc_page.' . PageBuilder::pageId() . '.' . hash('haval256,3', serialize(Request::input()));
             $renderedTemplate = Cache::remember($cacheName, config('coaster::frontend.cache'), function () use ($templatePath) {
                 return View::make($templatePath)->render();
             });

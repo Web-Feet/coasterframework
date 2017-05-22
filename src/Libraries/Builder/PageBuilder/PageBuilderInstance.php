@@ -3,7 +3,7 @@
 use CoasterCms\Exceptions\PageBuilderException;
 use CoasterCms\Helpers\Cms\Page\PageLoader;
 use CoasterCms\Helpers\Cms\Page\Path;
-use CoasterCms\Helpers\Cms\Page\Search;
+use CoasterCms\Libraries\Builder\PageBuilderLogger;
 use CoasterCms\Libraries\Builder\ViewClasses\BreadCrumb;
 use CoasterCms\Libraries\Builder\ViewClasses\PageDetails;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
@@ -97,6 +97,11 @@ class PageBuilderInstance
     public $cacheable;
 
     /**
+     * @var PageBuilderLogger
+     */
+    protected $_logger;
+
+    /**
      * @var array
      */
     protected $_pageCategoryLinks;
@@ -112,9 +117,10 @@ class PageBuilderInstance
     protected $_customBlockDataKey;
 
     /**
+     * @param PageBuilderLogger $logger
      * @param PageLoader $pageLoader
      */
-    public function __construct(PageLoader $pageLoader)
+    public function __construct(PageBuilderLogger $logger, PageLoader $pageLoader)
     {
         $this->page = !empty($pageLoader->pageLevels) ? end($pageLoader->pageLevels) : null;
         $this->pageLevels = $pageLoader->pageLevels;
@@ -133,6 +139,8 @@ class PageBuilderInstance
 
         $this->_customBlockData = [];
         $this->_customBlockDataKey = 0;
+
+        $this->_logger = $logger;
     }
 
     /**
@@ -173,7 +181,7 @@ class PageBuilderInstance
         if (!is_null($setValue)) {
             $this->cacheable = (bool) $setValue;
         }
-        if (Search::searchBlockExists()) {
+        if ($this->_logger->logs('method')->has('search')) {
             return false;
         }
         return $this->cacheable;
