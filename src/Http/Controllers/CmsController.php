@@ -1,11 +1,11 @@
 <?php namespace CoasterCms\Http\Controllers;
 
-use Cache;
 use CoasterCms\Events\Cms\GeneratePage\LoadedPageResponse;
 use CoasterCms\Events\Cms\GeneratePage\LoadErrorTemplate;
 use CoasterCms\Events\Cms\GeneratePage\LoadPageTemplate;
 use CoasterCms\Exceptions\CmsPageException;
 use CoasterCms\Helpers\Cms\Html\DOMDocument;
+use CoasterCms\Helpers\Cms\Page\PageCache;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\PageRedirect;
 use CoasterCms\Models\PageVersionSchedule;
@@ -157,12 +157,13 @@ class CmsController extends Controller
     protected function _getRenderedTemplate($templatePath)
     {
         if (config('coaster::frontend.cache') > 0) {
-            $cacheName = 'fpc_page.' . PageBuilder::pageId() . '.' . hash('haval256,3', serialize(Request::input()));
-            $renderedTemplate = Cache::remember($cacheName, config('coaster::frontend.cache'), function () use ($templatePath) {
+            $pageId = PageBuilder::pageId();
+            $hash = hash('haval256,3', serialize(Request::input()));
+            $renderedTemplate = PageCache::remember($pageId, $hash, function () use ($templatePath) {
                 return View::make($templatePath)->render();
             });
             if (!PageBuilder::canCache()) {
-                Cache::forget($cacheName);
+                PageCache::forget($pageId, $hash);
             }
             return $renderedTemplate;
         }

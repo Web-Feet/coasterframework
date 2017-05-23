@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Http\Controllers\AdminControllers;
 
-use Cache;
+use CoasterCms\Helpers\Cms\Page\PageCache;
 use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminLog;
@@ -44,6 +44,7 @@ class MenusController extends Controller
         $new_item->save();
         $item_name = Path::getFullName($page_id);
         AdminLog::log('Menu Item \'' . $item_name . '\' added to \'' . Menu::name($menu_id) . '\'');
+        PageCache::clear();
         return $new_item->id;
     }
 
@@ -51,6 +52,7 @@ class MenusController extends Controller
     {
         if ($menu_item = MenuItem::find($itemId)) {
             $menu_item->delete();
+            PageCache::clear();
             return $menu_item->getJSONLogIds();
         }
         return Response::make('Menu item with ID '.$itemId.' not found', 500);
@@ -83,7 +85,7 @@ class MenusController extends Controller
         }
         Page::sortPages($pages);
         AdminLog::log('Items re-ordered in menu \'' . Menu::name($menuId) . '\'');
-        Cache::flush();
+        PageCache::clear();
         return 1;
     }
 
@@ -105,6 +107,7 @@ class MenusController extends Controller
         if (!empty($item)) {
             $item->setHiddenPage(Request::input('pageId'), Request::input('hide'));
             $item->save();
+            PageCache::clear();
             return 1;
         }
         return abort(500, 'Item not found');
@@ -120,6 +123,7 @@ class MenusController extends Controller
             $item->save();
             // log action
             AdminLog::log('Change sub levels for menu item \'' . Path::getFullName($item->page_id) . '\' in \'' . Menu::name($item->menu_id) . '\' to ' . $item->sub_levels);
+            PageCache::clear();
             return json_encode(['children' => $item->getRenderedChildItems()]);
         }
         return abort('500');
@@ -139,6 +143,7 @@ class MenusController extends Controller
             } else {
                 AdminLog::log('Removed custom name for menu item \'' . $item_name . '\' in \'' . Menu::name($item->menu_id) . '\'');
             }
+            PageCache::clear();
             return 1;
         }
         return abort('500');
