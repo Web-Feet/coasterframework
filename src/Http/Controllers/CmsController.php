@@ -156,18 +156,15 @@ class CmsController extends Controller
      */
     protected function _getRenderedTemplate($templatePath)
     {
-        if (config('coaster::frontend.cache') > 0) {
-            $pageId = PageBuilder::pageId();
-            $hash = hash('haval256,3', serialize(Request::input()));
-            $renderedTemplate = PageCache::remember($pageId, $hash, function () use ($templatePath) {
-                return View::make($templatePath)->render();
-            });
-            if (!PageBuilder::canCache()) {
-                PageCache::forget($pageId, $hash);
-            }
-            return $renderedTemplate;
+        $pageId = PageBuilder::pageId();
+        $hash = hash('haval256,3', serialize(Request::input()));
+        $renderedTemplate = PageCache::remember($pageId, $hash, function () use ($templatePath) {
+            return View::make($templatePath)->render();
+        });
+        if (!PageBuilder::canCache()) {
+            PageCache::forget($pageId, $hash);
         }
-        return View::make($templatePath)->render();
+        return $renderedTemplate;
     }
 
     /**
