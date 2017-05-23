@@ -45,7 +45,7 @@ class PageCache
         $pageKeys = is_null($pageId) ? $this->_keys : (array_key_exists($pageId, $this->_keys) ? [$this->_keys[$pageId]] : []);
         foreach ($pageKeys as $pageId => $requestHashes) {
             foreach ($requestHashes as $requestHash => $key) {
-                Cache::forget($key);
+                Cache::forget($this->_key($pageId, $requestHash));
             }
             unset($this->_keys[$pageId]);
         }
@@ -58,12 +58,11 @@ class PageCache
      */
     public function _forget($pageId, $hash)
     {
-        $key = $this->_key($pageId, $hash);
+        Cache::forget($this->_key($pageId, $hash));
         if (array_key_exists($pageId, $this->_keys) && array_key_exists($hash, $this->_keys[$pageId])) {
             unset($this->_keys[$pageId][$hash]);
         }
         $this->_saveKeys();
-        Cache::forget($key);
     }
 
     /**
