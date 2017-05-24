@@ -4,6 +4,7 @@ use CoasterCms\Events\Cms\GeneratePage\LoadedPageResponse;
 use CoasterCms\Events\Cms\GeneratePage\LoadErrorTemplate;
 use CoasterCms\Events\Cms\GeneratePage\LoadPageTemplate;
 use CoasterCms\Exceptions\CmsPageException;
+use CoasterCms\Helpers\Cms\File\SecureUpload;
 use CoasterCms\Helpers\Cms\Html\DOMDocument;
 use CoasterCms\Helpers\Cms\Page\PageCache;
 use CoasterCms\Models\Block;
@@ -50,7 +51,7 @@ class CmsController extends Controller
      */
     public function getSecureUpload($file)
     {
-        $secureFilePath = storage_path() . '/uploads/' . $file;
+        $secureFilePath = SecureUpload::getBasePath() . '/' . $file;
 
         if (file_exists($secureFilePath)) {
             $size = filesize($secureFilePath);
