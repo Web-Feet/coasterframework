@@ -67,6 +67,7 @@ class BlocksExport extends AbstractExport
      */
     protected function _loadModelData()
     {
+        $this->_existingImportData = [];
         foreach ($this->_importObject->getImportData() as $importRow) {
             if (array_key_exists('Block Name', $importRow)) {
                 $this->_existingImportData[$importRow['Block Name']] = $importRow;
