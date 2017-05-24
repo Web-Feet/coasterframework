@@ -45,6 +45,23 @@ class CmsController extends Controller
     }
 
     /**
+     * @param string $file
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function getSecureUpload($file)
+    {
+        $secureFilePath = storage_path() . '/uploads/' . $file;
+
+        if (file_exists($secureFilePath)) {
+            $size = filesize($secureFilePath);
+            $type = \GuzzleHttp\Psr7\mimetype_from_filename($secureFilePath);
+            return response()->download($secureFilePath, null, ['size' => $size, 'Content-Type' => $type], null);
+        } else {
+            return $this->generatePage();
+        }
+    }
+
+    /**
      * @return \Symfony\Component\HttpFoundation\Response
      */
     public function generatePage()

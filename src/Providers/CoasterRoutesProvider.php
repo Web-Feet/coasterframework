@@ -46,23 +46,19 @@ class CoasterRoutesProvider extends ServiceProvider
                 ->as($adminRouteName)
                 ->namespace($namespace . '\AdminControllers')
                 ->group($routesDir . '/admin-auth.php');
-
-            Route::middleware(['web', 'coaster.guest'])
-                ->prefix($adminUrl)
-                ->as($adminRouteName)
-                ->namespace($namespace . '\AdminControllers')
-                ->group($routesDir . '/admin-guest.php');
-
-            Route::middleware(['web', 'coaster.admin'])
-                ->prefix($adminUrl)
-                ->as(rtrim($adminRouteName, '.'))
-                ->namespace($namespace)
-                ->group($routesDir . '/admin.php');
         }
 
-        Route::middleware(['web', 'auth'])
+        Route::middleware(['web', 'coaster.guest'])
+            ->prefix($adminUrl)
+            ->as($adminRouteName)
+            ->namespace($namespace . '\AdminControllers')
+            ->group($routesDir . '/admin-guest.php');
+
+        Route::middleware(['web', 'coaster.admin'])
+            ->prefix($adminUrl)
+            ->as(rtrim($adminRouteName, '.'))
             ->namespace($namespace)
-            ->group($routesDir . '/cms-auth.php');
+            ->group($routesDir . '/admin.php');
 
         Route::middleware(['web'])
             ->namespace($namespace)
