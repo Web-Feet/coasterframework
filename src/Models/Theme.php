@@ -240,8 +240,8 @@ Class Theme extends Eloquent
 
             if (is_dir($themePath . '/uploads')) {
                 Directory::copy($themePath . '/uploads', public_path() . '/uploads', function ($addFrom, $addTo) use ($themePath) {
-                    $addTo = substr($addFrom, strlen($themePath . '/uploads'));
-                    $addTo = SecureUpload::getBasePath(SecureUpload::isSecurePath($addTo), false) . $addTo;
+                    $addTo = substr($addFrom, strlen($themePath));
+                    $addTo = SecureUpload::getBasePath(SecureUpload::isSecurePath($addTo)) . $addTo;
                     return [$addFrom, $addTo];
                 });
             }
