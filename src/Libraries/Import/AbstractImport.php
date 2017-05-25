@@ -290,34 +290,30 @@ abstract class AbstractImport
         if ($this->validate()) {
             try {
                 $this->_beforeRun();
-            } catch (\Exception $e) {
-                $this->_importErrors[] = $e;
-            }
-            foreach ($this->_importData as $importRow) {
-                try {
-                    $this->_importCurrentRow = $importRow;
-                    $this->_beforeRowMap();
-                    foreach ($this->_fieldMap as $importFieldName => $importInfo) {
-                        $tryFieldNames = array_merge([$importFieldName], array_key_exists('aliases', $importInfo) ? $importInfo['aliases'] : []);
-                        $importFieldData = '';
-                        foreach ($tryFieldNames as $tryFieldName) {
-                            if (array_key_exists($tryFieldName, $importRow)) {
-                                $importFieldData = $importRow[$tryFieldName];
-                                break;
+                foreach ($this->_importData as $importRow) {
+                    try {
+                        $this->_importCurrentRow = $importRow;
+                        $this->_beforeRowMap();
+                        foreach ($this->_fieldMap as $importFieldName => $importInfo) {
+                            $tryFieldNames = array_merge([$importFieldName], array_key_exists('aliases', $importInfo) ? $importInfo['aliases'] : []);
+                            $importFieldData = '';
+                            foreach ($tryFieldNames as $tryFieldName) {
+                                if (array_key_exists($tryFieldName, $importRow)) {
+                                    $importFieldData = $importRow[$tryFieldName];
+                                    break;
+                                }
+                            }
+                            $importFieldData = $this->_mapFn($importInfo, $importFieldData);
+                            $importFieldData = $this->_setDefaultIfBlank($importInfo, $importFieldData);
+                            if (array_key_exists('mapTo', $importInfo)) {
+                                $this->_mapTo($importInfo, $importFieldData);
                             }
                         }
-                        $importFieldData = $this->_mapFn($importInfo, $importFieldData);
-                        $importFieldData = $this->_setDefaultIfBlank($importInfo, $importFieldData);
-                        if (array_key_exists('mapTo', $importInfo)) {
-                            $this->_mapTo($importInfo, $importFieldData);
-                        }
+                        $this->_afterRowMap();
+                    } catch (\Exception $e) {
+                        $this->_importErrors[] = $e;
                     }
-                    $this->_afterRowMap();
-                } catch (\Exception $e) {
-                    $this->_importErrors[] = $e;
                 }
-            }
-            try {
                 $this->_afterRun();
             } catch (\Exception $e) {
                 $this->_importErrors[] = $e;
