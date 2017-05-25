@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Models;
 
 use CoasterCms\Helpers\Cms\File\Directory;
+use CoasterCms\Helpers\Cms\File\SecureUpload;
 use CoasterCms\Helpers\Cms\File\Zip;
 use CoasterCms\Libraries\Export\BlocksExport;
 use CoasterCms\Libraries\Export\ContentExport;
@@ -21,7 +22,6 @@ use Validator;
 Class Theme extends Eloquent
 {
     protected $table = 'themes';
-    private static $_uploadsToAdd;
 
     public function templates()
     {
@@ -239,20 +239,9 @@ Class Theme extends Eloquent
             Directory::remove($themePath . '/public');
 
             if (is_dir($themePath . '/uploads')) {
-                $securePaths = [];
-                $secureUploadPaths = explode(',', config('coaster::site.secure_folders'));
-                foreach ($secureUploadPaths as $secureUploadPath) {
-                    $securePaths[] = '/uploads/' . trim($secureUploadPath, '/');
-                }
-
-                Directory::copy($themePath . '/uploads', public_path() . '/uploads', function ($addFrom, $addTo) use ($securePaths, $themePath) {
-                    $uploadPath = str_replace(public_path(), '', $addTo);
-                    foreach ($securePaths as $securePath) {
-                        if (strpos($uploadPath, $securePath) === 0) {
-                            $addTo = str_replace(public_path() . '/uploads', storage_path() . '/uploads', $addTo);
-                            break;
-                        }
-                    }
+                Directory::copy($themePath . '/uploads', public_path() . '/uploads', function ($addFrom, $addTo) use ($themePath) {
+                    $addTo = substr($addFrom, strlen($themePath . '/uploads'));
+                    $addTo = SecureUpload::getBasePath(SecureUpload::isSecurePath($addTo), false) . $addTo;
                     return [$addFrom, $addTo];
                 });
             }
@@ -378,14 +367,19 @@ Class Theme extends Eloquent
     {
         $theme = self::find($themeId);
         if (!empty($theme)) {
-            $themesDir = base_path() . '/resources/views/themes/';
-            $zipFileName = $theme->theme.'.zip';
-            // export blocks
-            $csvDataFolder = $themesDir.'/'.$theme->theme.'/export';
-            $blocksExport = new BlocksExport($csvDataFolder);
+
+            $themesDir = base_path() . '/resources/views/themes/' . $theme->theme;
+            $themePublicDir = public_path() . '/themes/' . $theme->theme;
+            $themeExportDataFolder = $themesDir . '/export';
+            $zipFilePath = $themesDir . '.zip';
+            $zip = new Zip;
+            $zip->open($zipFilePath, Zip::CREATE);
+
+            // save block data to export folder
+            $blocksExport = new BlocksExport($themeExportDataFolder);
             $blocksExport->setTheme($theme)->run();
+            // save page data to export folder
             if ($withPageData) {
-                // export page data
                 $exportClasses = [
                     PagesExport::class,
                     GroupsExport::class,
@@ -393,49 +387,46 @@ Class Theme extends Eloquent
                     ContentExport::class
                 ];
                 foreach ($exportClasses as $exportClass) {
-                    $exportObject = new $exportClass($csvDataFolder);
+                    $exportObject = new $exportClass($themeExportDataFolder);
                     $exportObject->run();
-                }
-            }
-            $zip = new Zip;
-            $zip->open($themesDir . $zipFileName, Zip::CREATE);
-            $zip->addDir($themesDir . $theme->theme, 'views', function($addFrom, $addTo) use($withPageData) {
-                if ($addTo == 'views/import') {
-                    $addTo = '';
-                }
-                if (stripos($addTo, '/.svn/') !== false) {
-                    $addTo = '';
-                }
-                if (!$withPageData && stripos($addTo, 'views/export/pages') === 0) {
-                    $addTo = '';
-                }
-                if (stripos($addTo, 'views/export') === 0) {
-                    $addTo = 'views/import'.substr($addTo, 12);
-                }
-                return [$addFrom, $addTo];
-            });
-            $zip->addDir(public_path() . '/themes/' . $theme->theme, 'public', function($addFrom, $addTo) {
-                if (stripos($addTo, '/.svn/') !== false) {
-                    $addTo = '';
-                }
-                return [$addFrom, $addTo];
-            });
-            if (!empty(self::$_uploadsToAdd)) {
-                foreach (self::$_uploadsToAdd as $zipPath => $dirPath) {
-                    if (file_exists($dirPath) && !is_dir($dirPath)) {
-                        $zip->addFile($dirPath, $zipPath);
+                    // add uploaded to zip
+                    if ($uploads = $exportObject->getUploads()) {
+                        foreach ($uploads as $uploadPath) {
+                            $basePath = SecureUpload::getBasePath(SecureUpload::isSecurePath($uploadPath), false);
+                            if (file_exists($basePath . $uploadPath) && !is_dir($basePath . $uploadPath)) {
+                                $zip->addFile($basePath . $uploadPath, $uploadPath);
+                            }
+                        }
                     }
                 }
             }
+            // zip theme dir and rename export folder to import
+            $zip->addDir($themesDir, 'views', function($addFrom, $addTo) use($withPageData) {
+                if (stripos($addTo, '/.') !== false) {
+                    $addTo = '';
+                } elseif ($addTo == 'views/import' || (!$withPageData && stripos($addTo, 'views/export/pages') === 0)) {
+                    $addTo = '';
+                } elseif (stripos($addTo, 'views/export') === 0) {
+                    $addTo = 'views/import' . substr($addTo, 12);
+                }
+                return [$addFrom, $addTo];
+            });
+            // zip public files
+            $zip->addDir($themePublicDir, 'public', function($addFrom, $addTo) {
+                if (stripos($addTo, '/.') !== false) {
+                    $addTo = '';
+                }
+                return [$addFrom, $addTo];
+            });
             $zip->close();
 
             header("Content-type: application/zip");
-            header("Content-Disposition: attachment; filename=" . $zipFileName);
-            header('Content-Length: ' . filesize($themesDir . $zipFileName));
+            header("Content-Disposition: attachment; filename=" . $theme->theme . '.zip');
+            header('Content-Length: ' . filesize($zipFilePath));
             header("Pragma: no-cache");
             header("Expires: 0");
-            readfile($themesDir . $zipFileName);
-            unlink($themesDir . $zipFileName);
+            readfile($zipFilePath);
+            unlink($zipFilePath);
             Directory::remove($themesDir.$theme->theme.'/export');
             exit;
         }

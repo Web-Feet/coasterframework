@@ -24,8 +24,9 @@ class SecureUpload
         $checkPath = '/' . trim($checkPath, '/');
         foreach (static::secureFolders() as $secureFolder) {
             if (strpos($checkPath, $secureFolder) === 0) {
-                if (!is_dir($secureStorage . $checkPath)) {
-                    @mkdir($secureStorage . $checkPath, 0777, true);
+                $dirName = dirname($secureStorage . $checkPath);
+                if (!is_dir($dirName)) {
+                    @mkdir($dirName, 0777, true);
                 }
                 return true;
             }
@@ -76,7 +77,7 @@ class SecureUpload
                 Directory::remove($fromPath . $folder, $folder == '/' || $toSecure, function($deleteFrom) use($fromPath, $oldFolders) {
                     $deleteFrom = substr($deleteFrom, strlen($fromPath));
                     foreach ($oldFolders as $oldFolder) {
-                        if (strpos($deleteFrom, rtrim($oldFolder, '/') . '/') === 0) {
+                        if ($deleteFrom == $oldFolder || strpos($oldFolder, rtrim($deleteFrom, '/') . '/') === 0) {
                             return false;
                         }
                     }
@@ -112,11 +113,12 @@ class SecureUpload
 
     /**
      * @param bool $secure
+     * @param bool $withUploadsFolder
      * @return string
      */
-    public static function getBasePath($secure = true)
+    public static function getBasePath($secure = true, $withUploadsFolder = true)
     {
-        return ($secure ? storage_path() : public_path()) . '/uploads';
+        return ($secure ? storage_path() : public_path()) . ($withUploadsFolder ? '/uploads' : '');
     }
 
 }
