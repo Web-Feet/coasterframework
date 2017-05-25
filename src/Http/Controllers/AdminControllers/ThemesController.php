@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Http\Controllers\AdminControllers;
 
 use Auth;
+use CoasterCms\Exceptions\ImportException;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Libraries\Builder\AssetBuilder;
 use CoasterCms\Libraries\Import\BlocksImport;
@@ -214,9 +215,20 @@ class ThemesController extends Controller
     public function getUpdate($themeId)
     {
         $theme = Theme::find($themeId) ?: new Theme();
-        $blocksImport = new BlocksImport();
-        $blocksImport->setTheme($theme)->run();
-        $importBlocks = $blocksImport->getBlocksCollection();
+
+        try {
+            $blocksImport = new BlocksImport();
+            $blocksImport->setTheme($theme)->run();
+            $importBlocks = $blocksImport->getBlocksCollection();
+            $errors = $blocksImport->getErrorMessages();
+        } catch (ImportException $e) {
+            $errors = $e->getImportErrors();
+        } catch (\Exception $e) {
+            $errors = [$e->getMessage()];
+        }
+        if ($errors) {
+            dd($errors);
+        }
 
         $this->layoutData['content'] = View::make('coaster::pages.themes.update',
             [
@@ -234,9 +246,20 @@ class ThemesController extends Controller
     {
         $postBlocks = Request::input('block');
         $theme = Theme::find($themeId) ?: new Theme();
-        $blocksImport = new BlocksImport();
-        $blocksImport->setTheme($theme)->run();
-        $importBlocks = $blocksImport->getBlocksCollection();
+
+        try {
+            $blocksImport = new BlocksImport();
+            $blocksImport->setTheme($theme)->run();
+            $importBlocks = $blocksImport->getBlocksCollection();
+            $errors = $blocksImport->getErrorMessages();
+        } catch (ImportException $e) {
+            $errors = $e->getImportErrors();
+        } catch (\Exception $e) {
+            $errors = [$e->getMessage()];
+        }
+        if ($errors) {
+            dd($errors);
+        }
 
         $importBlocks->setScope('form'); // all form data has priority
         $updateTemplates = [];

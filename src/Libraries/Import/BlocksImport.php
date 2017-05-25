@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Libraries\Import;
 
+use CoasterCms\Exceptions\ImportException;
 use CoasterCms\Helpers\Admin\Import\BlocksCollection;
 use CoasterCms\Helpers\Cms\File\Directory;
 use CoasterCms\Helpers\Cms\Page\PageLoaderDummy;
@@ -303,6 +304,7 @@ class BlocksImport extends AbstractImport
     /**
      * Get all extra block data from theme files
      * @param string $scope
+     * @throws ImportException
      */
     protected function _renderThemeFiles($scope = 'file')
     {
@@ -326,8 +328,7 @@ class BlocksImport extends AbstractImport
             $this->_renderedOrders = $themeBuilder->getOrders();
             $errors = array_merge($errors, $themeBuilder->getData('errors'));
             if ($errors) {
-                echo 'Could not complete block import, errors found in theme:';
-                dd($errors);
+                throw new ImportException('Could not complete block import, errors found in theme', 0, null, $errors);
             }
         }
 

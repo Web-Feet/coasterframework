@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Models;
 
+use CoasterCms\Exceptions\ImportException;
 use CoasterCms\Helpers\Cms\File\Directory;
 use CoasterCms\Helpers\Cms\File\SecureUpload;
 use CoasterCms\Helpers\Cms\File\Zip;
@@ -284,6 +285,8 @@ Class Theme extends Eloquent
                 $blocksImport = new BlocksImport();
                 $blocksImport->setTheme($newTheme)->run();
                 $errors = $blocksImport->getErrorMessages();
+            } catch (ImportException $e) {
+                $errors = $e->getImportErrors();
             } catch (\Exception $e) {
                 $errors = [$e->getMessage()];
             }
