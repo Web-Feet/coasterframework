@@ -51,9 +51,6 @@ class Directory
                     $callbackResult = $callback($copyFrom, $copyTo);
                     if (is_array($callbackResult)) {
                         list($copyFrom, $copyTo) = $callbackResult;
-                        if (!is_dir($copyTo)) {
-                            @mkdir($copyTo, 0777, true);
-                        }
                     } elseif (!$callbackResult) {
                         continue;
                     }

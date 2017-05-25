@@ -4,6 +4,7 @@ use CoasterCms\Exceptions\PageBuilderException;
 use CoasterCms\Helpers\Admin\Import\BlocksCollection;
 use CoasterCms\Helpers\Cms\Page\PageLoader;
 use CoasterCms\Libraries\Builder\MenuBuilder;
+use CoasterCms\Libraries\Builder\PageBuilderLogger;
 use CoasterCms\Libraries\Builder\ViewClasses\PageDetails;
 use CoasterCms\Libraries\Import\Blocks\SelectOptionImport;
 use CoasterCms\Models\Block;
@@ -55,12 +56,13 @@ class ThemeBuilderInstance extends PageBuilderInstance
 
     /**
      * ThemeBuilderInstance constructor.
+     * @param PageBuilderLogger $logger
      * @param PageLoader $pageLoader
      * @param BlocksCollection $blocksCollection
      */
-    public function __construct(PageLoader $pageLoader, $blocksCollection)
+    public function __construct(PageBuilderLogger $logger, PageLoader $pageLoader, $blocksCollection)
     {
-        parent::__construct($pageLoader);
+        parent::__construct($logger, $pageLoader);
         $this->errors = [];
 
         // set page override so check can be made if the actual page id is ever called

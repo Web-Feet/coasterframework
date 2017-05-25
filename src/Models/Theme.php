@@ -224,31 +224,43 @@ Class Theme extends Eloquent
 
     public static function install($themeName, $options)
     {
-        $themePath = base_path() . '/resources/views/themes/'.$themeName;
-        $packed = is_dir($themePath.'/views') && is_dir($themePath.'/public');
+        $themePath = base_path() . '/resources/views/themes/' . $themeName;
+        $packedFolders = [
+            '/views',
+            '/public',
+            '/uploads'
+        ];
+        $packed = false;
+        foreach ($packedFolders as $packedFolder) {
+            $packed = $packed || is_dir($themePath . $packedFolder);
+        }
 
         if (!empty($options['check'])) {
-            $pagesImport = ($packed)?$themePath.'/views/import/pages':$themePath.'/import/pages';
+            $pagesImport = is_dir($themePath . '/views') ? $themePath.'/views/import/pages' : $themePath . '/import/pages';
             return ['error' => 0, 'response' => is_dir($pagesImport)];
         }
 
         if ($packed) {
 
             // extract public folder, extract uploads folder, and move views to themes root
-            Directory::copy($themePath . '/public', public_path() . '/themes/' . $themeName);
-            Directory::remove($themePath . '/public');
+            if (is_dir($themePath . '/public')) {
+                Directory::copy($themePath . '/public', public_path() . '/themes/' . $themeName);
+                Directory::remove($themePath . '/public');
+            }
 
             if (is_dir($themePath . '/uploads')) {
                 Directory::copy($themePath . '/uploads', public_path() . '/uploads', function ($addFrom, $addTo) use ($themePath) {
                     $addTo = substr($addFrom, strlen($themePath));
-                    $addTo = SecureUpload::getBasePath(SecureUpload::isSecurePath($addTo)) . $addTo;
+                    $addTo = SecureUpload::getBasePath(SecureUpload::isSecurePath($addTo), false) . $addTo;
                     return [$addFrom, $addTo];
                 });
+                Directory::remove($themePath . '/uploads');
             }
-            Directory::remove($themePath . '/uploads');
 
-            Directory::copy($themePath . '/views', $themePath);
-            Directory::remove($themePath . '/views');
+            if (is_dir($themePath . '/views')) {
+                Directory::copy($themePath . '/views', $themePath);
+                Directory::remove($themePath . '/views');
+            }
 
         }
 
@@ -268,9 +280,14 @@ Class Theme extends Eloquent
             $newTheme->save();
 
             // install theme blocks and templates
-            $blocksImport = new BlocksImport();
-            $blocksImport->setTheme($newTheme)->run();
-            if ($errors = $blocksImport->getErrorMessages()) {
+            try {
+                $blocksImport = new BlocksImport();
+                $blocksImport->setTheme($newTheme)->run();
+                $errors = $blocksImport->getErrorMessages();
+            } catch (\Exception $e) {
+                $errors = [$e->getMessage()];
+            }
+            if ($errors) {
                 $newTheme->delete();
                 return ['error' => 1, 'response' => $errors];
             }

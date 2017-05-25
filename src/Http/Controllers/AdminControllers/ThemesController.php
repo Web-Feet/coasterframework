@@ -100,6 +100,7 @@ class ThemesController extends Controller
                             $theme->active = 1;
                         }
                     } else {
+                        $theme->id = 0;
                         $theme->install = 1;
                     }
                     $thumbs[] = $theme;
@@ -120,18 +121,19 @@ class ThemesController extends Controller
                 if ($theme_auth['manage']) {
                     $buttons[] = ['classes' => ['installTheme'], 'glyphicon' => 'cog', 'label' => 'Install'];
                 }
-            }
-            if ($theme_auth['manage']) {
-                $buttons[] = ['href' => '', 'classes' => ['activateTheme', 'activeSwitch', (isset($thumb->active)||isset($thumb->install))?'hidden':''], 'glyphicon' => 'ok', 'label' => 'Activate'];
-            }
-            if ($theme_auth['edit']) {
-                $buttons[] = ['href' => route('coaster.admin.themes.edit', ['themeId' => $thumb->id]), 'glyphicon' => 'pencil', 'label' => 'Edit'];
-            }
-            if ($theme_auth['export']) {
-                $buttons[] = ['classes' => ['exportTheme'], 'glyphicon' => 'download', 'label' => 'Export'];
-            }
-            if ($theme_auth['update']) {
-                $buttons[] = ['href' => route('coaster.admin.themes.update', ['themeId' => $thumb->id]), 'glyphicon' => 'flag', 'label' => 'Review Block Changes'];
+            } elseif ($thumb->id) {
+                if ($theme_auth['manage']) {
+                    $buttons[] = ['href' => '', 'classes' => ['activateTheme', 'activeSwitch', (isset($thumb->active) || isset($thumb->install)) ? 'hidden' : ''], 'glyphicon' => 'ok', 'label' => 'Activate'];
+                }
+                if ($theme_auth['edit']) {
+                    $buttons[] = ['href' => route('coaster.admin.themes.edit', ['themeId' => $thumb->id]), 'glyphicon' => 'pencil', 'label' => 'Edit'];
+                }
+                if ($theme_auth['export']) {
+                    $buttons[] = ['classes' => ['exportTheme'], 'glyphicon' => 'download', 'label' => 'Export'];
+                }
+                if ($theme_auth['update']) {
+                    $buttons[] = ['href' => route('coaster.admin.themes.update', ['themeId' => $thumb->id]), 'glyphicon' => 'flag', 'label' => 'Review Block Changes'];
+                }
             }
 
             $thumb->buttons = [];
