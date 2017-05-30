@@ -63,16 +63,11 @@
                         withPageData: wPageData
                     },
                     success: function (r) {
-                        if (typeof r == 'object' && r.error == 0) {
-                            location.reload();
-                        } else {
-                            var responses = (typeof r.response == 'string') ? [r.response] : r.response;
-                            for (var i = 0; i < responses.length; i++) {
-                                cms_alert('danger', 'An error occurred installing the theme: <br />'+ responses[i].replace("\r\n", '<br />'));
-                            }
+                        location.reload();
+                    }, error: function(r) {
+                        for (var i = 0; i < r.length; i++) {
+                            cms_alert('danger', r[i].replace("\r\n", '<br />'));
                         }
-                    }, error: function() {
-                        cms_alert('danger', 'An error occurred installing the theme: <br />'+r.response.replace("\r\n", '<br />'));
                     }
                 });
             }
@@ -90,16 +85,12 @@
                         check: 1
                     },
                     success: function (r) {
-                        if (typeof r == 'object' && r.error == 0) {
-                            if (r.response) {
-                                $('#installTheme .page-data').removeClass('hidden');
-                            } else {
-                                $('#installTheme .page-data').addClass('hidden');
-                            }
-                            $('#installTheme').modal('show');
+                        if (r) {
+                            $('#installTheme .page-data').removeClass('hidden');
                         } else {
-                            $('#installThemeError').modal('show');
+                            $('#installTheme .page-data').addClass('hidden');
                         }
+                        $('#installTheme').modal('show');
                     }, error: function() {
                         $('#installThemeError').modal('show');
                     }

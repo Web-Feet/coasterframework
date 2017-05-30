@@ -1,6 +1,27 @@
 <h1>Theme Blocks - {{ $theme->theme }}</h1>
 
-@if (isset($saved))
+@if (!empty($errors))
+
+    <div class="table-responsive">
+        <table id="themes-table" class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>Errors found in theme can't continue.</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach($errors as $error)
+                <tr>
+                    <td>
+                        {{ $error }}
+                    </td>
+                </tr>
+            @endforeach
+            </tbody>
+        </table>
+    </div>
+
+@elseif (isset($saved))
 
     <p class="text-success">Blocks have been successfully updated</p>
     <p><a href="{{ route('coaster.admin.themes.update', ['themeId' => $theme->id]) }}">&raquo; Return to review page</a></p>

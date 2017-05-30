@@ -1,6 +1,5 @@
 <?php namespace CoasterCms\Libraries\Import;
 
-use CoasterCms\Exceptions\ImportException;
 use CoasterCms\Helpers\Admin\Import\BlocksCollection;
 use CoasterCms\Helpers\Cms\File\Directory;
 use CoasterCms\Helpers\Cms\Page\PageLoaderDummy;
@@ -304,7 +303,6 @@ class BlocksImport extends AbstractImport
     /**
      * Get all extra block data from theme files
      * @param string $scope
-     * @throws ImportException
      */
     protected function _renderThemeFiles($scope = 'file')
     {
@@ -312,7 +310,6 @@ class BlocksImport extends AbstractImport
 
         $themeBuilder = PageBuilder::make(ThemeBuilderInstance::class, [new PageLoaderDummy($this->_additionalData['theme']->theme), $this->_blocksCollection]);
         if ($this->_templateList) {
-            $errors = [];
             foreach ($this->_templateList as $templateName) {
                 $templateView = 'themes.' . $this->_additionalData['theme']->theme . '.templates.' . $templateName;
                 if (View::exists($templateView)) {
@@ -321,15 +318,12 @@ class BlocksImport extends AbstractImport
                     try {
                         View::make($templateView)->render();
                     } catch (\Exception $e) {
-                        $errors[] = $e->getMessage();
+                        $this->_importErrors[] = $e->getMessage();
                     }
                 }
             }
             $this->_renderedOrders = $themeBuilder->getOrders();
-            $errors = array_merge($errors, $themeBuilder->getData('errors'));
-            if ($errors) {
-                throw new ImportException('Could not complete block import, errors found in theme', 0, null, $errors);
-            }
+            $this->_importErrors = array_merge($this->_importErrors, $themeBuilder->getData('errors'));
         }
 
         // make sure every csv block is rendered & better after theme render as there is less context

@@ -262,21 +262,21 @@ class InstallController extends Controller
 
         $error = false;
         if (!empty($details['theme'])) {
-            if (!($error = Theme::unzip($details['theme'].'.zip', false))) {
-                $withPageData = !empty($details['page-data']) ? 1 : 0;
-                $result = Theme::install($details['theme'], ['withPageData' => $withPageData]);
-                if ($result['error']) {
-                    $error = $result['response'];
+            $installResponse = Theme::install($details['theme'], ['withPageData' => !empty($details['page-data'])]);
+            if ($installResponse->getStatusCode() != 200) {
+                foreach ($installResponse->getData() as $error) {
+                    FormMessage::add('theme', $error);
                 }
-                if (($usedThemeSetting = Setting::where('name', '=', 'frontend.theme')->first()) && ($theme = Theme::where('theme', '=', $details['theme'])->first())) {
-                    $usedThemeSetting->value = $theme->id;
-                    $usedThemeSetting->save();
-                }
+                $error = true;
             }
+            if (($usedThemeSetting = Setting::where('name', '=', 'frontend.theme')->first()) && ($theme = Theme::where('theme', '=', $details['theme'])->first())) {
+                $usedThemeSetting->value = $theme->id;
+                $usedThemeSetting->save();
+            }
+
         }
 
         if ($error) {
-            FormMessage::add('theme', $error);
             $this->setupTheme();
         } else {
             Install::setInstallState('complete-welcome');

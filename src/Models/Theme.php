@@ -1,6 +1,5 @@
 <?php namespace CoasterCms\Models;
 
-use CoasterCms\Exceptions\ImportException;
 use CoasterCms\Helpers\Cms\File\Directory;
 use CoasterCms\Helpers\Cms\File\SecureUpload;
 use CoasterCms\Helpers\Cms\File\Zip;
@@ -16,6 +15,7 @@ use CoasterCms\Libraries\Import\MenusImport;
 use CoasterCms\Libraries\Import\PagesImport;
 use DB;
 use Eloquent;
+use Illuminate\Http\JsonResponse;
 use Request;
 use URL;
 use Validator;
@@ -181,50 +181,56 @@ Class Theme extends Eloquent
         if (!$validator->fails() && $file->getClientOriginalExtension() == 'zip') {
             $uploadTo = base_path() . '/resources/views/themes/';
             $file->move($uploadTo, $file->getClientOriginalName());
-            $error = self::unzip($file->getClientOriginalName());
+            return '';
         } else {
-            $error = 'The theme uploaded must be a zip file format.';
+            return 'The theme uploaded must be a zip file format.';
         }
-        return $error;
     }
 
-    public static function unzip($themeZip, $errorOnExisting = true)
+    public static function unzip(&$themeName)
     {
-        $filePathInfo = pathinfo($themeZip);
-        $uploadTo = base_path() . '/resources/views/themes/';
-        $themeDir = $uploadTo . str_replace('.', '_', $filePathInfo['filename']);
-        $error = '';
+        $uploadsPath = base_path() . '/resources/views/themes/';
+        $themeTmpDir = $uploadsPath . $themeName;
+        $newThemeName = str_replace('.', '_', $themeName); // view classes can't cope with dots
+        $themeZip = $themeTmpDir . '.zip';
+        $themeDir = $uploadsPath . $newThemeName;
         if (!is_dir($themeDir)) {
             $zip = new \ZipArchive;
-            if ($zip->open($uploadTo . $themeZip) === true) {
+            if ($zip->open($themeZip) === true) {
                 $extractItems = [];
                 for ($i = 0; $i < $zip->numFiles; $i++) {
-                    if (strpos($zip->getNameIndex($i), $filePathInfo['filename'] . '/') === 0) {
+                    if (strpos($zip->getNameIndex($i), $themeName . '/') === 0) {
                         $extractItems[] = $zip->getNameIndex($i);
                     }
                 }
                 if (!empty($extractItems)) {
-                    $zip->extractTo($uploadTo, $extractItems);
-                    if (($uploadTo . $filePathInfo['filename']) != $themeDir) {
-                        Directory::copy($uploadTo . $filePathInfo['filename'], $themeDir);
-                        Directory::remove($uploadTo . $filePathInfo['filename']);
+                    $zip->extractTo($uploadsPath, $extractItems);
+                    if ($themeTmpDir != $themeDir) {
+                        Directory::copy($themeTmpDir, $themeDir);
+                        Directory::remove($themeTmpDir);
                     }
                 } else {
                     $zip->extractTo($themeDir);
                 }
+                $themeName = $newThemeName;
                 $zip->close();
-                unlink($uploadTo . $themeZip);
+                unlink($themeZip);
             } else {
-                $error = 'Error uploading zip file, file may bigger than the server upload limit.';
+                throw new \Exception('Error unzipping theme, file may be corrupt, try uploading again.');
             }
-        } elseif ($errorOnExisting) {
-            $error = 'Theme with the same name already exists';
+        } else {
+            throw new \Exception('Unzipped theme with same name already exists.');
         }
-        return $error;
     }
 
     public static function install($themeName, $options)
     {
+        try {
+            static::unzip($themeName);
+        } catch (\Exception $e) {
+            return new JsonResponse([$e->getMessage()], 500);
+        }
+
         $themePath = base_path() . '/resources/views/themes/' . $themeName;
         $packedFolders = [
             '/views',
@@ -238,7 +244,7 @@ Class Theme extends Eloquent
 
         if (!empty($options['check'])) {
             $pagesImport = is_dir($themePath . '/views') ? $themePath.'/views/import/pages' : $themePath . '/import/pages';
-            return ['error' => 0, 'response' => is_dir($pagesImport)];
+            return new JsonResponse(is_dir($pagesImport));
         }
 
         if ($packed) {
@@ -268,7 +274,7 @@ Class Theme extends Eloquent
         $unpacked = is_dir($themePath.'/templates') && is_dir(public_path().'/themes/'.$themeName);
 
         if (!$unpacked) {
-            return ['error' => 1, 'response' => 'theme files not found for ' . $themeName];
+            return new JsonResponse(['Themes template folder or public folder not found'], 500);
         }
 
         $theme = self::where('theme', '=', $themeName)->first();
@@ -284,47 +290,43 @@ Class Theme extends Eloquent
             try {
                 $blocksImport = new BlocksImport();
                 $blocksImport->setTheme($newTheme)->run();
-                $errors = $blocksImport->getErrorMessages();
-            } catch (ImportException $e) {
-                $errors = $e->getImportErrors();
-            } catch (\Exception $e) {
-                $errors = [$e->getMessage()];
-            }
-            if ($errors) {
-                $newTheme->delete();
-                return ['error' => 1, 'response' => $errors];
-            }
-            try {
+                if ($blocksImport->getErrorMessages()) {
+                    throw new \Exception;
+                }
                 $blocksImport->save(true);
                 $blocksImport->cleanCsv();
             } catch (\Exception $e) {
                 $newTheme->delete();
-                return ['error' => 1, 'response' => $e->getMessage()];
+                return new JsonResponse($e->getMessage() ? [$e->getMessage()] : $blocksImport->getErrorMessages(), 500);
             }
 
             // install pages and page block data
             if (!empty($options['withPageData'])) {
-                $errors = [];
-                $path = base_path('resources/views/themes/' . $newTheme->theme . '/import/');
-                $importClasses = [
-                    PagesImport::class,
-                    GroupsImport::class,
-                    MenusImport::class,
-                    ContentImport::class
-                ];
-                foreach ($importClasses as $importClass) {
-                    $importObject = new $importClass($path);
-                    $importObject->run();
-                    $errors = array_merge($errors, $importObject->getErrorMessages());
-                }
-                if ($errors) {
-                    return ['error' => 1, 'response' => $errors];
+                try {
+                    $errors = [];
+                    $path = base_path('resources/views/themes/' . $newTheme->theme . '/import/');
+                    $importClasses = [
+                        PagesImport::class,
+                        GroupsImport::class,
+                        MenusImport::class,
+                        ContentImport::class
+                    ];
+                    foreach ($importClasses as $importClass) {
+                        $importObject = new $importClass($path);
+                        $importObject->run();
+                        $errors = array_merge($errors, $importObject->getErrorMessages());
+                    }
+                    if ($errors) {
+                        throw new \Exception;
+                    }
+                } catch (\Exception $e) {
+                    return new JsonResponse($e->getMessage() ? [$e->getMessage()] : $errors, 500);
                 }
             }
 
-            return ['error' => 0, 'response' => ''];
+            return new JsonResponse('Theme installed');
         } else {
-            return ['error' => 0, 'response' => 'theme ' . $themeName . ' already exists in database'];
+            return new JsonResponse('Theme with same name exists in database (' . $themeName . ')');
         }
 
     }
@@ -352,12 +354,10 @@ Class Theme extends Eloquent
             ThemeBlock::where('theme_id', '=', $theme->id)->delete();
             $theme->delete();
         }
-        if (is_dir(base_path() . '/resources/views/themes/' . $themeName)) {
-            Directory::remove(base_path() . '/resources/views/themes/' . $themeName);
-        }
-        if (is_dir(base_path() . '/public/themes/' . $themeName)) {
-            Directory::remove(base_path() . '/public/themes/' . $themeName);
-        }
+        $themePath = base_path() . '/resources/views/themes/' . $themeName;
+        unlink($themePath . '.zip');
+        Directory::remove($themePath);
+        Directory::remove(base_path() . '/public/themes/' . $themeName);
         return 1;
     }
 
