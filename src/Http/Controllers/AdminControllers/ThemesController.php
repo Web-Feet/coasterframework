@@ -115,13 +115,13 @@ class ThemesController extends Controller
 
         foreach ($thumbs as $thumb) {
             $buttons = [];
-            if (isset($thumb->install)) {
+            if ($thumb->install) {
                 if ($theme_auth['manage']) {
                     $buttons[] = ['classes' => ['installTheme'], 'glyphicon' => 'cog', 'label' => 'Install'];
                 }
             } elseif ($thumb->id) {
                 if ($theme_auth['manage']) {
-                    $buttons[] = ['href' => '', 'classes' => ['activateTheme', 'activeSwitch', (isset($thumb->active) || isset($thumb->install)) ? 'hidden' : ''], 'glyphicon' => 'ok', 'label' => 'Activate'];
+                    $buttons[] = ['href' => '', 'classes' => ['activateTheme', 'activeSwitch', ($thumb->active || $thumb->install) ? 'hidden' : ''], 'glyphicon' => 'ok', 'label' => 'Activate'];
                 }
                 if ($theme_auth['edit']) {
                     $buttons[] = ['href' => route('coaster.admin.themes.edit', ['themeId' => $thumb->id]), 'glyphicon' => 'pencil', 'label' => 'Edit'];
@@ -207,21 +207,22 @@ class ThemesController extends Controller
     public function getUpdate($themeId)
     {
         $theme = Theme::find($themeId) ?: new Theme();
+        $themeErrors = [];
 
         try {
             $blocksImport = new BlocksImport();
             $blocksImport->setTheme($theme)->run();
-            $importBlocks = $blocksImport->getBlocksCollection();
-            $errors = $blocksImport->getErrorMessages();
+            if ($blocksImport->getErrorMessages()) {
+                throw new \Exception;
+            }
         } catch (\Exception $e) {
-            $errors = [$e->getMessage()];
-        }
-        if ($errors) {
-            dd($errors);
+            $themeErrors = $e->getMessage() ? [$e->getMessage()] : $blocksImport->getErrorMessages();
         }
 
-        $this->layoutData['content'] = View::make('coaster::pages.themes.update',
-            [
+        $importBlocks = $blocksImport->getBlocksCollection();
+
+        $this->layoutData['content'] = View::make('coaster::pages.themes.update', [
+                'themeErrors' => $themeErrors,
                 'theme' => $theme,
                 'importBlocks' => $importBlocks,
                 'importBlocksList' => $importBlocks->getBlockListInfo(),
@@ -236,33 +237,37 @@ class ThemesController extends Controller
     {
         $postBlocks = Request::input('block');
         $theme = Theme::find($themeId) ?: new Theme();
+        $themeErrors = [];
 
         try {
             $blocksImport = new BlocksImport();
             $blocksImport->setTheme($theme)->run();
             $importBlocks = $blocksImport->getBlocksCollection();
-            $errors = $blocksImport->getErrorMessages();
-        } catch (\Exception $e) {
-            $errors = [$e->getMessage()];
-        }
+            if ($blocksImport->getErrorMessages()) {
+                throw new \Exception;
+            }
 
-        $importBlocks->setScope('form'); // all form data has priority
-        $updateTemplates = [];
-        foreach ($postBlocks as $blockName => $postData) {
-            $updateTemplates[$blockName] = array_key_exists('update_templates', $postData) ? $postData['update_templates'] : 0;
-            $postData['globalData'] = array_key_exists('globalData', $postData) ? $postData['globalData'] : [];
-            $postData['globalData'] += [
-                'show_in_global' => 0,
-                'show_in_pages' => 0
-            ];
-            $importBlocks->getBlock($blockName)
-                ->setBlockData($postData['blockData'])
-                ->setGlobalData($postData['globalData']);
+            $importBlocks->setScope('form'); // all form data has priority
+            $updateTemplates = [];
+            foreach ($postBlocks as $blockName => $postData) {
+                $updateTemplates[$blockName] = array_key_exists('update_templates', $postData) ? $postData['update_templates'] : 0;
+                $postData['globalData'] = array_key_exists('globalData', $postData) ? $postData['globalData'] : [];
+                $postData['globalData'] += [
+                    'show_in_global' => 0,
+                    'show_in_pages' => 0
+                ];
+                $importBlocks->getBlock($blockName)
+                    ->setBlockData($postData['blockData'])
+                    ->setGlobalData($postData['globalData']);
+            }
+            $blocksImport->save($updateTemplates);
+            $blocksImport->cleanCsv();
+        } catch (\Exception $e) {
+            $themeErrors = $e->getMessage() ? [$e->getMessage()] : $blocksImport->getErrorMessages();
         }
-        $blocksImport->save($updateTemplates);
-        $blocksImport->cleanCsv();
 
         $this->layoutData['content'] = View::make('coaster::pages.themes.update', [
+            'themeErrors' => $themeErrors,
             'theme' => $theme,
             'saved' => true
         ]);

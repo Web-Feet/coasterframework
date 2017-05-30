@@ -1,16 +1,16 @@
 <h1>Theme Blocks - {{ $theme->theme }}</h1>
 
-@if (!empty($errors))
+@if (!empty($themeErrors))
 
     <div class="table-responsive">
         <table id="themes-table" class="table table-striped table-bordered">
             <thead>
                 <tr>
-                    <th>Errors found in theme can't continue.</th>
+                    <th>Errors found in theme, can not continue.</th>
                 </tr>
             </thead>
             <tbody>
-            @foreach($errors as $error)
+            @foreach($themeErrors as $error)
                 <tr>
                     <td>
                         {{ $error }}

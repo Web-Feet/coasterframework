@@ -37,7 +37,7 @@ class InstallController extends Controller
             'content' => '',
             'coaster_routes' => Routes::jsonRoutes()
         ];
-        
+
         $currentRouteName = Request::route()->getName();
         $installRoute = Install::getRedirectRoute();
 
@@ -258,32 +258,30 @@ class InstallController extends Controller
 
     public function installTheme()
     {
-        $details = Request::all();
+        $themeName = Request::input('theme');
+        $withPageData = Request::input('page-data');
 
         $error = false;
-        if (!empty($details['theme'])) {
-            $installResponse = Theme::install($details['theme'], ['withPageData' => !empty($details['page-data'])]);
+        if ($themeName) {
+            $installResponse = Theme::install($themeName, ['withPageData' => $withPageData]);
             if ($installResponse->getStatusCode() != 200) {
-                foreach ($installResponse->getData() as $error) {
-                    FormMessage::add('theme', $error);
-                }
+                FormMessage::add('theme', implode('<br /><br />', $installResponse->getData()));
                 $error = true;
             }
-            if (($usedThemeSetting = Setting::where('name', '=', 'frontend.theme')->first()) && ($theme = Theme::where('theme', '=', $details['theme'])->first())) {
+            if (($usedThemeSetting = Setting::where('name', '=', 'frontend.theme')->first()) && ($theme = Theme::where('theme', '=', $themeName)->first())) {
                 $usedThemeSetting->value = $theme->id;
                 $usedThemeSetting->save();
             }
 
         }
 
-        if ($error) {
+        if (!Request::exists('theme') || $error) {
             $this->setupTheme();
         } else {
             Install::setInstallState('complete-welcome');
             $this->layoutData['title'] = 'Install Complete';
             $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'complete']);
         }
-
     }
 
 }

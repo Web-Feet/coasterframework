@@ -62,11 +62,12 @@
                         check: 0,
                         withPageData: wPageData
                     },
-                    success: function (r) {
+                    success: function () {
                         location.reload();
                     }, error: function(r) {
-                        for (var i = 0; i < r.length; i++) {
-                            cms_alert('danger', r[i].replace("\r\n", '<br />'));
+                        var response = r.responseJSON;
+                        for (var i = 0; i < response.length; i++) {
+                            cms_alert('danger', response[i].replace("\r\n", '<br />'));
                         }
                     }
                 });

@@ -318,7 +318,7 @@ class BlocksImport extends AbstractImport
                     try {
                         View::make($templateView)->render();
                     } catch (\Exception $e) {
-                        $this->_importErrors[] = $e->getMessage();
+                        $this->_importErrors[] = $e;
                     }
                 }
             }

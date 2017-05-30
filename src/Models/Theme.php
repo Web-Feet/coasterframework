@@ -218,7 +218,7 @@ Class Theme extends Eloquent
             } else {
                 throw new \Exception('Error unzipping theme, file may be corrupt, try uploading again.');
             }
-        } else {
+        } elseif (file_exists($themeZip)) {
             throw new \Exception('Unzipped theme with same name already exists.');
         }
     }
