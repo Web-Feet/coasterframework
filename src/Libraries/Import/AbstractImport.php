@@ -355,7 +355,7 @@ abstract class AbstractImport
                 $child->deleteCsv();
             }
         }
-        if ($this->_importFile) {
+        if ($this->_importFile && !is_dir($this->_importFile)) {
             unlink($this->_importFile);
         }
     }
