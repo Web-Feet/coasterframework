@@ -386,14 +386,15 @@ class PageBuilderInstance
     {
         $defaultOptions = [
             'view' => 'default',
-            '404-name' => '404'
+            '404-name' => ''
         ];
         $options = array_merge($defaultOptions, $options);
 
         $pageLevels = $this->pageLevels;
 
-        if ($this->is404) {
-            $pageLevels[count($pageLevels)-1]->pageCurrentLang->name = $options['404-name'];
+        if ($options['404-name'] !== '') {
+            end($pageLevels);
+            current($pageLevels)->pageCurrentLang->name = $options['404-name'];
         }
 
         $crumbs = '';

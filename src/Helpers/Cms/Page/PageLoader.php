@@ -2,6 +2,7 @@
 
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageGroup;
+use CoasterCms\Models\PageLang;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
