@@ -6,7 +6,6 @@ use CoasterCms\Models\Menu;
 use CoasterCms\Models\MenuItem;
 use CoasterCms\Models\Page;
 use Illuminate\Support\Collection;
-use PageBuilder;
 use View;
 
 class MenuBuilder
@@ -198,7 +197,7 @@ class MenuBuilder
      */
     protected function _getRenderedView($viewPath, $data = [])
     {
-        $viewPath = 'themes.' . PageBuilder::getData('theme') . '.menus.' . $this->options['view'] . '.' . $viewPath;
+        $viewPath = 'themes.' . PageBuilderFacade::getData('theme') . '.menus.' . $this->options['view'] . '.' . $viewPath;
         if (View::exists($viewPath)) {
             return View::make($viewPath, array_merge($this->options, $data))->render();
         } else {
@@ -243,13 +242,13 @@ class MenuBuilder
     {
         if ($force || !isset($this->activePageId)) {
             $this->activeParentIds = [];
-            $pageLevels = PageBuilder::getData('pageLevels') ?: [];
+            $pageLevels = PageBuilderFacade::getData('pageLevels') ?: [];
             foreach ($pageLevels as $k => $parentPage) {
                 if ($k > 0) { // ignore home page
                     $this->activeParentIds[] = $parentPage->page_id;
                 }
             }
-            $page = PageBuilder::getData('page') ?: new Page;
+            $page = PageBuilderFacade::getData('page') ?: new Page;
             $this->activePageId = (int) $page->id;
         }
     }
