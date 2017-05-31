@@ -198,13 +198,17 @@ class PageBuilderInstance
     }
 
     /**
+     * Get parent page id based on the page levels loaded from url
      * @param bool $noOverride
      * @return int
      */
     public function parentPageId($noOverride = false)
     {
-        $page = $this->_getPage($noOverride);
-        return !empty($page) ? $page->parent : 0;
+        if ($this->pageOverride && !$noOverride) {
+            return $this->pageOverride->parent;
+        } else {
+            return $this->pageLevels[count($this->pageLevels) - 2]->id;
+        }
     }
 
     /**
@@ -389,12 +393,7 @@ class PageBuilderInstance
         $pageLevels = $this->pageLevels;
 
         if ($this->is404) {
-            $page404 = new Page;
-            $pageLang = new PageLang;
-            $pageLang->url = '';
-            $pageLang->name = $options['404-name'];
-            $page404->setRelation('pageCurrentLang', $pageLang);
-            $pageLevels[] = $page404;
+            $pageLevels[count($pageLevels)-1]->pageCurrentLang->name = $options['404-name'];
         }
 
         $crumbs = '';

@@ -2,6 +2,7 @@
 
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageGroup;
+use CoasterCms\Models\PageLang;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
@@ -141,15 +142,19 @@ class PageLoader
 
         if (!empty($this->pageLevels[$urlSegments])) {
             $this->is404 = false;
+        } else {
+            $page404 = new Page;
+            $page404Lang = new PageLang;
+            $page404Lang->url = '';
+            $page404Lang->name = '404';
+            $page404->setRelation('pageCurrentLang', $page404Lang);
+            $this->pageLevels[count($this->pageLevels) - 1] = $page404;
         }
 
         if ($this->searchQuery === false && $query = Request::input('q')) {
             $this->searchQuery = $query;
         }
         $this->searchQuery = $this->searchQuery !== false ? urldecode($this->searchQuery) : false;
-
-        $this->pageLevels = array_filter($this->pageLevels);
-
     }
 
     /**
