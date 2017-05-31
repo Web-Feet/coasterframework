@@ -177,6 +177,21 @@ class ThemeBuilderInstance extends PageBuilderInstance
     }
 
     /**
+     * Return data for block as json
+     * @param string $blockName
+     * @param array $options
+     * @return string json
+     */
+    public function blockJson($blockName, $options = [])
+    {
+        if (array_key_exists('returnAll', $options) && $options['returnAll']) {
+            // don't load blocks from db (otherwise every db block will always be found)
+            return collect([])->toJson();
+        }
+        return parent::blockJson($blockName, $options);
+    }
+
+    /**
      * @param string $blockName
      * @param array $options
      * @param string $fn

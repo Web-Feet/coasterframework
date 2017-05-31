@@ -252,10 +252,14 @@ class BlocksImport extends AbstractImport
             $currentBlock = Block::preload($blockId);
             if ($currentBlock->exists) {
                 $templateIds = $themeTemplates->whereNotIn('template_id', explode(',', $themeBlock->exclude_templates))->pluck('template_id')->toArray();
-                $this->_blocksCollection->getBlock($currentBlock->name)
-                    ->setBlockData($currentBlock->getAttributes())
-                    ->setGlobalData($themeBlock->getAttributes())
-                    ->addTemplates($allTemplates->whereIn('id', $templateIds)->pluck('template')->toArray());
+                if ($templateIds) {
+                    $this->_blocksCollection->getBlock($currentBlock->name)
+                        ->setBlockData($currentBlock->getAttributes())
+                        ->setGlobalData($themeBlock->getAttributes())
+                        ->addTemplates($allTemplates->whereIn('id', $templateIds)->pluck('template')->toArray());
+                } else {
+                    $themeBlock->delete();
+                }
             }
         }
         foreach ($themeTemplateBlocks as $blockId => $themeTemplateBlock) {
@@ -574,12 +578,16 @@ class BlocksImport extends AbstractImport
             if ($importBlock->globalData['show_in_global'] || $importBlock->globalData['show_in_pages']) {
                 // save as a theme block (& remove template blocks)
                 $themeBlock = $themeBlocks->has($importBlock->blockData['id']) ? $themeBlocks[$importBlock->blockData['id']] : new ThemeBlock;
-                $themeBlock->theme_id = $this->_additionalData['theme']->id;
-                $themeBlock->block_id = $importBlock->blockData['id'];
-                $themeBlock->exclude_templates = implode(',', array_diff($themeTemplates->pluck('template_id')->toArray(), $newTemplateIds));
-                $themeBlock->show_in_global = $importBlock->globalData['show_in_global'];
-                $themeBlock->show_in_pages = $importBlock->globalData['show_in_pages'];
-                $themeBlock->save();
+                if ($newTemplateIds) {
+                    $themeBlock->theme_id = $this->_additionalData['theme']->id;
+                    $themeBlock->block_id = $importBlock->blockData['id'];
+                    $themeBlock->exclude_templates = implode(',', array_diff($themeTemplates->pluck('template_id')->toArray(), $newTemplateIds));
+                    $themeBlock->show_in_global = $importBlock->globalData['show_in_global'];
+                    $themeBlock->show_in_pages = $importBlock->globalData['show_in_pages'];
+                    $themeBlock->save();
+                } else {
+                    $themeBlock->delete();
+                }
                 ThemeTemplateBlock::where('block_id', '=', $importBlock->blockData['id'])->whereIn('theme_template_id', $themeTemplateIds)->delete();
             } else {
                 // save a template blocks (& remove theme block)
