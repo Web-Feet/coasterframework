@@ -28,7 +28,7 @@ class ContentImport extends AbstractImport
     /**
      *
      */
-    protected function _afterRun()
+    protected function _beforeRun()
     {
         // wipe data
         DB::table((new PageBlockDefault)->getTable())->truncate();
