@@ -13,6 +13,6 @@ return [
     'language' => '1',
     'canonicals' => '1',
     'enabled_feed_extensions' => 'rss,xml,json',
-    'cache' => '240' // fpc cache minutes
+    'cache' => '0' // fpc cache minutes
 
 ];
