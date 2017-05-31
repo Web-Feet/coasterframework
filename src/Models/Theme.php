@@ -304,7 +304,6 @@ Class Theme extends Eloquent
             if (!empty($options['withPageData'])) {
                 try {
                     $errors = [];
-                    $path = base_path('resources/views/themes/' . $newTheme->theme . '/import/');
                     $importClasses = [
                         PagesImport::class,
                         GroupsImport::class,
@@ -312,8 +311,9 @@ Class Theme extends Eloquent
                         ContentImport::class
                     ];
                     foreach ($importClasses as $importClass) {
-                        $importObject = new $importClass($path);
+                        $importObject = new $importClass($themePath . '/import/');
                         $importObject->run();
+                        $importObject->deleteCsv();
                         $errors = array_merge($errors, $importObject->getErrorMessages());
                     }
                     if ($errors) {

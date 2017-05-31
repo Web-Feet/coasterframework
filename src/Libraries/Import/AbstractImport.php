@@ -8,6 +8,11 @@ abstract class AbstractImport
 {
 
     /**
+     * @var AbstractImport[]
+     */
+    protected $_children;
+
+    /**
      * @var array
      */
     protected $_fieldMap;
@@ -318,9 +323,40 @@ abstract class AbstractImport
             } catch (\Exception $e) {
                 $this->_importErrors[] = $e;
             }
+            if ($this->_children) {
+                foreach ($this->_children as $child) {
+                    $child->run();
+                    $this->_importErrors = array_merge($this->_importErrors, $child->getErrors());
+                }
+            }
             return true;
         } else {
             return false;
+        }
+    }
+
+    /**
+     * @param array $childClasses
+     */
+    public function setChildren($childClasses = [])
+    {
+        foreach ($childClasses as $childClass) {
+            $this->_children[] = new $childClass($this->_importPath, $this->_importFileRequired);
+        }
+    }
+
+    /**
+     *
+     */
+    public function deleteCsv()
+    {
+        if ($this->_children) {
+            foreach ($this->_children as $child) {
+                $child->deleteCsv();
+            }
+        }
+        if ($this->_importFile) {
+            unlink($this->_importFile);
         }
     }
 

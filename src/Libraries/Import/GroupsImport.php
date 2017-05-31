@@ -18,6 +18,20 @@ class GroupsImport extends AbstractImport
     const IMPORT_FILE_DEFAULT = 'pages/groups.csv';
 
     /**
+     * GroupsImport constructor.
+     * @param string $importPath
+     * @param bool $requiredFile
+     */
+    public function __construct($importPath = '', $requiredFile = false)
+    {
+        parent::__construct($importPath, $requiredFile);
+        $childClasses = [
+            Groups\GroupAttributesImport::class
+        ];
+        $this->setChildren($childClasses);
+    }
+
+    /**
      * @return array
      */
     public function fieldMap()
@@ -81,16 +95,6 @@ class GroupsImport extends AbstractImport
     protected function _afterRowMap()
     {
         $this->_currentGroup->save();
-    }
-
-    /**
-     *
-     */
-    protected function _afterRun()
-    {
-        $groupAttributes = new Groups\GroupAttributesImport($this->_importPath, $this->_importFileRequired);
-        $groupAttributes->run();
-        $this->_importErrors = array_merge($this->_importErrors, $groupAttributes->getErrors());
     }
 
     /**

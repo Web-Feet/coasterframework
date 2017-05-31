@@ -11,9 +11,24 @@ class ContentImport extends AbstractImport
 {
 
     /**
+     * ContentImport constructor.
+     * @param string $importPath
+     * @param bool $requiredFile
+     */
+    public function __construct($importPath = '', $requiredFile = false)
+    {
+        parent::__construct($importPath, $requiredFile);
+        $childClasses = [
+            Content\PageBlocksImport::class,
+            Content\RepeaterBlocksImport::class
+        ];
+        $this->setChildren($childClasses);
+    }
+
+    /**
      *
      */
-    public function run()
+    protected function _afterRun()
     {
         // wipe data
         DB::table((new PageBlockDefault)->getTable())->truncate();
@@ -22,13 +37,6 @@ class ContentImport extends AbstractImport
         DB::table((new PageBlockRepeaterRows)->getTable())->truncate();
 
         Block::preload('', true); // fix block_id issue on install import
-
-        $pageBlocks = new Content\PageBlocksImport($this->_importPath, $this->_importFileRequired);
-        $pageBlocks->run();
-        $this->_importErrors = array_merge($this->_importErrors, $pageBlocks->getErrors());
-        $repeaterBlocks = new Content\RepeaterBlocksImport($this->_importPath, $this->_importFileRequired);
-        $repeaterBlocks->run();
-        $this->_importErrors = array_merge($this->_importErrors, $repeaterBlocks->getErrors());
     }
 
 }

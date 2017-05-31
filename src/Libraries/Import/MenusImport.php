@@ -17,6 +17,20 @@ class MenusImport extends AbstractImport
     const IMPORT_FILE_DEFAULT = 'pages/menus.csv';
 
     /**
+     * MenusImport constructor.
+     * @param string $importPath
+     * @param bool $requiredFile
+     */
+    public function __construct($importPath = '', $requiredFile = false)
+    {
+        parent::__construct($importPath, $requiredFile);
+        $childClasses = [
+            Menus\MenuItemsImport::class
+        ];
+        $this->setChildren($childClasses);
+    }
+
+    /**
      * @return array
      */
     public function fieldMap()
@@ -70,16 +84,6 @@ class MenusImport extends AbstractImport
     protected function _afterRowMap()
     {
         $this->_currentMenu->save();
-    }
-
-    /**
-     *
-     */
-    protected function _afterRun()
-    {
-        $menuItems = new Menus\MenuItemsImport($this->_importPath, $this->_importFileRequired);
-        $menuItems->run();
-        $this->_importErrors = array_merge($this->_importErrors, $menuItems->getErrors());
     }
 
     /**
