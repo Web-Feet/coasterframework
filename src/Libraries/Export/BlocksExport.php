@@ -51,7 +51,7 @@ class BlocksExport extends AbstractExport
      */
     public function run()
     {
-        if (!$this->_exportModelData) {
+        if (!isset($this->_exportModelData)) {
             $itemsExport = new CategoryExport($this->_exportPath);
             $itemsExport->run();
             $itemsExport = new FormRulesExport($this->_exportPath);

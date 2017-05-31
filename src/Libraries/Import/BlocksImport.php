@@ -595,6 +595,7 @@ class BlocksImport extends AbstractImport
                 ThemeTemplateBlock::where('block_id', '=', $importBlock->blockData['id'])->whereIn('theme_template_id', $deleteThemeTemplateIds)->delete();
                 ThemeBlock::where('block_id', '=', $importBlock->blockData['id'])->where('theme_id', '=', $this->_additionalData['theme']->id)->delete();
             }
+            $this->_blocksCollection->getBlock($blockName, 'db')->setGlobalData($importBlock->globalData, true);
         }
     }
 

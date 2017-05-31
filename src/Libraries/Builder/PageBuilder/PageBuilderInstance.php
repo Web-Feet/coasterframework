@@ -723,7 +723,8 @@ class PageBuilderInstance
             unset($options['returnAll']);
             $blocksData = [];
             $themeId = ($theme = Theme::where('theme', '=', $this->theme)->first()) ? $theme->id : 0;
-            $categoryBlocks = ThemeTemplate::templateBlocks($themeId, $this->pageTemplateId());
+            $template = Template::preload($this->template);
+            $categoryBlocks = ThemeTemplate::templateBlocks($themeId, $template->exists ? $template->id : null);
             foreach ($categoryBlocks as $blockCategory => $blocks) {
                 foreach ($blocks as $block) {
                     $blocksData += json_decode($this->blockJson($block->name, $options), true);
