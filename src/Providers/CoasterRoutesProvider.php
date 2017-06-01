@@ -40,7 +40,7 @@ class CoasterRoutesProvider extends ServiceProvider
                 ->group($routesDir . '/install.php');
         }
 
-        if (\Request::segment(1) == rtrim($adminUrl, '/') || config('coaster::admin.always_load_routes')) {
+        if (\App::runningInConsole() || \Request::segment(1) == rtrim($adminUrl, '/') || config('coaster::admin.always_load_routes')) {
             Route::middleware(['web', 'coaster.admin'])
                 ->prefix($adminUrl)
                 ->as($adminRouteName)
