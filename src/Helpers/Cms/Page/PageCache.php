@@ -42,7 +42,7 @@ class PageCache
      */
     public function _clear($pageId = null)
     {
-        $pageKeys = is_null($pageId) ? $this->_keys : (array_key_exists($pageId, $this->_keys) ? [$this->_keys[$pageId]] : []);
+        $pageKeys = is_null($pageId) ? $this->_keys : (array_key_exists($pageId, $this->_keys) ? [$pageId => $this->_keys[$pageId]] : []);
         foreach ($pageKeys as $pageId => $requestHashes) {
             foreach ($requestHashes as $requestHash => $key) {
                 Cache::forget($this->_key($pageId, $requestHash));
