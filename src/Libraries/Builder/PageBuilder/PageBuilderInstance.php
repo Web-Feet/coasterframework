@@ -181,7 +181,7 @@ class PageBuilderInstance
         if (!is_null($setValue)) {
             $this->cacheable = (bool) $setValue;
         }
-        if ($this->_logger->logs('method')->has('search')) {
+        if ($this->_logger->logs('method')->contains('search')) {
             return false;
         }
         return $this->cacheable;
@@ -599,7 +599,6 @@ class PageBuilderInstance
      */
     public function search($options = [])
     {
-        Search::searchBlockFound();
         $pages = [];
         if ($this->searchQuery !== false) {
             $pages = PageSearchData::lookup($this->searchQuery);
