@@ -317,6 +317,7 @@ Class Theme extends Eloquent
                         $importObject->deleteCsv();
                         $errors = array_merge($errors, $importObject->getErrorMessages());
                     }
+                    PageSearchData::updateAllSearchData();
                     if ($errors) {
                         throw new \Exception;
                     }
