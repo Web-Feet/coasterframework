@@ -35,12 +35,16 @@ class UpdateGroupPages extends Migration
             $table->integer('group_container_url_priority')->default(0)->after('group_container');
             $table->integer('canonical_parent')->default(0)->after('group_container_url_priority');
         });
+        if (Schema::hasColumn('page_group', 'default_parent')) {
+          Schema::table('page_group', function (Blueprint $table) {
+              $table->dropColumn('default_parent');
+              $table->dropColumn('order_by_attribute_id');
+              $table->dropColumn('order_dir');
+          });
+        }
 
         Schema::table('page_group', function (Blueprint $table) {
-            $table->dropColumn('default_parent');
-            $table->dropColumn('order_by_attribute_id');
-            $table->dropColumn('order_dir');
-            $table->integer('url_priority')->default(50)->after('item_name');
+          $table->integer('url_priority')->default(50)->after('item_name');
         });
 
         Schema::table('page_group_attributes', function (Blueprint $table) {

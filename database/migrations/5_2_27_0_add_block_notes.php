@@ -15,7 +15,7 @@ class AddBlockNotes extends Migration
     {
         Schema::table('blocks', function(Blueprint $table)
         {
-            $table->text('note')->after('active');
+            $table->text('note')->nullable()->after('active');
         });
     }
 

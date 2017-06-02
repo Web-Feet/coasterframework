@@ -122,7 +122,15 @@ class InstallController extends Controller
 
         try {
             $host = ($details['host'] ?: 'localhost') . (isset($port) ? ';port='.$port : '');
-            new \PDO('mysql:dbname='.$details['name'].';host='.$host, $details['user'], $details['password']);
+            $details['connection'] = 'mysql';
+            if (stristr($details['name'], '.sqlite') !== false) {
+              $details['connection'] = 'sqlite';
+              with(new \Illuminate\Database\Connectors\SQLiteConnector)->connect(['database' => $details['name']]);
+            }
+            else
+            {
+              new \PDO('mysql:dbname='.$details['name'].';host='.$host, $details['user'], $details['password']);
+            }
         } catch (\PDOException $e) {
             switch ($e->getCode()) {
                 case 1045: FormMessage::add('user', $e->getMessage()); break;
@@ -138,6 +146,7 @@ class InstallController extends Controller
         }
 
         $updateEnv = [
+            'DB_CONNECTION' => $details['connection'],
             'DB_HOST' => $details['host'],
             'DB_DATABASE' => $details['name'],
             'DB_PREFIX' => !empty($details['prefix']) ? $details['prefix'] : '',
