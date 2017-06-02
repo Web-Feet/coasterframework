@@ -217,6 +217,9 @@ class BlocksImport extends AbstractImport
                 }
             }
             $templates = array_flip($templates);
+            $templates = array_filter($templates, function($templateName) {
+                return View::exists('themes.' . $this->_additionalData['theme']->theme . '.templates.' . $templateName);
+            });
             $this->_templateList = array_unique(array_merge($this->_templateList, $templates));
             return $templates;
         }
@@ -604,7 +607,10 @@ class BlocksImport extends AbstractImport
                 ThemeBlock::where('block_id', '=', $importBlock->blockData['id'])->where('theme_id', '=', $this->_additionalData['theme']->id)->delete();
             }
             $this->_blocksCollection->getBlock($blockName, 'db')->setGlobalData($importBlock->globalData, true);
+            $this->_blocksCollection->getBlock($blockName, 'db')->templates = $importBlock->templates;
         }
+
+        $this->_deleteUnusedThemeTemplates($allTemplates, $themeTemplates);
     }
 
     /**
@@ -636,6 +642,21 @@ class BlocksImport extends AbstractImport
             }
         }
         return $themeTemplates;
+    }
+
+    /**
+     * @param Collection $allTemplates
+     * @param Collection $themeTemplates
+     */
+    protected function _deleteUnusedThemeTemplates($allTemplates, $themeTemplates)
+    {
+        $existingTemplateIds = $themeTemplates->pluck('template_id')->toArray();
+        $foundTemplateIds = array_map(function ($template) use ($allTemplates) {
+            return $allTemplates[$template]->id;
+        }, $this->_blocksCollection->getTemplates());
+        if ($deleteTemplateIds = array_diff($existingTemplateIds, $foundTemplateIds)) {
+            ThemeTemplate::where('theme_id', '=', $this->_additionalData['theme']->id)->whereIn('template_id', $deleteTemplateIds)->delete();
+        }
     }
 
     /**
