@@ -13,4 +13,9 @@ class Schema {
         unset(Column::$instances[$from]);
     }
 
+    public static function hasColumn()
+    {
+        return true;
+    }
+
 }
