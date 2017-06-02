@@ -7,6 +7,9 @@
     <ul class="nav nav-tabs">
         <li id="navtab0"><a href="#tab0" data-toggle="tab">Settings</a></li>
         <li id="navtab1"><a href="#tab1" data-toggle="tab">Site Health</a></li>
+        @if (Auth::action('coaster.wpimport'))
+            <li id="navtab2"><a href="#tab2" data-toggle="tab">Import Tools</a></li>
+        @endif
     </ul>
 
     <div class="tab-content">
@@ -117,6 +120,13 @@
                 @endif
             </div>
         </div>
+
+        @if (Auth::action('coaster.wpimport'))
+            <div class="tab-pane" id="tab2">
+                <br />
+                <a class="btn btn-primary" href="{{ route('coaster.admin.wpimport') }}">Wordpress Import (Beta)</a>
+            </div>
+        @endif
 
     </div>
 
