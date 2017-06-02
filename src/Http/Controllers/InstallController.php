@@ -122,14 +122,14 @@ class InstallController extends Controller
 
         try {
             $host = ($details['host'] ?: 'localhost') . (isset($port) ? ';port='.$port : '');
-            $details['connection'] = 'mysql';
             if (stristr($details['name'], '.sqlite') !== false) {
-              $details['connection'] = 'sqlite';
-              with(new \Illuminate\Database\Connectors\SQLiteConnector)->connect(['database' => $details['name']]);
+                $details['connection'] = 'sqlite';
+                with(new \Illuminate\Database\Connectors\SQLiteConnector)->connect(['database' => $details['name']]);
             }
             else
             {
-              new \PDO('mysql:dbname='.$details['name'].';host='.$host, $details['user'], $details['password']);
+                $details['connection'] = 'mysql';
+                new \PDO('mysql:dbname='.$details['name'].';host='.$host, $details['user'], $details['password']);
             }
         } catch (\PDOException $e) {
             switch ($e->getCode()) {
