@@ -11,6 +11,7 @@ return [
     'default_template' => '1',
     'publishing' => '0',
     'advanced_permissions' => '0',
-    'undo_time' => 3600 // limit for which deleted items can be restored for
+    'undo_time' => 3600, // limit for which deleted items can be restored for
+    'always_load_routes' => '0'
 
 ];

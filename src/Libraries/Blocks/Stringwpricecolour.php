@@ -5,12 +5,23 @@ use CoasterCms\Models\BlockSelectOption;
 class Stringwpricecolour extends String_
 {
     /**
+     * Return stringwpricecolour rendered view
+     * @param string $content
+     * @param array $options
+     * @return string
+     */
+    public function display($content, $options = [])
+    {
+        return $this->_renderDisplayView($options, $this->_defaultData($content));
+    }
+
+    /**
      * Return stringwpricecolour data
      * @param string $content
      * @param array $options
      * @return \stdClass
      */
-    public function display($content, $options = [])
+    public function data($content, $options = [])
     {
         return $this->_defaultData($content);
     }
@@ -58,9 +69,9 @@ class Stringwpricecolour extends String_
         if (empty($content) || !is_a($content, \stdClass::class)) {
             $content = new \stdClass;
         }
-        $content->text = !empty($content->text) ? $content->text : '';
-        $content->price = !empty($content->price) ? $content->price : 0;
-        $content->colour = !empty($content->colour) ? $content->colour : '';
+        $content->text = isset($content->text) ? $content->text : '';
+        $content->price = isset($content->price) ? $content->price : '';
+        $content->colour = isset($content->colour) ? $content->colour : '';
         return $content;
     }
 

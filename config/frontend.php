@@ -8,10 +8,11 @@ return [
     'strong_tags' => '0',
     'form_error_class' => 'has-error',
     'external_form_input' => 'coaster',
-    'language_fallback' => '1',
+    'language_fallback' => '0',
     'theme' => '1',
     'language' => '1',
     'canonicals' => '1',
-    'enabled_feed_extensions' => ['rss', 'xml']
+    'enabled_feed_extensions' => 'rss,xml,json',
+    'cache' => '0' // fpc cache minutes
 
 ];

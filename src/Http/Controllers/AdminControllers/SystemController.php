@@ -4,6 +4,7 @@ use Auth;
 use Cache;
 use CoasterCms\Helpers\Admin\Validation\Database;
 use CoasterCms\Helpers\Cms\File\Directory;
+use CoasterCms\Helpers\Cms\File\SecureUpload;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;
@@ -32,52 +33,9 @@ class SystemController extends Controller
                 $current_setting = Setting::where('name', '=', $setting)->where('editable', '=', 1)->first();
                 if (!empty($current_setting)) {
                     if ($setting == 'site.secure_folders') {
-                        $newValues = explode(',',$value);
-                        foreach ($newValues as $k => $folder) {
-                            $folder = trim($folder);
-                            if (empty($folder)) {
-                                unset($newValues[$k]);
-                            } else {
-                                $newValues[$k] = '/'.trim($folder, '/').'/';
-                            }
-                        }
-                        foreach ($newValues as $k => $folder) {
-                            foreach ($newValues as $kCheck => $folderCheck) {
-                                if ($k != $kCheck && strpos($folder, $folderCheck) === 0) {
-                                    unset($newValues[$k]);
-                                }
-                            }
-                        }
-                        $oldValues = explode(',', $current_setting->value);
-                        foreach ($oldValues as $k => $folder) {
-                            $folder = trim($folder);
-                            if (empty($folder)) {
-                                unset($oldValues[$k]);
-                            } else {
-                                $oldValues[$k] = '/'.trim($folder, '/').'/';
-                            }
-                        }
-                        $toSecure = array_diff($newValues, $oldValues);
-                        $toUnSecure = array_diff($oldValues, $newValues);
-                        foreach ($toSecure as $newSecureFolder) {
-                            if (is_dir(public_path().'/uploads'.$newSecureFolder)) {
-                                Directory::copy(public_path() . '/uploads' . $newSecureFolder, storage_path() . '/uploads' . $newSecureFolder);
-                                Directory::remove(public_path() . '/uploads' . $newSecureFolder, true);
-                            } else {
-                                @mkdir(storage_path() . '/uploads' . $newSecureFolder, 0777, true);
-                            }
-                        }
-                        foreach ($toUnSecure as $newUnSecureFolder) {
-                            if (is_dir(storage_path() . '/uploads' . $newUnSecureFolder)) {
-                                Directory::copy(storage_path().'/uploads'.$newUnSecureFolder, public_path().'/uploads'.$newUnSecureFolder);
-                                Directory::remove(storage_path().'/uploads'.$newUnSecureFolder);
-                            } else {
-                                @mkdir(public_path().'/uploads'.$newUnSecureFolder, 0777, true);
-                            }
-                        }
-                        $value = implode(',',$newValues);
+                        $value = implode(',', SecureUpload::updateFolders($value));
                     }
-                    $current_setting->value = $value;
+                    $current_setting->value = (string) $value;
                     $current_setting->save();
                     if (in_array($setting, ['frontend.theme', 'admin.default_template'])) {
                         Theme::templateIdUpdate();

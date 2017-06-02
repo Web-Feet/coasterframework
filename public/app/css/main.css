@@ -61,11 +61,6 @@ select{ height:35px; font-size:16px; font-family: 'Raleway', sans-serif; }
 
 
 
-ol.sortable li div{ border:none; padding:10px; transition:all 0.3s ease;}
-
-.menuLayout ol.sortable li div:hover{background-color: #d6d6d6 !important;}
-
-
 [class^="icon-"], [class*=" icon-"] {
     display: inline-block;
     width: 14px;
@@ -271,13 +266,12 @@ ol.sortable li div{ border:none; padding:10px; transition:all 0.3s ease;}
 .filemanager {width: 100%;  border: 0;  min-height: 600px;}
 .addButton{margin-top: 25px;}
 .long-select {min-width: 250px;}
-.sortable .disclose {color:#a52f26;}
 
 .modal h3 {margin: 7px 0;}
 .modal-body {padding: 30px 20px;}
 
 i.glyphicon {transition:all 0.3s ease;}
-i.glyphicon:hover{color:#eb5b4f !important; cursor: pointer; }
+i.glyphicon:hover, i.fa:hover{color:#eb5b4f !important; cursor: pointer; }
 i.glyphicon-move{cursor: move;}
 a.glyphicon, i.glyphicon {color:#333; text-decoration: none; padding: 3px 5px;}
 
@@ -313,6 +307,9 @@ input[type=checkbox].form-control {width: 25px;margin: 0; box-shadow: none;}
 .select2 {margin-bottom: 5px;}
 
 .repeater-table td.repeater-action {padding:8px 2px;}
+
+.repeater-table .help-block { margin: 0; }
+.repeater-table .form-group { margin-bottom: 0; padding-bottom: 0; }
 
 .fileinput-nice {
     position: relative;

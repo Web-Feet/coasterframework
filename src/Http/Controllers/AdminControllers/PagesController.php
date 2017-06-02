@@ -2,27 +2,21 @@
 
 use Auth;
 use CoasterCms\Helpers\Cms\DateTimeHelper;
+use CoasterCms\Helpers\Cms\Page\PageCache;
 use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Libraries\Blocks\Repeater;
-use CoasterCms\Libraries\Builder\FormMessage;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
 use CoasterCms\Http\Controllers\AdminController;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Block;
-use CoasterCms\Models\BlockBeacon;
 use CoasterCms\Models\Language;
-use CoasterCms\Models\MenuItem;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageBlock;
 use CoasterCms\Models\PageGroup;
-use CoasterCms\Models\PageGroupPage;
-use CoasterCms\Models\PageLang;
 use CoasterCms\Models\PagePublishRequests;
-use CoasterCms\Models\PageSearchData;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\PageVersionSchedule;
-use CoasterCms\Models\Template;
-use CoasterCms\Models\UserRole;
+use CoasterCms\Models\ThemeTemplate;
 use Request;
 use Response;
 use View;
@@ -152,7 +146,7 @@ class PagesController extends AdminController
 
         // load blocks content
         if ($page->link == 0) {
-            $blocks = Template::template_blocks(config('coaster::frontend.theme'), $page->template);
+            $blocks = ThemeTemplate::templateBlocks(config('coaster::frontend.theme'), $page->template);
             $blocks_content = PageBlock::preloadPage($pageId, $versionData['editing']);
             list($tab_headers, $tab_contents) = Block::getTabs($blocks, $blocks_content, $page->id);
         } else {
@@ -273,6 +267,7 @@ class PagesController extends AdminController
                 PagePublishRequests::add($pageId, $version->version_id, Request::input('request_note'));
             }
             $version->publish();
+            PageCache::clear($pageId);
         }
 
         // display page edit form
@@ -283,53 +278,7 @@ class PagesController extends AdminController
     {
         $pages = Request::input('list');
         if (!empty($pages)) {
-
-            $rootPages = Page::join('page_lang', 'page_lang.page_id', '=', 'pages.id')->where(function ($query) {
-                $query->whereIn('page_lang.url', ['', '/']);
-            })->where('page_lang.language_id', '=', Language::current())->where('link', '=', 0)->get(['pages.*'])->all();
-            $rootPageIds = array_map(function($rootPage) {return $rootPage->id;}, $rootPages);
-            $order = [];
-            $changeUnderParentIds = [];
-
-            foreach ($pages as $pageId => $parent) {
-                $currentPage = Page::preload($pageId);
-                if ($currentPage->exists) {
-
-                    $parent = (empty($parent) || $parent == 'null') ? 0 : $parent;
-                    if ($currentPage->parent != $parent && $parent != 0 && (in_array($currentPage->id, $rootPageIds) || in_array($parent, $rootPageIds))) {
-                        return 0; // don't allow root/home page to be moved under other pages or other pages to be moved under it
-                    }
-
-                    // get the order value for current page
-                    $order[$parent] = isset($order[$parent]) ? $order[$parent] : 0;
-                    $order[$parent]++;
-
-                    if (($currentPage->parent != $parent || $currentPage->order != $order[$parent])) {
-                        if (Auth::action('pages.sort', ['page_id' => $parent]) && Auth::action('pages.sort', ['page_id' => $currentPage->parent])) {
-                            $parentPageName = $parent ? PageLang::preload($parent)->name : 'top level';
-                            $pageName = PageLang::preload($pageId)->name;
-                            if ($parent != $currentPage->parent) {
-                                array_push($changeUnderParentIds, $parent, $currentPage->parent);
-                                AdminLog::new_log('Moved page \'' . $pageName . '\' under \'' . $parentPageName . '\' (Page ID ' . $currentPage->id . ')');
-                            }
-                            if (!in_array($parent, $changeUnderParentIds)) {
-                                $changeUnderParentIds[] = $parent;
-                                AdminLog::new_log('Re-ordered pages in \'' . $parentPageName . '\' (Page ID ' . $currentPage->id . ')');
-                            }
-                            $changeUnderParentIds = array_unique($changeUnderParentIds);
-                            $currentPage->parent = $parent;
-                            $currentPage->order = $order[$parent];
-                            $currentPage->save();
-                        } else {
-                            return 0; // error, can't move page to new location
-                        }
-                    }
-
-                } else {
-                    return 0; // error, moved page no longer exists
-                }
-            }
-
+            Page::sortPages($pages);
         }
         return 1;
     }

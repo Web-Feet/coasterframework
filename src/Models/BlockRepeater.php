@@ -26,4 +26,20 @@ Class BlockRepeater extends Eloquent
         return $repeaterBlocks;
     }
 
+    public static function addChildBlockIds($blockIds)
+    {
+        $blockRepeaterBlockIds = [];
+        foreach ($blockIds as $blockId) {
+            $blockRepeater = static::preload($blockId);
+            if ($blockRepeater->exists) {
+                $blockRepeaterBlockIds = array_merge(
+                    $blockRepeaterBlockIds,
+                    static::addChildBlockIds(explode(',', $blockRepeater->blocks)),
+                    [$blockId]
+                );
+            }
+        }
+        return array_unique($blockRepeaterBlockIds);
+    }
+
 }

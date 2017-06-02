@@ -6,7 +6,7 @@
  *
  * @package CoasterCms\Libraries\Blocks
  */
-class Comment extends String_
+class Comment extends AbstractBlock
 {
 
 }

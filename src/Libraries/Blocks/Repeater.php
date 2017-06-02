@@ -6,7 +6,7 @@ use CoasterCms\Helpers\Cms\View\CmsBlockInput;
 use CoasterCms\Helpers\Cms\View\FormWrap;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
 use CoasterCms\Libraries\Builder\FormMessage;
-use CoasterCms\Libraries\Builder\PageBuilder;
+use PageBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockFormRule;
 use CoasterCms\Models\BlockRepeater;
@@ -16,9 +16,32 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Request;
 use Validator;
 
-class Repeater extends String_
+class Repeater extends AbstractBlock
 {
+    /**
+     * @var bool
+     */
     protected static $_duplicate = false;
+
+    /**
+     * @var string
+     */
+    protected $_renderDataName = 'repeaters';
+
+    /**
+     * @var string
+     */
+    protected $_renderRepeatedItemName = 'repeater_row';
+
+    /**
+     * Repeater constructor.
+     * @param Block $block
+     */
+    public function __construct(Block $block)
+    {
+        parent::__construct($block);
+        $this->_displayViewDirs[] = 'repeaters';
+    }
 
     /**
      * Display repeater view
@@ -29,12 +52,14 @@ class Repeater extends String_
     public function display($content, $options = [])
     {
         if (!empty($options['form'])) {
-            return FormWrap::view($this->_block, $options, $this->displayView(array_merge($options, ['view_suffix' => '-form'])));
+            $view = !empty($options['view']) ? $options['view'] : '';
+            return FormWrap::view($this->_block, $options, $this->displayView($view, '-form'));
         }
 
         $options = $options + ['random' => false, 'repeated_view' => true];
+        $options['repeater_id'] = $content;
         $repeaterRows = PageBlockRepeaterData::loadRepeaterData($content, $options['version'], $options['random']);
-        return $this->_renderDisplayView($options, ['repeater' => $repeaterRows, 'repeater_id' => $content], 'repeater_row');
+        return $this->_renderDisplayView($options, $repeaterRows);
     }
 
     /**
@@ -44,33 +69,62 @@ class Repeater extends String_
     public function displayDummy($options)
     {
         $options = $options + ['repeated_view' => true];
-        return $this->_renderDisplayView($options, ['repeater' => [0], 'repeater_id' => 0], 'repeater_row');
+        $options['repeater_id'] = 0;
+        return $this->_renderDisplayView($options, [0]);
+    }
+
+    /**
+     * Used in theme builder to render blocks as json
+     * @param string $content
+     * @param array $options
+     * @return string json
+     */
+    public function toJson($content, $options = [])
+    {
+        $options = $options + ['random' => false, 'repeated_view' => true];
+        $options['repeater_id'] = $content;
+        $repeaterRows = PageBlockRepeaterData::loadRepeaterData($content, $options['version'], $options['random']);
+        $data = ['rows' => [], 'repeater_id' => $content];
+
+        foreach ($repeaterRows as $rowId => $rowBlockData) {
+            $data['rows'][$rowId] = [];
+
+            foreach ($rowBlockData as $key => $rowContent) {
+                $block = Block::preload($key);
+                if ($block->exists) {
+                    $data['rows'][$rowId] += json_decode($block->getTypeObject()->toJson($rowContent, $options), true);
+                }
+            }
+        }
+
+        return parent::toJson($data, $options);
     }
 
     /**
      * Check per page values and load block info to pass to repeated view
-     * @param string|array $view
-     * @param array $data
-     * @param string $itemName
+     * @param array $options
+     * @param array $repeaterRows
      * @return string
      */
-    protected function _renderRepeatedDisplayView($view, $data = [], $itemName = 'item')
+    protected function _renderRepeatedDisplayView($options, $repeaterRows = [])
     {
-        $repeaterRows = reset($data);
         $repeaterBlocks = BlockRepeater::getRepeaterBlocks($this->_block->id);
         // $repeaterRows[0] check allows skipping of block check (used for dummy data)
         if (($repeaterRows && $repeaterBlocks) || (isset($repeaterRows[0]) && $repeaterRows[0] === 0)) {
 
             // pagination
-            if (!empty($view['per_page'])) {
-                $pagination = new LengthAwarePaginator($repeaterRows, count($repeaterRows), $view['per_page'], Request::input('page', 1));
+            if (!empty($options['per_page'])) {
+                $pagination = new LengthAwarePaginator($repeaterRows, count($repeaterRows), $options['per_page'], Request::input('page', 1));
                 $pagination->setPath(Request::getPathInfo());
                 $paginationLinks = PaginatorRender::run($pagination);
-                $repeaterRows = array_slice($repeaterRows, (($pagination->currentPage() - 1) * $view['per_page']), $view['per_page'], true);
+                $repeaterRows = array_slice($repeaterRows, (($pagination->currentPage() - 1) * $options['per_page']), $options['per_page'], true);
             } else {
                 $paginationLinks = '';
             }
-            return parent::_renderRepeatedDisplayView($view, [key($data) => $repeaterRows, 'blocks' => $repeaterBlocks, 'repeater_id' => $data['repeater_id'], 'pagination' => $paginationLinks, 'links' => $paginationLinks], $itemName);
+            $options['pagination'] = $paginationLinks;
+            $options['links'] = $paginationLinks;
+            $options['blocks'] = $repeaterBlocks;
+            return parent::_renderRepeatedDisplayView($options, $repeaterRows);
         }
         return '';
     }
@@ -143,8 +197,10 @@ class Repeater extends String_
         // if no current repeater id, reserve next new repeater id for use on save
         $repeaterId = $content ?: PageBlockRepeaterRows::nextFreeRepeaterId();
         $this->_editViewData['renderedRows'] = '';
+        $this->_editViewData['itemName'] = '';
 
         if ($repeaterBlocks = BlockRepeater::getRepeaterBlocks($this->_block->id)) {
+            $this->_editViewData['itemName'] = BlockRepeater::preload($this->_block->id)->item_name;
             // check if new or existing row needs displaying
             if ($newRow) {
                 $renderedRow = '';

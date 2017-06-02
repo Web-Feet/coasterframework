@@ -3,12 +3,10 @@
 use CoasterCms\Exceptions\PageBuilderException;
 use CoasterCms\Helpers\Cms\Page\PageLoader;
 use CoasterCms\Helpers\Cms\Page\Path;
-use CoasterCms\Helpers\Cms\Page\Search;
+use CoasterCms\Libraries\Builder\PageBuilderLogger;
 use CoasterCms\Libraries\Builder\ViewClasses\BreadCrumb;
 use CoasterCms\Libraries\Builder\ViewClasses\PageDetails;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
-use CoasterCms\Libraries\Blocks\Image;
-use CoasterCms\Libraries\Blocks\Repeater;
 use CoasterCms\Libraries\Builder\MenuBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\Language;
@@ -20,6 +18,9 @@ use CoasterCms\Models\PageLang;
 use CoasterCms\Models\PageSearchData;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\Setting;
+use CoasterCms\Models\Template;
+use CoasterCms\Models\Theme;
+use CoasterCms\Models\ThemeTemplate;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -91,6 +92,16 @@ class PageBuilderInstance
     public $searchQuery;
 
     /**
+     * @var bool
+     */
+    public $cacheable;
+
+    /**
+     * @var PageBuilderLogger
+     */
+    protected $_logger;
+
+    /**
      * @var array
      */
     protected $_pageCategoryLinks;
@@ -106,9 +117,10 @@ class PageBuilderInstance
     protected $_customBlockDataKey;
 
     /**
+     * @param PageBuilderLogger $logger
      * @param PageLoader $pageLoader
      */
-    public function __construct(PageLoader $pageLoader)
+    public function __construct(PageBuilderLogger $logger, PageLoader $pageLoader)
     {
         $this->page = !empty($pageLoader->pageLevels) ? end($pageLoader->pageLevels) : null;
         $this->pageLevels = $pageLoader->pageLevels;
@@ -123,9 +135,12 @@ class PageBuilderInstance
         $this->theme = $pageLoader->theme;
         $this->template = $pageLoader->template;
         $this->contentType = $pageLoader->contentType;
+        $this->cacheable = true;
 
         $this->_customBlockData = [];
         $this->_customBlockDataKey = 0;
+
+        $this->_logger = $logger;
     }
 
     /**
@@ -146,10 +161,30 @@ class PageBuilderInstance
         if ($this->customTemplate) {
             return $themePath . $this->customTemplate;
         } elseif ($this->feedExtension) {
-            return $themePath . 'feed.' . $this->feedExtension . '.' . $this->template;
+            $templatePath = $themePath . 'feed.' . $this->feedExtension . '.' . $this->template;
+
+            if (!view()->exists($templatePath)) {
+                $templatePath = $themePath . 'feed.' . $this->feedExtension . '.default';
+            }
+            return $templatePath;
         } else {
             return $themePath . 'templates.' . $this->template;
         }
+    }
+
+    /**
+     * @param int|null $setValue
+     * @return bool
+     */
+    public function canCache($setValue = null)
+    {
+        if (!is_null($setValue)) {
+            $this->cacheable = (bool) $setValue;
+        }
+        if ($this->_logger->logs('method')->has('search')) {
+            return false;
+        }
+        return $this->cacheable;
     }
 
     /**
@@ -163,13 +198,17 @@ class PageBuilderInstance
     }
 
     /**
+     * Get parent page id based on the page levels loaded from url
      * @param bool $noOverride
      * @return int
      */
     public function parentPageId($noOverride = false)
     {
-        $page = $this->_getPage($noOverride);
-        return !empty($page) ? $page->parent : 0;
+        if ($this->pageOverride && !$noOverride) {
+            return $this->pageOverride->parent;
+        } else {
+            return $this->pageLevels[count($this->pageLevels) - 2]->id;
+        }
     }
 
     /**
@@ -347,19 +386,15 @@ class PageBuilderInstance
     {
         $defaultOptions = [
             'view' => 'default',
-            '404-name' => '404'
+            '404-name' => ''
         ];
         $options = array_merge($defaultOptions, $options);
 
         $pageLevels = $this->pageLevels;
 
-        if ($this->is404) {
-            $page404 = new Page;
-            $pageLang = new PageLang;
-            $pageLang->url = '';
-            $pageLang->name = $options['404-name'];
-            $page404->setRelation('pageCurrentLang', $pageLang);
-            $pageLevels[] = $page404;
+        if ($options['404-name'] !== '') {
+            end($pageLevels);
+            current($pageLevels)->pageCurrentLang->name = $options['404-name'];
         }
 
         $crumbs = '';
@@ -481,7 +516,6 @@ class PageBuilderInstance
     {
         $defaultOptions = [
             'match' => '=',
-            'fromPageIds' => [],
             'operand' => 'AND',
             'multiFilter' => false
         ];
@@ -498,8 +532,8 @@ class PageBuilderInstance
                 $filteredPagesForBlock = [];
                 $liveBlocks = PageBlock::livePageBlocksForBlock($block->id);
                 foreach ($liveBlocks as $liveBlock) {
-                    if (array_key_exists($liveBlock->page_id, $filteredPagesForBlock) || (!empty($options['fromPageIds']) && !in_array($liveBlock->page_id, $options['fromPageIds']))) {
-                        continue;
+                    if (array_key_exists($liveBlock->page_id, $filteredPagesForBlock)) {
+                        continue; // skip unnecessary extra checks
                     }
                     if ($blockTypeObject->filter($liveBlock->content, $searchValue, $options['match'])) {
                         $filteredPagesForBlock[$liveBlock->page_id] = Page::preload($liveBlock->page_id);
@@ -570,25 +604,8 @@ class PageBuilderInstance
         if ($this->searchQuery !== false) {
             $pages = PageSearchData::lookup($this->searchQuery);
             if (!empty($pages)) {
-                if (!empty($options['templates'])) {
-                    foreach ($pages as $k => $page) {
-                        if (!isset($page->template) || !in_array($page->template, $options['templates'])) {
-                            unset($pages[$k]);
-                        }
-                    }
-                }
-                if (!empty($options['groups'])) {
-                    $pageIds = [];
-                    $pageGroupPages = PageGroupPage::whereIn('group_id', $options['groups'])->get();
-                    foreach ($pageGroupPages as $pageGroupPage) {
-                        $pageIds[] = $pageGroupPage->page_id;
-                    }
-                    foreach ($pages as $k => $page) {
-                        if (!in_array($page->id, $pageIds)) {
-                            unset($pages[$k]);
-                        }
-                    }
-                }
+                // pass to renderer as it will do filtering on pages
+                $pages = $this->_renderCategory(0, $pages, ['render' => false] + $options);
                 $results = count($pages);
                 $showing = "";
                 if ($results > 20) {
@@ -611,9 +628,10 @@ class PageBuilderInstance
     /**
      * @param string $blockName
      * @param array $options
-     * @return mixed|string
+     * @param string $fn
+     * @return mixed
      */
-    public function block($blockName, $options = [])
+    protected function _block($blockName, $options = [], $fn = 'display')
     {
         // force query available if block details changed in current request
         $block = Block::preloadClone($blockName, isset($options['force_query']));
@@ -622,7 +640,7 @@ class PageBuilderInstance
         $usingGlobalContent = false;
         $blockData = null;
 
-        if (($customBlockData = $this->_getCustomBlockData($blockName)) !== null  && !isset($options['page_id'])) {
+        if (($customBlockData = $this->_getCustomBlockData($blockName)) !== null && !isset($options['page_id'])) {
             // load custom block data for (is also used for repeater content)
             $blockData = $customBlockData;
         } elseif ($block->exists) {
@@ -650,12 +668,13 @@ class PageBuilderInstance
                 }
             }
 
-            // return raw data
-            if (isset($options['raw']) && $options['raw']) {
-                return $blockData;
-            }
         } else {
             return 'block not found';
+        }
+
+        // return raw data
+        if (isset($options['raw']) && $options['raw']) {
+            return $blockData;
         }
 
         // set version that data has been grabbed for (0 = latest)
@@ -663,8 +682,57 @@ class PageBuilderInstance
             $options['version'] = $usingGlobalContent ? 0 : $this->pageVersion($pageId);
         }
 
-        // pass block details and data to display class
-        return $block->setPageId($pageId)->setVersionId($options['version'])->getTypeObject()->display($blockData, $options);
+        // generate type object (ie. String / Image / Repeater) with page and version data
+        $blockTypeObject = $block->setPageId($pageId)->setVersionId($options['version'])->getTypeObject();
+
+        // return rendered view or run custom function on block type
+        return $blockTypeObject->$fn($blockData, $options);
+    }
+
+    /**
+     * Return string or rendered view for block
+     * @param string $blockName
+     * @param array $options
+     * @return string
+     */
+    public function block($blockName, $options = [])
+    {
+        return $this->_block($blockName, $options);
+    }
+
+    /**
+     * Return data for block
+     * @param string $blockName
+     * @param array $options
+     * @return mixed
+     */
+    public function blockData($blockName, $options = [])
+    {
+        return $this->_block($blockName, $options, 'data');
+    }
+
+    /**
+     * Return data for block as json
+     * @param string $blockName
+     * @param array $options
+     * @return string json
+     */
+    public function blockJson($blockName, $options = [])
+    {
+        if (array_key_exists('returnAll', $options) && $options['returnAll']) {
+            unset($options['returnAll']);
+            $blocksData = [];
+            $themeId = ($theme = Theme::where('theme', '=', $this->theme)->first()) ? $theme->id : 0;
+            $template = Template::preload($this->template);
+            $categoryBlocks = ThemeTemplate::templateBlocks($themeId, $template->exists ? $template->id : null);
+            foreach ($categoryBlocks as $blockCategory => $blocks) {
+                foreach ($blocks as $block) {
+                    $blocksData += json_decode($this->blockJson($block->name, $options), true);
+                }
+            }
+            return collect($blocksData)->toJson();
+        }
+        return $this->_block($blockName, $options, 'toJson');
     }
 
     /**
@@ -722,7 +790,7 @@ class PageBuilderInstance
      * @param int $categoryPageId
      * @param Page[]|Collection $pages
      * @param array $options
-     * @return string
+     * @return string|array
      */
     protected function _renderCategory($categoryPageId, $pages, $options)
     {
@@ -737,13 +805,12 @@ class PageBuilderInstance
             'per_page' => 20,
             'limit' => 0,
             'content' => '',
+            'templates' => [],
+            'groups' => [],
+            'fromPageIds' => [],
             'canonicals' => config('coaster::frontend.canonicals')
         ];
         $options = array_merge($defaultOptions, $options);
-
-        if (!$options['render']) {
-            return $pages;
-        }
 
         // select page of selected type
         $pagesOfSelectedType = [];
@@ -757,21 +824,54 @@ class PageBuilderInstance
                 }
             }
         }
+        $pages = $pagesOfSelectedType;
+
+        // filtering by templates/groups/pageIds
+        if (!empty($options['templates'])) {
+            $templates = Template::getTemplateIds($options['templates']); // converts names to ids
+            foreach ($pages as $k => $page) {
+                if (!isset($page->template) || !in_array($page->template, $templates)) {
+                    unset($pages[$k]);
+                }
+            }
+        }
+        if (!empty($options['groups'])) {
+            $pageIds = [];
+            $pageGroupPages = PageGroupPage::whereIn('group_id', $options['groups'])->get();
+            foreach ($pageGroupPages as $pageGroupPage) {
+                $pageIds[] = $pageGroupPage->page_id;
+            }
+            foreach ($pages as $k => $page) {
+                if (!in_array($page->id, $pageIds)) {
+                    unset($pages[$k]);
+                }
+            }
+        }
+        if (!empty($options['fromPageIds'])) {
+            foreach ($pages as $k => $page) {
+                if (!in_array($page->id, $options['fromPageIds'])) {
+                    unset($pages[$k]);
+                }
+            }
+        }
 
         // limit results
         if (!empty($options['limit']) && is_int($options['limit'])) {
-            $pagesOfSelectedType = array_slice($pagesOfSelectedType, 0, $options['limit']);
+            $pages = array_slice($pages, 0, $options['limit']);
+        }
+
+        if (!$options['render']) {
+            return $pages;
         }
 
         // pagination
         if (!empty($options['per_page']) && (int)$options['per_page'] > 0) {
-            $paginator = new LengthAwarePaginator($pagesOfSelectedType, count($pagesOfSelectedType), $options['per_page'], Request::input('page', 1));
+            $paginator = new LengthAwarePaginator($pages, count($pages), $options['per_page'], Request::input('page', 1));
             $paginator->setPath(Request::getPathInfo());
             $paginator->appends(Request::all());
             $paginationLinks = PaginatorRender::run($paginator);
-            $pages = array_slice($pagesOfSelectedType, (($paginator->currentPage() - 1) * $options['per_page']), $options['per_page']);
+            $pages = array_slice($pages, (($paginator->currentPage() - 1) * $options['per_page']), $options['per_page']);
         } else {
-            $pages = $pagesOfSelectedType;
             $paginationLinks = '';
         }
 
@@ -841,6 +941,31 @@ class PageBuilderInstance
             return $this->_customBlockData[$this->_customBlockDataKey][$blockName];
         } else {
             return null;
+        }
+    }
+
+    /**
+     * @param string $varName
+     * @return mixed
+     */
+    public function getData($varName = '')
+    {
+        $varName = camel_case($varName);
+        if ($varName) {
+            return property_exists($this, $varName) ? $this->$varName : null;
+        } else {
+            return get_object_vars($this);
+        }
+    }
+
+    /**
+     * @param string $varName
+     * @param mixed $value
+     */
+    public function setData($varName, $value)
+    {
+        if ($varName && property_exists($this, $varName)) {
+            $this->$varName = $value;
         }
     }
 

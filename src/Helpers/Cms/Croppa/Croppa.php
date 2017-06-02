@@ -11,10 +11,11 @@ class Croppa extends Helpers
         if (strpos($url, URL::to('/')) === 0) {
             $url = substr_replace($url, '', 0, strlen(URL::to('/')));
         }
-        if (preg_match('#^/(' . config('coaster::frontend.croppa_handle') . ')$#', $url)) {
-            $url = '/cache' . $url;
+        $newUrl = parent::url($url, $width, $height, $options);
+        if ($newUrl != $url && preg_match('#^/(' . config('coaster::frontend.croppa_handle') . ')$#', $url)) {
+            $newUrl = '/cache' . $newUrl;
         }
-        return parent::url($url, $width, $height, $options);
+        return $newUrl;
     }
 
 }

@@ -3,12 +3,23 @@
 class Stringwprice extends String_
 {
     /**
+     * Return stringwprice rendered view
+     * @param string $content
+     * @param array $options
+     * @return string
+     */
+    public function display($content, $options = [])
+    {
+        return $this->_renderDisplayView($options, $this->_defaultData($content));
+    }
+
+    /**
      * Return stringwprice data
      * @param string $content
      * @param array $options
-     * @return mixed|\stdClass
+     * @return \stdClass
      */
-    public function display($content, $options = [])
+    public function data($content, $options = [])
     {
         return $this->_defaultData($content);
     }
@@ -49,8 +60,8 @@ class Stringwprice extends String_
         if (empty($content) || !is_a($content, \stdClass::class)) {
             $content = new \stdClass;
         }
-        $content->text = !empty($content->text) ? $content->text : '';
-        $content->price = !empty($content->price) ? $content->price : 0;
+        $content->text = isset($content->text) ? $content->text : '';
+        $content->price = isset($content->price) ? $content->price : '';
         return $content;
     }
 

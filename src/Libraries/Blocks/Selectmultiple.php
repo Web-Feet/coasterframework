@@ -2,16 +2,26 @@
 
 class Selectmultiple extends Select
 {
+
+    /**
+     * @var string
+     */
+    protected $_renderDataName = 'options';
+
+    /**
+     * @var string
+     */
+    protected $_renderRepeatedItemName = 'option';
+
     /**
      * Unserialize string to php array before returning
      * @param string $content
      * @param array $options
-     * @return array|string
+     * @return string
      */
     public function display($content, $options = [])
     {
-        $content = $content ? unserialize($content) : [];
-        return parent::display($content, $options);
+        return $this->_renderDisplayView($options, $this->_defaultData($content));
     }
 
     /**
@@ -21,8 +31,7 @@ class Selectmultiple extends Select
      */
     public function edit($content)
     {
-        $content = @unserialize($content);
-        return parent::edit($content);
+        return parent::edit($this->_defaultData($content));
     }
 
     /**
@@ -45,6 +54,16 @@ class Selectmultiple extends Select
         $content = @unserialize($content) ?: [];
         $searchText = $this->_generateSearchText(...$content);
         return parent::generateSearchText($searchText);
+    }
+
+    /**
+     * @param mixed $content
+     * @return array
+     */
+    protected function _defaultData($content)
+    {
+        $content = $content ? @unserialize($content) : [];
+        return is_array($content) ? $content : [];
     }
 
     /**

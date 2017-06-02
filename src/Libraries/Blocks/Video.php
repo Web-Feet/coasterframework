@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
-use CoasterCms\Libraries\Builder\PageBuilder;
+use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockVideoCache;
 use GuzzleHttp\Client;
 use View;
@@ -11,6 +11,21 @@ class Video extends String_
      * @var array
      */
     protected static $_cachedVideoData = [];
+
+    /**
+     * @var string
+     */
+    protected $_renderDataName = 'video';
+
+    /**
+     * Video constructor.
+     * @param Block $block
+     */
+    public function __construct(Block $block)
+    {
+        parent::__construct($block);
+        $this->_displayViewDirs[] = 'vidoes';
+    }
 
     /**
      * Display video using info from youtube API
@@ -24,7 +39,7 @@ class Video extends String_
             if (!($videoInfo = $this->_cache($content))) {
                 return 'Video does not exist, it may have been removed from youtube';
             }
-            return $this->_renderDisplayView($options, ['video' => $videoInfo]);
+            return $this->_renderDisplayView($options, $videoInfo);
         } else {
             return '';
         }

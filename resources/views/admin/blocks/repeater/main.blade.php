@@ -1,5 +1,5 @@
 <div class="row">
-    <h4 class="col-sm-2 text-right">{{ $label }}</h4>
+    <h4 class="col-sm-12">{{ $label }}</h4>
 
     <div class="col-sm-12 {!! $renderedRows ? '' : ' hide' !!}">
         <table id="repeater_{!! $content !!}" class="table table-bordered repeater-table">
@@ -17,7 +17,7 @@
                     {!! Form::hidden($name . '[parent_repeater_id]', $_block->getRepeaterId()) !!}
                     {!! Form::hidden($name . '[parent_repeater_row_id]', $_block->getRepeaterRowId()) !!}
                     <button type="button" class="btn repeater_button" data-repeater="{{ $content }}" data-block="{{ $_block->id }}" data-page="{{ $_block->getPageId() }}">
-                        Add Another Repeater Block
+                        {{ 'Add ' . ($itemName ?: 'Another Repeater Block') }}
                     </button>
                 </div>
             </div>

@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Libraries\Blocks;
 
 use CoasterCms\Helpers\Cms\Page\Path;
-use CoasterCms\Libraries\Builder\PageBuilder;
+use PageBuilder;
 use CoasterCms\Libraries\Builder\ViewClasses\PageDetails;
 use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\Page;
@@ -9,6 +9,17 @@ use CoasterCms\Models\PageBlock;
 
 class Selectpages extends Selectmultiple
 {
+
+    /**
+     * @var string
+     */
+    protected $_renderDataName = 'pages';
+
+    /**
+     * @var string
+     */
+    protected $_renderRepeatedItemName = 'page';
+
     /**
      * Display pages selected with view
      * Also reverse lookup option, find pages with the current page selected
@@ -48,7 +59,7 @@ class Selectpages extends Selectmultiple
             }
         }
 
-        return $this->_renderDisplayView($options, ['pages' => $pages], 'page');
+        return $this->_renderDisplayView($options, $pages);
     }
 
     /**
@@ -57,7 +68,7 @@ class Selectpages extends Selectmultiple
      */
     public function displayDummy($options)
     {
-        return $this->_renderDisplayView($options, ['pages' => [new Page]], 'page');
+        return $this->_renderDisplayView($options, [new PageDetails(0)]);
     }
 
     /**

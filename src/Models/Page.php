@@ -93,8 +93,11 @@ class Page extends Eloquent
         return implode('/', array_unique($itemNames));
     }
 
-    public function groupIds()
+    public function groupIds($clearCache = false)
     {
+        if ($clearCache) {
+            PageGroupPage::clearGroupIds();
+        }
         return PageGroupPage::getGroupIds($this->id);
     }
 
@@ -248,7 +251,7 @@ class Page extends Eloquent
         $list = array();
         foreach ($paths as $page_id => $path) {
             if ((!isset($options['exclude_home']) || $path->fullUrl != '/') && !is_null($path->fullUrl)) {
-                $list[$page_id] = $path->fullName;
+                $list[$page_id] = html_entity_decode($path->fullName); // fix form selects which have another html encode on
             }
         }
 
@@ -335,6 +338,57 @@ class Page extends Eloquent
             return View::make('coaster::partials.pages.ol', array('pages_li' => $pages_li, 'level' => $level))->render();
         }
         return null;
+    }
+
+    /**
+     * @param array $pages
+     */
+    public static function sortPages($pages)
+    {
+        $rootPages = Page::join('page_lang', 'page_lang.page_id', '=', 'pages.id')->where(function ($query) {
+            $query->whereIn('page_lang.url', ['', '/']);
+        })->where('page_lang.language_id', '=', Language::current())->where('link', '=', 0)->get(['pages.*'])->all();
+        $rootPageIds = array_map(function($rootPage) {return $rootPage->id;}, $rootPages);
+        $order = [];
+        $changeUnderParentIds = [];
+
+        foreach ($pages as $pageId => $parent) {
+            $currentPage = Page::preload($pageId);
+            if ($currentPage->exists) {
+
+                $parent = (empty($parent) || $parent == 'null') ? 0 : $parent;
+                if ($currentPage->parent != $parent && $parent != 0 && (in_array($currentPage->id, $rootPageIds) || in_array($parent, $rootPageIds))) {
+                    abort(500, 'homepage can\'t be moved under other pages and other pages to be moved under it');
+                }
+
+                // get the order value for current page
+                $order[$parent] = isset($order[$parent]) ? $order[$parent] : 0;
+                $order[$parent]++;
+
+                if (($currentPage->parent != $parent || $currentPage->order != $order[$parent])) {
+                    if (Auth::action('pages.sort', ['page_id' => $parent]) && Auth::action('pages.sort', ['page_id' => $currentPage->parent])) {
+                        $parentPageName = $parent ? PageLang::preload($parent)->name : 'top level';
+                        $pageName = PageLang::preload($pageId)->name;
+                        if ($parent != $currentPage->parent) {
+                            array_push($changeUnderParentIds, $parent, $currentPage->parent);
+                            AdminLog::new_log('Moved page \'' . $pageName . '\' under \'' . $parentPageName . '\' (Page ID ' . $currentPage->id . ')');
+                        }
+                        if (!in_array($parent, $changeUnderParentIds)) {
+                            $changeUnderParentIds[] = $parent;
+                            AdminLog::new_log('Re-ordered pages in \'' . $parentPageName . '\' (Page ID ' . $currentPage->id . ')');
+                        }
+                        $changeUnderParentIds = array_unique($changeUnderParentIds);
+                        $currentPage->parent = $parent;
+                        $currentPage->order = $order[$parent];
+                        $currentPage->save();
+                    } else {
+                        abort(500, 'error, can\'t move page to new location');
+                    }
+                }
+            } else {
+                abort(500, 'error, moved page no longer exists');
+            }
+        }
     }
 
     public function delete()
@@ -473,16 +527,20 @@ class Page extends Eloquent
         }
 
         //template
+        $theme = Theme::find(config('coaster::frontend.theme'));
         if (empty($this->template)) {
             $this->template = config('coaster::admin.default_template');
             $parentPage = static::find($this->parent);
-            if ($parentPage && $parentTemplate = Template::find($parentPage->template)) {
-                $this->template = $parentTemplate->child_template;
+            if ($parentPage && $parentTemplate = $theme->templateById($parentPage->template)) {
+                $this->template = $parentTemplate->child_template ?: $this->template;
             }
         }
-        $templateData = Template::find($this->template);
         $templates = Theme::get_template_list($this->template);
-        $templateSelectHidden = !empty($templateData) ? $templateData->hidden : false;
+        if ($theme && $templateData = $theme->templateById($this->template)) {
+            $templateSelectHidden = (bool) $templateData->getAttribute('hidden');
+        } else {
+            $templateSelectHidden = false;
+        }
 
         // menu selection
         $menus = Menu::all();
@@ -719,6 +777,7 @@ class Page extends Eloquent
         foreach (array_diff($newGroupIds, $currentGroupIds) as $addGroupId) {
             $this->groups()->attach($addGroupId);
         }
+        $this->groupIds(true); // clear old groups as data may be used again in page info view
 
         /*
          * Save other page info

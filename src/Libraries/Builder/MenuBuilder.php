@@ -10,142 +10,184 @@ use View;
 
 class MenuBuilder
 {
+
+    /**
+     * @var int
+     */
+    public $rootPageId;
+
+    /**
+     * @var MenuItem[]
+     */
+    public $rootItems;
+
+    /**
+     * @var int
+     */
+    public $subLevels;
+
+    /**
+     * @var int
+     */
+    public $startLevel;
+
     /**
      * @var array
      */
-    protected static $_options;
+    public $options;
 
     /**
-     * @param array $menuName
+     * @var array
+     */
+    public $activePageId;
+
+    /**
+     * @var
+     */
+    public $activeParentIds;
+
+    /**
+     * @param string $menuName
      * @param array $options
      * @return string
      */
     public static function menu($menuName, $options = [])
     {
-        $menu = Menu::get_menu($menuName);
-        if (!empty($menu)) {
-            $options['menu'] = $menu;
-            self::_setOptions($options);
-            return self::_buildMenu($menu->items()->get(), 0, 1);
+        if ($menu = Menu::preload($menuName)) {
+            return (new static($menu->items()->get(), 0, 0, 1, ['menu' => $menu] + $options))->render();
         } else {
             return '';
         }
     }
 
     /**
-     * @param int $pageId
-     * @param int $subMenuLevel
-     * @param int $subLevels
-     * @param array $options
-     * @return string
-     */
-    public static function pageMenu($pageId, $subMenuLevel = 1, $subLevels = 0, $options = [])
-    {
-        if ($subPages = Page::getChildPages($pageId)) {
-            self::_setOptions($options);
-            return self::_buildMenu($subPages, $pageId, $subMenuLevel, $subLevels);
-        } else {
-            return '';
-        }
-    }
-
-    /**
-     * @param array $items
      * @param int $parentPageId
-     * @param int $subMenuLevel
+     * @param int $startLevel
      * @param int $subLevels
      * @param array $options
      * @return string
      */
-    public static function customMenu($items, $parentPageId = 0, $subMenuLevel = 1, $subLevels = 0, $options = [])
+    public static function pageMenu($parentPageId, $startLevel = 1, $subLevels = 0, $options = [])
     {
-        self::_setOptions($options);
-        return self::_buildMenu($items, $parentPageId, $subMenuLevel, $subLevels);
+        if ($subPages = Page::getChildPages($parentPageId)) {
+            return (new static($subPages, $parentPageId, $startLevel, $subLevels, $options))->render();
+        } else {
+            return '';
+        }
     }
 
     /**
+     * @param Page[]|MenuItem[]|Collection $items
+     * @param int $parentPageId
+     * @param int $startLevel
+     * @param int $subLevels
+     * @param array $options
+     * @return string
+     */
+    public static function customMenu($items, $parentPageId = 0, $startLevel = 1, $subLevels = 0, $options = [])
+    {
+        return (new static($items, $parentPageId, $startLevel, $subLevels, $options))->render();
+    }
+
+    /**
+     * MenuBuilder constructor.
+     * @param Page[]|MenuItem[]|Collection $menuItems
+     * @param int $rootPageId
+     * @param int $subLevels
+     * @param int $startLevel
      * @param array $options
      */
-    protected static function _setOptions($options)
+    public function __construct($menuItems, $rootPageId = 0, $subLevels = 0, $startLevel = 1, $options = [])
     {
-        self::$_options = array_merge([
+        if (is_a($menuItems, Collection::class)) {
+            $menuItems = $menuItems->all();
+        }
+
+        $this->rootPageId = $rootPageId;
+        $this->rootItems = $this->_convertPagesToItems($menuItems);
+        $this->subLevels = $subLevels;
+        $this->startLevel = $startLevel;
+
+        $this->options = array_merge([
             'view' => 'default',
             'canonicals' => config('coaster::frontend.canonicals')
         ], $options);
     }
 
     /**
+     * @return string
+     */
+    public function render()
+    {
+        $menuItems = $this->_buildMenuItems($this->rootItems, $this->rootPageId, $this->startLevel, $this->subLevels);
+        return $this->_getRenderedView('menu', ['items' => $menuItems]);
+    }
+
+    /**
      * @param Page[]|MenuItem[] $items
+     * @param MenuItem|null $baseItem
+     * @return MenuItem[]
+     */
+    protected function _convertPagesToItems($items, $baseItem = null)
+    {
+        $baseItem = $baseItem ?: new MenuItem;
+        foreach ($items as $k => $item) {
+            if (is_a($item, Page::class)) {
+                $spoofMenuItem = clone $baseItem;
+                $spoofMenuItem->page_id = $item->id;
+                $spoofMenuItem->sub_levels = null;
+                $spoofMenuItem->custom_name = $spoofMenuItem->getCustomName($spoofMenuItem->page_id);
+                $items[$k] = $spoofMenuItem;
+            }
+        }
+        return $items;
+    }
+
+    /**
+     * @param MenuItem[] $items
      * @param int $parentPageId
      * @param int $level
      * @param int $subLevels
      * @return string
      */
-    protected static function _buildMenu($items, $parentPageId, $level = 1, $subLevels = 0)
+    protected function _buildMenuItems($items, $parentPageId, $level = 1, $subLevels = 0)
     {
-        // convert page models to menu items and remove non-live pages
-        foreach ($items as $k => $item) {
-            if (is_a($item, Page::class)) {
-                $pageId = $item->id;
-                $items[$k] = new MenuItem;
-                $items[$k]->page_id = $item->id;
-                $items[$k]->sub_levels = 0;
-                $items[$k]->custom_name = '';
-            } else {
-                $pageId = $item->page_id;
-            }
-            $pageId = Path::unParsePageId($pageId);
-            $page = Page::preload($pageId);
-            if (!$page->exists || !$page->is_live()) {
-                unset($items[$k]);
-            }
-        }
-
-        $pageParents = [];
-        $pageLevels = PageBuilder::getData('pageLevels')?:[];
-        foreach ($pageLevels as $k => $parentPage) {
-            if ($k > 0) {
-                $pageParents[] = $parentPage->page_id;
-            }
-        }
-        $currentPage = PageBuilder::getData('page')?:new Page;
+        // remove deleted pages and hidden ones from array
+        $items = $this->_returnExistingLiveItems($items);
 
         $total = count($items);
-        $menuItems = '';
-        $defaultSubLevels = $subLevels;
-        if (is_a($items, Collection::class)) {
-            $items = $items->all();
-        }
-        $items = array_values($items);
+        $renderedMenuItems = '';
+
         foreach ($items as $count => $item) {
             $isFirst = ($count == 0);
             $isLast = ($count == $total - 1);
 
             $pageId = Path::unParsePageId($item->page_id);
-            
-            $active = ($currentPage->id == $pageId || in_array($pageId, $pageParents));
-            $itemData = new MenuItemDetails($item, $active, $parentPageId, self::$_options['canonicals']);
+            $active = $this->_isActivePage($pageId); // or active parent page
+            $itemData = new MenuItemDetails($item, $active, $parentPageId, $this->options['canonicals']);
 
-            $subMenu = '';
-            $subLevels = $item->sub_levels > 0 ? $item->sub_levels : $defaultSubLevels;
-            if ($subLevels > 0) {
+            $renderedSubMenu = '';
+            if ($subLevelsToRender = is_null($item->sub_levels) ? $subLevels : $item->sub_levels) {
                 if ($subPages = Page::category_pages($pageId)) {
-                    $subMenu = self::_buildMenu($subPages, $pageId, $level + 1, $subLevels - 1);
+                    $subPages = $this->_convertPagesToItems($subPages, $item);
+                    $renderedSubMenu = $this->_buildMenuItems($subPages, $pageId, $level + 1, $subLevelsToRender - 1);
                 }
             }
 
-            if (!empty($subMenu)) {
-                $menuItems .= self::_getRenderedView('submenu_' . $level, ['item' => $itemData, 'items' => $subMenu, 'is_first' => $isFirst, 'is_last' => $isLast, 'count' => $count + 1, 'total' => $total, 'level' => $level, 'further_levels' => $subLevels]);
-            } else {
-                $menuItems .= self::_getRenderedView('item', ['item' => $itemData, 'is_first' => $isFirst, 'is_last' => $isLast, 'count' => $count, 'total' => $total, 'level' => $level]);
-            }
+            $view = $renderedSubMenu ? 'submenu_' . $level : 'item';
+            $renderedMenuItems .= $this->_getRenderedView($view, [
+                'item' => $itemData,
+                'items' => $renderedSubMenu,
+                'is_first' => $isFirst,
+                'is_last' => $isLast,
+                'count' => $count + 1,
+                'total' => $total,
+                'level' => $level,
+                'further_levels' => $subLevelsToRender
+            ]);
         }
 
-        if ($level == 1) {
-            return self::_getRenderedView('menu', ['items' => $menuItems]);
-        } else {
-            return $menuItems;
-        }
+        return $renderedMenuItems;
     }
 
     /**
@@ -153,14 +195,61 @@ class MenuBuilder
      * @param array $data
      * @return string
      */
-    protected static function _getRenderedView($viewPath, $data = [])
+    protected function _getRenderedView($viewPath, $data = [])
     {
-        $viewPath = 'themes.' . PageBuilder::getData('theme') . '.menus.' . self::$_options['view'] . '.' . $viewPath;
+        $viewPath = 'themes.' . PageBuilderFacade::getData('theme') . '.menus.' . $this->options['view'] . '.' . $viewPath;
         if (View::exists($viewPath)) {
-            $data = array_merge(self::$_options, $data);
-            return View::make($viewPath, $data)->render();
+            return View::make($viewPath, array_merge($this->options, $data))->render();
         } else {
             return 'View not found (' . $viewPath . ')';
+        }
+    }
+
+    /**
+     * @param MenuItem[] $items
+     * @return MenuItem[]
+     */
+    protected function _returnExistingLiveItems($items)
+    {
+        foreach ($items as $k => $item) {
+            $pageId = Path::unParsePageId($item->page_id);
+            if ($item->isHiddenPage($pageId)) {
+                unset($items[$k]);
+                continue;
+            }
+            $page = Page::preload($pageId);
+            if (!$page->exists || !$page->is_live()) {
+                unset($items[$k]);
+            }
+        }
+        return array_values($items);
+    }
+
+    /**
+     * @param $pageId
+     * @return bool
+     */
+    protected function _isActivePage($pageId)
+    {
+        $this->_loadActivePages();
+        return ($pageId == $this->activePageId || in_array($pageId, $this->activeParentIds));
+    }
+
+    /**
+     * @param bool $force
+     */
+    protected function _loadActivePages($force = false)
+    {
+        if ($force || !isset($this->activePageId)) {
+            $this->activeParentIds = [];
+            $pageLevels = PageBuilderFacade::getData('pageLevels') ?: [];
+            foreach ($pageLevels as $k => $parentPage) {
+                if ($k > 0) { // ignore home page
+                    $this->activeParentIds[] = $parentPage->page_id;
+                }
+            }
+            $page = PageBuilderFacade::getData('page') ?: new Page;
+            $this->activePageId = (int) $page->id;
         }
     }
 

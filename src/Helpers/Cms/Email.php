@@ -1,7 +1,6 @@
 <?php namespace CoasterCms\Helpers\Cms;
 
 use CoasterCms\Exceptions\CmsPageException;
-use CoasterCms\Libraries\Builder\PageBuilder;
 use Illuminate\Mail\Message;
 use Mail;
 use Validator;
@@ -21,12 +20,9 @@ class Email
         ];
 
         // split to addresses
-        if (strpos($emailDetails['to'], ',') !== false) {
-            $emailDetails['to'] = explode(',', $emailDetails['to']);
-        }
+        $emailDetails['to'] = explode(',', $emailDetails['to']);
+        $emailCheck = Validator::make($emailDetails, ['from' => 'email|required', 'to' => 'required', 'to.*' => 'required|email']);
 
-        $emailCheck = Validator::make($emailDetails, ['from' => 'email|required']);
-        $emailCheck->each('to.*', 'required|email');
         if ($emailCheck->passes()) {
 
             // get templates

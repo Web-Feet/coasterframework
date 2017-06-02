@@ -1,9 +1,9 @@
 <?php namespace CoasterCms\Http\Controllers\AdminControllers;
 
 use Auth;
-use CoasterCms\Helpers\Cms\Theme\BlockUpdater;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Libraries\Builder\AssetBuilder;
+use CoasterCms\Libraries\Import\BlocksImport;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\BlockBeacon;
@@ -61,47 +61,46 @@ class ThemesController extends Controller
             foreach (Theme::all() as $databaseTheme) {
                 $databaseThemes[$databaseTheme->theme] = $databaseTheme;
             }
-            foreach (scandir($themesPath) as $themeFile) {
-                if (!is_dir($themesPath . '/' . $themeFile) && substr($themeFile, -4) == '.zip') {
-                    Theme::unzip($themeFile);
-                }
-            }
             foreach (scandir($themesPath) as $themeFolder) {
-                if (is_dir($themesPath . '/' . $themeFolder) && strpos($themeFolder, '.') !== 0) {
-                    $theme = new \stdClass;
-                    $theme->name = $themeFolder;
+                if (strpos($themeFolder, '.') !== 0) {
 
+                    $theme = new \stdClass;
+                    if (isset($databaseThemes[$themeFolder])) {
+                        $theme->id = $databaseThemes[$themeFolder]->id;
+                        $theme->install = 0;
+                        $theme->active = ($databaseThemes[$themeFolder]->id == config('coaster::frontend.theme'));
+                    } else {
+                        $theme->id = 0;
+                        $theme->install = 1;
+                        $theme->active = false;
+                    }
                     $theme->image = 'https://placeholdit.imgix.net/~text?txtsize=19&bg=efefef&txtclr=aaaaaa%26text%3Dno%2Bimage&txt=no+image&w=200&h=150';
-                    $publicLocations = [public_path('themes/' . $themeFolder), $themesPath . '/' . $themeFolder . '/public'];
-                    foreach ($publicLocations as $k => $publicLocation) {
-                        if (is_dir($publicLocation)) {
-                            foreach (scandir($publicLocation) as $file) {
-                                if (!is_dir($publicLocation. '/'. $file)) {
-                                    if (strpos($file, 'screenshot.') === 0) {
+
+                    if (is_dir($themesPath . '/' . $themeFolder)) {
+                        $theme->name = $themeFolder;
+                        $publicLocations = [public_path('themes/' . $themeFolder), $themesPath . '/' . $themeFolder . '/public'];
+                        foreach ($publicLocations as $k => $publicLocation) {
+                            if (is_dir($publicLocation)) {
+                                foreach (scandir($publicLocation) as $file) {
+                                    if (!is_dir($publicLocation . '/' . $file) && strpos($file, 'screenshot.') === 0) {
                                         if ($k == 0) {
                                             $theme->image = \Croppa::url(URL::to('themes/' . $themeFolder . '/' . $file), 252, 142);
                                         } else {
                                             $saveInCache = public_path('coaster/tmp/themes/' . $themeFolder);
                                             @mkdir($saveInCache, 0777, true);
-                                            copy($publicLocation . '/'.  $file, $saveInCache . '/'.  $file);
+                                            copy($publicLocation . '/' . $file, $saveInCache . '/' . $file);
                                             $theme->image = \Croppa::url(URL::to('coaster/tmp/themes/' . $themeFolder . '/' . $file), 252, 142);
                                         }
                                     }
                                 }
                             }
                         }
+                    } elseif (substr($themeFolder, -4) === '.zip') {
+                        $theme->name = substr($themeFolder, 0, -4);
+                    } else {
+                        continue;
                     }
 
-                    if (isset($databaseThemes[$themeFolder])) {
-                        $theme->id = $databaseThemes[$themeFolder]->id;
-                        if ($databaseThemes[$themeFolder]->id != config('coaster::frontend.theme')) {
-                            $theme->activate = 1;
-                        } else {
-                            $theme->active = 1;
-                        }
-                    } else {
-                        $theme->install = 1;
-                    }
                     $thumbs[] = $theme;
                 }
             }
@@ -113,6 +112,33 @@ class ThemesController extends Controller
             'export' => Auth::action('themes.export'),
             'edit' => Auth::action('themes.edit')
         ];
+
+        foreach ($thumbs as $thumb) {
+            $buttons = [];
+            if ($thumb->install) {
+                if ($theme_auth['manage']) {
+                    $buttons[] = ['classes' => ['installTheme'], 'glyphicon' => 'cog', 'label' => 'Install'];
+                }
+            } elseif ($thumb->id) {
+                if ($theme_auth['manage']) {
+                    $buttons[] = ['href' => '', 'classes' => ['activateTheme', 'activeSwitch', ($thumb->active || $thumb->install) ? 'hidden' : ''], 'glyphicon' => 'ok', 'label' => 'Activate'];
+                }
+                if ($theme_auth['edit']) {
+                    $buttons[] = ['href' => route('coaster.admin.themes.edit', ['themeId' => $thumb->id]), 'glyphicon' => 'pencil', 'label' => 'Edit'];
+                }
+                if ($theme_auth['export']) {
+                    $buttons[] = ['classes' => ['exportTheme'], 'glyphicon' => 'download', 'label' => 'Export'];
+                }
+                if ($theme_auth['update']) {
+                    $buttons[] = ['href' => route('coaster.admin.themes.update', ['themeId' => $thumb->id]), 'glyphicon' => 'flag', 'label' => 'Review Block Changes'];
+                }
+            }
+
+            $thumb->buttons = [];
+            foreach ($buttons as $button) {
+                $thumb->buttons[] = View::make('coaster::partials.themes.thumbs.button', $button + ['href' => '', 'classes' => [], 'glyphicon' => '', 'label' => '', 'thumb' => $thumb]);
+            }
+        }
 
         $themes_installed = View::make('coaster::partials.themes.thumbs', ['thumbs' => $thumbs, 'auth' => $theme_auth]);
 
@@ -149,12 +175,7 @@ class ThemesController extends Controller
         }
 
         if (!empty($request['install'])) {
-            if (!empty($request['check'])) {
-                $response = Theme::install($request['theme'], ['check' => 1]);
-            } else {
-                $response = Theme::install($request['theme'], ['withPageData' => $request['withPageData']]);
-            }
-            return json_encode($response);
+            return Theme::install($request['theme'], ['check' => !empty($request['check']), 'withPageData' => !empty($request['withPageData'])]);
         }
 
         return null;
@@ -185,35 +206,71 @@ class ThemesController extends Controller
 
     public function getUpdate($themeId)
     {
-        $theme = Theme::find($themeId);
-        BlockUpdater::processFiles($theme);
+        $theme = Theme::find($themeId) ?: new Theme();
+        $themeErrors = [];
 
-        $this->layoutData['content'] = View::make('coaster::pages.themes.update',
-            [
+        try {
+            $blocksImport = new BlocksImport();
+            $blocksImport->setTheme($theme)->run();
+            if ($blocksImport->getErrorMessages()) {
+                throw new \Exception;
+            }
+        } catch (\Exception $e) {
+            $themeErrors = $e->getMessage() ? [$e->getMessage()] : $blocksImport->getErrorMessages();
+        }
+
+        $importBlocks = $blocksImport->getBlocksCollection();
+
+        $this->layoutData['content'] = View::make('coaster::pages.themes.update', [
+                'themeErrors' => $themeErrors,
                 'theme' => $theme,
-                'blocksData' => BlockUpdater::getMainTableData(),
+                'importBlocks' => $importBlocks,
+                'importBlocksList' => $importBlocks->getBlockListInfo(),
                 'typeList' => $this->_typeList(),
                 'categoryList' => $this->_categoryList(),
-                'templateList' => BlockUpdater::getTemplateList()
+                'templateList' => []
             ]
         );
     }
 
     public function postUpdate($themeId)
     {
-        $blocks = Request::input('block');
-        $theme = Theme::find($themeId);
+        $postBlocks = Request::input('block');
+        $theme = Theme::find($themeId) ?: new Theme();
+        $themeErrors = [];
 
-        if (!empty($blocks)) {
-            BlockUpdater::updateTheme($theme, $blocks);
+        try {
+            $blocksImport = new BlocksImport();
+            $blocksImport->setTheme($theme)->run();
+            $importBlocks = $blocksImport->getBlocksCollection();
+            if ($blocksImport->getErrorMessages()) {
+                throw new \Exception;
+            }
+
+            $importBlocks->setScope('form'); // all form data has priority
+            $updateTemplates = [];
+            foreach ($postBlocks as $blockName => $postData) {
+                $updateTemplates[$blockName] = array_key_exists('update_templates', $postData) ? $postData['update_templates'] : 0;
+                $postData['globalData'] = array_key_exists('globalData', $postData) ? $postData['globalData'] : [];
+                $postData['globalData'] += [
+                    'show_in_global' => 0,
+                    'show_in_pages' => 0
+                ];
+                $importBlocks->getBlock($blockName)
+                    ->setBlockData($postData['blockData'])
+                    ->setGlobalData($postData['globalData']);
+            }
+            $blocksImport->save($updateTemplates);
+            $blocksImport->cleanCsv();
+        } catch (\Exception $e) {
+            $themeErrors = $e->getMessage() ? [$e->getMessage()] : $blocksImport->getErrorMessages();
         }
 
-        $this->layoutData['content'] = View::make('coaster::pages.themes.update',
-            [
-                'theme' => $theme,
-                'saved' => true
-            ]
-        );
+        $this->layoutData['content'] = View::make('coaster::pages.themes.update', [
+            'themeErrors' => $themeErrors,
+            'theme' => $theme,
+            'saved' => true
+        ]);
     }
 
     public function getForms($template = null)
@@ -230,13 +287,16 @@ class ThemesController extends Controller
                 foreach (scandir($themes) as $theme) {
                     if (is_dir($themes . DIRECTORY_SEPARATOR . $theme) && $theme != '.' && $theme != '..') {
 
-                        $forms = $themes . DIRECTORY_SEPARATOR . $theme . '/blocks/forms';
-                        if (is_dir($forms)) {
-                            foreach (scandir($forms) as $form) {
-                                if (!is_dir($forms . DIRECTORY_SEPARATOR . $form)) {
-                                    $form_file = explode(".", $form);
-                                    if (!empty($form_file[0])) {
-                                        $formTemplates[] = $form_file[0];
+                        $formsDirs = [$themes . DIRECTORY_SEPARATOR . $theme . '/blocks/form'];
+                        $formsDirs[] = $formsDirs[0].'s';
+                        foreach ($formsDirs as $forms) {
+                            if (is_dir($forms)) {
+                                foreach (scandir($forms) as $form) {
+                                    if (!is_dir($forms . DIRECTORY_SEPARATOR . $form)) {
+                                        $form_file = explode(".", $form);
+                                        if (!empty($form_file[0])) {
+                                            $formTemplates[] = $form_file[0];
+                                        }
                                     }
                                 }
                             }

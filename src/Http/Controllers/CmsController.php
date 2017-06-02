@@ -4,14 +4,15 @@ use CoasterCms\Events\Cms\GeneratePage\LoadedPageResponse;
 use CoasterCms\Events\Cms\GeneratePage\LoadErrorTemplate;
 use CoasterCms\Events\Cms\GeneratePage\LoadPageTemplate;
 use CoasterCms\Exceptions\CmsPageException;
+use CoasterCms\Helpers\Cms\File\SecureUpload;
 use CoasterCms\Helpers\Cms\Html\DOMDocument;
-use CoasterCms\Helpers\Cms\Page\Search;
-use CoasterCms\Libraries\Builder\PageBuilder;
+use CoasterCms\Helpers\Cms\Page\PageCache;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\PageRedirect;
 use CoasterCms\Models\PageVersionSchedule;
 use Exception;
 use Illuminate\Routing\Controller;
+use PageBuilder;
 use Request;
 use Response;
 use View;
@@ -42,6 +43,23 @@ class CmsController extends Controller
         $this->headers = [];
         $this->responseCode = 200;
         $this->responseContent = '';
+    }
+
+    /**
+     * @param string $file
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function getSecureUpload($file)
+    {
+        $secureFilePath = SecureUpload::getBasePath() . '/' . $file;
+
+        if (file_exists($secureFilePath)) {
+            $size = filesize($secureFilePath);
+            $type = \GuzzleHttp\Psr7\mimetype_from_filename($secureFilePath);
+            return response()->download($secureFilePath, null, ['size' => $size, 'Content-Type' => $type], null);
+        } else {
+            return $this->generatePage();
+        }
     }
 
     /**
@@ -99,19 +117,23 @@ class CmsController extends Controller
             event(new LoadPageTemplate($templatePath));
             if (View::exists($templatePath)) {
                 $this->_setHeader('Content-Type', PageBuilder::getData('contentType'));
-                $this->responseContent = View::make($templatePath)->render();
+                $this->responseContent = $this->_getRenderedTemplate($templatePath);
             } else {
                 throw new Exception('cms page found with non existent template - '.$templatePath, 500);
             }
 
             // if declared as a search page, must have search block
-            if (Search::searchBlockRequired() && !Search::searchBlockExists()) {
-                throw new Exception('cms page found without search function', 404);
+            if (PageBuilder::getData('searchRequired') && !PageBuilder::logs('method')->has('search')) {
+                throw new Exception('No search function implemented on this page', 404);
             }
 
         } catch (CmsPageException $e) {
 
-            $this->responseContent = $e->getAlternateResponse();
+            if ($e->getAlternateResponse()) {
+                $this->responseContent = $e->getAlternateResponse();
+            } else {
+                $this->_setErrorContent($e);
+            }
 
         } catch (Exception $e) {
 
@@ -144,6 +166,23 @@ class CmsController extends Controller
         }
 
         return $response;
+    }
+
+    /**
+     * @param string $templatePath
+     * @return string
+     */
+    protected function _getRenderedTemplate($templatePath)
+    {
+        $pageId = PageBuilder::pageId();
+        $hash = hash('haval256,3', serialize(Request::input()));
+        $renderedTemplate = PageCache::remember($pageId, $hash, function () use ($templatePath) {
+            return View::make($templatePath)->render();
+        });
+        if (!PageBuilder::canCache()) {
+            PageCache::forget($pageId, $hash);
+        }
+        return $renderedTemplate;
     }
 
     /**

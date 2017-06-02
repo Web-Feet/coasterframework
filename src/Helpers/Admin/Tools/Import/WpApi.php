@@ -6,9 +6,10 @@ use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Page;
-use CoasterCms\Models\TemplateBlock;
+use CoasterCms\Models\ThemeTemplateBlock;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\PageBlockRepeaterData;
+use CoasterCms\Models\BlockRepeater;
 use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\Language;
@@ -45,12 +46,27 @@ class WpApi
 
     public function setUpCommentsBlocks()
     {
-      $commentStatusBlock = Block::where('name', '=', 'comment_status')->first();
+      $commentBlocks = collect([]);
+      $commentsBlock = $this->getBlock('comments', 'repeater', 'Comments', '');
+      $commentBlocks->push($this->getBlock('comment_content', 'text', 'Comment Content', ''));
+
+      BlockRepeater::unguard();
+      $rb = BlockRepeater::firstOrCreate(['block_id' => $commentsBlock->id]);
+      BlockRepeater::reguard();
+
+      $commentStatusBlock = $this->getBlock('comment_status', 'select', 'Comment Status', '');
       BlockSelectOption::unguard();
       $this->commentApprovedId = BlockSelectOption::firstOrCreate(['block_id' => $commentStatusBlock->id, 'option' => 'Approved', 'value' => 'approved'])->id;
       $this->commentNotApprovedId = BlockSelectOption::firstOrCreate(['block_id' => $commentStatusBlock->id, 'option' => 'Awaiting Approval', 'value' => 'awaiting approval'])->id;
       BlockSelectOption::reguard();
+      $commentBlocks->push($commentStatusBlock);
+      $commentBlocks->push($this->getBlock('comment_author', 'string', 'Comment Author', ''));
+      $commentBlocks->push($this->getBlock('comment_date', 'datetime', 'Comment Date', ''));
+      $commentBlocks->push($this->getBlock('comment_url', 'string', 'Comment Author', ''));
+      $commentBlocks->push($this->getBlock('comment_parent', 'string', 'Comment Parent', ''));
 
+      $rb->blocks = $commentBlocks->map(function($item){ return $item->id;})->implode(',');
+      $rb->save();
     }
 
     public function featuredImage($data, $pageLang)
@@ -60,7 +76,7 @@ class WpApi
             $imData = head($data->_embedded->{"wp:featuredmedia"});
 
             if ( ! empty($imData->source_url) && $imData->media_type == 'image') {
-              $imageBlock = $this->getBlock('image', 'image', 'Main Image');
+              $imageBlock = $this->getBlock('image', 'image', 'Image');
               $im = $this->saveImageLocally($imData->source_url);
               $alt = empty($imData->alt_text) ? $pageLang->name : $imData->alt_text;
               $imageBlock->setPageId($pageLang->page_id)->getTypeObject()->submit(['source' => $im, 'alt' => $alt]);
@@ -75,7 +91,7 @@ class WpApi
     }
 
 
-    public function getBlock($name, $type = 'selectmultiplewnew', $label = '', $note = '')
+    public function getBlock($name, $type = 'selectmultiplewnew', $label = '', $note = '', $category_id = 1)
     {
       if (isset($this->blocks[$name]))
       {
@@ -83,11 +99,11 @@ class WpApi
       }
       $label = empty($label) ? str_replace('_', ' ', $name) : $label;
       Block::unguard();
-      $block = Block::firstOrCreate(['name' => $name, 'label' => ucwords($label), 'note' => $note, 'category_id' => 1, 'type' => $type]);
+      $block = Block::firstOrCreate(['name' => $name, 'label' => ucwords($label), 'note' => $note, 'category_id' => $category_id, 'type' => $type]);
       Block::reguard();
-      TemplateBlock::unguard();
-      TemplateBlock::firstOrCreate(['template_id' => $this->getTemplateId('item_template'), 'block_id' => $block->id]);
-      TemplateBlock::reguard();
+      ThemeTemplateBlock::unguard();
+      ThemeTemplateBlock::firstOrCreate(['theme_template_id' => $this->getTemplateId('item_template'), 'block_id' => $block->id]);
+      ThemeTemplateBlock::reguard();
       $this->blocks[$name] = $block;
       return $block;
     }
@@ -108,7 +124,7 @@ class WpApi
 
     public function getCategory($data, $page_id)
     {
-        $catBlock = $this->getBlock($this->category_block_name);
+        $catBlock = $this->getBlock($this->category_block_name, 'selectmultiplewnew', 'Categories', '', 2);
 
         $cats = collect($data)->collapse()->where('taxonomy', 'category')->all();
 
@@ -117,7 +133,7 @@ class WpApi
 
     private function syncTags($page, $tags)
     {
-        $tagBlock = $this->getBlock($this->tag_block_name);
+        $tagBlock = $this->getBlock($this->tag_block_name, 'selectmultiplewnew', 'Tags', '', 2);
         $tags = collect($tags)->collapse()->where('taxonomy', 'post_tag')->all();
 
         return $this->loopDataAndAddToSelectMultipleWNewBlock($tagBlock, $tags, $page->id);
@@ -164,7 +180,7 @@ class WpApi
       $groupPageLang->url = str_slug($groupPageLang->name);
       $groupPageLang->save();
 
-      $titleBlock = $this->getBlock('title', 'string', 'Main Title');
+      $titleBlock = $this->getBlock('title', 'string', 'Title');
       $titleBlock->setPageId($groupPage->id)->getTypeObject()->submit($groupPageLang->name);
 
       return $groupPage;
@@ -242,13 +258,15 @@ class WpApi
         {
           $rowData['comment_author'] = $comment->author_name;
           $rowData['comment_url'] = $comment->author_url;
-          $rowData['comment_message'] = $comment->content->rendered;
+          $rowData['comment_content'] = $comment->content->rendered;
           $rowData['comment_status'] = $comment->status;
 
           $rowData['comment_parent'] = isset($idsInserted[$comment->parent]) ? $idsInserted[$comment->parent] : 0;
 
           $rowData['comment_date'] = $this->carbonDate($comment->date)->format('Y-m-d H:i:s');
+
           Block::preloadClone('comments')->setPageId($page->id)->getTypeObject()->insertRow($rowData);
+
           $check = PageBlockRepeaterData::where('content', '=', $comment->content->rendered)->first();
           $idsInserted[$comment->id] = $check->row_id;
           $ret .= 'Comment: '.$comment->content->rendered.', ';
@@ -269,15 +287,15 @@ class WpApi
       $meta_description = (empty($yoastData->metadesc)) ? substr(strip_tags($data->content->rendered), 0, 140).'...' : $yoastData->metadesc;
       $meta_keywords = (empty($yoastData->metakeywords)) ? $data->title->rendered : $yoastData->metakeywords;
       try {
-        $meta_title_block = $this->getBlock('meta_title', 'string', 'Meta Title');
+        $meta_title_block = $this->getBlock('meta_title', 'string', 'Meta Title', '', 5);
         if (!empty($title_block)) {
             $meta_title_block->setPageId($page_id)->getTypeObject()->save($meta_title);
         }
-        $meta_desc_block = $this->getBlock('meta_description', 'string', 'Meta Description');
+        $meta_desc_block = $this->getBlock('meta_description', 'string', 'Meta Description', '', 5);
         if (!empty($meta_desc_block)) {
             $meta_desc_block->setPageId($page_id)->getTypeObject()->save($meta_description);
         }
-        $meta_keywords_block = $this->getBlock('meta_keywords', 'string', 'Meta Keywords');
+        $meta_keywords_block = $this->getBlock('meta_keywords', 'string', 'Meta Keywords', '', 5);
         if (!empty($meta_keywords_block)) {
             $meta_keywords_block->setPageId($page_id)->getTypeObject()->save($meta_keywords);
         }
@@ -311,7 +329,7 @@ class WpApi
         $res->message = 'Post '.$uporc.': '.$pageLang->name;
         $res->oldLink = $data->link;
         $res->newLink = Path::getFullUrl($page->id);
-        $res->categories = 'UPDATE RUN';
+        $res->categories =  $this->getCategory($data->_embedded->{"wp:term"}, $page->id);
         $res->tags = 'UPDATE RUN';
         $res->comments = $comments;
         $res->main_image = $this->featuredImage($data, $pageLang);
@@ -331,6 +349,7 @@ class WpApi
       $page->save();
       $page->groups()->sync([$this->group->id]);
       $comments  = $this->getComments($data, $page);
+
       $categories = $this->getCategory($data->_embedded->{"wp:term"}, $page->id);
       // Page Lang
       $pageLang->live_version = 0;

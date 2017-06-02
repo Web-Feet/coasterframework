@@ -37,7 +37,7 @@ class InstallController extends Controller
             'content' => '',
             'coaster_routes' => Routes::jsonRoutes()
         ];
-        
+
         $currentRouteName = Request::route()->getName();
         $installRoute = Install::getRedirectRoute();
 
@@ -165,25 +165,34 @@ class InstallController extends Controller
             return $this->setupDatabase();
         }
 
-        try {
-            Artisan::call('key:generate');
-        } catch (\PDOException $e) {
-            FormMessage::add('host', $e->getMessage());
-            return $this->setupDatabase();
-        }
-
         Install::setInstallState('coaster.install.databaseMigrate');
 
         return \redirect()->route('coaster.install.databaseMigrate');
     }
 
-    public function runDatabaseMigrations()
+    public function runDatabaseMigrations($skipEnvCheck = false)
     {
-        Artisan::call('migrate', ['--path' => '/vendor/web-feet/coasterframework/database/migrations']);
+        $unMatchedEnvVars = [];
+        $envFile = new Dotenv(base_path(), File::getEnvFile());
+        foreach ($envFile->load() as $env) {
+            list($envVar, $envValue) = explode('=', $env, 2);
+            $envValue = trim($envValue, '"');
+            if (getenv($envVar) !== false && getenv($envVar) != $envValue) {
+                $unMatchedEnvVars[$envVar] = $envValue;
+            }
+        }
 
-        Install::setInstallState('coaster.install.admin');
+        if (!$skipEnvCheck && $unMatchedEnvVars) {
 
-        return \redirect()->route('coaster.install.admin');
+            $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'envCheck', 'unMatchedEnvVars' => $unMatchedEnvVars]);
+
+        } else {
+            Artisan::call('migrate', ['--path' => '/vendor/web-feet/coasterframework/database/migrations']);
+
+            Install::setInstallState('coaster.install.admin');
+
+            return \redirect()->route('coaster.install.admin');
+        }
     }
 
     public function setupAdminUser()
@@ -244,38 +253,35 @@ class InstallController extends Controller
         }
 
         $this->layoutData['title'] = 'Install Theme';
-        $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'theme', 'themes' => $themes, 'defaultTheme' => 'coaster2016']);
+        $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'theme', 'themes' => $themes, 'defaultTheme' => 'coaster2017']);
     }
 
     public function installTheme()
     {
-        $details = Request::all();
+        $themeName = Request::input('theme');
+        $withPageData = Request::input('page-data');
 
         $error = false;
-        if (!empty($details['theme'])) {
-            if (!($error = Theme::unzip($details['theme'].'.zip', false))) {
-                $withPageData = !empty($details['page-data']) ? 1 : 0;
-                $result = Theme::install($details['theme'], ['withPageData' => $withPageData]);
-                if ($result['error']) {
-                    $error = $result['response'];
-                }
-                if (($usedThemeSetting = Setting::where('name', '=', 'frontend.theme')->first()) && ($theme = Theme::where('theme', '=', $details['theme'])->first())) {
-                    $usedThemeSetting->value = $theme->id;
-                    $usedThemeSetting->save();
-                }
+        if ($themeName) {
+            $installResponse = Theme::install($themeName, ['withPageData' => $withPageData]);
+            if ($installResponse->getStatusCode() != 200) {
+                FormMessage::add('theme', implode('<br /><br />', $installResponse->getData()));
+                $error = true;
             }
+            if (($usedThemeSetting = Setting::where('name', '=', 'frontend.theme')->first()) && ($theme = Theme::where('theme', '=', $themeName)->first())) {
+                $usedThemeSetting->value = $theme->id;
+                $usedThemeSetting->save();
+            }
+
         }
 
-        if ($error) {
-            FormMessage::add('theme', $error);
+        if (!Request::exists('theme') || $error) {
             $this->setupTheme();
         } else {
-            include __DIR__ . '/../../Http/routes/admin.php';
             Install::setInstallState('complete-welcome');
             $this->layoutData['title'] = 'Install Complete';
             $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'complete']);
         }
-
     }
 
 }

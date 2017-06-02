@@ -25,6 +25,13 @@ class Blueprint {
         new Column($this->tableName, 'remember_token', ['Type' => 'remember_token', 'Null' => 'YES']);
 	}
 
+	public function renameColumn($from, $to)
+    {
+        Column::$instances[$this->tableName][$from]['Field'] = $to;
+        Column::$instances[$this->tableName][$to] = Column::$instances[$this->tableName][$from];
+        unset(Column::$instances[$this->tableName][$from]);
+    }
+
 	public function __call($type, $args)
 	{
         if ($type == 'dropColumn') {

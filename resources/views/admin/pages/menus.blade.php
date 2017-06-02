@@ -10,40 +10,48 @@
         var selected_menu;
         var selected_item;
 
-        $('.editsub').click(function () {
-            var max_sublevel = $(this).data('max-sublevel');
-            $('#editMIModal option:gt(0)').hide();
-            $('#editMIModal option:lt(' + (max_sublevel + 1) + ')').show();
-            selected_item = $(this).closest('li').attr('id');
+        $('.sub-levels').click(function () {
+            var spModal = $('#subLevelMIModal');
+            spModal.find('.page-name').html($(this).data('name'));
+            selected_item = $(this).closest('li');
             $.ajax({
                 url: route('coaster.admin.menus.get-levels'),
                 type: 'POST',
-                data: {id: selected_item},
+                dataType: 'json',
+                data: {id: selected_item.data('id')},
                 success: function (r) {
-                    if (r % 1 === 0) {
-                        $('#editMIModal').modal('show');
-                        $('#sublevels').val(r);
-                    }
-                    else {
-                        cms_alert('danger', 'Error receiving data');
-                    }
+                    $('#subLevelMIModal').modal('show');
+                    $('#sublevels').val(r.sub_levels);
+                    spModal.find('.page-levels').html(r.max_levels);
+                    spModal.find('.menu-max-levels').html(r.menu_max_levels);
+                    spModal.find('option:gt(0)').hide();
+                    spModal.find('option:lt(' + (r.menu_max_levels + 1) + ')').show();
+                },
+                error: function () {
+                    cms_alert('danger', 'Error receiving data');
                 }
             });
         });
 
-        $('#editMIModal .change').click(function () {
+        $('#subLevelMIModal .change').click(function () {
             var sl = $('#sublevels').val();
             $.ajax({
                 url: route('coaster.admin.menus.save-levels'),
                 type: 'POST',
-                data: {id: selected_item, sub_level: sl},
+                dataType: 'json',
+                data: {id: selected_item.data('id'), sub_level: sl},
                 success: function (r) {
-                    if (r % 1 === 0) {
-                        $('#' + selected_item + ' .sl_numb').html(sl);
+                    selected_item.find('> ol').remove();
+                    selected_item.find('.sl_numb').html(sl);
+                    selected_item.removeClass().append(r.children);
+                    if (r.children) {
+                        selected_item.addClass('mjs-nestedSortable-branch mjs-nestedSortable-collapsed');
+                    } else {
+                        selected_item.addClass('mjs-nestedSortable-leaf');
                     }
-                    else {
-                        cms_alert('danger', 'Error updating menu item');
-                    }
+                    initList();
+                }, error: function() {
+                    cms_alert('danger', 'Error updating menu item');
                 }
             });
         });
@@ -53,18 +61,15 @@
             $.ajax({
                 url: route('coaster.admin.menus.rename'),
                 type: 'POST',
-                data: {id: selected_item, custom_name: custom_name},
-                success: function (r) {
-                    if (r % 1 === 0) {
-                        if (custom_name != '') {
-                            $('#' + selected_item + ' .custom-name').html("&nbsp;(Custom Name: " + custom_name + ")");
-                        } else {
-                            $('#' + selected_item + ' .custom-name').html("");
-                        }
+                data: {id: selected_item.data('id'), pageId: selected_item.data('page-id'), customName: custom_name},
+                success: function () {
+                    if (custom_name != '') {
+                        selected_item.find('> div > .custom-name').html("&nbsp;(Custom Name: " + custom_name + ")");
+                    } else {
+                        selected_item.find('> div > .custom-name').html('');
                     }
-                    else {
-                        cms_alert('danger', 'Error updating menu item');
-                    }
+                }, error: function() {
+                    cms_alert('danger', 'Error updating menu item');
                 }
             });
         });
@@ -85,18 +90,12 @@
             });
         });
 
-        $('.rename').click(function () {
-            selected_item = $(this).closest('li').attr('id');
-            $('#renameMIModal').modal('show');
-        });
-
         function add_item(menu) {
             selected_menu = menu;
             $('#addMIModal').modal('show');
         }
 
         function sort_items_s(menu) {
-            console.log(menu);
             $('#' + menu + '_saved').removeClass('hide');
             $('#' + menu + '_add').addClass('hide');
             setTimeout(function () {
@@ -114,11 +113,67 @@
             }, 1500);
         }
 
-        $(document).ready(function () {
-            initialize_sort('sortable', sort_items_s, sort_items_f);
+        function hidePage(liItem, hide) {
+            $.ajax({
+                url: route('coaster.admin.menus.hide-page'),
+                type: 'POST',
+                dataType: 'json',
+                data: {hide: hide ? 1 : 0, itemId: liItem.data('id'), pageId: liItem.data('page-id')},
+                success: function () {
+                    if (hide) {
+                        liItem.addClass('hidden-page');
+                        liItem.find('.hide-page').addClass('fa-eye').removeClass('fa-eye-slash');
+                    } else {
+                        liItem.removeClass('hidden-page');
+                        liItem.find('.hide-page').addClass('fa-eye-slash').removeClass('fa-eye');
+                    }
+                }, error: function() {
+                    cms_alert('danger', 'Error updating menu item');
+                }
+            });
+        }
+
+        var initList = function() {
+            $('.sortable').nestedSortable({
+                forcePlaceholderSize: true,
+                handle: 'div',
+                helper: 'clone',
+                items: 'li',
+                opacity: .6,
+                placeholder: 'placeholder',
+                revert: 250,
+                tabSize: 25,
+                tolerance: 'pointer',
+                toleranceElement: '> div',
+                maxLevels: 10,
+                isTree: true,
+                expandOnHover: 700,
+                startCollapsed: true,
+                disableParentChange: true
+            });
+
+            $('.disclose').unbind('click').on('click', function () {
+                $(this).toggleClass('glyphicon-plus-sign').toggleClass('glyphicon-minus-sign');
+                $(this).closest('li').toggleClass('mjs-nestedSortable-collapsed').toggleClass('mjs-nestedSortable-expanded');
+            });
+
+            initialize_sort('nestedSortable', sort_items_s, sort_items_f);
             watch_for_delete('.delete', 'menu item', function (el) {
                 return el.closest('li').attr('id');
             }, route('coaster.admin.menus.delete', {itemId: ''}));
+
+            $('.rename').unbind('click').click(function () {
+                selected_item = $(this).closest('li');
+                $('#renameMIModal').modal('show');
+            });
+
+            $('.hide-page').unbind('click').click(function () {
+                hidePage($(this).closest('li'), $(this).hasClass('fa-eye-slash'));
+            });
+        };
+
+        $(document).ready(function () {
+            initList();
         });
 
     </script>

@@ -61,7 +61,7 @@ class Block extends Eloquent
     public static function getBlockOnPage($blockId, $pageId)
     {
         if ($page = Page::find($pageId)) {
-            $blocksByCat = Template::template_blocks(config('coaster::frontend.theme'), $page->template);
+            $blocksByCat = ThemeTemplate::templateBlocks(config('coaster::frontend.theme'), $page->template);
         } else {
             $blocksByCat = Theme::theme_blocks(config('coaster::frontend.theme'));
         }
@@ -171,7 +171,9 @@ class Block extends Eloquent
                 if (is_dir($dirPath)) {
                     foreach (scandir($dirPath) as $file) {
                         if ($className = explode('.', $file)[0]) {
-                            static::_preloadAdd('blockClass', trim(strtolower($className), '_'), $classPath . $className);
+                            if (stripos($className, 'abstract') === false) {
+                                static::_preloadAdd('blockClass', trim(strtolower($className), '_'), $classPath . $className);
+                            }
                         }
                     }
                 }

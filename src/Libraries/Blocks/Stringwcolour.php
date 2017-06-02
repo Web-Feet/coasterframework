@@ -5,12 +5,23 @@ use CoasterCms\Models\BlockSelectOption;
 class Stringwcolour extends String_
 {
     /**
+     * Return stringwcolour rendered view
+     * @param string $content
+     * @param array $options
+     * @return string
+     */
+    public function display($content, $options = [])
+    {
+        return $this->_renderDisplayView($options, $this->_defaultData($content));
+    }
+
+    /**
      * Return stringwcolour data
      * @param string $content
      * @param array $options
-     * @return mixed|\stdClass
+     * @return \stdClass
      */
-    public function display($content, $options = [])
+    public function data($content, $options = [])
     {
         return $this->_defaultData($content);
     }
@@ -44,7 +55,7 @@ class Stringwcolour extends String_
     /**
      * Return valid stringwcolour data
      * @param $content
-     * @return mixed|\stdClass
+     * @return \stdClass
      */
     protected function _defaultData($content)
     {
@@ -52,8 +63,8 @@ class Stringwcolour extends String_
         if (empty($content) || !is_a($content, \stdClass::class)) {
             $content = new \stdClass;
         }
-        $content->text = !empty($content->text) ? $content->text : '';
-        $content->colour = !empty($content->colour) ? $content->colour : '';
+        $content->text = isset($content->text) ? $content->text : '';
+        $content->colour = isset($content->colour) ? $content->colour : '';
         return $content;
     }
 

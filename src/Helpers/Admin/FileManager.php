@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Helpers\Admin;
 
 use Auth;
+use CoasterCms\Helpers\Cms\File\SecureUpload;
 
 class FileManager
 {
@@ -90,28 +91,7 @@ class FileManager
     public static function setSecureUpload($checkPath)
     {
         global $current_path;
-
-        $secureStorage = storage_path('uploads').'/';
-        if (strpos($checkPath,$secureStorage) === 0) {
-            $subdir = substr($checkPath,strlen($secureStorage));
-        } else {
-            $subdir = $checkPath;
-        }
-
-        $secureFolders = explode(',', config('coaster::site.secure_folders'));
-
-        foreach ($secureFolders as $secureFolder) {
-            if ($secureFolder == '*') {
-                $secureFolder = '/';
-            }
-            if (strpos($subdir, trim($secureFolder, '/').'/') === 0) {
-                if (!is_dir(__DIR__.$secureStorage.'')) {
-                    @mkdir($secureStorage.$subdir);
-                }
-                $current_path = $secureStorage;
-                break;
-            }
-        }
+        $current_path = SecureUpload::isSecurePath($checkPath) ? SecureUpload::getBasePath(true) . '/' : $current_path;
     }
 
     public static function createDirPermissions()

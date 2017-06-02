@@ -4,7 +4,8 @@ use CoasterCms\Helpers\Cms\Captcha\Securimage;
 use CoasterCms\Helpers\Cms\Email;
 use CoasterCms\Helpers\Cms\View\FormWrap;
 use CoasterCms\Libraries\Builder\FormMessage;
-use CoasterCms\Libraries\Builder\PageBuilder;
+use PageBuilder;
+use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockFormRule;
 use CoasterCms\Models\FormSubmission;
 use CoasterCms\Models\Page;
@@ -14,7 +15,7 @@ use Response;
 use Session;
 use Validator;
 
-class Form extends String_
+class Form extends AbstractBlock
 {
     /**
      * @var array
@@ -22,16 +23,26 @@ class Form extends String_
     public static $blockSettings = ['Manage form input validation rules' => 'themes/forms'];
 
     /**
+     * Repeater constructor.
+     * @param Block $block
+     */
+    public function __construct(Block $block)
+    {
+        parent::__construct($block);
+        $this->_displayViewDirs[] = 'forms';
+    }
+
+    /**
      * Display form view
      * @param string $content
      * @param array $options
-     * @return \Illuminate\Contracts\View\View|string
+     * @return string
      */
     public function display($content, $options = [])
     {
         $formData = $this->_defaultData($content);
-        $options['view'] = !empty($options['view']) ? $options['view'] : $formData->template;
-        return FormWrap::view($this->_block, $options, $this->displayView($options), ['form_data' => $formData]);
+        $view = !empty($options['view']) ? $options['view'] : $formData->template;
+        return FormWrap::view($this->_block, $options, $this->displayView($view), ['form_data' => $formData]);
     }
 
     /**
@@ -106,7 +117,7 @@ class Form extends String_
                     $form_submission->save();
                 }
 
-                Session::set('form_data', $form_submission);
+                Session::put('form_data', $form_submission);
                 return \redirect(PageBuilder::pageUrl($form_settings->page_to));
             } else {
                 FormMessage::set($v->messages());

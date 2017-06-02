@@ -4,12 +4,11 @@ use App;
 use Auth;
 use CoasterCms\Events\Cms\LoadAuth;
 use CoasterCms\Events\Cms\LoadMiddleware;
-use CoasterCms\Events\Cms\LoadRouteFile;
 use CoasterCms\Events\Cms\SetViewPaths;
 use CoasterCms\Helpers\Cms\Install;
 use CoasterCms\Http\Middleware\AdminAuth;
 use CoasterCms\Http\Middleware\GuestAuth;
-use CoasterCms\Http\Middleware\PageBuilderInit;
+use CoasterCms\Http\Middleware\SecureUpload;
 use CoasterCms\Http\Middleware\UploadChecks;
 use Illuminate\Foundation\Http\Kernel;
 use Illuminate\Routing\Router;
@@ -42,14 +41,14 @@ class CmsServiceProvider extends ServiceProvider
         $routerMiddleware = [
             'coaster.admin' => AdminAuth::class,
             'coaster.guest' => GuestAuth::class,
-            'coaster.pagebuilder.init' => PageBuilderInit::class
+            'coaster.secure_upload' => SecureUpload::class,
         ];
         event(new LoadMiddleware($globalMiddleware, $routerMiddleware));
         foreach ($globalMiddleware as $globalMiddlewareClass) {
             $kernel->pushMiddleware($globalMiddlewareClass);
         }
         foreach ($routerMiddleware as $routerMiddlewareName => $routerMiddlewareClass) {
-            $router->middleware($routerMiddlewareName, $routerMiddlewareClass);
+            $router->middlewareGroup($routerMiddlewareName, [$routerMiddlewareClass]);
         }
 
         // use coater guard and user provider
@@ -81,13 +80,6 @@ class CmsServiceProvider extends ServiceProvider
         $this->loadViewsFrom($adminViews, 'coaster');
         $this->loadViewsFrom($frontendViews, 'coasterCms');
 
-        // run routes if not in console
-        $routeFile = __DIR__ . '/Http/routes.php';
-        event(new LoadRouteFile($routeFile));
-        if ($routeFile && file_exists($routeFile)) {
-            include $routeFile;
-        }
-
         // if in console and not installed, display notice
         if (App::runningInConsole() && !Install::isComplete()) {
             echo "Coaster Framework: CMS awaiting install, go to a web browser to complete installation\r\n";
@@ -103,6 +95,7 @@ class CmsServiceProvider extends ServiceProvider
     {
         $this->app->register('CoasterCms\Providers\CoasterEventsProvider');
         $this->app->register('CoasterCms\Providers\CoasterConfigProvider');
+        $this->app->register('CoasterCms\Providers\CoasterPageBuilderProvider');
 
         // register third party providers
         $this->app->register('Bkwld\Croppa\ServiceProvider');
@@ -116,7 +109,6 @@ class CmsServiceProvider extends ServiceProvider
         $loader->alias('CmsBlockInput', 'CoasterCms\Helpers\Cms\View\CmsBlockInput');
         $loader->alias('FormMessage', 'CoasterCms\Libraries\Builder\FormMessage');
         $loader->alias('AssetBuilder', 'CoasterCms\Libraries\Builder\AssetBuilder');
-        $loader->alias('PageBuilder', 'CoasterCms\Libraries\Builder\PageBuilder');
         $loader->alias('DateTimeHelper', 'CoasterCms\Helpers\Cms\DateTimeHelper');
     }
 
@@ -130,6 +122,7 @@ class CmsServiceProvider extends ServiceProvider
         return [
             'CoasterCms\Providers\CoasterConfigProvider',
             'CoasterCms\Providers\CoasterEventsProvider',
+            'CoasterCms\Providers\CoasterPageBuilderProvider',
             'Bkwld\Croppa\ServiceProvider',
             'Collective\Html\HtmlServiceProvider'
         ];

@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Models;
 
 use Eloquent;
+use Illuminate\Support\Collection;
 
 Class BlockSelectOption extends Eloquent
 {
@@ -53,6 +54,18 @@ Class BlockSelectOption extends Eloquent
             $optionsArray[$option->value] = $option->option;
         }
         return $optionsArray;
+    }
+
+    /**
+     * @return Collection
+     */
+    public static function blockNamesWithOptions()
+    {
+        $blockTable = (new Block)->getTable();
+        $selectTable = (new static)->getTable();
+        return static::select($blockTable.'.name')->groupBy('block_id')->join($blockTable, function ($join) use ($blockTable, $selectTable) {
+            $join->on($blockTable.'.id', '=', $selectTable.'.block_id');
+        })->get()->keyBy('name')->keys();
     }
 
 }
