@@ -3,6 +3,7 @@
 use CoasterCms\Helpers\Cms\File\Directory;
 use CoasterCms\Helpers\Cms\File\SecureUpload;
 use CoasterCms\Helpers\Cms\File\Zip;
+use CoasterCms\Helpers\Cms\Page\PageCache;
 use CoasterCms\Libraries\Export\BlocksExport;
 use CoasterCms\Libraries\Export\ContentExport;
 use CoasterCms\Libraries\Export\GroupsExport;
@@ -336,6 +337,7 @@ Class Theme extends Eloquent
         $theme = self::where('theme', '=', $themeName)->first();
         if (!empty($theme)) {
             Setting::where('name', '=', 'frontend.theme')->update(['value' => $theme->id]);
+            PageCache::clear();
             self::templateIdUpdate($theme->id);
             return 1;
         }
