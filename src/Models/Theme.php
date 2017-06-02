@@ -358,7 +358,9 @@ Class Theme extends Eloquent
             $theme->delete();
         }
         $themePath = base_path() . '/resources/views/themes/' . $themeName;
-        unlink($themePath . '.zip');
+        if (file_exists($themePath . '.zip')) {
+            unlink($themePath . '.zip');
+        }
         Directory::remove($themePath);
         Directory::remove(base_path() . '/public/themes/' . $themeName);
         return 1;
