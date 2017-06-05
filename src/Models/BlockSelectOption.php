@@ -63,7 +63,7 @@ Class BlockSelectOption extends Eloquent
     {
         $blockTable = (new Block)->getTable();
         $selectTable = (new static)->getTable();
-        return static::select($blockTable.'.name')->groupBy('block_id')->join($blockTable, function ($join) use ($blockTable, $selectTable) {
+        return static::select($blockTable.'.name')->groupBy($blockTable.'.name')->join($blockTable, function ($join) use ($blockTable, $selectTable) {
             $join->on($blockTable.'.id', '=', $selectTable.'.block_id');
         })->get()->keyBy('name')->keys();
     }
