@@ -27,17 +27,25 @@ Class Theme extends Eloquent
 
     public function templates()
     {
-        $templatesTable = DB::getTablePrefix() . (new Template)->getTable();
-        $themeTemplatesTable = DB::getTablePrefix() . (new ThemeTemplate)->getTable();
-        return $this->belongsToMany('CoasterCms\Models\Template', 'theme_templates')
-            ->withPivot('label', 'child_template')
-            ->addSelect('templates.id')
-            ->addSelect('templates.template')
+        $templatesTableNoPrefix = (new Template)->getTable();
+        $themeTemplatesTableNoPrefix = (new ThemeTemplate)->getTable();
+        $templatesTable = DB::getTablePrefix() . $templatesTableNoPrefix;
+        $themeTemplatesTable = DB::getTablePrefix() . $themeTemplatesTableNoPrefix;
+        $t1 = $this->belongsToMany('CoasterCms\Models\Template', $themeTemplatesTableNoPrefix)
+            ->addSelect($templatesTableNoPrefix . '.id')
             ->addSelect(DB::raw('IF (`'.$themeTemplatesTable.'`.`label` IS NOT NULL, `'.$themeTemplatesTable.'`.`label`, `'.$templatesTable.'`.`label`) as label'))
             ->addSelect(DB::raw('IF (`'.$themeTemplatesTable.'`.`child_template` IS NOT NULL, `'.$themeTemplatesTable.'`.`child_template`, `'.$templatesTable.'`.`child_template`) as child_template'))
-            ->addSelect(DB::raw('IF (`'.$themeTemplatesTable.'`.`hidden` IS NOT NULL, `'.$themeTemplatesTable.'`.`hidden`, `'.$templatesTable.'`.`hidden`) as hidden'))
-            ->addSelect('templates.updated_at')
-            ->addSelect('templates.created_at');
+            ->addSelect(DB::raw('IF (`'.$themeTemplatesTable.'`.`hidden` IS NOT NULL, `'.$themeTemplatesTable.'`.`hidden`, `'.$templatesTable.'`.`hidden`) as hidden'));
+        $t2 = DB::raw('(' . $t1->toSql() . ') ' . $themeTemplatesTable);
+        return Template::join($t2, $themeTemplatesTableNoPrefix.'.id', '=', $templatesTableNoPrefix.'.id')
+            ->setBindings($t1->getBindings())
+            ->addSelect($templatesTableNoPrefix . '.id')
+            ->addSelect($templatesTableNoPrefix . '.template')
+            ->addSelect($themeTemplatesTableNoPrefix . '.label')
+            ->addSelect($themeTemplatesTableNoPrefix . '.child_template')
+            ->addSelect($themeTemplatesTableNoPrefix . '.hidden')
+            ->addSelect($templatesTableNoPrefix . '.created_at')
+            ->addSelect($templatesTableNoPrefix . '.updated_at');
     }
 
     public function templateById($templateId)
@@ -54,7 +62,7 @@ Class Theme extends Eloquent
     {
         $templates = [];
         if ($theme = static::find(config('coaster::frontend.theme'))) {
-            foreach ($theme->templates()->having('hidden', '=', 0)->get() as $template) {
+            foreach ($theme->templates()->where('theme_templates.hidden', '=', 0)->get() as $template) {
                 $templates[$template->id] = !empty($template->label) ? $template->label : $template->template;
             }
         }
