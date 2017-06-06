@@ -2,6 +2,7 @@
 
 use CoasterCms\Exceptions\CmsPageException;
 use Illuminate\Mail\Message;
+use PageBuilder;
 use Mail;
 use Validator;
 use View;

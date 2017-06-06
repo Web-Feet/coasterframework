@@ -28,8 +28,9 @@ class CoasterGuard extends SessionGuard
             $user = User::find($options['user_id']);
         } else {
             /** @var User $user */
-            $user = $this->user();
-            $options['user_id'] = $user->id;
+            if ($user = $this->user()) {
+                $options['user_id'] = $user->id;
+            }
         }
 
         return (!empty($user) && $user->role->check_action($action, $options));
