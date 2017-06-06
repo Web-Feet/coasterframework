@@ -43,7 +43,7 @@ class HomeController extends Controller
         }
 
         $coasterBlog = 'https://www.coastercms.org/blog/';
-        $coasterBlogHttpClient = new Client(['base_uri' => $coasterBlog.'wp-json/wp/v2/']);
+        $coasterBlogHttpClient = new Client(['base_uri' => $coasterBlog.'wp-json/wp/v2/', 'connect_timeout' => 2]);
         try {
             $latestPosts = $coasterBlogHttpClient->request('GET', 'posts', ['query' => ['per_page' => 3]]);
             $latestPosts = json_decode($latestPosts->getBody());
