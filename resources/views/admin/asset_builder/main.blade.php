@@ -47,5 +47,3 @@ AssetBuilder::set('cms-editor', [
 AssetBuilder::set('cms-versions', [
         '/app/js/versions.js'
 ], false, 10);
-
-FormMessage::setErrorClass('has-error');
