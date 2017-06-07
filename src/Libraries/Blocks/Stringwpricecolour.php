@@ -51,7 +51,7 @@ class Stringwpricecolour extends String_
     {
         if ($postContent && (!empty($postContent['text']) || !empty($postContent['colour']) || !empty($postContent['price']))) {
             $saveData = $this->_defaultData('');
-            $saveData->selected = !empty($postContent['text']) ? $postContent['text'] : '';
+            $saveData->text = !empty($postContent['text']) ? $postContent['text'] : '';
             $saveData->price = !empty($postContent['price']) ? $postContent['price'] : 0;
             $saveData->colour = !empty($postContent['colour']) ? $postContent['colour'] : '';
         }
