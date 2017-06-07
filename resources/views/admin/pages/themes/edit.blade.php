@@ -100,12 +100,7 @@
                 else {
                   editor.session.setMode("ace/mode/html_blade");
                 }
-                ta[0].innerHTML = String(r.file);
                 editor.setValue(r.file, 1);
-
-                editor.on('input', function(){
-                  ta.html(editor.getValue());
-                });
               }
             });
           });
@@ -114,6 +109,7 @@
           var frm = $('.content form');
           frm.bind('submit', function(e)
           {
+            ta.val(editor.getValue());
             e.preventDefault();
             $.ajax({
               url: frm.attr('action'),
