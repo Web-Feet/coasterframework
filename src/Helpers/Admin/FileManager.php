@@ -12,7 +12,7 @@ class FileManager
             if (Auth::admin()) {
                 die('Access denied');
             } else {
-                header('Location: http://' . $_SERVER['HTTP_HOST'] . '/' . config('coaster::admin.url') . '/login?login_path=' . $_SERVER['REQUEST_URI']);
+                header('Location: //' . $_SERVER['HTTP_HOST'] . '/' . config('coaster::admin.url') . '/login?login_path=' . $_SERVER['REQUEST_URI']);
             }
         }
     }

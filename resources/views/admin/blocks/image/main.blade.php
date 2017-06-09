@@ -13,7 +13,7 @@
                 </a>
             @else
                 <img id="{!! $image_preview_id !!}" alt="No Image"
-                     src="https://placeholdit.imgix.net/~text?txtsize=19&bg=efefef&txtclr=aaaaaa%26text%3Dno%2Bimage&txt=no+image&w=200&h=150"/>
+                     src="//placeholdit.imgix.net/~text?txtsize=19&bg=efefef&txtclr=aaaaaa%26text%3Dno%2Bimage&txt=no+image&w=200&h=150"/>
             @endif
         </div>
     </div>

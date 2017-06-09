@@ -8,9 +8,9 @@
     <meta name="generator" content="Coaster CMS {{ config('coaster::site.version') }}">
     <meta name="_token" content="{{ csrf_token() }}">
 
-    <link href='https://fonts.googleapis.com/css?family=Raleway:400,100,300,500,600,700,800,900' rel='stylesheet' type='text/css'>
+    <link href='//fonts.googleapis.com/css?family=Raleway:400,100,300,500,600,700,800,900' rel='stylesheet' type='text/css'>
     {!! AssetBuilder::styles() !!}
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
     @yield('styles')
 
 </head>

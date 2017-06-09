@@ -166,7 +166,7 @@ function load_editor_js(rerun) {
             return m;
         } // we do not want to escape markup since we are displaying html in results
     }).on("change", function () {
-        $('#' + this.id + '_preview').attr('src', 'http://www.youtube.com/embed/' + $(this).val()).css('display', 'block');
+        $('#' + this.id + '_preview').attr('src', '//www.youtube.com/embed/' + $(this).val()).css('display', 'block');
     });
 
     // select colour options

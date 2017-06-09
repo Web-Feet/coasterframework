@@ -74,7 +74,7 @@ class ThemesController extends Controller
                         $theme->install = 1;
                         $theme->active = false;
                     }
-                    $theme->image = 'https://placeholdit.imgix.net/~text?txtsize=19&bg=efefef&txtclr=aaaaaa%26text%3Dno%2Bimage&txt=no+image&w=200&h=150';
+                    $theme->image = '//placeholdit.imgix.net/~text?txtsize=19&bg=efefef&txtclr=aaaaaa%26text%3Dno%2Bimage&txt=no+image&w=200&h=150';
 
                     if (is_dir($themesPath . '/' . $themeFolder)) {
                         $theme->name = $themeFolder;

@@ -17,7 +17,7 @@
 
 <form id="fileupload" action="#" method="POST" enctype="multipart/form-data">
     <!-- Redirect browsers with JavaScript disabled to the origin page -->
-    <noscript><input type="hidden" name="redirect" value="http://blueimp.github.io/jQuery-File-Upload/"></noscript>
+    <noscript><input type="hidden" name="redirect" value="//blueimp.github.io/jQuery-File-Upload/"></noscript>
     <!-- The fileupload-buttonbar contains buttons to add/delete files and start/cancel the upload -->
     <div class="row textbox fileupload-buttonbar">
         <div class="col-sm-7">
@@ -179,7 +179,7 @@
 
 @section('styles')
 <!-- blueimp Gallery styles -->
-<link rel="stylesheet" href="http://blueimp.github.io/Gallery/css/blueimp-gallery.min.css">
+<link rel="stylesheet" href="//blueimp.github.io/Gallery/css/blueimp-gallery.min.css">
 <!-- CSS to style the file input field as button and adjust the Bootstrap progress bars -->
 <link rel="stylesheet" href="{!! $assets_path !!}/css/jquery.fileupload-ui.css">
 @stop
