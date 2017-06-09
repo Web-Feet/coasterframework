@@ -187,12 +187,14 @@ Class Theme extends Eloquent
     {
         $file = Request::file('newTheme');
         $validator = Validator::make(['theme' => $newTheme], ['theme' => 'required']);
-        if (!$validator->fails() && $file->getClientOriginalExtension() == 'zip') {
+        if ($file->getClientOriginalExtension() != 'zip') {
+            return 'The theme uploaded must be a zip file format.';
+        } else if (!$validator->fails()) {
             $uploadTo = base_path() . '/resources/views/themes/';
             $file->move($uploadTo, $file->getClientOriginalName());
             return '';
         } else {
-            return 'The theme uploaded must be a zip file format.';
+            return $validator->errors()->first();
         }
     }
 
