@@ -649,7 +649,7 @@ class PageBuilderInstance
             $pageBlockData = PageBlock::preloadPageBlock($pageId, $block->id, $this->pageVersion($pageId));
 
             // get languages
-            $loadForLanguages = [!empty($options['language']) ? : $options['language'] : Language::current()];
+            $loadForLanguages = [!empty($options['language']) ? $options['language'] : Language::current()];
             if (config('coaster::frontend.language_fallback') == 1 && !in_array(config('coaster::frontend.language'), $loadForLanguages)) {
                 $loadForLanguages[] = config('coaster::frontend.language');
             }
