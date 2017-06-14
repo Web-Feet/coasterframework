@@ -139,15 +139,15 @@ class Repeater extends AbstractBlock
     {
         $itemData = reset($data);
         $itemDataIdKey = key($data) . '_id';
-        $previousKey = PageBuilder::getCustomBlockDataKey();
-        PageBuilder::setCustomBlockDataKey('repeater' . $data['repeater_id'] . '.' . $data[$itemDataIdKey]);
+        $previousKey = PageBuilder::getData('customBlockDataKey');
+        PageBuilder::setData('customBlockDataKey', 'repeater' . $data['repeater_id'] . '.' . $data[$itemDataIdKey]);
         foreach ($data['blocks'] as $repeaterBlock) {
             if ($repeaterBlock->exists) {
                 PageBuilder::setCustomBlockData($repeaterBlock->name, !empty($itemData[$repeaterBlock->id]) ? $itemData[$repeaterBlock->id] : '', null, false);
             }
         }
         $renderedContent = parent::_renderRepeatedDisplayViewItem($displayView, $data);
-        PageBuilder::setCustomBlockDataKey($previousKey);
+        PageBuilder::setData('customBlockDataKey', $previousKey);
         return $renderedContent;
     }
 

@@ -114,7 +114,7 @@ class PageBuilderInstance
     /**
      * @var int
      */
-    protected $_customBlockDataKey;
+    public $customBlockDataKey;
 
     /**
      * @param PageBuilderLogger $logger
@@ -138,7 +138,7 @@ class PageBuilderInstance
         $this->cacheable = true;
 
         $this->_customBlockData = [];
-        $this->_customBlockDataKey = 0;
+        $this->customBlockDataKey = 0;
 
         $this->_logger = $logger;
     }
@@ -334,29 +334,13 @@ class PageBuilderInstance
      */
     public function setCustomBlockData($blockName, $content, $key = null, $overwrite = true)
     {
-        $key = is_null($key) ? $this->_customBlockDataKey : $key;
+        $key = is_null($key) ? $this->customBlockDataKey : $key;
         if (empty($this->_customBlockData[$key])) {
             $this->_customBlockData[$key] = [];
         }
         if ($overwrite || !array_key_exists($blockName, $this->_customBlockData[$key])) {
             $this->_customBlockData[$key][$blockName] = $content;
         }
-    }
-
-    /**
-     * @param string|int $key
-     */
-    public function setCustomBlockDataKey($key)
-    {
-        $this->_customBlockDataKey = $key;
-    }
-
-    /**
-     * @return string|int
-     */
-    public function getCustomBlockDataKey()
-    {
-        return $this->_customBlockDataKey;
     }
 
     /**
@@ -893,14 +877,14 @@ class PageBuilderInstance
             $isLast = ($count == $total -1);
 
             if (is_string($page->id)) {
-                $tmpCustomBlockKey = $this->_customBlockDataKey;
-                $this->_customBlockDataKey = 'customPage:'.$page->id;
+                $tmpCustomBlockKey = $this->customBlockDataKey;
+                $this->customBlockDataKey = 'customPage:'.$page->id;
                 $pageDetails = new \stdClass;
                 foreach ($page as $blockName => $content) {
                     if (in_array($blockName, ['fullUrl', 'fullName'])) {
                         $pageDetails->$blockName = $content;
                     } else {
-                        $this->setCustomBlockData($blockName, $content, $this->_customBlockDataKey);
+                        $this->setCustomBlockData($blockName, $content, $this->customBlockDataKey);
                     }
                 }
                 Path::addCustomPagePath($page->id, $pageDetails);
@@ -917,7 +901,7 @@ class PageBuilderInstance
             );
 
             if (isset($tmpCustomBlockKey)) {
-                $this->_customBlockDataKey = $tmpCustomBlockKey;
+                $this->customBlockDataKey = $tmpCustomBlockKey;
                 $tmpCustomBlockKey = null;
             }
 
@@ -936,8 +920,8 @@ class PageBuilderInstance
      */
     protected function _getCustomBlockData($blockName)
     {
-        if (isset($this->_customBlockDataKey) && !empty($this->_customBlockData[$this->_customBlockDataKey]) && array_key_exists($blockName, $this->_customBlockData[$this->_customBlockDataKey])) {
-            return $this->_customBlockData[$this->_customBlockDataKey][$blockName];
+        if (!array_key_exists($this->customBlockDataKey, $this->_customBlockData) && array_key_exists($blockName, $this->_customBlockData[$this->customBlockDataKey])) {
+            return $this->_customBlockData[$this->customBlockDataKey][$blockName];
         } else {
             return null;
         }
