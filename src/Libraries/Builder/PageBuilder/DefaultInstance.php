@@ -173,6 +173,18 @@ class DefaultInstance
     }
 
     /**
+     * @param string $customTemplate
+     * @return string
+     */
+    public function templateRender($customTemplate = null)
+    {
+        if (isset($customTemplate)) {
+            $this->customTemplate = $customTemplate;
+        }
+        return view($this->templatePath())->render();
+    }
+
+    /**
      * @param int|null $setValue
      * @return bool
      */
