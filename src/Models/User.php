@@ -22,36 +22,6 @@ class User extends Eloquent implements AuthenticatableContract, AuthorizableCont
     protected $hidden = ['password', 'remember_token'];
     protected static $_aliases;
 
-    public function getAuthIdentifier()
-    {
-        return $this->getKey();
-    }
-
-    public function getAuthPassword()
-    {
-        return $this->password;
-    }
-
-    public function getRememberToken()
-    {
-        return $this->remember_token;
-    }
-
-    public function setRememberToken($value)
-    {
-        $this->remember_token = $value;
-    }
-
-    public function getRememberTokenName()
-    {
-        return 'remember_token';
-    }
-
-    public function getReminderEmail()
-    {
-        return $this->email;
-    }
-
     public function role()
     {
         return $this->belongsTo('CoasterCms\Models\UserRole');
@@ -59,7 +29,6 @@ class User extends Eloquent implements AuthenticatableContract, AuthorizableCont
 
     public function change_password($tmp_code = null)
     {
-
         $tmp_check = false;
         if (!Auth::check()) {
             $code_created = new Carbon($this->tmp_code_created);
@@ -135,6 +104,24 @@ class User extends Eloquent implements AuthenticatableContract, AuthorizableCont
         parent::delete();
 
         return $log_id;
+    }
+
+    /**
+     * @param string $tmpCode
+     * @return $this
+     * @throws \Exception
+     */
+    public static function findFromTmpCode($tmpCode)
+    {
+        if ($tmpCode && $user = User::where('tmp_code', '=', $tmpCode)->first()) {
+            $code_created = new Carbon($user->tmp_code_created);
+            $di = $code_created->diff(new Carbon('now'));
+            if ($di->days > 7) {
+                throw new \Exception('This code has expired!');
+            }
+            return $user;
+        }
+        throw new \Exception('Invalid Code!');
     }
 
 }
