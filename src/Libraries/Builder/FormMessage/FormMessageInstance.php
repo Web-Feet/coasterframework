@@ -14,6 +14,11 @@ class FormMessageInstance
     protected $_errorBag;
 
     /**
+     * @var
+     */
+    protected $_session;
+
+    /**
      * FormMessage constructor.
      * @param Request $request
      * @param string  $defaultBag
@@ -21,10 +26,11 @@ class FormMessageInstance
      */
     public function __construct($request, $defaultBag, $errorClass)
     {
-        if (!$request->session()->get('errors')) {
-            $request->session()->put('errors', new ViewErrorBag);
+        $this->_session = $request->session();
+        if (!$this->_session->get('errors')) {
+            $this->_session->put('errors', new ViewErrorBag);
         }
-        $this->_errorBag = $request->session()->get('errors');
+        $this->_errorBag = $this->_session->get('errors', new ViewErrorBag);
         $this->_defaultBag = $defaultBag;
         $this->_errorClass = $errorClass;
     }
@@ -52,19 +58,27 @@ class FormMessageInstance
 
     /**
      * @param MessageBag|array $messages
+     * @param bool $flash
      */
-    public function set($messages)
+    public function set($messages, $flash = true)
     {
         $this->defaultBag(null, $messages);
+        if ($flash) {
+            $this->_session->put('_flash.old', 'errors');
+        }
     }
 
     /**
      * @param string $key
      * @param string $message
+     * @param bool $flash
      */
-    public function add($key, $message)
+    public function add($key, $message, $flash = true)
     {
         $this->defaultBag()->add($key, $message);
+        if ($flash) {
+            $this->_session->put('_flash.old', 'errors');
+        }
     }
 
     /**
