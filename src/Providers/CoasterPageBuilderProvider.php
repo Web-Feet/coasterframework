@@ -1,7 +1,8 @@
 <?php namespace CoasterCms\Providers;
 
 use CoasterCms\Helpers\Cms\Page\PageLoader;
-use CoasterCms\Libraries\Builder\PageBuilder;
+use CoasterCms\Libraries\Builder\PageBuilder\DefaultInstance;
+use CoasterCms\Libraries\Builder\PageBuilderFactory;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\ServiceProvider;
 
@@ -16,7 +17,7 @@ class CoasterPageBuilderProvider extends ServiceProvider
     public function boot()
     {
         $this->app->singleton('pageBuilder', function () {
-            return new PageBuilder(PageBuilder\PageBuilderInstance::class, [new PageLoader]);
+            return new PageBuilderFactory(DefaultInstance::class, [new PageLoader]);
         });
     }
 

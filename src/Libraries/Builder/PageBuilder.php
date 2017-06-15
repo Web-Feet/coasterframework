@@ -1,6 +1,11 @@
-<?php namespace CoasterCms\Libraries\Builder;
+<?php
+namespace CoasterCms\Libraries\Builder;
 
-use CoasterCms\Libraries\Builder\PageBuilder\PageBuilderInstance;
+use CoasterCms\Exceptions\PageBuilderException;
+use CoasterCms\Libraries\Builder\PageBuilder\DefaultInstance;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Traits\Macroable;
 
 /**
  * Class PageBuilder
@@ -21,8 +26,6 @@ use CoasterCms\Libraries\Builder\PageBuilder\PageBuilderInstance;
  * @method static string css(string $fileName)
  * @method static string js(string $fileName)
  * @method static void setCustomBlockData(string $blockName, mixed $content, int $key = 0, bool $overwrite = true)
- * @method static void setCustomBlockDataKey(string $key)
- * @method static string getCustomBlockDataKey()
  * @method static string external(string $section)
  * @method static string section(string $section)
  * @method static string breadcrumb(array $options = [])
@@ -38,112 +41,68 @@ use CoasterCms\Libraries\Builder\PageBuilder\PageBuilderInstance;
  * @method static mixed blockData(string $blockName, $options = [])
  * @method static \PDOStatement blogPosts(int $getPosts = 3, string $where = 'post_type = "post" AND post_status = "publish"')
  */
-
 class PageBuilder
 {
-
-    /**
-     * @var PageBuilderInstance[]
-     */
-    protected $_instances;
-
-    /**
-     * @var string
-     */
-    protected $_activeInstance;
-
-    /**
-     * @var int
-     */
-    protected $_unNamedIndex;
-
-    /**
-     * @var string
-     */
-    protected $_defaultClass;
-
-    /**
-     * @var array
-     */
-    protected $_defaultArgs;
-
-    /**
-     * PageBuilderFactory constructor.
-     * @param string $defaultClass
-     * @param array $defaultArgs
-     */
-    public function __construct($defaultClass = '', $defaultArgs = [])
-    {
-        $this->_defaultClass = $defaultClass;
-        $this->_defaultArgs = $defaultArgs;
-        $this->_instances = [];
-        $this->_unNamedIndex = 0;
-        $this->_activeInstance = 'default';
+    use Macroable {
+        __call as macroCall;
     }
 
     /**
+     * @var DefaultInstance
+     */
+    protected $_pageBuilder;
+
+    /**
+     * @var Collection
+     */
+    protected $_logs;
+
+    /**
+     * @param string $key
+     * @return Collection
+     */
+    public function logs($key = null)
+    {
+        if (!is_null($key)) {
+            return $this->_logs->pluck($key);
+        }
+        return $this->_logs;
+    }
+
+    /**
+     * PageBuilderLogger constructor.
      * @param string $pageBuilderClass
      * @param array $pageBuilderArgs
-     * @param bool $setActive
-     * @return PageBuilderInstance
      */
-    public function make($pageBuilderClass, $pageBuilderArgs, $setActive = true)
+    public function __construct($pageBuilderClass, $pageBuilderArgs)
     {
-        return $this->setInstance('', $pageBuilderClass, $pageBuilderArgs, $setActive);
+        $this->_logs = collect([]);
+        $this->_pageBuilder = new $pageBuilderClass($this, ...$pageBuilderArgs);
     }
 
     /**
-     * @param string $activeInstance
-     */
-    public function switchActiveInstance($activeInstance)
-    {
-        $this->_activeInstance = $activeInstance;
-    }
-
-    /**
-     * @param string $name
-     * @return PageBuilderInstance
-     */
-    public function getInstance($name = null)
-    {
-        $name = is_null($name) ? $this->_activeInstance : $name;
-        return $this->setInstance($name);
-    }
-
-    /**
-     * @param string $name
-     * @param string $pageBuilderClass
-     * @param array $pageBuilderArgs
-     * @param bool $setActive
-     * @return PageBuilderInstance
-     */
-    public function setInstance($name = '', $pageBuilderClass = '', $pageBuilderArgs = [], $setActive = true)
-    {
-        if ($name === '') {
-            $name = $this->_unNamedIndex++;
-            while (array_key_exists($name, $this->_instances)) {
-                $name = $this->_unNamedIndex++;
-            }
-        }
-        if (!array_key_exists($name, $this->_instances)) {
-            $pageBuilderArgs = ($pageBuilderClass || $pageBuilderArgs) ? $pageBuilderArgs : $this->_defaultArgs;
-            $pageBuilderClass = $pageBuilderClass ?: $this->_defaultClass;
-            $this->_instances[$name] = new PageBuilderLogger($pageBuilderClass, $pageBuilderArgs);
-        }
-        if ($setActive) {
-            $this->switchActiveInstance($name);
-        }
-        return $this->_instances[$name];
-    }
-
-    /**
-     * @param $methodName
-     * @param $args
+     * @param string $methodName
+     * @param array $args
      * @return mixed
      */
     public function __call($methodName, $args)
     {
-        return call_user_func_array([$this->getInstance(), $methodName], $args);
+        $logFn = 'debug';
+        $logContext = ['method' => $methodName, 'args' => $args, 'macro' => false];
+        try {
+            if ($this->hasMacro($methodName)) {
+                $logContext['macro'] = true;
+                $return = $this->macroCall($methodName, $args);
+            } else {
+                $return = call_user_func_array([$this->_pageBuilder, $methodName], $args);
+            }
+        } catch (PageBuilderException $e) {
+            $logFn = 'error';
+            $return = 'PageBuilder error: ' . $e->getMessage();
+        }
+        $this->_logs->push($logContext);
+        Log::$logFn('PageBuilder method called: '. $methodName, $logContext);
+        return $return;
     }
 
 }

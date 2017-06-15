@@ -3,7 +3,7 @@
 use CoasterCms\Exceptions\PageBuilderException;
 use CoasterCms\Helpers\Cms\Page\PageLoader;
 use CoasterCms\Helpers\Cms\Page\Path;
-use CoasterCms\Libraries\Builder\PageBuilderLogger;
+use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Libraries\Builder\ViewClasses\BreadCrumb;
 use CoasterCms\Libraries\Builder\ViewClasses\PageDetails;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
@@ -28,7 +28,7 @@ use Request;
 use URL;
 use View;
 
-class PageBuilderInstance
+class DefaultInstance
 {
 
     /**
@@ -97,7 +97,7 @@ class PageBuilderInstance
     public $cacheable;
 
     /**
-     * @var PageBuilderLogger
+     * @var PageBuilder
      */
     protected $_logger;
 
@@ -117,10 +117,10 @@ class PageBuilderInstance
     public $customBlockDataKey;
 
     /**
-     * @param PageBuilderLogger $logger
+     * @param PageBuilder $logger
      * @param PageLoader $pageLoader
      */
-    public function __construct(PageBuilderLogger $logger, PageLoader $pageLoader)
+    public function __construct(PageBuilder $logger, PageLoader $pageLoader)
     {
         $this->page = !empty($pageLoader->pageLevels) ? end($pageLoader->pageLevels) : null;
         $this->pageLevels = $pageLoader->pageLevels;
