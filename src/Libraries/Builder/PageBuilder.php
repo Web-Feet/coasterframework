@@ -89,7 +89,7 @@ class PageBuilder
      */
     public function __construct($pageBuilderClass, $pageBuilderArgs)
     {
-        $this->_logState = true;
+        $this->_logEnabled = true;
         $this->_logs = collect([]);
         $this->_pageBuilder = new $pageBuilderClass($this, ...$pageBuilderArgs);
     }
