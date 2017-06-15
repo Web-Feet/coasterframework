@@ -174,14 +174,15 @@ class DefaultInstance
 
     /**
      * @param string $customTemplate
+     * @param array $viewData
      * @return string
      */
-    public function templateRender($customTemplate = null)
+    public function templateRender($customTemplate = null, $viewData = [])
     {
         if (isset($customTemplate)) {
             $this->customTemplate = $customTemplate;
         }
-        return view($this->templatePath())->render();
+        return view($this->templatePath(), $viewData)->render();
     }
 
     /**
