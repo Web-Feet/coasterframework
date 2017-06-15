@@ -58,6 +58,11 @@ class PageBuilder
     protected $_logs;
 
     /**
+     * @var bool
+     */
+    protected $_logEnabled;
+
+    /**
      * @param string $key
      * @return Collection
      */
@@ -70,12 +75,21 @@ class PageBuilder
     }
 
     /**
+     * @param bool $state
+     */
+    public function setLogState($state)
+    {
+        $this->_logEnabled = $state;
+    }
+
+    /**
      * PageBuilderLogger constructor.
      * @param string $pageBuilderClass
      * @param array $pageBuilderArgs
      */
     public function __construct($pageBuilderClass, $pageBuilderArgs)
     {
+        $this->_logState = true;
         $this->_logs = collect([]);
         $this->_pageBuilder = new $pageBuilderClass($this, ...$pageBuilderArgs);
     }
@@ -100,8 +114,10 @@ class PageBuilder
             $logFn = 'error';
             $return = 'PageBuilder error: ' . $e->getMessage();
         }
-        $this->_logs->push($logContext);
-        Log::$logFn('PageBuilder method called: '. $methodName, $logContext);
+        if ($this->_logEnabled) {
+            $this->_logs->push($logContext);
+            Log::$logFn('PageBuilder method called: ' . $methodName, $logContext);
+        }
         return $return;
     }
 

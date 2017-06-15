@@ -5,6 +5,7 @@ use CoasterCms\Libraries\Builder\PageBuilder\DefaultInstance;
 use CoasterCms\Libraries\Builder\PageBuilderFactory;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\ServiceProvider;
+use View;
 
 class CoasterPageBuilderProvider extends ServiceProvider
 {
@@ -16,9 +17,13 @@ class CoasterPageBuilderProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->app->singleton('pageBuilder', function () {
-            return new PageBuilderFactory(DefaultInstance::class, [new PageLoader]);
+        $pb = new PageBuilderFactory(DefaultInstance::class, [new PageLoader]);
+
+        $this->app->singleton('pageBuilder', function () use($pb) {
+            return $pb;
         });
+
+        View::share('pb', $pb);
     }
 
     /**
