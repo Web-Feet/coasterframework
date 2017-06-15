@@ -920,7 +920,7 @@ class PageBuilderInstance
      */
     protected function _getCustomBlockData($blockName)
     {
-        if (!array_key_exists($this->customBlockDataKey, $this->_customBlockData) && array_key_exists($blockName, $this->_customBlockData[$this->customBlockDataKey])) {
+        if (array_key_exists($this->customBlockDataKey, $this->_customBlockData) && array_key_exists($blockName, $this->_customBlockData[$this->customBlockDataKey])) {
             return $this->_customBlockData[$this->customBlockDataKey][$blockName];
         } else {
             return null;
