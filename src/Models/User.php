@@ -53,12 +53,11 @@ class User extends Eloquent implements AuthenticatableContract, AuthorizableCont
                 FormMessage::add('current_password', 'The current password was incorrect');
                 return false;
             }
-            // if user can change his password then change it
-            if (Auth::action('account.password', ['user_id' => $this->id]) || (Auth::check() && Auth::action('user.edit'))) {
-                $this->password = Hash::make($details['new_password']);
-                $this->tmp_code = '';
-                $this->save();
+            try {
+                $this->updatePassword($details['new_password']);
                 return true;
+            } catch (\Exception $e) {
+                FormMessage::add('new_password', $e->getMessage());
             }
         } else {
             FormMessage::set($v->messages());
@@ -134,6 +133,22 @@ class User extends Eloquent implements AuthenticatableContract, AuthorizableCont
         $this->tmp_code_created = new Carbon();
         $this->save();
         $this->notify(new PasswordReset($this, $routeName));
+    }
+
+    /**
+     * @param string $password
+     * @throws \Exception
+     */
+    public function updatePassword($password)
+    {
+        // update only if users account has update password action or logged in user has admin user edit permissions
+        if (Auth::action('account.password', ['user_id' => $this->id]) || (Auth::check() && Auth::action('user.edit'))) {
+            $this->password = Hash::make($password);
+            $this->tmp_code = '';
+            $this->save();
+        } else {
+            throw new \Exception('Can\'t update account password');
+        }
     }
 
     /**
