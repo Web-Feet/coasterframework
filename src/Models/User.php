@@ -1,22 +1,23 @@
 <?php namespace CoasterCms\Models;
 
-use Auth;
 use Carbon\Carbon;
 use CoasterCms\Libraries\Builder\FormMessage;
-use Hash;
+use CoasterCms\Notifications\NewAccount;
+use CoasterCms\Notifications\PasswordReset;
 use Illuminate\Auth\Authenticatable;
-use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
-use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 use Illuminate\Foundation\Auth\Access\Authorizable;
+use Illuminate\Notifications\Notifiable;
+use Auth;
 use Eloquent;
+use Hash;
 use Request;
 use Validator;
 
-class User extends Eloquent implements AuthenticatableContract, AuthorizableContract, CanResetPasswordContract
+class User extends Eloquent implements AuthenticatableContract, AuthorizableContract
 {
-    use Authenticatable, Authorizable, CanResetPassword;
+    use Authenticatable, Authorizable, Notifiable;
 
     protected $table = 'users';
     protected $hidden = ['password', 'remember_token'];
@@ -122,6 +123,26 @@ class User extends Eloquent implements AuthenticatableContract, AuthorizableCont
             return $user;
         }
         throw new \Exception('Invalid Code!');
+    }
+
+    /**
+     * @param string $routeName
+     */
+    public function sendPasswordResetNotification($routeName = 'coaster.admin.login.password.change')
+    {
+        $this->tmp_code = urlencode(str_random(32) . microtime());
+        $this->tmp_code_created = new Carbon();
+        $this->save();
+        $this->notify(new PasswordReset($this, $routeName));
+    }
+
+    /**
+     * @param string $password
+     * @param string $routeName
+     */
+    public function sendNewAccountNotification($password, $routeName = 'coaster.admin.login')
+    {
+        $this->notify(new NewAccount($this, $password, $routeName));
     }
 
 }

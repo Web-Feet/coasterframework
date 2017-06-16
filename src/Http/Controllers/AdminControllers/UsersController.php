@@ -157,11 +157,8 @@ class UsersController extends Controller
             AdminLog::new_log('User \'' . $new_user->email . '\' added');
 
             if (Request::input('send_email') == 1) {
-                Mail::send('coaster::emails.new_account', array('email' => $new_user->email, 'password' => $password), function ($message) use ($new_user) {
-                    $message->from(config('coaster::site.email'));
-                    $message->to($new_user->email);
-                    $message->subject(config('coaster::site.name') . ': New Account Details');
-                });
+
+                $new_user->sendNewAccountNotification($password);
 
                 $failures = Mail::failures();
 

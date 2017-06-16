@@ -40,7 +40,12 @@ class CoasterConfigProvider extends ServiceProvider
         
         Setting::loadAll($configFile, 'coaster', $useDatabaseSettings);
 
+        $updatedAppName = (config('app.name') == 'Coaster CMS' && config('coaster::site.name')) ? config('coaster::site.name') : config('app.name');
+        $updatedAppUrl = (config('app.url') == 'http://localhost' && !app()->runningInConsole()) ? url()->to('/') : config('app.url');
+
         $overrideConfigValues = [
+            'app.name' => $updatedAppName,
+            'app.url' => $updatedAppUrl,
             'auth.guards.web.driver' => 'coaster',
             'auth.providers.users.model' => User::class,
             'croppa.src_dir' => public_path(),

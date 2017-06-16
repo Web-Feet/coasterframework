@@ -17,20 +17,10 @@ class AccountController extends Controller
     private function _change_password_checks($code)
     {
         $this->layoutData['title'] = 'Forgotten Password';
-        if (empty($code)) {
-            $this->layoutData['content'] = 'Invalid Code!';
-        } else {
-            if (!($user = User::where('tmp_code', '=', $code)->first())) {
-                $this->layoutData['content'] = 'Invalid Code!';
-            } else {
-                $code_created = new Carbon($user->tmp_code_created);
-                $di = $code_created->diff(new Carbon('now'));
-                if ($di->days > 7) {
-                    $this->layoutData['content'] = 'This code has expired!';
-                } else {
-                    return $user;
-                }
-            }
+        try {
+            return User::findFromTmpCode($code);
+        } catch (\Exception $e) {
+            $this->layoutData['content'] = $e->getMessage();
         }
         return null;
     }
@@ -71,16 +61,9 @@ class AccountController extends Controller
                 if (!Auth::action('account.password', ['user_id' => $user->id])) {
                     FormMessage::add('email', 'You can\'t change the password for this account');
                 } else {
-                    $code = urlencode(str_random(32) . microtime());
-                    $user->tmp_code = $code;
-                    $user->tmp_code_created = new Carbon;
-                    $user->save();
 
-                    Mail::send('coaster::emails.forgotten_password', array('code' => $code), function ($message) use ($email_addr) {
-                        $message->from(config('coaster::site.email'));
-                        $message->to($email_addr);
-                        $message->subject(config('coaster::site.name') . ': Forgotten Password');
-                    });
+                    $user->sendPasswordResetNotification();
+
                     $failures = Mail::failures();
 
                     if (empty($failures)) {
