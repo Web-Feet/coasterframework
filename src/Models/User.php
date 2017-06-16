@@ -137,12 +137,13 @@ class User extends Eloquent implements AuthenticatableContract, AuthorizableCont
 
     /**
      * @param string $password
+     * @param bool $ignoreChecks
      * @throws \Exception
      */
-    public function updatePassword($password)
+    public function updatePassword($password, $ignoreChecks = false)
     {
         // update only if users account has update password action or logged in user has admin user edit permissions
-        if (Auth::action('account.password', ['user_id' => $this->id]) || (Auth::check() && Auth::action('user.edit'))) {
+        if ($ignoreChecks || Auth::action('account.password', ['user_id' => $this->id]) || (Auth::check() && Auth::action('user.edit'))) {
             $this->password = Hash::make($password);
             $this->tmp_code = '';
             $this->save();
