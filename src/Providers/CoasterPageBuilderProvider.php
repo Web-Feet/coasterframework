@@ -17,13 +17,11 @@ class CoasterPageBuilderProvider extends ServiceProvider
      */
     public function boot()
     {
-        $pb = new PageBuilderFactory(DefaultInstance::class, [new PageLoader]);
-
-        $this->app->singleton('pageBuilder', function () use($pb) {
+        $this->app->singleton('pageBuilder', function () {
+            $pb = new PageBuilderFactory(DefaultInstance::class, [new PageLoader]);
+            View::share('pb', $pb);
             return $pb;
         });
-
-        View::share('pb', $pb);
     }
 
     /**
