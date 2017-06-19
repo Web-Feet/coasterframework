@@ -1,6 +1,7 @@
 <?php namespace CoasterCms\Helpers\Cms\View;
 
 use CoasterCms\Models\Block;
+use PageBuilder;
 use Request;
 use View;
 
@@ -17,20 +18,26 @@ class FormWrap
     public static function view($block, $formOptions, $template, $templateData = [])
     {
         if (View::exists($template)) {
-            $useReal = !empty($formOptions['real_page_id']) ? $formOptions['real_page_id'] : false;
-            $honeyPot = !empty($formOptions['honeyPot']) ? $formOptions['honeyPot'] : true;
+            $formOptions += [
+                'real_page_id' => false,
+                'page_id' => null,
+                'honeyPot' => true,
+                'url' => (Request::input('forwarded_url') ?: Request::fullUrl()) . '#form' . $block->id,
+                'files' => true,
+                'id' => 'form' . $block->id
+            ];
 
-            $formOptions['url'] = (Request::input('forwarded_url') ?: Request::fullUrl()) . '#form' . $block->id;
-            $formOptions['files'] = !empty($formOptions['files']) ? $formOptions['files'] : true;
-            $formOptions['id'] = !empty($formOptions['id']) ? $formOptions['id']:'form' . $block->id;
+            $pageId = $formOptions['page_id'] ?: PageBuilder::pageId($formOptions['real_page_id']);
+            $honeyPot = $formOptions['honeyPot'];
 
+            unset($formOptions['real_page_id']);
+            unset($formOptions['page_id']);
             unset($formOptions['view']);
             unset($formOptions['version']);
-            unset($formOptions['useReal']);
             unset($formOptions['honeyPot']);
 
             $formView = View::make($template, $templateData)->render();
-            return View::make('coasterCms::form.wrap', ['blockId' => $block->id, 'honeyPot' => $honeyPot, 'useReal' => $useReal, 'formAttributes' => $formOptions, 'formView' => $formView])->render();
+            return View::make('coasterCms::form.wrap', ['blockId' => $block->id, 'pageId' => $pageId, 'honeyPot' => $honeyPot, 'formAttributes' => $formOptions, 'formView' => $formView])->render();
         } else {
             return 'Form template '.$template.' not found';
         }
