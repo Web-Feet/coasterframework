@@ -101,7 +101,7 @@ class Form extends AbstractBlock
             $captcha = Securimage::captchaCheck();
 
             // check form rules
-            if ($v->passes() && !($form_settings->captcha == true && !$captcha)) {
+            if ($v->passes() && !($form_settings->captcha && !$captcha)) {
                 // delete blank and system fields
                 unset($formData['captcha_code']);
 
@@ -121,7 +121,7 @@ class Form extends AbstractBlock
                 return \redirect(PageBuilder::pageUrl($form_settings->page_to));
             } else {
                 FormMessage::set($v->messages());
-                if (!$captcha) {
+                if (!$captcha && $form_settings->captcha) {
                     FormMessage::add('captcha_code', 'Invalid Captcha Code, try again.');
                 }
             }
