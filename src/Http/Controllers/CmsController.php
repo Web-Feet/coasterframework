@@ -3,6 +3,7 @@
 use CoasterCms\Events\Cms\GeneratePage\LoadedPageResponse;
 use CoasterCms\Events\Cms\GeneratePage\LoadErrorTemplate;
 use CoasterCms\Events\Cms\GeneratePage\LoadPageTemplate;
+use CoasterCms\Events\Cms\SubmitFormData;
 use CoasterCms\Exceptions\CmsPageException;
 use CoasterCms\Helpers\Cms\File\SecureUpload;
 use CoasterCms\Helpers\Cms\Html\DOMDocument;
@@ -72,25 +73,21 @@ class CmsController extends Controller
 
         try {
 
-            // check for forced redirects
+            // check for redirects
             $redirect = PageRedirect::uriHasRedirect();
-            if (!empty($redirect) && $redirect->force == 1) {
-                throw new CmsPageException('forced redirect', 0, null, redirect($redirect->to, $redirect->type));
-            }
-
-            // check for unforced redirects
-            if (PageBuilder::getData('is404') && !empty($redirect)) {
-                throw new CmsPageException('redirect', 0, null, redirect($redirect->to, $redirect->type));
+            if (!empty($redirect) && ($redirect->force || PageBuilder::getData('is404'))) {
+                $this->responseContent = redirect($redirect->to, $redirect->type);
+                throw new CmsPageException('redirect' . ($redirect->force ? ' forced' : ''));
             }
 
             // 404, no cms page for current request
             if (PageBuilder::getData('is404')) {
-                throw new Exception('cms page not found', 404);
+                throw new CmsPageException('cms page not found', 404);
             }
 
             // 404, hidden page
             if (!PageBuilder::getData('previewVersion') && !PageBuilder::getData('isLive')) {
-                throw new Exception('cms page not live', 404);
+                throw new CmsPageException('cms page not live', 404);
             }
 
             // check for form submissions
@@ -100,13 +97,17 @@ class CmsController extends Controller
                     if (!($block = Block::find($formData['block_id']))) {
                         throw new Exception('no block handler for this form data', 500);
                     } else {
-                        $pageId = !empty($formData['page_id']) ? $formData['page_id'] : 0;
-                        unset($formData['_token']);
-                        unset($formData['block_id']);
-                        unset($formData['page_id']);
-                        unset($formData['coaster_check']);
-                        if ($formSubmitResponse = $block->setPageId($pageId)->setVersionId(PageBuilder::pageLiveVersionId())->getTypeObject()->submission($formData)) {
-                            throw new CmsPageException('form submission response', 0, null, $formSubmitResponse);
+                        event(new SubmitFormData($block, $formData));
+                        if ($formData) {
+                            $pageId = !empty($formData['page_id']) ? $formData['page_id'] : 0;
+                            unset($formData['_token']);
+                            unset($formData['block_id']);
+                            unset($formData['page_id']);
+                            unset($formData['coaster_check']);
+                            if ($formSubmitResponse = $block->setPageId($pageId)->setVersionId(PageBuilder::pageLiveVersionId())->getTypeObject()->submission($formData)) {
+                                $this->responseContent = $formSubmitResponse;
+                                throw new CmsPageException('form submission response', 0, null);
+                            }
                         }
                     }
                 }
@@ -119,25 +120,19 @@ class CmsController extends Controller
                 $this->_setHeader('Content-Type', PageBuilder::getData('contentType'));
                 $this->responseContent = $this->_getRenderedTemplate($templatePath);
             } else {
-                throw new Exception('cms page found with non existent template - '.$templatePath, 500);
+                throw new CmsPageException('cms page found with non existent template - '.$templatePath, 500);
             }
 
             // if declared as a search page, must have search block
             if (PageBuilder::getData('searchRequired') && !PageBuilder::logs('method')->has('search')) {
-                throw new Exception('No search function implemented on this page', 404);
-            }
-
-        } catch (CmsPageException $e) {
-
-            if ($e->getAlternateResponse()) {
-                $this->responseContent = $e->getAlternateResponse();
-            } else {
-                $this->_setErrorContent($e);
+                throw new CmsPageException('No search function implemented on this page', 404);
             }
 
         } catch (Exception $e) {
 
-            $this->_setErrorContent($e);
+            if (!$this->responseContent) {
+                $this->_setErrorContent($e);
+            }
 
         }
 
