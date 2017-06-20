@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\MessageBag;
 use Illuminate\Contracts\Support\MessageBag as MessageBagContract;
 use Illuminate\Support\ViewErrorBag;
+use View;
 
 class FormMessageInstance
 {
@@ -27,10 +28,7 @@ class FormMessageInstance
     public function __construct($request, $defaultBag, $errorClass)
     {
         $this->_session = $request->session();
-        if (!$this->_session->get('errors')) {
-            $this->_session->put('errors', new ViewErrorBag);
-        }
-        $this->_errorBag = $this->_session->get('errors', new ViewErrorBag);
+        $this->_errorBag = View::shared('errors');
         $this->_defaultBag = $defaultBag;
         $this->_errorClass = $errorClass;
     }
