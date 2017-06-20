@@ -202,6 +202,16 @@ class DefaultInstance
 
     /**
      * @param bool $noOverride
+     * @return string
+     */
+    public function pageJson($noOverride = false)
+    {
+        $page = $this->_getPage($noOverride);
+        return $page->toJson();
+    }
+
+    /**
+     * @param bool $noOverride
      * @return int
      */
     public function pageId($noOverride = false)
