@@ -100,6 +100,7 @@ class CmsServiceProvider extends ServiceProvider
     {
         $this->app->register('CoasterCms\Providers\CoasterEventsProvider');
         $this->app->register('CoasterCms\Providers\CoasterConfigProvider');
+        $this->app->register('CoasterCms\Providers\CoasterConsoleProvider');
         $this->app->register('CoasterCms\Providers\CoasterPageBuilderProvider');
 
         // register third party providers
@@ -127,6 +128,7 @@ class CmsServiceProvider extends ServiceProvider
         return [
             'CoasterCms\Providers\CoasterConfigProvider',
             'CoasterCms\Providers\CoasterEventsProvider',
+            'CoasterCms\Providers\CoasterConsoleProvider',
             'CoasterCms\Providers\CoasterPageBuilderProvider',
             'Bkwld\Croppa\ServiceProvider',
             'Collective\Html\HtmlServiceProvider'
