@@ -50,7 +50,8 @@ class UpdateAssets extends Command
         Assets\App::class,
         Assets\Bootstrap::class,
         Assets\AceEditor::class,
-        Assets\FileManager::class
+        Assets\FileManager::class,
+        Assets\JQuery::class
     ];
 
     /**

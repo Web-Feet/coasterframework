@@ -57,7 +57,7 @@ abstract class AbstractAsset
      */
     public function __construct($coasterPublicFolder, $version, $force, $progressBar)
     {
-        $this->_baseFolder = $coasterPublicFolder . static::$name;
+        $this->_baseFolder = $coasterPublicFolder . static::$name . DIRECTORY_SEPARATOR;
         $this->_currentVersion = $version;
         $this->_force = $force;
         $this->_progressBar = $progressBar;
@@ -71,6 +71,9 @@ abstract class AbstractAsset
     {
         $version = static::$version ?: config('coaster::site.version');
         if ($this->_force || version_compare($this->_currentVersion, $version, '<')) {
+            if (!file_exists($this->_baseFolder)) {
+                mkdir($this->_baseFolder, 0777, true);
+            }
             $this->run();
             $this->_currentVersion = $version;
         }
@@ -86,25 +89,38 @@ abstract class AbstractAsset
     }
 
     /**
-     * @param string $method
      * @param string $url
-     * @param array $params
      * @param array $extracts
+     * @param string $method
+     * @param array $params
      */
-    public function downloadZip($method, $url, $params, $extracts)
+    public function downloadZip($url, $extracts, $method = 'GET', $params = [])
     {
-        $zipFile = basename(parse_url($url, PHP_URL_PATH));
-        $this->_httpClient->request($method, $url, [
-            'form_params' => $params,
-            'sink' => $this->_baseFolder . $zipFile
-        ])->getBody()->close();
+        $zipFile = $this->downloadFile($url, '', $method, $params);
         $zip = new Zip;
-        $zip->open($this->_baseFolder . $zipFile);
+        $zip->open($zipFile);
         foreach ($extracts as $zipPath => $filePath) {
-            $zip->extractDir($zipPath, $this->_baseFolder . DIRECTORY_SEPARATOR . $filePath);
+            $zip->extractDir($zipPath, $this->_baseFolder . $filePath);
         }
         $zip->close();
-        unlink($this->_baseFolder . $zipFile);
+        unlink($zipFile);
+    }
+
+    /**
+     * @param string $url
+     * @param string $fileName
+     * @param string $method
+     * @param array $params
+     * @return string
+     */
+    public function downloadFile($url, $fileName = '', $method = 'GET', $params = [])
+    {
+        $fileName = $fileName ?: basename(parse_url($url, PHP_URL_PATH));
+        $this->_httpClient->request($method, $url, [
+            'form_params' => $params,
+            'sink' => $this->_baseFolder . $fileName
+        ])->getBody()->close();
+        return $this->_baseFolder . $fileName;
     }
 
     /**

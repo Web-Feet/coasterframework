@@ -12,12 +12,9 @@ class AceEditor extends AbstractAsset
     public function run()
     {
         $this->downloadZip(
-            'GET',
             'https://github.com/ajaxorg/ace-builds/archive/v'.static::$version.'.zip',
-            [],
             ['ace-builds-'.static::$version.'/src-min' => '']
         );
-
         $this->copyFrom();
     }
 

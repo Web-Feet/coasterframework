@@ -14,9 +14,7 @@ class FileManager extends AbstractAsset
     public function run()
     {
         $this->downloadZip(
-            'GET',
             'https://github.com/trippo/ResponsiveFilemanager/releases/download/v9.10.1/responsive_filemanager.zip',
-            [],
             ['filemanager' => '', 'tinymce/plugins/responsivefilemanager' => '../jquery/tinymce/plugins/responsivefilemanager']
         );
 

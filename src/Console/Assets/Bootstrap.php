@@ -12,9 +12,7 @@ class Bootstrap extends AbstractAsset
     public function run()
     {
         $this->downloadZip(
-            'GET',
             'https://github.com/twbs/bootstrap/releases/download/v3.3.6/bootstrap-3.3.6-dist.zip',
-            [],
             ['bootstrap-3.3.6-dist' => '']
         );
     }
