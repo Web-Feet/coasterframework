@@ -2,7 +2,7 @@
 <div class="panel">
   <div class="panel-heading">
     <h1>Import from Wordpress to a blog</h1>
-    <p>This requires the Wordpress REST Api plugin to be installed on you Wordpress blog.</p>
+    <p>This requires the Wordpress REST Api plugin to be installed on your Wordpress blog.</p>
     <a href="https://wordpress.org/plugins/rest-api/" title="rest PAI plugin for wordpress">Find out more</a>
   </div>
 </div>
