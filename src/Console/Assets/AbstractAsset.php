@@ -82,7 +82,7 @@ abstract class AbstractAsset
     {
         $version = static::$version ?: config('coaster::site.version');
         if ($this->_options['force'] || version_compare($this->_currentVersion, $version, '<')) {
-            if (!file_exists($this->_baseFolder)) {
+            if (!file_exists($this->_baseFolder) && static::$version != '-') {
                 mkdir($this->_baseFolder, 0777, true);
             }
             $this->run();

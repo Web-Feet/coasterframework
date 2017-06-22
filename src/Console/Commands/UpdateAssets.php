@@ -15,7 +15,7 @@ class UpdateAssets extends Command
      */
     protected $signature = 'coaster:update-assets 
         {assets?* : $assets} 
-        {--force : Will run asset updates regardless of stored version}
+        {--f|force : Will run asset updates regardless of stored version}
         {--default-themes : Overwrite default theme files with latest updates}';
 
     /**
