@@ -132,10 +132,10 @@ abstract class AbstractAsset
      */
     public function downloadFile($url, $fileName = '', $method = 'GET', $params = [], $inBaseFolder = true, $overwrite = true)
     {
+        $fileName = $fileName ?: basename(parse_url($url, PHP_URL_PATH));
         $fileName = ($inBaseFolder ? $this->_baseFolder : '') . $fileName;
         if ($overwrite || !$fileName || !file_exists($fileName)) {
             $this->_setDetailedMessage('downloading: ' . $url);
-            $fileName = $fileName ?: basename(parse_url($url, PHP_URL_PATH));
             $this->_httpClient->request($method, $url, [
                 'form_params' => $params,
                 'sink' => $fileName
