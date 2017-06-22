@@ -3,7 +3,7 @@
 class SecureImage extends AbstractAsset
 {
 
-    public static $name = 'secureimage';
+    public static $name = 'securimage';
 
     public static $version = '3.6.3';
 
