@@ -18,6 +18,8 @@ class FileManager extends AbstractAsset
             ['filemanager' => '', 'tinymce/plugins/responsivefilemanager' => '../jquery/tinymce/plugins/responsivefilemanager']
         );
 
+        $this->_setDetailedMessage('integrating with Coaster');
+
         File::insertAtLine($this->_baseFolder . '/config/config.php', [
             362 => [
                 'require __DIR__ .\'/../../../../vendor/web-feet/coasterframework/hooks/laravel.php\';',
@@ -68,6 +70,44 @@ class FileManager extends AbstractAsset
         // permissions fix
         File::replaceString($this->_baseFolder . '/include/utils.php', 'umask(0)', 'umask()');
         File::replaceString($this->_baseFolder . '/include/utils.php', '0766', 'CoasterCms\Helpers\Admin\FileManager::createDirPermissions()');
+
+        $this->_setDetailedMessage('setting up upload locations');
+
+        $this->copyFrom($this->_publicFiles('uploads'), public_path('uploads'), false, false);
+        $this->copyFrom($this->_publicFiles('uploads/secure'), storage_path('uploads/secure'), false, false);
+
+        // namespace has changed for FileManager helper, check config files have up to date one
+        $this->_checkConfigFiles(public_path('uploads'));
+        $this->_checkConfigFiles(storage_path('uploads'));
+    }
+
+    protected function _checkConfigFiles($uploadPath)
+    {
+        foreach (scandir($uploadPath) as $item) {
+            if (!in_array($item, ['.', '..'])) {
+                if (is_dir($uploadPath . '/' . $item)) {
+                    $this->_checkConfigFiles($uploadPath . '/' . $item);
+                } elseif ($item == 'config.php') {
+                    $this->_updateConfigFile($uploadPath . '/' . $item);
+                }
+            }
+        }
+    }
+
+    protected function _updateConfigFile($configFile)
+    {
+        $count = 0;
+        $fileContent = file_get_contents($configFile);
+        $fileContent = preg_replace(
+            '/\S*filemanager_set_permissions\((.*)\);/m',
+            '\CoasterCms\Helpers\Admin\FileManager::filemanager_set_permissions(\1);',
+            $fileContent,
+            -1,
+            $count
+        );
+        if ($count) {
+            file_put_contents($configFile, $fileContent);
+        }
     }
 
 }

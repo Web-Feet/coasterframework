@@ -3,6 +3,7 @@
 namespace CoasterCms\Console\Commands;
 
 use CoasterCms\Console\Assets as Assets;
+use CoasterCms\Helpers\Cms\Install;
 use Illuminate\Console\Command;
 
 class UpdateAssets extends Command
@@ -51,7 +52,11 @@ class UpdateAssets extends Command
         Assets\Bootstrap::class,
         Assets\AceEditor::class,
         Assets\FileManager::class,
-        Assets\JQuery::class
+        Assets\JQuery::class,
+        Assets\JQueryUI::class,
+        Assets\SecureImage::class,
+        Assets\GalleryFileUpdates::class,
+        Assets\StorageFileUpdates::class
     ];
 
     /**
@@ -62,7 +67,7 @@ class UpdateAssets extends Command
         foreach ($this->_assets as $asset) {
             $this->_assetNames[$asset::$name] = $asset;
         }
-        $this->signature = str_replace('$assets', implode(' ', $this->_assetNames), $this->signature);
+        $this->signature = str_replace('$assets', implode(' ', array_keys($this->_assetNames)), $this->signature);
         parent::__construct();
     }
 
@@ -73,19 +78,21 @@ class UpdateAssets extends Command
     {
         $this->_initVersions();
 
-        $this->info('Running public asset file update:');
+        $this->info("Running public asset file update:\n");
         if ($assets = $this->input->getArgument('assets')) {
             $updateAssets = array_intersect_key($this->_assetNames, array_fill_keys($assets, null));
         } else {
             $updateAssets = $this->_assetNames;
         }
         $bar = $this->output->createProgressBar(count($updateAssets));
-        $bar->setFormatDefinition('custom', ' %current%/%max% [%bar%] - %message%');
+        $bar->setFormatDefinition('custom', ' %current%/%max% [%bar%] -- %message% %details%');
         $bar->setFormat('custom');
+        $bar->setMessage('', 'details');
         $bar->setMessage('Initializing ...');
         $bar->display();
 
         $errors = [];
+        $reportMessages = [];
         foreach ($updateAssets as $assetName => $assetClass) {
             $bar->setMessage('Updating: ' . ($assetClass::$description ?: $assetName) . ' (' . $assetClass::$version . ')');
             $bar->display();
@@ -93,12 +100,14 @@ class UpdateAssets extends Command
             $asset = new $assetClass($this->_folders['public'], $this->_assetInstalledVersions[$assetName], $this->input->getOption('force'), $bar);
             try {
                 $this->_setVersion($assetName, $asset->execute());
+                $reportMessages[$assetName] = $asset->getReport();
             } catch (\Exception $e) {
                 $errors[$assetName] = $e->getMessage() . ' [' . $e->getFile() . ':' . $e->getLine() . ']';
             }
             $bar->advance();
         }
 
+        $bar->setMessage('', 'details');
         $bar->setMessage('Finished' . ($errors ? ' with errors' : ''));
         $bar->finish();
         $this->info("\n");
@@ -106,6 +115,15 @@ class UpdateAssets extends Command
             foreach ($errors as $assetName => $error) {
                 $this->error($assetName . ': ' . $error);
             }
+        }
+        foreach ($reportMessages as $assetName => $assetReport) {
+            foreach ($assetReport as $reportMessage) {
+                $this->comment($assetName . ': ' . $reportMessage);
+            }
+        }
+        // if in console and not installed, display notice
+        if (app()->runningInConsole() && !Install::isComplete()) {
+            $this->comment('To complete Coaster installation visit /install in your web browser .');
         }
     }
 

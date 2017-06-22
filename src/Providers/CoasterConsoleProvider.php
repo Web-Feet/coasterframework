@@ -17,6 +17,7 @@ class CoasterConsoleProvider extends ServiceProvider
      * @var array
      */
     protected $_commands = [
+        Commands\Migrate::class,
         Commands\UpdateAssets::class
     ];
 

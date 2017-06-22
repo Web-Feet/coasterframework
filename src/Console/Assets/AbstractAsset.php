@@ -49,6 +49,11 @@ abstract class AbstractAsset
     protected $_progressBar;
 
     /**
+     * @var array
+     */
+    protected $_reportMessages;
+
+    /**
      * AbstractAsset constructor.
      * @param string $coasterPublicFolder
      * @param string $version
@@ -115,6 +120,7 @@ abstract class AbstractAsset
      */
     public function downloadFile($url, $fileName = '', $method = 'GET', $params = [])
     {
+        $this->_setDetailedMessage('downloading: ' . $url);
         $fileName = $fileName ?: basename(parse_url($url, PHP_URL_PATH));
         $this->_httpClient->request($method, $url, [
             'form_params' => $params,
@@ -125,11 +131,50 @@ abstract class AbstractAsset
 
     /**
      * @param string $fromFolder
+     * @param string $toFolder
+     * @param bool $inBaseFolder
+     * @param bool $overwrite
      */
-    public function copyFrom($fromFolder = '')
+    public function copyFrom($fromFolder = '', $toFolder = '', $inBaseFolder = true, $overwrite = true)
     {
-        $fromFolder = $fromFolder ?: realpath(__DIR__ . '/../../../public/' . static::$name);
-        Directory::copy($fromFolder, $this->_baseFolder);
+        $this->_setDetailedMessage('copying: ' . $fromFolder);
+        $fromFolder = $fromFolder ?: $this->_publicFiles(static::$name);
+        $toFolder = ($inBaseFolder ? $this->_baseFolder : '') . $toFolder;
+        Directory::copy($fromFolder, $toFolder, null, $overwrite);
+    }
+
+    /**
+     * @param string $path
+     * @return string
+     */
+    protected function _publicFiles($path)
+    {
+        return realpath(__DIR__ . '/../../../public/' . $path);
+    }
+
+    /**
+     * @param string $message
+     */
+    protected function _setDetailedMessage($message)
+    {
+        $this->_progressBar->setMessage('['.$message.']', 'details');
+        $this->_progressBar->display();
+    }
+
+    /**
+     * @param string $message
+     */
+    protected function _report($message)
+    {
+        $this->_reportMessages[] = $message;
+    }
+
+    /**
+     * @return array
+     */
+    public function getReport()
+    {
+        return $this->_reportMessages ?: [];
     }
 
 }

@@ -81,11 +81,6 @@ class CmsServiceProvider extends ServiceProvider
         $this->loadViewsFrom($adminViews, 'coaster');
         $this->loadViewsFrom($frontendViews, 'coasterCms');
 
-        // if in console and not installed, display notice
-        if (App::runningInConsole() && !Install::isComplete()) {
-            echo "Coaster Framework: CMS awaiting install, go to a web browser to complete installation\r\n";
-        }
-
         $this->app->singleton('formMessage', function () {
             return new FormMessageInstance($this->app['request'], 'default', config('coaster::frontend.form_error_class'));
         });
