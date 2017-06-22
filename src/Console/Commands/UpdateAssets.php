@@ -15,7 +15,8 @@ class UpdateAssets extends Command
      */
     protected $signature = 'coaster:update-assets 
         {assets?* : $assets} 
-        {--force : Update assets file regardless of stored version}';
+        {--force : Will run asset updates regardless of stored version}
+        {--default-themes : Overwrite default theme files with latest updates}';
 
     /**
      * The console command description.
@@ -56,7 +57,8 @@ class UpdateAssets extends Command
         Assets\JQueryUI::class,
         Assets\SecureImage::class,
         Assets\GalleryFileUpdates::class,
-        Assets\StorageFileUpdates::class
+        Assets\StorageFileUpdates::class,
+        Assets\Themes::class
     ];
 
     /**
@@ -77,13 +79,16 @@ class UpdateAssets extends Command
     public function handle()
     {
         $this->_initVersions();
-
         $this->info("Running public asset file update:\n");
-        if ($assets = $this->input->getArgument('assets')) {
-            $updateAssets = array_intersect_key($this->_assetNames, array_fill_keys($assets, null));
-        } else {
-            $updateAssets = $this->_assetNames;
+
+        $assets = $this->input->getArgument('assets');
+        $forceAssets = [];
+        if ($this->input->getOption('default-themes') && !array_key_exists(Assets\Themes::$name, $assets)) {
+            $assets[] = Assets\Themes::$name;
+            $forceAssets[] = Assets\Themes::$name;
         }
+        $updateAssets = $assets ? array_intersect_key($this->_assetNames, array_fill_keys($assets, null)) : $this->_assetNames;
+
         $bar = $this->output->createProgressBar(count($updateAssets));
         $bar->setFormatDefinition('custom', ' %current%/%max% [%bar%] -- %message% %details%');
         $bar->setFormat('custom');
@@ -96,8 +101,10 @@ class UpdateAssets extends Command
         foreach ($updateAssets as $assetName => $assetClass) {
             $bar->setMessage('Updating: ' . ($assetClass::$description ?: $assetName) . ' (' . $assetClass::$version . ')');
             $bar->display();
+            $options = $this->input->getOptions();
+            $options['force'] = in_array($assetName, $forceAssets) ? true : $options['force'];
             /** @var Assets\AbstractAsset $asset */
-            $asset = new $assetClass($this->_folders['public'], $this->_assetInstalledVersions[$assetName], $this->input->getOption('force'), $bar);
+            $asset = new $assetClass($this->_folders['public'], $this->_assetInstalledVersions[$assetName], $options, $bar);
             try {
                 $this->_setVersion($assetName, $asset->execute());
                 $reportMessages[$assetName] = $asset->getReport();
@@ -123,6 +130,7 @@ class UpdateAssets extends Command
                 $this->comment($assetName . ': ' . $reportMessage);
             }
         }
+
         // if in console and not installed, display notice
         if (app()->runningInConsole() && !Install::isComplete()) {
             $this->comment('To complete Coaster installation visit /install in your web browser .');
