@@ -152,8 +152,8 @@ abstract class AbstractAsset
      */
     public function copyFrom($fromFolder = '', $toFolder = '', $inBaseFolder = true, $overwrite = true)
     {
-        $this->_setDetailedMessage('copying: ' . $fromFolder);
         $fromFolder = $fromFolder ?: $this->_publicFiles(static::$name);
+        $this->_setDetailedMessage('copying: ' . $fromFolder);
         $toFolder = ($inBaseFolder ? $this->_baseFolder : '') . $toFolder;
         Directory::copy($fromFolder, $toFolder, null, $overwrite);
     }
