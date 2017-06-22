@@ -44,6 +44,11 @@ abstract class AbstractAsset
     protected $_force;
 
     /**
+     * @var boolean
+     */
+    protected $_failed;
+
+    /**
      * @var ProgressBar
      */
     protected $_progressBar;
@@ -62,6 +67,7 @@ abstract class AbstractAsset
      */
     public function __construct($coasterPublicFolder, $version, $force, $progressBar)
     {
+        $this->_failed = false;
         $this->_baseFolder = $coasterPublicFolder . static::$name . DIRECTORY_SEPARATOR;
         $this->_currentVersion = $version;
         $this->_force = $force;
@@ -80,7 +86,9 @@ abstract class AbstractAsset
                 mkdir($this->_baseFolder, 0777, true);
             }
             $this->run();
-            $this->_currentVersion = $version;
+            if (!$this->_failed) { // silent fail (throw \Exception in run() for normal failure)
+                 $this->_currentVersion = $version;
+            }
         }
         return $this->_currentVersion;
     }

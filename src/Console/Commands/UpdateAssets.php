@@ -102,7 +102,9 @@ class UpdateAssets extends Command
                 $this->_setVersion($assetName, $asset->execute());
                 $reportMessages[$assetName] = $asset->getReport();
             } catch (\Exception $e) {
-                $errors[$assetName] = $e->getMessage() . ' [' . $e->getFile() . ':' . $e->getLine() . ']';
+                if ($e->getMessage()) {
+                    $errors[$assetName] = $e->getMessage() . ' [' . $e->getFile() . ':' . $e->getLine() . ']';
+                }
             }
             $bar->advance();
         }

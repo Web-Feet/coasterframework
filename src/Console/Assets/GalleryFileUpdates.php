@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Console\Assets;
 
+use CoasterCms\Helpers\Cms\Install;
 use CoasterCms\Models\Block;
 use CoasterCms\Helpers\Cms\File\Directory;
 use File;
@@ -16,7 +17,13 @@ class GalleryFileUpdates extends AbstractAsset
     public function run()
     {
         $action = false;
-        $galleryBlocks = Block::where('type', '=', 'gallery')->get();
+
+        try {
+            $galleryBlocks = Block::where('type', '=', 'gallery')->get();
+        } catch (\PDOException $e) {
+            $galleryBlocks = collect([]);
+            $this->_failed = Install::isComplete(); // can skip on new installs
+        }
 
         // location change to name based as of v5.2.27
         if (!$galleryBlocks->isEmpty()) {
