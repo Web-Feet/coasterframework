@@ -14,7 +14,7 @@ class StorageFileUpdates extends AbstractAsset
     public function run()
     {
         $filesToMove = ['install.txt', 'assets.json', 'update.log'];
-        $filesToRemove = ['update.log', 'update.json'];
+        $filesToRemove = ['update.log', 'updates.json'];
 
         // changed location as of v5.2.39
         $oldFolder = storage_path('app');
