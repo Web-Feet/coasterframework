@@ -260,24 +260,28 @@ Class Theme extends Eloquent
 
         if ($packed) {
 
-            // extract public folder, extract uploads folder, and move views to themes root
-            if (is_dir($themePath . '/public')) {
-                Directory::copy($themePath . '/public', public_path() . '/themes/' . $themeName);
-                Directory::remove($themePath . '/public');
-            }
+            try {
+                // extract public folder, extract uploads folder, and move views to themes root
+                if (is_dir($themePath . '/public')) {
+                    Directory::copy($themePath . '/public', public_path() . '/themes/' . $themeName);
+                    Directory::remove($themePath . '/public');
+                }
 
-            if (is_dir($themePath . '/uploads')) {
-                Directory::copy($themePath . '/uploads', public_path() . '/uploads', function ($addFrom, $addTo) use ($themePath) {
-                    $addTo = substr($addFrom, strlen($themePath));
-                    $addTo = SecureUpload::getBasePath(SecureUpload::isSecurePath($addTo), false) . $addTo;
-                    return [$addFrom, $addTo];
-                });
-                Directory::remove($themePath . '/uploads');
-            }
+                if (is_dir($themePath . '/uploads')) {
+                    Directory::copy($themePath . '/uploads', public_path() . '/uploads', function ($addFrom, $addTo) use ($themePath) {
+                        $addTo = substr($addFrom, strlen($themePath));
+                        $addTo = SecureUpload::getBasePath(SecureUpload::isSecurePath($addTo), false) . $addTo;
+                        return [$addFrom, $addTo];
+                    });
+                    Directory::remove($themePath . '/uploads');
+                }
 
-            if (is_dir($themePath . '/views')) {
-                Directory::copy($themePath . '/views', $themePath);
-                Directory::remove($themePath . '/views');
+                if (is_dir($themePath . '/views')) {
+                    Directory::copy($themePath . '/views', $themePath);
+                    Directory::remove($themePath . '/views');
+                }
+            } catch (\Exception $e) {
+                return new JsonResponse([$e->getMessage()], 500);
             }
 
         }
