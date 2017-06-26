@@ -6,26 +6,33 @@ use Route;
 class Install
 {
 
-    private static $_loadedState;
+    protected static $_loadedState;
 
     public static function getInstallState($reload = false)
     {
         if ($reload || !isset(self::$_loadedState)) {
-            $installStateFile = self::_getFilePath();
-
-            if (!File::exists($installStateFile)) {
-                File::put($installStateFile, 'coaster.install.permissions');
-            }
-
-            self::$_loadedState = File::get($installStateFile);
+            static::setInstallState();
         }
 
         return self::$_loadedState;
     }
 
-    public static function setInstallState($state)
+    public static function setInstallState($state = '')
     {
-        File::put(self::_getFilePath(), $state);
+        $filePath = self::_getFilePath();
+        if (!File::exists($filePath)) {
+            $dir = pathinfo($filePath, PATHINFO_DIRNAME);
+            if (!File::exists($dir)) {
+                File::makeDirectory($dir);
+            }
+            $state = $state ?: 'coaster.install.permissions';
+        }
+        if ($state) {
+            File::put($filePath, $state);
+            static::$_loadedState = static::$_loadedState ?: $state;
+        } else {
+            static::$_loadedState = File::get($filePath);
+        }
     }
 
     public static function getRedirectRoute()
@@ -42,7 +49,7 @@ class Install
         return strpos(self::getInstallState($reload), 'complete') !== false;
     }
 
-    private static function _getFilePath()
+    protected static function _getFilePath()
     {
         return storage_path(config('coaster::site.storage_path')) . '/install.txt';
     }

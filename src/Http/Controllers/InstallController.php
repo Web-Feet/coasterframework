@@ -158,6 +158,12 @@ class InstallController extends Controller
             $updateEnv['DB_PORT'] = $port;
         }
 
+        foreach ($updateEnv as &$value) {
+            if (strpos($value, ' ') !== false) {
+                $value = '"' . $value . '"';
+            }
+        }
+
         try {
             $envFileContents = File::getEnvContents();
             $dotEnv = new Dotenv(base_path(), File::getEnvFile());

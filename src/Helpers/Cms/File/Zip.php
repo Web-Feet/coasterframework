@@ -27,43 +27,36 @@ class Zip extends \ZipArchive
         closedir($dir);
     }
 
-    public function extractDir($localName, $dstDir)
+    public function extractDir($localName, $dstDir, $overwrite = true)
     {
-        if (!is_dir($dstDir)) {
-            mkdir($dstDir, 0777, true);
-        }
+        $dstDir = rtrim($dstDir, '/');
         for($i=0; $i<$this->numFiles; $i++) {
             $name = $this->getNameIndex($i);
-            if (strpos($name, "{$localName}/") === 0 && substr($name, -1) != '/') {
-                $file = $dstDir . '/' . substr($name, strlen($localName) + 1);
-                $inDir = dirname($file);
-                if (!is_dir($inDir)) {
-                    mkdir($inDir, 0777, true);
+            if (substr($name, -1) != '/') {
+                if ($localName == '/' || strpos($name, $localName.'/') === 0) {
+                    $this->extractFile($name, $dstDir . '/' . substr($name, strlen($localName) + ($localName == '/' ? -1 : 1)), $overwrite);
+                } elseif ($name == $localName) {
+                    $this->extractFile($name, $dstDir, $overwrite);
                 }
-                $fpr = $this->getStream($name);
-                $fpw = fopen($file, 'w');
-                while ($data = fread($fpr, 1024)) {
-                    fwrite($fpw, $data);
-                }
-                fclose($fpr);
-                fclose($fpw);
             }
         }
     }
 
-    public function extractFile($localName, $dst)
+    public function extractFile($localName, $dst, $overwrite = true)
     {
-        $dstDir = dirname($dst);
-        if (!is_dir($dstDir)) {
-            mkdir($dstDir, 0777, true);
+        if ($overwrite || !file_exists($dst)) {
+            $dstDir = dirname($dst);
+            if (!is_dir($dstDir)) {
+                mkdir($dstDir, 0777, true);
+            }
+            $fpr = $this->getStream($localName);
+            $fpw = fopen($dst, 'w');
+            while ($data = fread($fpr, 1024)) {
+                fwrite($fpw, $data);
+            }
+            fclose($fpr);
+            fclose($fpw);
         }
-        $fpr = $this->getStream($localName);
-        $fpw = fopen($dst, 'w');
-        while ($data = fread($fpr, 1024)) {
-            fwrite($fpw, $data);
-        }
-        fclose($fpr);
-        fclose($fpw);
     }
 
 }

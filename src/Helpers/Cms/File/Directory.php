@@ -36,8 +36,9 @@ class Directory
      * @param string $srcDir
      * @param string $dstDir
      * @param \Closure $callback
+     * @param $overwrite
      */
-    public static function copy($srcDir, $dstDir, $callback = null)
+    public static function copy($srcDir, $dstDir, $callback = null, $overwrite = true)
     {
         $srcDir = rtrim($srcDir, '/');
         $dstDir = rtrim($dstDir, '/');
@@ -56,8 +57,8 @@ class Directory
                     }
                 }
                 if (is_dir($copyFrom)) {
-                    self::copy($copyFrom, $copyTo, $callback);
-                } else {
+                    self::copy($copyFrom, $copyTo, $callback, $overwrite);
+                } elseif ($overwrite || !file_exists($copyTo)) {
                     copy($copyFrom, $copyTo);
                 }
             }
