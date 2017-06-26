@@ -404,7 +404,7 @@ class DefaultInstance
             current($pageLevels)->pageCurrentLang->name = $options['404-name'];
         }
 
-        $crumbs = '';
+        $crumbs = [];
         if (!empty($pageLevels)) {
             $url = '';
             end($pageLevels);
@@ -419,14 +419,14 @@ class DefaultInstance
                 $crumb = new BreadCrumb($page->pageLang(), $url, $active);
 
                 if ($this->_viewExists('.breadcrumbs.' . $options['view'] . '.active_element') && $active) {
-                    $crumbs .= $this->_getRenderedView('breadcrumbs.' . $options['view'] . '.active_element', ['crumb' => $crumb]);
+                    $crumbs[] = $this->_getRenderedView('breadcrumbs.' . $options['view'] . '.active_element', ['crumb' => $crumb]);
                 } else {
-                    $crumbs .= $this->_getRenderedView('breadcrumbs.' . $options['view'] . '.link_element', ['crumb' => $crumb]);
-                    $crumbs .= $active ? $this->_getRenderedView('breadcrumbs.' . $options['view'] . '.separator') : '';
+                    $crumbs[] = $this->_getRenderedView('breadcrumbs.' . $options['view'] . '.link_element', ['crumb' => $crumb]);
                 }
             }
         }
-        return $this->_getRenderedView('breadcrumbs.' . $options['view'] . '.wrap', ['crumbs' => $crumbs]);
+        $crumbsHtml = implode($this->_getRenderedView('breadcrumbs.' . $options['view'] . '.separator'), $crumbs);
+        return $this->_getRenderedView('breadcrumbs.' . $options['view'] . '.wrap', ['crumbs' => $crumbsHtml]);
     }
 
     /**
