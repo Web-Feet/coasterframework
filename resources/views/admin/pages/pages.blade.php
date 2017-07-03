@@ -1,4 +1,6 @@
-<?php AssetBuilder::setStatus('jquery-sortable', true); ?>
+@php
+    AssetBuilder::setStatus('jquery-sortable', true);
+@endphp
 
 <div class="row">
     <div class="col-sm-6">
