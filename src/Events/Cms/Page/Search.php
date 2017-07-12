@@ -21,8 +21,8 @@ class Search
      */
     public function __construct(&$searchObjects, &$onlyLive)
     {
-        $this->_searchObjects = &$searchObjects;
-        $this->_onlyLive = &$onlyLive;
+        $this->searchObjects = &$searchObjects;
+        $this->onlyLive = &$onlyLive;
     }
     
     /**
