@@ -70,8 +70,8 @@ class Form extends AbstractBlock
         $form_submission->content = serialize($formData);
         $form_submission->sent = 0;
         $form_submission->from_page_id = PageBuilder::pageId();
-        $form_submission->uploadFiles($files);
         $form_submission->save();
+        $form_submission->uploadFiles($files);
         return $form_submission;
     }
 
@@ -83,8 +83,8 @@ class Form extends AbstractBlock
      */
     public function submissionSendEmail(array $formData, \stdClass $form_settings)
     {
-      $subject = config('coaster::site.name') . ': New Form Submission - ' . $this->_block->label;
-      return Email::sendFromFormData([$form_settings->template], $formData, $subject, $form_settings->email_to, $form_settings->email_from);
+        $subject = config('coaster::site.name') . ': New Form Submission - ' . $this->_block->label;
+        return Email::sendFromFormData([$form_settings->template], $formData, $subject, $form_settings->email_to, $form_settings->email_from);
     }
 
     /**
@@ -112,7 +112,7 @@ class Form extends AbstractBlock
                 }
 
                 // Send email
-                if ($this->submissionSendEmail($formData, $form_settings)) {
+                if ($this->submissionSendEmail(unserialize($form_submission->content), $form_settings)) {
                     $form_submission->sent = 1;
                     $form_submission->save();
                 }
