@@ -88,7 +88,7 @@ class PageCache
      */
     public function _remember($pageId, $hash, $callback)
     {
-        if (array_key_exists($pageId, $this->_keys) && array_key_exists($hash, $this->_keys[$pageId]) && Cache::has($this->_keys[$pageId][$hash])) {
+        if ($this->_cacheFor > 0 && array_key_exists($pageId, $this->_keys) && array_key_exists($hash, $this->_keys[$pageId]) && Cache::has($this->_keys[$pageId][$hash])) {
             $content = Cache::get($this->_keys[$pageId][$hash]);
         } else {
             $content = $callback();
