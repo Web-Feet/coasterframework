@@ -230,7 +230,7 @@ class DefaultInstance
         if ($this->pageOverride && !$noOverride) {
             return $this->pageOverride->parent;
         } else {
-            return $this->pageLevels[count($this->pageLevels) - 2]->id;
+            return ($parentIndex = (count($this->pageLevels) - 2)) >= 0 ? $this->pageLevels[$parentIndex]->id : 0;
         }
     }
 
