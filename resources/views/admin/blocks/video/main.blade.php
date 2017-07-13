@@ -1,6 +1,6 @@
 <?php
 $input_id = str_replace(['[', ']'], ['_', ''], $name);
-$content = $submitted_data?:$content;
+$content = $submitted_data?$submitted_data['select']:$content;
 ?>
 
 <div class="form-group {{ $field_class }}">

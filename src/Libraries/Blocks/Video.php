@@ -5,7 +5,7 @@ use CoasterCms\Models\BlockVideoCache;
 use GuzzleHttp\Client;
 use View;
 
-class Video extends String_
+class Video extends Select
 {
     /**
      * @var array
@@ -36,7 +36,8 @@ class Video extends String_
     public function display($content, $options = [])
     {
         if (!empty($content)) {
-            if (!($videoInfo = $this->_cache($content))) {
+            $videoInfo = $this->_cache($content);
+            if (!($videoInfo || empty($options['alwaysRender']))) {
                 return 'Video does not exist, it may have been removed from youtube';
             }
             return $this->_renderDisplayView($options, $videoInfo);
@@ -65,30 +66,30 @@ class Video extends String_
      */
     public function submit($postContent)
     {
-        if (!empty($postContent['select'])) {
-            if ($videoData = $this->_dl('videos', ['id' => $postContent, 'part' => 'id,snippet'])) {
-                $cachedVideoData = BlockVideoCache::where('videoId', '=', $postContent)->first() ?: new BlockVideoCache;
-                $cachedVideoData->videoId = $postContent;
-                $cachedVideoData->videoInfo = serialize($videoData);
-                $cachedVideoData->save();
-            }
-        }
-        return $this->save(!empty($postContent['select']) ? $postContent['select'] : '');
+        $this->_cache($postContent['select'], true);
+        return parent::submit($postContent);
     }
 
     /**
      * Return cached youtube video API data or fetch if not cached
-     * @param $videoId
-     * @return mixed
+     * @param string $videoId
+     * @param bool $dl
+     * @return null|\stdClass https://developers.google.com/youtube/v3/docs/search#resource
      */
-    protected function _cache($videoId)
+    protected function _cache($videoId, $dl = false)
     {
-        if (!array_key_exists($videoId, static::$_cachedVideoData)) {
-            if ($videoData = BlockVideoCache::where('videoId', '=', $videoId)->first()) {
-                static::$_cachedVideoData[$videoId] = unserialize($videoData->videoInfo);
-            } else {
-                static::$_cachedVideoData[$videoId] = $this->_dl('videos', ['id' => $videoId, 'part' => 'id,snippet']);
+        if ($videoId && (!array_key_exists($videoId, static::$_cachedVideoData) || $dl)) {
+            $videoData = BlockVideoCache::where('videoId', '=', $videoId)->first() ?: new BlockVideoCache;
+            if (!$videoData->exists() || $dl) {
+                if ($videoInfo = $this->_dl('videos', ['id' => $videoId, 'part' => 'id,snippet'])) {
+                    $videoData->videoId = $videoId;
+                    $videoData->videoInfo = serialize($videoInfo);
+                    $videoData->save();
+                }
+            } else  {
+                $videoInfo = unserialize($videoData->videoInfo);
             }
+            static::$_cachedVideoData[$videoId] = $videoInfo;
         }
         return static::$_cachedVideoData[$videoId];
     }
