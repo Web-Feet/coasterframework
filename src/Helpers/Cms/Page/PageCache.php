@@ -38,7 +38,7 @@ class PageCache
     }
 
     /**
-     * @param int $pageId
+     * @param string $pageId
      */
     public function _clear($pageId = null)
     {
@@ -53,7 +53,7 @@ class PageCache
     }
 
     /**
-     * @param int $pageId
+     * @param string $pageId
      * @param string $hash
      */
     public function _forget($pageId, $hash)
@@ -66,7 +66,7 @@ class PageCache
     }
 
     /**
-     * @param int $pageId
+     * @param string $pageId
      * @param string $hash
      * @param string $content
      */

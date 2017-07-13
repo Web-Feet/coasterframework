@@ -9,6 +9,7 @@ use CoasterCms\Helpers\Cms\File\SecureUpload;
 use CoasterCms\Helpers\Cms\Html\DOMDocument;
 use CoasterCms\Helpers\Cms\Page\PageCache;
 use CoasterCms\Models\Block;
+use CoasterCms\Models\Language;
 use CoasterCms\Models\PageRedirect;
 use CoasterCms\Models\PageVersionSchedule;
 use Exception;
@@ -169,7 +170,7 @@ class CmsController extends Controller
      */
     protected function _getRenderedTemplate($templatePath)
     {
-        $pageId = PageBuilder::pageId();
+        $pageId = PageBuilder::pageId() . '.' . Language::current();
         $hash = hash('haval256,3', serialize(Request::input()));
         $renderedTemplate = PageCache::remember($pageId, $hash, function () use ($templatePath) {
             return View::make($templatePath)->render();
