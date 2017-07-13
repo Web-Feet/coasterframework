@@ -539,6 +539,8 @@ class BlocksImport extends AbstractImport
         $this->_saveBlockTemplates($allBlockData);
         $this->_saveBlockRepeaters($allBlockData);
 
+        Block::preload('', true); // reload pre-loaded blocks
+
         // run import for select blocks (can only be run after blocks have been saved as it saves a block_id)
         $selectOptionsImport = new \CoasterCms\Libraries\Import\Blocks\SelectOptionImport;
         $selectOptionsImport->setTheme($this->_additionalData['theme'])->run();
