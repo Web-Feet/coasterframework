@@ -146,6 +146,7 @@ class CmsController extends Controller
             $domDocument->loadHTML($response->getContent());
 
             $domDocument->addMetaTag('generator', 'Coaster CMS ' . config('coaster::site.version'));
+            $domDocument->updateTokens(); // fpc fix for tokens
 
             if (config('coaster::frontend.strong_tags') == 1) {
                 $keywords = explode(", ", str_replace(" and ", ", ", PageBuilder::block('meta_keywords')));

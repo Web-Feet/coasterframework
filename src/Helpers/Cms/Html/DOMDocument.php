@@ -86,7 +86,7 @@ class DOMDocument extends \DOMDocument
             }
         }
     }
-    
+
     public function addStrongTags($keywords)
     {
         $keywords = "/(" . implode("|", $keywords) . ")/i";
@@ -104,7 +104,7 @@ class DOMDocument extends \DOMDocument
             }
         }
     }
-    
+
     public function appendInputFieldNames($prefix)
     {
         foreach ($this->bodyNodes['input'] as $node) {
@@ -113,6 +113,15 @@ class DOMDocument extends \DOMDocument
                 $node->setAttribute('name', $prefix . '[' . preg_replace('/[/', '][', $node->getAttribute('name'), 1));
             } else {
                 $node->setAttribute('name', $prefix . '[' . $node->getAttribute('name') . ']');
+            }
+        }
+    }
+
+    public function updateTokens()
+    {
+        foreach ($this->bodyNodes['input'] as $node) {
+            if ($node->getAttribute('name') == '_token') {
+                $node->setAttribute('value', csrf_token());
             }
         }
     }
