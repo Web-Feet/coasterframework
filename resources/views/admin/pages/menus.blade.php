@@ -153,7 +153,6 @@
             });
 
             $('.disclose').unbind('click').on('click', function () {
-                $(this).toggleClass('glyphicon-plus-sign').toggleClass('glyphicon-minus-sign');
                 $(this).closest('li').toggleClass('mjs-nestedSortable-collapsed').toggleClass('mjs-nestedSortable-expanded');
             });
 

@@ -76,7 +76,6 @@
               });
 
             $('.disclose').on('click', function (e) {
-                $(this).toggleClass('glyphicon-plus-sign').toggleClass('glyphicon-minus-sign');
                 var li = $(this).closest('li');
                 li.toggleClass('mjs-nestedSortable-collapsed').toggleClass('mjs-nestedSortable-expanded');
                 if (!e.isTrigger) {

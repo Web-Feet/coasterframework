@@ -35,13 +35,13 @@ li.mjs-nestedSortable-collapsed.mjs-nestedSortable-hovering div {
     background: #fafafa;
 }
 
-.disclose {
-    cursor: pointer;
-    width: 20px;
+.sortable li.mjs-nestedSortable-collapsed > ol {
     display: none;
 }
 
-.sortable li.mjs-nestedSortable-collapsed > ol {
+.disclose {
+    cursor: pointer;
+    width: 20px;
     display: none;
 }
 
@@ -49,8 +49,12 @@ li.mjs-nestedSortable-collapsed.mjs-nestedSortable-hovering div {
     display: inline-block;
 }
 
-.sortable li.mjs-nestedSortable-leaf > div > .disclose {
-    display: none;
+.sortable li.mjs-nestedSortable-collapsed > div > .disclose:before {
+    content: "\e081";
+}
+
+.sortable li.mjs-nestedSortable-expanded > div > .disclose:before {
+    content: "\e082";
 }
 
 ol.sortable li div{ border:none; padding:10px; transition:all 0.3s ease;}

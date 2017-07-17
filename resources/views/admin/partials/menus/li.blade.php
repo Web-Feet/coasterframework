@@ -1,6 +1,6 @@
 <li id="list_{!! $item->id !!}" data-id="{!! $item->id !!}">
     <div>
-        <span class='disclose glyphicon glyphicon-plus-sign'></span>
+        <span class='disclose glyphicon'></span>
         {!! $name !!} &nbsp; <span class="custom-name">{{ ($customName = $item->getCustomName()) ? '(Custom Name: ' . $customName . ')' : '' }}</span>
         <span class='pull-right'>
             @if ($permissions['subpage'] == true)

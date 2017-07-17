@@ -1,6 +1,6 @@
 <li id="list_p{{ $page->id }}" data-id="{{ $item->id }}" data-page-id="{{ $page->id }}" class="{{ $item->isHiddenPage($page->id) ? 'hidden-page ' : '' }}{!! $leaf ? 'mjs-nestedSortable-branch mjs-nestedSortable-collapsed' : '' !!}">
     <div>
-        <span class='disclose glyphicon glyphicon-plus-sign'></span>
+        <span class='disclose glyphicon'></span>
         {!! $name !!} &nbsp; <span class="custom-name">{{ ($customName = $item->getCustomName($page->id)) ? '(Custom Name: ' . $customName . ')' : '' }}</span>
         <span class='pull-right'>
             @if ($permissions['rename'])

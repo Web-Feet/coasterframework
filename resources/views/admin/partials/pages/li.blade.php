@@ -1,6 +1,6 @@
 <li id='list_{!! $page->id !!}'>
     <div class='{!! $li_info->type !!}'>
-        <span class='disclose glyphicon glyphicon-plus-sign'></span>
+        <span class='disclose glyphicon'></span>
         {!! $li_info->altName ?: $page_lang->name !!} {{ $li_info->group ? ' &nbsp; (Group: ' . $li_info->group->name . ')' : '' }}
         <span class="pull-right">
             @if (!empty($li_info->blog) && $permissions['blog'])
