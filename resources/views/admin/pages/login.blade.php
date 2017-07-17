@@ -23,7 +23,6 @@
     </div>
 </div>
 
-{!! Form::hidden('_token', csrf_token()) !!}
 {!! Form::hidden('login_path', Request::input('login_path')) !!}
 
         <!-- submit button -->
