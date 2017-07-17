@@ -78,16 +78,20 @@ class Video extends Select
      */
     protected function _cache($videoId, $dl = false)
     {
-        if ($videoId && (!array_key_exists($videoId, static::$_cachedVideoData) || $dl)) {
-            $videoData = BlockVideoCache::where('videoId', '=', $videoId)->first() ?: new BlockVideoCache;
-            if (!$videoData->exists() || $dl) {
-                if ($videoInfo = $this->_dl('videos', ['id' => $videoId, 'part' => 'id,snippet'])) {
-                    $videoData->videoId = $videoId;
-                    $videoData->videoInfo = serialize($videoInfo);
-                    $videoData->save();
+        if ((!array_key_exists($videoId, static::$_cachedVideoData) || $dl)) {
+            if ($videoId) {
+                $videoData = BlockVideoCache::where('videoId', '=', $videoId)->first() ?: new BlockVideoCache;
+                if (!$videoData->exists() || $dl) {
+                    if ($videoInfo = $this->_dl('videos', ['id' => $videoId, 'part' => 'id,snippet'])) {
+                        $videoData->videoId = $videoId;
+                        $videoData->videoInfo = serialize($videoInfo);
+                        $videoData->save();
+                    }
+                } else {
+                    $videoInfo = unserialize($videoData->videoInfo);
                 }
-            } else  {
-                $videoInfo = unserialize($videoData->videoInfo);
+            } else {
+                $videoInfo = null;
             }
             static::$_cachedVideoData[$videoId] = $videoInfo;
         }
