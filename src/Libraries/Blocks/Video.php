@@ -24,7 +24,7 @@ class Video extends Select
     public function __construct(Block $block)
     {
         parent::__construct($block);
-        $this->_displayViewDirs[] = 'vidoes';
+        $this->_displayViewDirs[] = 'videos';
     }
 
     /**
