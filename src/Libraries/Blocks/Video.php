@@ -66,7 +66,9 @@ class Video extends Select
      */
     public function submit($postContent)
     {
-        $this->_cache($postContent['select'], true);
+        if (is_array($postContent) && array_key_exists('select', $postContent)) {
+            $this->_cache($postContent['select'], true);
+        }
         return parent::submit($postContent);
     }
 
