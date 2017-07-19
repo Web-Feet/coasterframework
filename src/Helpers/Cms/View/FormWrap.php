@@ -22,10 +22,11 @@ class FormWrap
                 'real_page_id' => false,
                 'page_id' => null,
                 'honeyPot' => true,
-                'url' => (Request::input('forwarded_url') ?: Request::fullUrl()) . '#form' . $block->id,
+                'url' => (Request::input('forwarded_url') ?: Request::fullUrl()),
                 'files' => true,
                 'id' => 'form' . $block->id
             ];
+            $formOptions['url'] .= '#' . $formOptions['id'];
 
             $pageId = $formOptions['page_id'] ?: PageBuilder::pageId($formOptions['real_page_id']);
             $honeyPot = $formOptions['honeyPot'];
