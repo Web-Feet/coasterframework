@@ -400,9 +400,10 @@ class Block extends Eloquent
      * @param array $categorisedBlocks
      * @param array $blockContents
      * @param int $pageId
+     * @param int $versionId
      * @return array
      */
-    public static function getTabs($categorisedBlocks, $blockContents, $pageId = 0)
+    public static function getTabs($categorisedBlocks, $blockContents, $pageId = 0, $versionId = 0)
     {
         $tabHeaders = [];
         $tabContents = [];
@@ -417,7 +418,7 @@ class Block extends Eloquent
             foreach ($categoryBlocks as $blockId => $block) {
                 /** @var Block $block */
                 $blockContent = isset($blockContents[$blockId][Language::current()]) ? $blockContents[$blockId][Language::current()]->content : '';
-                $tabContents[$tabIndex] .= $block->setPageId($pageId)->getTypeObject()->edit($blockContent);
+                $tabContents[$tabIndex] .= $block->setPageId($pageId)->setVersionId($versionId)->getTypeObject()->edit($blockContent);
             }
         }
         return [$tabHeaders, $tabContents];
