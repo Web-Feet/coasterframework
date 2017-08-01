@@ -411,12 +411,12 @@ class DefaultInstance
             $lowestLevel = key($pageLevels);
             foreach ($pageLevels as $level => $page) {
 
-                if ($page && $page->pageLang()->url != '/') {
-                    $url .= '/' . $page->pageLang()->url;
+                if ($page) {
+                    $url .= rtrim('/' . $page->pageLang()->url, '/');
                 }
                 $active = ($lowestLevel == $level);
 
-                $crumb = new BreadCrumb($page->pageLang(), $url, $active);
+                $crumb = new BreadCrumb($page->pageLang(), $url ?: '/', $active);
 
                 if ($this->_viewExists('.breadcrumbs.' . $options['view'] . '.active_element') && $active) {
                     $crumbs[] = $this->_getRenderedView('breadcrumbs.' . $options['view'] . '.active_element', ['crumb' => $crumb]);
