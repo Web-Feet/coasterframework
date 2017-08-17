@@ -75,11 +75,10 @@ class DOMDocument extends \DOMDocument
             $generator->setAttribute('name', $name);
             $generator->setAttribute('content', $value);
             if ($headNode->hasChildNodes()) {
-                $titleNode = $this->getElementsByTagName('title')->item(0);
-                if (!empty($titleNode)) {
+                if ($titleNode = $this->getElementsByTagName('title')->item(0)) {
                     $headNode->insertBefore($generator, $titleNode);
                 } else {
-                    $headNode->insertBefore($generator, $headNode->firstChild);
+                    $headNode->insertBefore($generator, $headNode->lastChild);
                 }
             } else {
                 $headNode->appendChild($generator);
@@ -132,7 +131,7 @@ class DOMDocument extends \DOMDocument
             '#<script(.*?)>(.*?)</script>#is',
             function ($matches) {
                 $this->_jsScripts[] = $matches[0];
-                return '<div class="coaster_js_replace"></div>';
+                return '<script type="text/coaster_js_replace"></script>';
             },
             $html
         );
@@ -142,7 +141,7 @@ class DOMDocument extends \DOMDocument
     {
         $index = 0;
         return preg_replace_callback(
-            '/<div class="coaster_js_replace"><\/div>/is',
+            '/<script type="text\/coaster_js_replace"><\/script>/is',
             function () use (&$index) {
                 return $this->_jsScripts[$index++];
             },
