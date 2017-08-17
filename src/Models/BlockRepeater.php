@@ -20,7 +20,7 @@ Class BlockRepeater extends Eloquent
         $blockRepeater = static::preload($blockId);
         if ($blockRepeater->exists) {
             foreach (explode(",", $blockRepeater->blocks) as $repeaterBlockId) {
-                $repeaterBlocks[$repeaterBlockId] = Block::preload($repeaterBlockId);
+                $repeaterBlocks[$repeaterBlockId] = Block::preloadClone($repeaterBlockId);
             }
         }
         return $repeaterBlocks;
