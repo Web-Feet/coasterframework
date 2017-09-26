@@ -7,6 +7,11 @@ use CoasterCms\Models\PageLang;
 class PageDetails
 {
     /**
+     * @var int
+     */
+    public $id;
+
+    /**
      * @var string
      * @deprecated
      */
@@ -67,6 +72,8 @@ class PageDetails
 
         $this->full_name = $this->fullName;
         $this->full_url = $this->url;
+
+        $this->id = $page->id;
 
         $this->page = $page;
         $this->pageLang = $pageLang;
