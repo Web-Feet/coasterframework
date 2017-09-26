@@ -23,7 +23,7 @@
         "doctrine/dbal": "^2.5",
         "laravelcollective/html": "5.4.*",
         "bkwld/croppa": "~4.0",
-        "blueimp/jQuery-File-Upload": "9.11.2",
+        "blueimp/jQuery-File-Upload": "9.19.1",
         "guzzlehttp/guzzle": "6.*"
     },
     "autoload": {
