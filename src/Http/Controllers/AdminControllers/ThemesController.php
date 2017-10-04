@@ -409,8 +409,12 @@ class ThemesController extends Controller
 
     public function getSelects($blockId = null, $import = 0)
     {
+        $blocksQ = Block::where(function ($query) {
+            $query->orWhere('type', 'LIKE', '%select%')->orWhere('type', 'LIKE', '%wpricecolour%')->orWhere('type', 'LIKE', '%wcolour%');
+        })->where('type', 'NOT LIKE', '%selectpage%');
+
         if ($blockId) {
-            $block = Block::where('type', 'LIKE', '%select%')->where('type', 'NOT LIKE', '%selectpage%')->where('id', '=', $blockId)->first();
+            $block = $blocksQ->where('id', '=', $blockId)->first();
         }
 
         if (!empty($block)) {
@@ -435,7 +439,7 @@ class ThemesController extends Controller
 
             $selectBlocks = [];
 
-            $blocks = Block::where('type', 'LIKE', '%select%')->where('type', 'NOT LIKE', '%selectpage%')->get();
+            $blocks = $blocksQ->get();
             if (!$blocks->isEmpty()) {
                 foreach ($blocks as $block) {
                     $selectBlocks[$block->id] = $block->name;
