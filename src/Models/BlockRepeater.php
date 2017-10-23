@@ -32,9 +32,13 @@ Class BlockRepeater extends Eloquent
         foreach ($blockIds as $blockId) {
             $blockRepeater = static::preload($blockId);
             if ($blockRepeater->exists) {
+                $blockRepeaterChildren = explode(',', $blockRepeater->blocks);
+                if (($key = array_search($blockId, $blockRepeaterChildren)) !== false) {
+                    unset($blockRepeaterChildren[$key]);
+                }
                 $blockRepeaterBlockIds = array_merge(
                     $blockRepeaterBlockIds,
-                    static::addChildBlockIds(explode(',', $blockRepeater->blocks)),
+                    static::addChildBlockIds($blockRepeaterChildren),
                     [$blockId]
                 );
             }
