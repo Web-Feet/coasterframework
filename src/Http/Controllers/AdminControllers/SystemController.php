@@ -213,7 +213,7 @@ class SystemController extends Controller
             $coasterStorage = storage_path(config('coaster::site.storage_path'));
             $logFile = $coasterStorage . '/upgrade.log';
             if (!file_exists($logFile) && is_writable($coasterStorage)) {
-                file_put_contents('', $logFile);
+                file_put_contents($logFile, '');
             }
             if (is_writable($logFile)) {
                 shell_exec('cd ' . base_path() . '; composer -n update 2>' . $logFile . ';');
