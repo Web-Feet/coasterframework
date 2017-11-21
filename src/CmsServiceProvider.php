@@ -67,6 +67,11 @@ class CmsServiceProvider extends ServiceProvider
             });
         }
 
+        // make migrations publishable
+        $this->publishes([
+            __DIR__.'/../database/migrations/' => database_path().'/migrations/'
+        ], 'migrations');
+
         // set cookie jar for cookies
         Auth::setCookieJar($this->app['cookie']);
 
