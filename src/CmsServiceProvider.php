@@ -5,7 +5,6 @@ use Auth;
 use CoasterCms\Events\Cms\LoadAuth;
 use CoasterCms\Events\Cms\LoadMiddleware;
 use CoasterCms\Events\Cms\SetViewPaths;
-use CoasterCms\Helpers\Cms\Install;
 use CoasterCms\Http\Middleware\AdminAuth;
 use CoasterCms\Http\Middleware\GuestAuth;
 use CoasterCms\Http\Middleware\SecureUpload;
@@ -58,17 +57,27 @@ class CmsServiceProvider extends ServiceProvider
         event(new LoadAuth($authGuard, $authUserProvider));
         if ($authGuard && $authUserProvider) {
             Auth::extend('coaster', function ($app) use ($authGuard, $authUserProvider) {
-                return new $authGuard(
+                $guard = new $authGuard(
                     'coasterguard',
-                    new $authUserProvider,
+                    new $authUserProvider($app['hash'], config('auth.providers.users.model')),
                     $app['session.store'],
                     $app['request']
                 );
+
+                // set cookie jar for cookies
+                if (method_exists($guard, 'setCookieJar')) {
+                    $guard->setCookieJar($this->app['cookie']);
+                }
+                if (method_exists($guard, 'setDispatcher')) {
+                    $guard->setDispatcher($this->app['events']);
+                }
+                if (method_exists($guard, 'setRequest')) {
+                    $guard->setRequest($this->app->refresh('request', $guard, 'setRequest'));
+                }
+
+                return $guard;
             });
         }
-
-        // set cookie jar for cookies
-        Auth::setCookieJar($this->app['cookie']);
 
         // load coaster views
         $adminViews = [
