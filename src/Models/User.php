@@ -1,7 +1,7 @@
 <?php namespace CoasterCms\Models;
 
 use Carbon\Carbon;
-use CoasterCms\Libraries\Builder\FormMessage;
+use CoasterCms\Facades\FormMessage;
 use CoasterCms\Notifications\NewAccount;
 use CoasterCms\Notifications\PasswordReset;
 use Illuminate\Auth\Authenticatable;

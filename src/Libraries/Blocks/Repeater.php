@@ -5,7 +5,7 @@ use CoasterCms\Helpers\Cms\Email;
 use CoasterCms\Helpers\Cms\View\CmsBlockInput;
 use CoasterCms\Helpers\Cms\View\FormWrap;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
-use CoasterCms\Libraries\Builder\FormMessage;
+use CoasterCms\Facades\FormMessage;
 use PageBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockFormRule;

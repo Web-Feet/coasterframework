@@ -2,7 +2,7 @@
 
 use Auth;
 use Carbon\Carbon;
-use CoasterCms\Libraries\Builder\FormMessage;
+use CoasterCms\Facades\FormMessage;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\Language;
 use CoasterCms\Models\User;

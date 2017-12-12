@@ -3,7 +3,7 @@
 use Auth;
 use CoasterCms\Helpers\Cms\DateTimeHelper;
 use CoasterCms\Helpers\Cms\Page\Path;
-use CoasterCms\Libraries\Builder\FormMessage;
+use CoasterCms\Facades\FormMessage;
 use CoasterCms\Libraries\Traits\DataPreLoad;
 use Eloquent;
 use Illuminate\Database\Eloquent\Collection;

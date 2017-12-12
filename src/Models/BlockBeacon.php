@@ -2,7 +2,7 @@
 
 use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Libraries\Beacons\BeaconAbstract;
-use CoasterCms\Libraries\Builder\FormMessage;
+use CoasterCms\Facades\FormMessage;
 use Eloquent;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;

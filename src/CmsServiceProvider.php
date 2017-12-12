@@ -1,6 +1,5 @@
 <?php namespace CoasterCms;
 
-use App;
 use Auth;
 use CoasterCms\Events\Cms\LoadAuth;
 use CoasterCms\Events\Cms\LoadMiddleware;
@@ -9,7 +8,7 @@ use CoasterCms\Http\Middleware\AdminAuth;
 use CoasterCms\Http\Middleware\GuestAuth;
 use CoasterCms\Http\Middleware\SecureUpload;
 use CoasterCms\Http\Middleware\UploadChecks;
-use CoasterCms\Libraries\Builder\FormMessage\FormMessageInstance;
+use CoasterCms\Libraries\Builder\FormMessage;
 use Illuminate\Foundation\Http\Kernel;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
@@ -91,7 +90,7 @@ class CmsServiceProvider extends ServiceProvider
         $this->loadViewsFrom($frontendViews, 'coasterCms');
 
         $this->app->singleton('formMessage', function () {
-            return new FormMessageInstance($this->app['request'], 'default', config('coaster::frontend.form_error_class'));
+            return new FormMessage($this->app['session'], 'default', config('coaster::frontend.form_error_class'));
         });
     }
 
@@ -117,7 +116,7 @@ class CmsServiceProvider extends ServiceProvider
         $loader->alias('HTML', 'Collective\Html\HtmlFacade');
         $loader->alias('Croppa', 'CoasterCms\Helpers\Cms\Croppa\CroppaFacade');
         $loader->alias('CmsBlockInput', 'CoasterCms\Helpers\Cms\View\CmsBlockInput');
-        $loader->alias('FormMessage', 'CoasterCms\Libraries\Builder\FormMessageFacade');
+        $loader->alias('FormMessage', 'CoasterCms\Facades\FormMessage');
         $loader->alias('AssetBuilder', 'CoasterCms\Libraries\Builder\AssetBuilder');
         $loader->alias('DateTimeHelper', 'CoasterCms\Helpers\Cms\DateTimeHelper');
     }

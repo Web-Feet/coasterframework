@@ -5,7 +5,7 @@ use Carbon\Carbon;
 use CoasterCms\Helpers\Admin\Routes;
 use CoasterCms\Helpers\Cms\File\File;
 use CoasterCms\Helpers\Cms\Install;
-use CoasterCms\Libraries\Builder\FormMessage;
+use CoasterCms\Facades\FormMessage;
 use CoasterCms\Models\Setting;
 use CoasterCms\Models\Theme;
 use CoasterCms\Models\User;
@@ -141,6 +141,7 @@ class InstallController extends Controller
                     break;
                 default:
                     FormMessage::add('host', $e->getMessage());
+                    FormMessage::
             }
             return $this->setupDatabase();
         }
