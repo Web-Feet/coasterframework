@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Libraries\Builder;
 
+use CoasterCms\Facades\PageBuilder;
 use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Libraries\Builder\ViewClasses\MenuItemDetails;
 use CoasterCms\Models\Menu;
@@ -197,7 +198,7 @@ class MenuBuilder
      */
     protected function _getRenderedView($viewPath, $data = [])
     {
-        $viewPath = 'themes.' . PageBuilderFacade::getData('theme') . '.menus.' . $this->options['view'] . '.' . $viewPath;
+        $viewPath = 'themes.' . PageBuilder::getData('theme') . '.menus.' . $this->options['view'] . '.' . $viewPath;
         if (View::exists($viewPath)) {
             return View::make($viewPath, array_merge($this->options, $data))->render();
         } else {
@@ -242,13 +243,13 @@ class MenuBuilder
     {
         if ($force || !isset($this->activePageId)) {
             $this->activeParentIds = [];
-            $pageLevels = PageBuilderFacade::getData('pageLevels') ?: [];
+            $pageLevels = PageBuilder::getData('pageLevels') ?: [];
             foreach ($pageLevels as $k => $parentPage) {
                 if ($k > 0) { // ignore home page
                     $this->activeParentIds[] = $parentPage->page_id;
                 }
             }
-            $page = PageBuilderFacade::getData('page') ?: new Page;
+            $page = PageBuilder::getData('page') ?: new Page;
             $this->activePageId = (int) $page->id;
         }
     }
