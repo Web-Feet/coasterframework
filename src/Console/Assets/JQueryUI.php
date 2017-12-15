@@ -63,6 +63,8 @@ class JQueryUI extends AbstractAsset
         );
         $this->downloadFile('https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.2/jquery.ui.touch-punch.min.js');
         File::replaceString($this->_baseFolder . '/jquery-ui-timepicker-addon.js', 'formattedDateTime += this._defaults.separator + this.formattedTime + this._defaults.timeSuffix;', 'formattedDateTime = this.formattedTime + this._defaults.timeSuffix + this._defaults.separator + formattedDateTime;');
+        File::replaceString($this->_baseFolder . '/jquery-ui-timepicker-addon.js', 'dateString: allParts.splice(0, allPartsLen - timePartsLen)', 'dateString: allParts.slice(timePartsLen)');
+        File::replaceString($this->_baseFolder . '/jquery-ui-timepicker-addon.js', 'timeString: allParts.splice(0, timePartsLen)', 'timeString: allParts.slice(0, timePartsLen)');
     }
 
 }
