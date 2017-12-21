@@ -18,7 +18,7 @@ class CoasterGuard extends SessionGuard
     }
 
     /**
-     * @param array $action
+     * @param string $action
      * @param array $options
      * @return bool
      */

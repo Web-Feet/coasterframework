@@ -141,7 +141,6 @@ class InstallController extends Controller
                     break;
                 default:
                     FormMessage::add('host', $e->getMessage());
-                    FormMessage::
             }
             return $this->setupDatabase();
         }
