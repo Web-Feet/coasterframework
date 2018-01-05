@@ -44,10 +44,17 @@ class CoasterAuthUserProvider extends EloquentUserProvider
     /**
      * @param array $credentials
      * @return \Illuminate\Database\Eloquent\Model|null|static
+     * @throws \ErrorException
      */
     public function retrieveByCredentials(array $credentials)
     {
-        return $this->createModel()->newQuery()->where('email', '=', $credentials['username'])->where('active', '=', 1)->first();
+        $emailFields = ['username', 'email'];
+        foreach ($emailFields as $emailField) {
+            if (array_key_exists($emailField, $credentials)) {
+                return $this->createModel()->newQuery()->where('email', '=', $credentials[$emailField])->where('active', '=', 1)->first();
+            }
+        }
+        throw new \ErrorException('Credentials must have one of: '.implode(', ', $emailFields));
     }
 
 }
