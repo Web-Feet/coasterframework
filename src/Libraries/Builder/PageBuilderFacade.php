@@ -1,6 +1,7 @@
 <?php
 namespace CoasterCms\Libraries\Builder;
 
+use CoasterCms\Libraries\Builder\PageBuilder\DefaultInstance;
 use Illuminate\Support\Facades\Facade;
 
 /**
@@ -16,5 +17,9 @@ class PageBuilderFacade extends Facade
     protected static function getFacadeAccessor()
     {
         return 'pageBuilder';
+    }
+
+    protected static function getMockableClass() {
+        return DefaultInstance::class;
     }
 }

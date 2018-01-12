@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Providers;
 
-use CoasterCms\Helpers\Cms\Install;
+use CoasterCms\Facades\Install;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
