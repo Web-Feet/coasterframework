@@ -1,7 +1,10 @@
 /vendor
 /.DS_Store
+<<<<<<< HEAD
 /tests/testApp/storage/framework/testing/disks
 /tests/testApp/storage/framework/views
 /tests/testApp/storage/framework/session
 /tests/testApp/storage/app
 /tests/testApp/storage/logs
+=======
+>>>>>>> Add test features to Coaster framework
