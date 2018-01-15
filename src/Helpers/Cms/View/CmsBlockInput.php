@@ -1,6 +1,6 @@
 <?php namespace CoasterCms\Helpers\Cms\View;
 
-use CoasterCms\Libraries\Builder\FormMessage;
+use CoasterCms\Facades\FormMessage;
 use CoasterCms\Models\Block;
 use Request;
 use View;

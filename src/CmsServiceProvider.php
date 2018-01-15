@@ -1,16 +1,14 @@
 <?php namespace CoasterCms;
 
-use App;
 use Auth;
 use CoasterCms\Events\Cms\LoadAuth;
 use CoasterCms\Events\Cms\LoadMiddleware;
 use CoasterCms\Events\Cms\SetViewPaths;
-use CoasterCms\Helpers\Cms\Install;
 use CoasterCms\Http\Middleware\AdminAuth;
 use CoasterCms\Http\Middleware\GuestAuth;
 use CoasterCms\Http\Middleware\SecureUpload;
 use CoasterCms\Http\Middleware\UploadChecks;
-use CoasterCms\Libraries\Builder\FormMessage\FormMessageInstance;
+use CoasterCms\Libraries\Builder\FormMessage;
 use Illuminate\Foundation\Http\Kernel;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
@@ -58,17 +56,27 @@ class CmsServiceProvider extends ServiceProvider
         event(new LoadAuth($authGuard, $authUserProvider));
         if ($authGuard && $authUserProvider) {
             Auth::extend('coaster', function ($app) use ($authGuard, $authUserProvider) {
-                return new $authGuard(
+                $guard = new $authGuard(
                     'coasterguard',
-                    new $authUserProvider,
+                    new $authUserProvider($app['hash'], config('auth.providers.users.model')),
                     $app['session.store'],
                     $app['request']
                 );
+
+                // set cookie jar for cookies
+                if (method_exists($guard, 'setCookieJar')) {
+                    $guard->setCookieJar($this->app['cookie']);
+                }
+                if (method_exists($guard, 'setDispatcher')) {
+                    $guard->setDispatcher($this->app['events']);
+                }
+                if (method_exists($guard, 'setRequest')) {
+                    $guard->setRequest($this->app->refresh('request', $guard, 'setRequest'));
+                }
+
+                return $guard;
             });
         }
-
-        // set cookie jar for cookies
-        Auth::setCookieJar($this->app['cookie']);
 
         // load coaster views
         $adminViews = [
@@ -82,7 +90,7 @@ class CmsServiceProvider extends ServiceProvider
         $this->loadViewsFrom($frontendViews, 'coasterCms');
 
         $this->app->singleton('formMessage', function () {
-            return new FormMessageInstance($this->app['request'], 'default', config('coaster::frontend.form_error_class'));
+            return new FormMessage($this->app['session'], 'default', config('coaster::frontend.form_error_class'));
         });
     }
 
@@ -108,7 +116,7 @@ class CmsServiceProvider extends ServiceProvider
         $loader->alias('HTML', 'Collective\Html\HtmlFacade');
         $loader->alias('Croppa', 'CoasterCms\Helpers\Cms\Croppa\CroppaFacade');
         $loader->alias('CmsBlockInput', 'CoasterCms\Helpers\Cms\View\CmsBlockInput');
-        $loader->alias('FormMessage', 'CoasterCms\Libraries\Builder\FormMessageFacade');
+        $loader->alias('FormMessage', 'CoasterCms\Facades\FormMessage');
         $loader->alias('AssetBuilder', 'CoasterCms\Libraries\Builder\AssetBuilder');
         $loader->alias('DateTimeHelper', 'CoasterCms\Helpers\Cms\DateTimeHelper');
     }

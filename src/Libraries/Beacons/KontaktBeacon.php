@@ -2,7 +2,7 @@
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
-use CoasterCms\Libraries\Builder\FormMessage;
+use CoasterCms\Facades\FormMessage;
 
 /**
  * Kontakt beacon "driver"

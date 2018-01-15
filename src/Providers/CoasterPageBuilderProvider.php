@@ -1,11 +1,13 @@
 <?php namespace CoasterCms\Providers;
 
+use CoasterCms\Contracts\PageBuilder;
+use CoasterCms\Facades\PageBuilder as PageBuilderFacade;
 use CoasterCms\Helpers\Cms\Page\PageLoader;
 use CoasterCms\Libraries\Builder\PageBuilder\DefaultInstance;
 use CoasterCms\Libraries\Builder\PageBuilderFactory;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\ServiceProvider;
-use View;
+use Illuminate\View\Factory;
 
 class CoasterPageBuilderProvider extends ServiceProvider
 {
@@ -17,9 +19,11 @@ class CoasterPageBuilderProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->app->singleton('pageBuilder', function () {
+        $this->app->singleton('pageBuilder', function ($app) {
             $pb = new PageBuilderFactory(DefaultInstance::class, [new PageLoader]);
-            View::share('pb', $pb);
+            /** @var Factory $view */
+            $view = $app['view'];
+            $view->share('pb', $pb);
             return $pb;
         });
     }
@@ -31,9 +35,13 @@ class CoasterPageBuilderProvider extends ServiceProvider
      */
     public function register()
     {
-        // register aliases
+        // register class aliases
         $loader = AliasLoader::getInstance();
-        $loader->alias('PageBuilder', 'CoasterCms\Libraries\Builder\PageBuilderFacade');
+        $loader->alias('PageBuilder', PageBuilderFacade::class);
+
+        // register container aliases
+        $this->app->alias('pageBuilder', PageBuilderFactory::class);
+        $this->app->alias('pageBuilder', PageBuilder::class);
     }
 
 }

@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Models;
 
+use Closure;
 use Eloquent;
 
 class UserRole extends Eloquent
@@ -173,6 +174,20 @@ class UserRole extends Eloquent
         $page_actions->delete();
 
         return $log_id;
+    }
+
+    /**
+     * @param Closure $where
+     * @return array
+     */
+    public function optionsArray($where = null)
+    {
+        $options = [];
+        $roles = $where ? $where($this)->get() : $this->get();
+        foreach ($roles as $role) {
+            $options[$role->id] = $role->name;
+        }
+        return $options;
     }
 
 }

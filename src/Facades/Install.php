@@ -11,12 +11,19 @@ use Illuminate\Support\Facades\Facade;
 class Install extends Facade
 {
 
+    /**
+     * @return string
+     */
     protected static function getFacadeAccessor()
     {
         return InstallContract::class;
     }
 
-    protected static function getMockableClass() {
+    /**
+     * @return string
+     */
+    protected static function getMockableClass()
+    {
         return self::getFacadeAccessor();
     }
 }

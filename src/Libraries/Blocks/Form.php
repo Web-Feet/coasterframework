@@ -3,7 +3,7 @@
 use CoasterCms\Helpers\Cms\Captcha\Securimage;
 use CoasterCms\Helpers\Cms\Email;
 use CoasterCms\Helpers\Cms\View\FormWrap;
-use CoasterCms\Libraries\Builder\FormMessage;
+use CoasterCms\Facades\FormMessage;
 use PageBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockFormRule;
