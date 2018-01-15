@@ -30,7 +30,7 @@
     <div class="col-sm-10">
         @foreach($groups as $group)
             <label class="checkbox-inline">
-                {!! Form::checkbox('page_groups['.$group->id.']', 1, in_array($group->id, $page->groupIds())) !!} &nbsp; {!! $group->name !!}
+                {!! Form::checkbox('page_groups['.$group->id.']', 1, in_array($group->id, array_merge($page->groupIds(), $page->groups->pluck('id')->toArray()))) !!} &nbsp; {!! $group->name !!}
             </label>
         @endforeach
     </div>

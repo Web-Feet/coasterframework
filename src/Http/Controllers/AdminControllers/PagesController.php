@@ -439,10 +439,12 @@ class PagesController extends AdminController
         $page_details = Path::getFullPaths($pages, html_entity_decode(' &raquo; '));
         $json_array = array();
         foreach ($page_details as $page_detail) {
-            $details = new \stdClass;
-            $details->title = $page_detail->fullName;
-            $details->value = $page_detail->fullUrl;
-            $json_array[] = $details;
+            if (!is_null($page_detail->fullUrl)) {
+                $details = new \stdClass;
+                $details->title = $page_detail->fullName;
+                $details->value = $page_detail->fullUrl;
+                $json_array[] = $details;
+            }
         }
         usort($json_array, function ($a, $b) {
             return strcmp($a->title, $b->title);
