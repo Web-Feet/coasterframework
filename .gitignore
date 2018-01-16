@@ -1,8 +1,4 @@
 /vendor
-/testApp/storage/app
-/testApp/storage/framework
-/testApp/storage/logs
 /.DS_Store
-/tests/testApp/storage/framework/testing
-/tests/testApp/storage/framework
-/tests/testApp/storage/logs/laravel.log
+/tests/testApp/storage/framework/testing/disks
+/tests/testApp/storage/framework/
