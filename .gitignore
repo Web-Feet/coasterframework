@@ -2,4 +2,4 @@
 /.DS_Store
 /tests/testApp/storage/framework/*
 /tests/testApp/storage/app/*
-/tests/testApp/storage/logs/*.;log
+/tests/testApp/storage/logs/*.log
