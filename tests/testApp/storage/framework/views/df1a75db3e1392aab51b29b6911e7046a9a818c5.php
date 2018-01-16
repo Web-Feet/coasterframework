@@ -1,1 +1,0 @@
-<?php echo e($image->file); ?>.<?php echo e($image->caption); ?>
