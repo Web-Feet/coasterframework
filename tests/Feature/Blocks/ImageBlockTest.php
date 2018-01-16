@@ -31,6 +31,7 @@ class ImageBlockTest extends TestCase
      * @codingStandardsIgnoreLine */
     public function display_renders_a_string()
     {
+        // Create block view
         $this->createView('images', '{{ $image->file }}.{{ $image->caption }}');
 
         Block::unguard();
