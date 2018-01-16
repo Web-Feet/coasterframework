@@ -1,4 +1,5 @@
 /vendor
 /.DS_Store
-/tests/testApp/storage/framework/testing/disks
-/tests/testApp/storage/framework/
+/tests/testApp/storage/framework/*
+/tests/testApp/storage/app/*
+/tests/testApp/storage/logs/*.;log
