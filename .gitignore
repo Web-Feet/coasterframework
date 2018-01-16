@@ -1,3 +1,5 @@
 /vendor
 /.DS_Store
 /tests/testApp/storage/framework/testing/disks
+/tests/testApp/storage/framework/views
+/tests/testApp/storage/framework/session
