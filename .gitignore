@@ -5,3 +5,4 @@
 /.DS_Store
 /tests/testApp/storage/framework/testing
 /tests/testApp/storage/framework
+/tests/testApp/storage/logs/laravel.log
