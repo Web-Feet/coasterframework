@@ -280,7 +280,7 @@ class ThemeBuilderInstance extends DefaultInstance
     protected function _renderCategoryWithoutPageData($options)
     {
         if ($this->_importIgnore($options)) {
-            return '';
+            return $this->_returnValue('', $options);
         }
 
         $view = !empty($options['view']) ? $options['view'] : 'default';
@@ -305,7 +305,7 @@ class ThemeBuilderInstance extends DefaultInstance
             $output = '';
         }
 
-        return $output;
+        return $this->_returnValue($output, $options);
     }
 
     /**
