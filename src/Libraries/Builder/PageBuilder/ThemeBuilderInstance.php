@@ -470,9 +470,7 @@ class ThemeBuilderInstance extends DefaultInstance
         }
 
         foreach (array_intersect_key($options, $returnOpts) as $returnValue) {
-            if ($returnValue) {
-                return $returnValue;
-            }
+            return $returnValue;
         }
         return $output;
     }
