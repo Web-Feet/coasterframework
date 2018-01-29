@@ -1,11 +1,13 @@
 <?php
 
+// namespace CoasterCms\Tests\Feature\Admin;
+
 use CoasterCms\Models\User;
 use CoasterCms\Models\UserRole;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
-use Tests\TestCase;
+use CoasterCms\Tests\TestCase;
 
 class LoginScreenTest extends TestCase
 {

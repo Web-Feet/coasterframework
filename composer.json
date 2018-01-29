@@ -29,12 +29,18 @@
     "require-dev": {
         "laravel/framework": "5.5.*",
         "phpunit/phpunit": "~6.0",
-        "mockery/mockery": "~1.0"
+        "mockery/mockery": "~1.0",
+        "fzaninotto/faker": "~1.4"
     },
     "autoload": {
         "psr-4": {
             "CoasterCms\\": "src/",
             "CoasterCmsDatabase\\Seeds\\": "database/seeds/"
+        }
+    },
+    "autoload-dev" : {
+        "psr-4": {
+            "CoasterCms\\Tests\\": "tests/"
         }
     }
 }

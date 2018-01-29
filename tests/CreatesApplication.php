@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests;
+namespace CoasterCms\Tests;
 
 use CoasterCms\CmsServiceProvider;
 use CoasterCms\Facades\Install;

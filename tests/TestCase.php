@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests;
+namespace CoasterCms\Tests;
 
 use App\Console\Kernel;
 use CoasterCms\CmsServiceProvider;
@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\Facades\Schema;
 use Mockery as m;
 use Spatie\MigrateFresh\Commands\MigrateFresh;
-use Tests\CreatesApplication;
+use CoasterCms\Tests\CreatesApplication;
 
 abstract class TestCase extends BaseTestCase
 {

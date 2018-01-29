@@ -1,5 +1,5 @@
 <?php
-namespace Tests\Feature\Blocks\Traits;
+namespace CoasterCms\Tests\Feature\Blocks\Traits;
 
 use Illuminate\Support\Facades\Storage;
 
