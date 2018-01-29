@@ -1,16 +1,19 @@
 <?php
 
+use CoasterCms\Facades\PageBuilder as PageBuilderFacade;
 use CoasterCms\Libraries\Blocks\String_;
-use CoasterCms\Libraries\Builder\PageBuilderFacade;
 use CoasterCms\Models\Block;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Mockery as m;
+use Tests\Feature\Blocks\Traits\BlockTrait;
 use Tests\TestCase;
+
 
 class StringBlockTest extends TestCase
 {
+    use BlockTrait;
     /**
      * @test
      * @codingStandardsIgnoreLine */
@@ -22,6 +25,22 @@ class StringBlockTest extends TestCase
         $stringClass = new String_($block);
 
         $this->assertEquals('A string', $stringClass->display($block->content));
+    }
+
+    /**
+     * @test
+     * @codingStandardsIgnoreLine */
+    function can_display_through_a_view()
+    {
+        Block::unguard();
+        $block = new Block;
+        $block->content = 'string';
+        $stringClass = new String_($block);
+
+        // Create block view
+        $this->createView('strings', 'The {{ $data }}');
+
+        $this->assertEquals('The string', $stringClass->display($block->content, ['view' => 'strings.default']));
     }
 
     /**
