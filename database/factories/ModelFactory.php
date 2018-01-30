@@ -42,6 +42,14 @@ $factory->state(UserRole::class, 'admin', function () {
     ];
 });
 
+$factory->state(UserRole::class, 'superadmin', function () {
+    return [
+        'name' => 'Super Admin Role',
+        'description' => 'Super Admin Role description',
+        'admin' => 2,
+    ];
+});
+
 
 $factory->define(Block::class, function () {
     return [

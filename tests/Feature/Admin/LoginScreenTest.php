@@ -43,7 +43,7 @@ class LoginScreenTest extends TestCase
      * @codingStandardsIgnoreLine */
     function cannot_login_if_not_admin()
     {
-        $role = factory(UserRole::class)->create(['name' => 'superadmin']);
+        $role = factory(UserRole::class)->create(['name' => 'attemptor']);
         factory(User::class)->create(['email' => 'dan@coastercms.org',
             'password' => bcrypt('password'),
             'role_id' => $role->id,
@@ -64,7 +64,24 @@ class LoginScreenTest extends TestCase
      * @codingStandardsIgnoreLine */
     function can_login_if_admin()
     {
-        $role = factory(UserRole::class)->states('admin')->create(['name' => 'superadmin']);
+        $role = factory(UserRole::class)->states('admin')->create(['name' => 'admin']);
+        factory(User::class)->create(['email' => 'dan@coastercms.org',
+            'password' => bcrypt('password'),
+            'role_id' => $role->id,
+        ]);
+
+        $this->response = $this->post('/admin/login', ['username' => 'dan@coastercms.org', 'password' => 'password']);
+
+        $this->response->assertStatus(302);
+        $this->assertEquals(env('APP_URL').'/admin/home', $this->response->getTargetUrl());
+    }
+
+     /**
+     * @test
+     * @codingStandardsIgnoreLine */
+    function can_login_if_superadmin()
+    {
+        $role = factory(UserRole::class)->states('superadmin')->create(['name' => 'superadmin']);
         factory(User::class)->create(['email' => 'dan@coastercms.org',
             'password' => bcrypt('password'),
             'role_id' => $role->id,
