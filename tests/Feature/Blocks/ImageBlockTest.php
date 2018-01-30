@@ -17,12 +17,12 @@ class ImageBlockTest extends TestCase
     {
         $this->imageObj = new \stdClass;
         $this->imageObj->file = 'image.src';
+        $this->imageObj->title = 'title';
         $this->imageObj->caption = 'caption';
 
         foreach ($data as $key => $value) {
             $this->imageObj->{$key} = $value;
         }
-
         return $this->imageObj;
     }
 
@@ -44,6 +44,37 @@ class ImageBlockTest extends TestCase
         $rendered = $blockClass->display($block->content);
         $this->assertContains('image-test.src', $rendered);
         $this->assertContains('A caption', $rendered);
+    }
+
+    /** @test */
+    function display_returns_empty_string_if_no_file_is_present()
+    {
+        // Create block view
+        $this->createView('images', '{{ $image->file }}.{{ $image->caption }}');
+
+        $block = factory(Block::class)->create([
+            'name' => 'image_test',
+            'label' => 'Image test',
+            'type' => 'image',
+        ]);
+
+        $blockClass = new Image($block);
+
+        $this->assertSame('', $blockClass->display($this->generateImageObject(['file' => ''])));
+    }
+
+    /** @test */
+    function display_returns_an_error_when_no_view_is_present()
+    {
+        $block = factory(Block::class)->create([
+            'name' => 'image_test',
+            'label' => 'Image test',
+            'type' => 'image',
+        ]);
+
+        $blockClass = new Image($block);
+        $content = serialize($this->generateImageObject());
+        $this->assertViewNotFound($blockClass->display($content), $block->name, $block->type);
     }
 
     /**
