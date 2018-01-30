@@ -1,4 +1,5 @@
 <?php
+use CoasterCms\Models\Block;
 use CoasterCms\Models\User;
 use CoasterCms\Models\UserRole;
 /*
@@ -38,5 +39,15 @@ $factory->state(UserRole::class, 'admin', function () {
         'name' => 'Admin Role',
         'description' => 'Admin Role description',
         'admin' => 1,
+    ];
+});
+
+
+$factory->define(Block::class, function () {
+    return [
+        'category_id' => 1,
+        'name' => 'a_block',
+        'label' => 'A block',
+        'type' => 'string',
     ];
 });

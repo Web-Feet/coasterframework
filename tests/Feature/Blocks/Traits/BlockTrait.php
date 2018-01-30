@@ -10,4 +10,9 @@ trait BlockTrait {
         Storage::fake('views');
         Storage::disk('views')->put('themes/default/blocks/'.$type.'/default.blade.php', $contentString);
     }
+
+    public function assertViewNotFound($viewResult, $blockName, $blockType = 'string')
+    {
+    	$this->assertEquals('Template not found for '.$blockType.' block: '.$blockName.'<br />Tried #1 themes.default.blocks.'.$blockType.'.'.$blockName.'<br />Tried #2 themes.default.blocks.'.$blockType.'.default', $viewResult);
+    }
 }
