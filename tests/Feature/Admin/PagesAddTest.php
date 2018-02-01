@@ -86,4 +86,33 @@ class PagesTest extends TestCase
         $this->assertEquals('A page title', $pageLang->name);
         $this->assertEquals('a-page-title', $pageLang->url);
     }
+
+    /**
+     * @test
+     * @codingStandardsIgnoreLine */
+    function added_page_defaults_to_not_live()
+    {
+        $role = factory(UserRole::class)->states('admin')->create(['name' => 'admin']);
+        $user = factory(User::class)->create(['email' => 'dan@coastercms.org',
+            'password' => bcrypt('password'),
+            'role_id' => $role->id,
+        ]);
+
+        $this->enableActionAccessForRole($role, 'pages', 'add');
+
+        $this->response = $this->actingAs($user)->post('admin/pages/add', [
+            'page_info' => [
+                'parent' => 0,
+            ],
+            'page_info_lang' => [
+                'name' => 'A page title',
+                'url' => 'a-page-title',
+            ],
+        ]);
+
+        $this->response->assertStatus(302);
+
+        $page = Page::first();
+        $this->assertEquals(0, $page->live);
+    }
 }
