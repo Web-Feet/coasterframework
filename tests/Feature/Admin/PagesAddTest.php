@@ -76,6 +76,10 @@ class PagesTest extends TestCase
         $this->assertCount(1, Page::all());
         $this->assertCount(1, PageLang::all());
 
+        $page = Page::first();
+        $this->assertEquals(1, $page->id);
+        $this->assertEquals(0, $page->parent);
+
         $pageLang = PageLang::first();
 
         $this->assertEquals(1, $pageLang->id);
