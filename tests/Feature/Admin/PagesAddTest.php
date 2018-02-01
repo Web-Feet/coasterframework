@@ -67,6 +67,7 @@ class PagesTest extends TestCase
             ],
             'page_info_lang' => [
                 'name' => 'A page title',
+                'url' => 'a-page-title',
             ],
         ]);
 
@@ -79,5 +80,6 @@ class PagesTest extends TestCase
 
         $this->assertEquals(1, $pageLang->id);
         $this->assertEquals('A page title', $pageLang->name);
+        $this->assertEquals('a-page-title', $pageLang->url);
     }
 }
