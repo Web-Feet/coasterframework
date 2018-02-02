@@ -1,5 +1,8 @@
 <?php
 use CoasterCms\Models\Block;
+use CoasterCms\Models\Page;
+use CoasterCms\Models\PageLang;
+use CoasterCms\Models\Template;
 use CoasterCms\Models\User;
 use CoasterCms\Models\UserRole;
 /*
@@ -57,5 +60,31 @@ $factory->define(Block::class, function () {
         'name' => 'a_block',
         'label' => 'A block',
         'type' => 'string',
+    ];
+});
+
+
+$factory->define(PageLang::class, function(Faker\Generator $faker) {
+    $name = $faker->name;
+    $page = factory(Page::class)->create();
+    return [
+        'page_id' => $page->id,
+        'language_id' => 1,
+        'live_version' => 1,
+        'name' => $name,
+        'url' => str_slug($name),
+    ];
+});
+
+$factory->define(Page::class, function () {
+    return [
+        'live' => 1,
+    ];
+});
+
+$factory->define(Template::class, function () {
+    return [
+        'label' => 'template',
+        'template' => 'template',
     ];
 });

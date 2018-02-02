@@ -61,8 +61,8 @@ class StringBlockTest extends TestCase
      * @codingStandardsIgnoreLine */
     function page_name_can_be_passed_into_string_when_meta_option_is_true()
     {
-        PageBuilderFacade::shouldReceive('getData');
-        PageBuilderFacade::shouldReceive('pageName')->andReturn('The page');
+        PageBuilderFacade::shouldReceive('getData')->once();
+        PageBuilderFacade::shouldReceive('pageName')->once()->andReturn('The page');
 
         Block::unguard();
         $block = new Block;
@@ -78,7 +78,7 @@ class StringBlockTest extends TestCase
     function site_name_can_be_passed_into_string_when_meta_option_is_true()
     {
         config(['coaster::site.name' => 'The site']);
-        PageBuilderFacade::shouldReceive('getData')->shouldReceive('pageName');
+        PageBuilderFacade::shouldReceive('getData')->shouldReceive('pageName')->once();
 
         Block::unguard();
         $block = new Block;
