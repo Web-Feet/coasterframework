@@ -22,7 +22,7 @@ trait PagesTrait {
 
 	public function createPage($title = 'Page title', $pageOptions = [],  $pageLangOptions = [], $blocks = [])
 	{
-		$pageLangOptions = array_merge(['name' => $title, 'url' => ' /'], $pageLangOptions);
+		$pageLangOptions = array_merge(['name' => $title, 'url' => '/'], $pageLangOptions);
 		$pl = factory(PageLang::class)->create($pageLangOptions);
 
 		$pl->page()->first()->update($pageOptions);

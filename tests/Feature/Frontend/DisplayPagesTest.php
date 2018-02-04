@@ -1,5 +1,6 @@
 <?php
 
+use Carbon\Carbon;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Tests\Feature\Traits\PagesTrait;
@@ -38,6 +39,34 @@ class DisplayPagesTest extends TestCase
         	'live' => 0,
         ]);
 
+        $this->response = $this->get('/');
+
+        $this->response->assertStatus(404);
+    }
+
+    /** @test 
+    * @codingStandardsIgnoreLine */
+    function can_access_a_page_between_two_dates()
+    {
+        $template = $this->createTemplateView('home');
+        $p = $this->createPage('Home', [
+            'template' => $template->id,
+            'live' => 0,
+            'live_start' => Carbon::parse('2018-05-02 09:00'),
+            'live_end' => Carbon::parse('2018-05-03 12:00'),
+        ], ['url' => '/']);        
+
+        Carbon::setTestNow(Carbon::parse('2018-05-02 08:59:59'));
+        $this->response = $this->get('/');
+
+        $this->response->assertStatus(404);
+
+        Carbon::setTestNow(Carbon::parse('2018-05-02 09:00:00'));
+        $this->response = $this->get('/');
+
+        $this->response->assertStatus(200);
+
+        Carbon::setTestNow(Carbon::parse('2018-05-03 12:00:01'));
         $this->response = $this->get('/');
 
         $this->response->assertStatus(404);
