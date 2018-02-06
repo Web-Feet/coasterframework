@@ -46,7 +46,7 @@ class DisplayPagesTest extends TestCase
 
     /** @test 
     * @codingStandardsIgnoreLine */
-    function can_access_a_page_between_two_dates()
+    function cannot_access_a_page_before_start_date()
     {
         $template = $this->createTemplateView('home');
         $p = $this->createPage('Home', [
@@ -60,6 +60,20 @@ class DisplayPagesTest extends TestCase
         $this->response = $this->get('/');
 
         $this->response->assertStatus(404);
+        $this->assertContains('cms page not live', $this->response->getContent());
+
+    }
+
+    /** @test */
+    function can_access_a_page_after_live_start_date()
+    {
+        $template = $this->createTemplateView('home');
+        $p = $this->createPage('Home', [
+            'template' => $template->id,
+            'live' => 0,
+            'live_start' => Carbon::parse('2018-05-02 09:00'),
+            'live_end' => Carbon::parse('2018-05-03 12:00'),
+        ], ['url' => '/']);  
 
         Carbon::setTestNow(Carbon::parse('2018-05-02 09:00:00'));
         $this->response = $this->get('/');
@@ -68,7 +82,24 @@ class DisplayPagesTest extends TestCase
 
         Carbon::setTestNow(Carbon::parse('2018-05-03 12:00:01'));
         $this->response = $this->get('/');
+    }
+
+
+    /** @test */
+    function cannot_access_a_page_after_live_end_date()
+    {
+        $template = $this->createTemplateView('home');
+        $p = $this->createPage('Home', [
+            'template' => $template->id,
+            'live' => 0,
+            'live_start' => Carbon::parse('2018-05-02 09:00'),
+            'live_end' => Carbon::parse('2018-05-03 12:00'),
+        ], ['url' => '/']);  
+        
+        Carbon::setTestNow(Carbon::parse('2018-05-03 12:00:01'));
+        $this->response = $this->get('/');
 
         $this->response->assertStatus(404);
+        $this->assertContains('cms page not live', $this->response->getContent());
     }
 }

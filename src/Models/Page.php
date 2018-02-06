@@ -73,6 +73,7 @@ class Page extends Eloquent
             
             return ($now->between($live_from, $live_to));
         }
+        
         return false;
     }
 
