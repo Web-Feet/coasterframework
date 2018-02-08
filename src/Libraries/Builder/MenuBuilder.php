@@ -13,6 +13,11 @@ class MenuBuilder
 {
 
     /**
+     * @var MenuTree
+     */
+    protected $_tree;
+
+    /**
      * @var int
      */
     public $rootPageId;
@@ -108,6 +113,7 @@ class MenuBuilder
         $this->rootItems = $this->_convertPagesToItems($menuItems);
         $this->subLevels = $subLevels;
         $this->startLevel = $startLevel;
+        $this->_tree = new MenuTree();
 
         $this->options = array_merge([
             'view' => 'default',
@@ -121,7 +127,7 @@ class MenuBuilder
     public function render()
     {
         $menuItems = $this->_buildMenuItems($this->rootItems, $this->rootPageId, $this->startLevel, $this->subLevels);
-        return $this->_getRenderedView('menu', ['items' => $menuItems]);
+        return $this->_getView('menu', ['items' => $this->_getSubItemsView($menuItems), 'tree' => $this->_tree], true);
     }
 
     /**
@@ -149,7 +155,7 @@ class MenuBuilder
      * @param int $parentPageId
      * @param int $level
      * @param int $subLevels
-     * @return string
+     * @return array
      */
     protected function _buildMenuItems($items, $parentPageId, $level = 1, $subLevels = 0)
     {
@@ -157,7 +163,7 @@ class MenuBuilder
         $items = $this->_returnExistingLiveItems($items);
 
         $total = count($items);
-        $renderedMenuItems = '';
+        $menuItems = [];
 
         foreach ($items as $count => $item) {
             $isFirst = ($count == 0);
@@ -167,43 +173,59 @@ class MenuBuilder
             $active = $this->_isActivePage($pageId); // or active parent page
             $itemData = new MenuItemDetails($item, $active, $parentPageId, $this->options['canonicals']);
 
-            $renderedSubMenu = '';
+            $this->_tree->add($itemData);
+
+            $subItemsToRender = [];
             if ($subLevelsToRender = is_null($item->sub_levels) ? $subLevels : $item->sub_levels) {
                 if ($subPages = Page::category_pages($pageId)) {
                     $subPages = $this->_convertPagesToItems($subPages, $item);
-                    $renderedSubMenu = $this->_buildMenuItems($subPages, $pageId, $level + 1, $subLevelsToRender - 1);
+                    $this->_tree->downLevel($pageId);
+                    $subItemsToRender = $this->_buildMenuItems($subPages, $pageId, $level + 1, $subLevelsToRender - 1);
+                    $this->_tree->upLevel();
                 }
             }
 
-            $view = $renderedSubMenu ? 'submenu_' . $level : 'item';
-            $renderedMenuItems .= $this->_getRenderedView($view, [
+            $view = $subItemsToRender ? 'submenu_' . $level : 'item';
+            $menuItems[] = $this->_getView($view, [
                 'item' => $itemData,
-                'items' => $renderedSubMenu,
+                'items' => $this->_getSubItemsView($subItemsToRender),
                 'is_first' => $isFirst,
                 'is_last' => $isLast,
                 'count' => $count + 1,
                 'total' => $total,
                 'level' => $level,
-                'further_levels' => $subLevelsToRender
+                'further_levels' => $subLevelsToRender,
+                'tree' => $this->_tree->newInstance($item->page_id)
             ]);
         }
 
-        return $renderedMenuItems;
+        return $menuItems;
     }
 
     /**
      * @param string $viewPath
      * @param array $data
-     * @return string
+     * @param bool $render
+     * @return \Illuminate\Contracts\View\View|string
      */
-    protected function _getRenderedView($viewPath, $data = [])
+    protected function _getView($viewPath, $data = [], $render = false)
     {
         $viewPath = 'themes.' . PageBuilder::getData('theme') . '.menus.' . $this->options['view'] . '.' . $viewPath;
         if (View::exists($viewPath)) {
-            return View::make($viewPath, array_merge($this->options, $data))->render();
+            $view = View::make($viewPath, array_merge($this->options, $data));
+            return $render ? $view->render() : $view;
         } else {
             return 'View not found (' . $viewPath . ')';
         }
+    }
+
+    /**
+     * @param $subItemsToRender
+     * @return \Illuminate\Contracts\View\View|string
+     */
+    protected function _getSubItemsView($subItemsToRender)
+    {
+        return $subItemsToRender ? View::make('coasterCms::menu.items', ['itemsData' => $subItemsToRender]) : '';
     }
 
     /**
