@@ -1,5 +1,7 @@
 /vendor
 /.DS_Store
-/tests/testApp/storage/framework/*
+/tests/testApp/storage/framework/testing/*
+/tests/testApp/storage/framework/views/*
+!/tests/testApp/storage/framework/views/.gitignore
 /tests/testApp/storage/app/*
 /tests/testApp/storage/logs/*.log
