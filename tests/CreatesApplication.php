@@ -2,19 +2,11 @@
 
 namespace CoasterCms\Tests;
 
-use CoasterCms\CmsServiceProvider;
-use CoasterCms\Facades\Install;
-use CoasterCms\Providers\CoasterRoutesProvider;
-use Illuminate\Container\Container;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Illuminate\Foundation\Exceptions\Handler;
-use Illuminate\Support\Facades\Facade;
-use Illuminate\Support\Facades\Storage;
-use Spatie\MigrateFresh\Commands\MigrateFresh;
-
 use Illuminate\Contracts\Http\Kernel as HttpKernelContract;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 

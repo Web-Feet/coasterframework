@@ -5,7 +5,8 @@ use Illuminate\Support\Facades\Storage;
 
 trait BlockTrait {
     
-    public function createView($type, $contentString, $name = 'test_block') {
+    public function createView($type, $contentString)
+    {
         $this->app['view']->addLocation(storage_path('framework/testing/disks/views'));
 
         Storage::fake('views');

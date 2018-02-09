@@ -2,9 +2,6 @@
 
 use CoasterCms\Libraries\Blocks\Image;
 use CoasterCms\Models\Block;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Foundation\Testing\WithoutMiddleware;
 
 use \CoasterCms\Tests\Feature\Blocks\Traits\BlockTrait;
 use \CoasterCms\Tests\TestCase;

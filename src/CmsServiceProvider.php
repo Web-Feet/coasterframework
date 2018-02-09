@@ -101,6 +101,10 @@ class CmsServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        if (!defined('COASTER_ROOT')) {
+            define('COASTER_ROOT', dirname(__DIR__));
+        }
+
         $this->app->register('CoasterCms\Providers\CoasterEventsProvider');
         $this->app->register('CoasterCms\Providers\CoasterConfigProvider');
         $this->app->register('CoasterCms\Providers\CoasterConsoleProvider');

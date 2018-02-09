@@ -2,27 +2,23 @@
 
 namespace CoasterCms\Tests;
 
-use App\Console\Kernel;
 use CoasterCms\CmsServiceProvider;
 use CoasterCms\Facades\Install;
-use CoasterCms\Models\Setting;
 use CoasterCms\Providers\CoasterRoutesProvider;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Database\Eloquent\Factory as Factory;
 use Illuminate\Foundation\Exceptions\Handler;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-use Illuminate\Foundation\Testing\TestResponse;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Facade;
-use Illuminate\Support\Facades\Schema;
-use Mockery as m;
-use Spatie\MigrateFresh\Commands\MigrateFresh;
-use CoasterCms\Tests\CreatesApplication;
 
 abstract class TestCase extends BaseTestCase
 {
     use CreatesApplication, DatabaseMigrations;
+
+    protected static $preloadedModels = [];
+
+    protected $response;
 
     public function setUp()
     {
@@ -32,6 +28,7 @@ abstract class TestCase extends BaseTestCase
         $this->app->register(CmsServiceProvider::class);
         $this->app->register(CoasterRoutesProvider::class);
         $this->app['view']->addNamespace('coaster', realpath(__DIR__.'/../resources/views/admin'));
+        static::$preloadedModels = [];
 
         $this->registerDefaultMiddleware();
         $this->registerFactoriesSingleton();
@@ -86,6 +83,15 @@ abstract class TestCase extends BaseTestCase
         $sql .= 'SET FOREIGN_KEY_CHECKS=1;';
 
         $pdo->exec($sql);
+    }
+
+    public static function preloadReset($model)
+    {
+        if (!in_array($model, static::$preloadedModels)) {
+            static::$preloadedModels[] = $model;
+            return true;
+        }
+        return false;
     }
 
     protected function disableExceptionHandling()

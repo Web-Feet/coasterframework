@@ -6,9 +6,6 @@ use CoasterCms\Models\User;
 use CoasterCms\Models\UserRole;
 use CoasterCms\Tests\Feature\Admin\Traits\AdminActions;
 use CoasterCms\Tests\TestCase;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Foundation\Testing\WithoutMiddleware;
 
 class PagesAddTest extends TestCase
 {

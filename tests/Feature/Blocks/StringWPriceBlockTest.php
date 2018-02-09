@@ -1,12 +1,7 @@
 <?php
 
 use CoasterCms\Libraries\Blocks\Stringwprice;
-use CoasterCms\Libraries\Builder\PageBuilderFacade;
 use CoasterCms\Models\Block;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Foundation\Testing\WithoutMiddleware;
-use Illuminate\Support\Facades\View;
 use CoasterCms\Tests\Feature\Blocks\Traits\BlockTrait;
 use CoasterCms\Tests\TestCase;
 

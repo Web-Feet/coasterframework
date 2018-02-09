@@ -3,10 +3,6 @@
 use CoasterCms\Facades\PageBuilder as PageBuilderFacade;
 use CoasterCms\Libraries\Blocks\String_;
 use CoasterCms\Models\Block;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Foundation\Testing\WithoutMiddleware;
-use Mockery as m;
 use CoasterCms\Tests\Feature\Blocks\Traits\BlockTrait;
 use CoasterCms\Tests\TestCase;
 

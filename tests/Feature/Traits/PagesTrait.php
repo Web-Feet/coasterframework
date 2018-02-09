@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\Storage;
 
 trait PagesTrait {
 
-	public function createTemplateView($name = 'home', $contentString = '<html><body>Hello world!</body></html>') {
+	public function createTemplateView($name = 'home', $contentString = '<html><body>Hello world!</body></html>')
+    {
         $this->app['view']->addLocation(storage_path('framework/testing/disks/views'));
 
         Storage::fake('views');
@@ -20,7 +21,7 @@ trait PagesTrait {
         ]);
     }
 
-	public function createPage($title = 'Page title', $pageOptions = [],  $pageLangOptions = [], $blocks = [])
+	public function createPage($title = 'Page title', $pageOptions = [],  $pageLangOptions = [])
 	{
 		$pageLangOptions = array_merge(['name' => $title, 'url' => '/'], $pageLangOptions);
 		$pl = factory(PageLang::class)->create($pageLangOptions);

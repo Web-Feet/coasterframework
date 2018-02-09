@@ -1,13 +1,8 @@
 <?php
 
 use Carbon\Carbon;
-use CoasterCms\Models\Page;
-use CoasterCms\Models\PageLang;
 use CoasterCms\Tests\Feature\Traits\PagesTrait;
 use CoasterCms\Tests\TestCase;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Foundation\Testing\WithoutMiddleware;
 
 class DisplayPagesTest extends TestCase
 {
@@ -79,9 +74,6 @@ class DisplayPagesTest extends TestCase
         $this->response = $this->get('/');
 
         $this->response->assertStatus(200);
-
-        Carbon::setTestNow(Carbon::parse('2018-05-03 12:00:01'));
-        $this->response = $this->get('/');
     }
 
 
