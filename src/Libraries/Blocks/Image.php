@@ -65,7 +65,6 @@ class Image extends AbstractBlock
         } else {
             $imageData->file = $imageData->original;
         }
-
         return $this->_renderDisplayView($options, $imageData);
     }
 

@@ -12,24 +12,29 @@
             "email": "dan@web-feet.co.uk"
         }
     ],
-    "repositories" : [
-        {
-            "type": "git",
-            "url": "https://github.com/Web-Feet/html"
-        }
-    ],
     "require": {
-        "php": ">=5.6.4",
+        "php": ">=7.0",
         "doctrine/dbal": "^2.5",
-        "laravelcollective/html": "5.4.*",
+        "laravelcollective/html": "5.5.*",
         "bkwld/croppa": "~4.0",
         "blueimp/jQuery-File-Upload": "9.19.1",
         "guzzlehttp/guzzle": "6.*"
+    },
+    "require-dev": {
+        "laravel/framework": "5.5.*",
+        "phpunit/phpunit": "~6.0",
+        "mockery/mockery": "~1.0",
+        "fzaninotto/faker": "~1.4"
     },
     "autoload": {
         "psr-4": {
             "CoasterCms\\": "src/",
             "CoasterCmsDatabase\\Seeds\\": "database/seeds/"
+        }
+    },
+    "autoload-dev" : {
+        "psr-4": {
+            "CoasterCms\\Tests\\": "tests/"
         }
     }
 }

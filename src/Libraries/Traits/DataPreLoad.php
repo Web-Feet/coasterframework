@@ -1,6 +1,8 @@
 <?php namespace CoasterCms\Libraries\Traits;
 
+use CoasterCms\Tests\TestCase;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\App;
 
 trait DataPreLoad
 {
@@ -22,7 +24,8 @@ trait DataPreLoad
      */
     public static function preload($key, $force = false)
     {
-        if (!static::_preloadIsset() || $force) {
+        $refreshPreloads = App::runningUnitTests() && TestCase::preloadReset(get_called_class());
+        if (!static::_preloadIsset() || $force || $refreshPreloads) {
             static::_preload();
         }
         return !empty(static::$_preLoadedData[$key]) ? static::$_preLoadedData[$key] : new static;

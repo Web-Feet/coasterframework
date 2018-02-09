@@ -5,6 +5,7 @@ use DB;
 use Eloquent;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Query\JoinClause;
+use Illuminate\Support\Facades\App;
 use Request;
 
 class Block extends Eloquent
@@ -163,7 +164,7 @@ class Block extends Eloquent
     {
         if (!static::_preloadIsset('blockClass') || $reload) {
             $paths = [
-                'CoasterCms\\Libraries\\Blocks\\' => base_path('vendor/web-feet/coasterframework/src/Libraries/Blocks'),
+                'CoasterCms\\Libraries\\Blocks\\' => realpath(COASTER_ROOT . '/src/Libraries/Blocks'),
                 'App\\Blocks\\' => base_path('app/Blocks')
             ];
 
@@ -377,7 +378,7 @@ class Block extends Eloquent
                 DB::raw(
                     '(SELECT ' . $selectIdentifiers . ', MAX(maxVersions.version) as version FROM ' . $fullTableName . ' maxVersions '
                     . $useMaxLiveJoin . ' '
-                    . (!empty($whereQueries['maxVersions']) ? 'WHERE ' . implode(' AND ', $whereQueries['maxVersions']) : '') . ' 
+                    . (!empty($whereQueries['maxVersions']) ? 'WHERE ' . implode(' AND ', $whereQueries['maxVersions']) : '') . '
                      GROUP BY ' . $selectIdentifiers . ')' . DB::getTablePrefix() . 'j'
                 ),
                 function (JoinClause $join) use($joinClauses) {

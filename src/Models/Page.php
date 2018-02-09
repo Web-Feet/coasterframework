@@ -1,9 +1,10 @@
 <?php namespace CoasterCms\Models;
 
 use Auth;
+use Carbon\Carbon;
+use CoasterCms\Facades\FormMessage;
 use CoasterCms\Helpers\Cms\DateTimeHelper;
 use CoasterCms\Helpers\Cms\Page\Path;
-use CoasterCms\Facades\FormMessage;
 use CoasterCms\Libraries\Traits\DataPreLoad;
 use Eloquent;
 use Illuminate\Database\Eloquent\Collection;
@@ -66,12 +67,13 @@ class Page extends Eloquent
         if ($this->live == 1) {
             return true;
         } elseif ($this->live_start || $this->live_end) {
-            $live_from = strtotime($this->live_start) ?: time() - 10;
-            $live_to = strtotime($this->live_end) ?: time() + 10;
-            if ($live_from < time() && $live_to > time()) {
-                return true;
-            }
+            $now = Carbon::now();
+            $live_from = Carbon::parse($this->live_start) ?: Carbon::parse('-10 seconds');
+            $live_to = Carbon::parse($this->live_end) ?: Carbon::parse('+10 seconds');
+            
+            return ($now->between($live_from, $live_to));
         }
+        
         return false;
     }
 
