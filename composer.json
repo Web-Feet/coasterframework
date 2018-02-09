@@ -16,7 +16,7 @@
         "php": ">=7.0",
         "doctrine/dbal": "^2.5",
         "laravelcollective/html": "5.5.*",
-        "bkwld/croppa": "~4.0",
+        "bkwld/croppa": "4.4.*",
         "blueimp/jQuery-File-Upload": "9.19.1",
         "guzzlehttp/guzzle": "6.*"
     },
