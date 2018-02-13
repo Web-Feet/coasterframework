@@ -218,7 +218,7 @@ class InstallController extends Controller
 
     public function saveAdminUser()
     {
-        $details = Request::all();
+        $details = Request::all() + ['skip' => ''];
 
         if (User::count() == 0 || $details['skip'] != 'Skip') {
 
