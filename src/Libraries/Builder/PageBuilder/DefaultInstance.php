@@ -675,7 +675,7 @@ class DefaultInstance
             }
 
         } else {
-            return 'block not found';
+            return config('app.env') == 'development' ? 'block not found' : '';
         }
 
         // return raw data

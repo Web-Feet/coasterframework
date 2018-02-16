@@ -10,6 +10,7 @@ use CoasterCms\Tests\TestCase;
 class StringBlockTest extends TestCase
 {
     use BlockTrait;
+
     /**
      * @test
      * @codingStandardsIgnoreLine */
@@ -17,10 +18,9 @@ class StringBlockTest extends TestCase
     {
         Block::unguard();
         $block = new Block;
-        $block->content = 'A string';
         $stringClass = new String_($block);
 
-        $this->assertEquals('A string', $stringClass->display($block->content));
+        $this->assertEquals('A string', $stringClass->display('A string'));
     }
 
     /**
@@ -30,13 +30,12 @@ class StringBlockTest extends TestCase
     {
         Block::unguard();
         $block = new Block;
-        $block->content = 'string';
         $stringClass = new String_($block);
 
         // Create block view
         $this->createView('strings', 'The {{ $data }}');
 
-        $this->assertEquals('The string', $stringClass->display($block->content, ['view' => 'strings.default']));
+        $this->assertEquals('The string', $stringClass->display('string', ['view' => 'strings.default']));
     }
 
     /**
@@ -46,10 +45,9 @@ class StringBlockTest extends TestCase
     {
         Block::unguard();
         $block = new Block;
-        $block->content = 'A string';
         $stringClass = new String_($block);
 
-        $this->assertEquals('A string', $stringClass->data($block->content));
+        $this->assertEquals('A string', $stringClass->data('A string'));
     }
 
     /**
@@ -62,10 +60,9 @@ class StringBlockTest extends TestCase
 
         Block::unguard();
         $block = new Block;
-        $block->content = 'A string %page_name%';
         $stringClass = new String_($block);
 
-        $this->assertEquals('A string The page', $stringClass->display($block->content, ['meta' => true]));
+        $this->assertEquals('A string The page', $stringClass->display('A string %page_name%', ['meta' => true]));
     }
 
     /**
@@ -78,10 +75,9 @@ class StringBlockTest extends TestCase
 
         Block::unguard();
         $block = new Block;
-        $block->content = 'A string %site_name%';
         $stringClass = new String_($block);
 
-        $this->assertEquals('A string The site', $stringClass->display($block->content, ['meta' => true]));
+        $this->assertEquals('A string The site', $stringClass->display('A string %site_name%', ['meta' => true]));
     }
 
     /**
@@ -91,9 +87,21 @@ class StringBlockTest extends TestCase
     {
         Block::unguard();
         $block = new Block;
-        $block->content = 'A string <h3>In a tag</h3>';
         $stringClass = new String_($block);
 
-        $this->assertEquals('A string In a tag', $stringClass->display($block->content, ['meta' => true]));
+        $this->assertEquals('A string In a tag', $stringClass->display('A string <h3>In a tag</h3>', ['meta' => true]));
+    }
+
+    /**
+     * @test
+     * @codingStandardsIgnoreLine */
+    function can_get_block_as_json_data()
+    {
+        Block::unguard();
+        $block = new Block;
+        $block->name = 'String name';
+        $stringClass = new String_($block);
+
+        $this->assertEquals('{"String name":{"block":{"name":"String name"},"data":"A string <h3>In a tag<\/h3>"}}', $stringClass->toJson('A string <h3>In a tag</h3>'));
     }
 }

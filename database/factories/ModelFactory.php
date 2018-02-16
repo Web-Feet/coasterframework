@@ -88,3 +88,12 @@ $factory->define(Template::class, function () {
         'template' => 'template',
     ];
 });
+
+$factory->define(Block::class, function () {
+    return [
+        'name' => 'black_name',
+        'label' => 'Block label',
+        'type' => 'string',
+        'category_id' => 1,
+    ];
+});

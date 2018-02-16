@@ -33,12 +33,12 @@ class ImageBlockTest extends TestCase
 
         Block::unguard();
         $block = new Block;
-        $block->content = serialize($this->generateImageObject(['file' => 'image-test.src',
+        $content = serialize($this->generateImageObject(['file' => 'image-test.src',
             'caption' => 'A caption'
         ]));
         $blockClass = new Image($block);
 
-        $rendered = $blockClass->display($block->content);
+        $rendered = $blockClass->display($content);
         $this->assertContains('image-test.src', $rendered);
         $this->assertContains('A caption', $rendered);
     }
@@ -82,14 +82,28 @@ class ImageBlockTest extends TestCase
         Block::unguard();
         $block = new Block;
 
-        $block->content = serialize($this->generateImageObject(['file' => 'image-test.src',
+        $content = serialize($this->generateImageObject(['file' => 'image-test.src',
             'caption' => 'A caption'
         ]));
 
         $blockClass = new Image($block);
 
-        $returnedData = $blockClass->data($block->content);
+        $returnedData = $blockClass->data($content);
         $this->assertEquals('image-test.src', $returnedData->file);
         $this->assertEquals('A caption', $returnedData->caption);
+    }
+
+    /**
+     * @test
+     * @codingStandardsIgnoreLine */
+    function can_get_block_as_json_data()
+    {
+        Block::unguard();
+        $block = new Block;
+        $block->name = 'Block name';
+        $blockClass = new Image($block);
+
+        $content = serialize($this->generateImageObject());
+        $this->assertEquals('{"Block name":{"block":{"name":"Block name"},"data":{"file":"image.src","title":"title","caption":"caption"}}}', $blockClass->toJson($content));
     }
 }

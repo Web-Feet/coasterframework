@@ -49,7 +49,7 @@ class StringWPriceBlockTest extends TestCase
             'label' => 'String Price test',
             'type' => 'stringwprice',
         ]);
-        
+
         $stringWPrice = new Stringwprice($block);
         $this->assertViewNotFound($stringWPrice->display($object), $block->name, $block->type);
     }
@@ -63,7 +63,7 @@ class StringWPriceBlockTest extends TestCase
 
         $block = new Block;
         $block->name = 'stringwprice';
-        
+
     	$stringWPrice = new Stringwprice($block);
 
 
@@ -71,5 +71,21 @@ class StringWPriceBlockTest extends TestCase
 
     	$this->assertEquals('This is a price - &pound;10', $stringWPrice->display(serialize($object)));
     }
-    
+
+    /**
+     * @test
+     * @codingStandardsIgnoreLine */
+    function can_get_block_as_json_data()
+    {
+        $object = new stdClass;
+        $object->text = 'This is a price';
+        $object->price = 10;
+
+        Block::unguard();
+        $block = new Block;
+        $block->name = 'String with price name';
+        $stringWPrice = new Stringwprice($block);
+
+        $this->assertEquals('{"String with price name":{"block":{"name":"String with price name"},"data":{"text":"","price":""}}}', $stringWPrice->toJson($object));
+    }
 }
