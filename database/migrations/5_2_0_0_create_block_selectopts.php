@@ -13,10 +13,10 @@ class CreateBlockSelectopts extends Migration
      */
     public function up()
     {
-        Schema::table('block_selectopts', function (Blueprint $table) {
-            $table->create();
+        Schema::create('block_selectopts', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
             $table->increments('id');
-            $table->integer('block_id');
+            $table->integer('block_id')->unsigned();
             $table->string('option');
             $table->string('value');
             $table->timestamps();
@@ -30,7 +30,7 @@ class CreateBlockSelectopts extends Migration
      */
     public function down()
     {
-        //
+        Schema::drop('block_selectopts');
     }
 
 }

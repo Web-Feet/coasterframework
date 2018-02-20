@@ -13,11 +13,11 @@ class CreatePageBlocksRepeaterData extends Migration
      */
     public function up()
     {
-        Schema::table('page_blocks_repeater_data', function (Blueprint $table) {
-            $table->create();
+        Schema::create('page_blocks_repeater_data', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
             $table->increments('id');
             $table->integer('row_key');
-            $table->integer('block_id');
+            $table->integer('block_id')->unsigned();
             $table->text('content');
             $table->integer('version');
             $table->timestamps();
@@ -32,7 +32,7 @@ class CreatePageBlocksRepeaterData extends Migration
      */
     public function down()
     {
-        //
+        Schema::drop('page_blocks_repeater_data');
     }
 
 }

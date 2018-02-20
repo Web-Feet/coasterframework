@@ -65,7 +65,7 @@ class UpdateThemeActions extends Migration
      */
     public function down()
     {
-
+        //
     }
 
 }

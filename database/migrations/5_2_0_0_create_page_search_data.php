@@ -13,8 +13,8 @@ class CreatePageSearchData extends Migration
      */
     public function up()
     {
-        Schema::table('page_search_data', function (Blueprint $table) {
-            $table->create();
+        Schema::create('page_search_data', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
             $table->increments('id');
             $table->integer('language_id');
             $table->integer('page_id');
@@ -31,7 +31,7 @@ class CreatePageSearchData extends Migration
      */
     public function down()
     {
-        //
+        Schema::drop('page_search_data');
     }
 
 }

@@ -13,8 +13,8 @@ class CreatePageRedirects extends Migration
      */
     public function up()
     {
-        Schema::table('page_redirects', function (Blueprint $table) {
-            $table->create();
+        Schema::create('page_redirects', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
             $table->increments('id');
             $table->string('redirect');
             $table->string('to');
@@ -31,7 +31,7 @@ class CreatePageRedirects extends Migration
      */
     public function down()
     {
-        //
+        Schema::drop('page_redirects');
     }
 
 }

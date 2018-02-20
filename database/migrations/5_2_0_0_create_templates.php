@@ -13,12 +13,12 @@ class CreateTemplates extends Migration
      */
     public function up()
     {
-        Schema::table('templates', function (Blueprint $table) {
-            $table->create();
+        Schema::create('templates', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
             $table->increments('id');
-            $table->integer('theme_id');
+            $table->integer('theme_id')->unsigned();
             $table->string('label');
-            $table->string('template');
+            $table->string('template')->unique();
             $table->integer('child_template')->default(0);
             $table->integer('hidden')->default(0);
             $table->timestamps();
@@ -32,7 +32,7 @@ class CreateTemplates extends Migration
      */
     public function down()
     {
-        //
+        Schema::drop('templates');
     }
 
 }

@@ -14,10 +14,10 @@ class CreateUserRoles extends Migration
      */
     public function up()
     {
-        Schema::table('user_roles', function (Blueprint $table) {
-            $table->create();
+        Schema::create('user_roles', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
             $table->increments('id');
-            $table->string('name');
+            $table->string('name')->unique();
             $table->integer('admin')->default(1);
             $table->text('description')->nullable();
             $table->timestamps();
@@ -73,7 +73,7 @@ class CreateUserRoles extends Migration
      */
     public function down()
     {
-        //
+        Schema::drop('user_roles');
     }
 
 }

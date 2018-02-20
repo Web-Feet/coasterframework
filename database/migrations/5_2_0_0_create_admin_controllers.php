@@ -15,10 +15,10 @@ class CreateAdminControllers extends Migration
     public function up()
     {
 
-        Schema::table('admin_controllers', function (Blueprint $table) {
-            $table->create();
+        Schema::create('admin_controllers', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
             $table->increments('id');
-            $table->string('controller');
+            $table->string('controller')->unique();
             $table->string('role_name');
             $table->integer('role_order');
             $table->integer('role_section');
@@ -169,7 +169,7 @@ class CreateAdminControllers extends Migration
      */
     public function down()
     {
-        //
+        Schema::drop('admin_controllers');
     }
 
 }

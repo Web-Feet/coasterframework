@@ -13,8 +13,8 @@ class CreatePageGroup extends Migration
      */
     public function up()
     {
-        Schema::table('page_group', function (Blueprint $table) {
-            $table->create();
+        Schema::create('page_group', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
             $table->increments('id');
             $table->string('name');
             $table->string('item_name');
@@ -33,7 +33,7 @@ class CreatePageGroup extends Migration
      */
     public function down()
     {
-        //
+        Schema::drop('page_group');
     }
 
 }

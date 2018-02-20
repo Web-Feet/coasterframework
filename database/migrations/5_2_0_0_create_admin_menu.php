@@ -14,16 +14,22 @@ class CreateAdminMenu extends Migration
      */
     public function up()
     {
-        Schema::table('admin_menu', function (Blueprint $table) {
-            $table->create();
+        Schema::create('admin_menu', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
             $table->increments('id');
-            $table->integer('action_id');
+            $table->integer('action_id')->unsigned();
             $table->integer('parent');
             $table->integer('order');
             $table->string('icon');
             $table->string('item_name');
             $table->string('item_desc')->nullable();
             $table->timestamps();
+        });
+
+        Schema::table('admin_menu', function (Blueprint $table) {
+            $table->foreign('action_id')
+                  ->references('id')->on('admin_actions')
+                  ->onDelete('cascade');
         });
 
         $date = new Carbon;
@@ -141,7 +147,7 @@ class CreateAdminMenu extends Migration
      */
     public function down()
     {
-        //
+        Schema::drop('admin_menu');
     }
 
 }

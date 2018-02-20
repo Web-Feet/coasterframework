@@ -13,11 +13,10 @@ class CreateThemeBlocks extends Migration
      */
     public function up()
     {
-        Schema::table('theme_blocks', function (Blueprint $table) {
-            $table->create();
+        Schema::create('theme_blocks', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('theme_id');
-            $table->integer('block_id');
+            $table->integer('theme_id')->unsigned();
+            $table->integer('block_id')->unsigned();
             $table->integer('show_in_pages')->default(0);
             $table->string('exclude_templates')->default(null);
             $table->integer('show_in_global')->default(1);
@@ -32,7 +31,7 @@ class CreateThemeBlocks extends Migration
      */
     public function down()
     {
-        //
+        Schema::drop('theme_blocks');
     }
 
 }

@@ -14,10 +14,10 @@ class CreateAdminLogs extends Migration
      */
     public function up()
     {
-        Schema::table('admin_logs', function (Blueprint $table) {
-            $table->create();
+        Schema::create('admin_logs', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
             $table->increments('id');
-            $table->integer('user_id');
+            $table->integer('user_id')->unsigned();
             $table->string('log');
             $table->timestamps();
         });
@@ -43,7 +43,7 @@ class CreateAdminLogs extends Migration
      */
     public function down()
     {
-        //
+        Schema::drop('admin_logs');
     }
 
 }
