@@ -37,7 +37,7 @@ class AddCacheSetting extends Migration
      */
     public function down()
     {
-        //
+
     }
 
 }

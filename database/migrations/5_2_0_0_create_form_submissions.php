@@ -13,8 +13,8 @@ class CreateFormSubmissions extends Migration
      */
     public function up()
     {
-        Schema::create('form_submissions', function (Blueprint $table) {
-            $table->engine = 'InnoDB';
+        Schema::table('form_submissions', function (Blueprint $table) {
+            $table->create();
             $table->increments('id');
             $table->integer('form_block_id');
             $table->integer('from_page_id');
@@ -31,7 +31,7 @@ class CreateFormSubmissions extends Migration
      */
     public function down()
     {
-        Schema::drop('form_submissions');
+        //
     }
 
 }

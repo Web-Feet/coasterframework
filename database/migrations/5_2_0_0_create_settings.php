@@ -14,14 +14,14 @@ class CreateSettings extends Migration
      */
     public function up()
     {
-        Schema::create('settings', function (Blueprint $table) {
-            $table->engine = 'InnoDB';
+        Schema::table('settings', function (Blueprint $table) {
+            $table->create();
             $table->increments('id');
             $table->string('label');
-            $table->string('name')->unique();
+            $table->string('name');
             $table->string('value');
-            $table->boolean('editable');
-            $table->boolean('hidden');
+            $table->integer('editable');
+            $table->integer('hidden');
             $table->timestamps();
         });
 
@@ -176,7 +176,7 @@ class CreateSettings extends Migration
      */
     public function down()
     {
-        Schema::drop('settings');
+        //
     }
 
 }

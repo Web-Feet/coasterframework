@@ -13,23 +13,17 @@ class CreateBlocks extends Migration
      */
     public function up()
     {
-        Schema::create('blocks', function (Blueprint $table) {
-            $table->engine = 'InnoDB';
+        Schema::table('blocks', function (Blueprint $table) {
+            $table->create();
             $table->increments('id');
-            $table->integer('category_id')->unsigned();
+            $table->integer('category_id');
             $table->string('label');
-            $table->string('name')->unique();
+            $table->string('name');
             $table->string('type');
             $table->integer('order')->default(0);
             $table->integer('search_weight')->default(1);
             $table->integer('active')->default(1);
             $table->timestamps();
-        });
-
-        Schema::table('blocks', function (Blueprint $table) {
-            $table->foreign('category_id')
-                  ->references('id')->on('block_category')
-                  ->onDelete('cascade');
         });
     }
 
@@ -40,7 +34,7 @@ class CreateBlocks extends Migration
      */
     public function down()
     {
-        Schema::drop('blocks');
+        //
     }
 
 }

@@ -13,8 +13,8 @@ class CreateBlockFormRules extends Migration
      */
     public function up()
     {
-        Schema::create('block_form_rules', function (Blueprint $table) {
-            $table->engine = 'InnoDB';
+        Schema::table('block_form_rules', function (Blueprint $table) {
+            $table->create();
             $table->increments('id');
             $table->string('form_template');
             $table->string('field');
@@ -30,7 +30,7 @@ class CreateBlockFormRules extends Migration
      */
     public function down()
     {
-        Schema::drop('block_form_rules');
+        //
     }
 
 }

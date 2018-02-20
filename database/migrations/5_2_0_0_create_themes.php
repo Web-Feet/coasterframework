@@ -13,10 +13,10 @@ class CreateThemes extends Migration
      */
     public function up()
     {
-        Schema::create('themes', function (Blueprint $table) {
-            $table->engine = 'InnoDB';
+        Schema::table('themes', function (Blueprint $table) {
+            $table->create();
             $table->increments('id');
-            $table->string('theme')->unique();
+            $table->string('theme');
             $table->timestamps();
         });
     }
@@ -28,7 +28,7 @@ class CreateThemes extends Migration
      */
     public function down()
     {
-        Schema::drop('themes');
+        //
     }
 
 }

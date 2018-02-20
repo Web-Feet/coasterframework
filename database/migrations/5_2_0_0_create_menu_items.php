@@ -13,11 +13,11 @@ class CreateMenuItems extends Migration
      */
     public function up()
     {
-        Schema::create('menu_items', function (Blueprint $table) {
-            $table->engine = 'InnoDB';
+        Schema::table('menu_items', function (Blueprint $table) {
+            $table->create();
             $table->increments('id');
-            $table->integer('menu_id')->unsigned();
-            $table->integer('page_id')->unsigned();
+            $table->integer('menu_id');
+            $table->string('page_id');
             $table->integer('order')->default(0);
             $table->integer('sub_levels')->default(0);
             $table->text('custom_name')->nullable();
@@ -32,7 +32,7 @@ class CreateMenuItems extends Migration
      */
     public function down()
     {
-        Schema::drop('menu_items');
+        //
     }
 
 }

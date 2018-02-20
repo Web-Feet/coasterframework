@@ -55,7 +55,7 @@ class UpdateThemeManageActions extends Migration
      */
     public function down()
     {
-        //
+
     }
 
 }

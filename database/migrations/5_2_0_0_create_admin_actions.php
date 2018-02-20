@@ -15,10 +15,10 @@ class CreateAdminActions extends Migration
     public function up()
     {
 
-        Schema::create('admin_actions', function (Blueprint $table) {
-            $table->engine = 'InnoDB';
+        Schema::table('admin_actions', function (Blueprint $table) {
+            $table->create();
             $table->increments('id');
-            $table->integer('controller_id')->unsigned();
+            $table->integer('controller_id');
             $table->string('action');
             $table->integer('inherit')->default(0);
             $table->integer('edit_based')->default(0);
@@ -732,7 +732,7 @@ class CreateAdminActions extends Migration
      */
     public function down()
     {
-        Schema::drop('admin_actions');
+
     }
 
 }

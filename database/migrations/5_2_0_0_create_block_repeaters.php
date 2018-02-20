@@ -13,10 +13,10 @@ class CreateBlockRepeaters extends Migration
      */
     public function up()
     {
-        Schema::create('block_repeaters', function (Blueprint $table) {
-            $table->engine = 'InnoDB';
+        Schema::table('block_repeaters', function (Blueprint $table) {
+            $table->create();
             $table->increments('id');
-            $table->integer('block_id')->unsigned();
+            $table->integer('block_id');
             $table->string('blocks');
             $table->timestamps();
         });
@@ -29,7 +29,7 @@ class CreateBlockRepeaters extends Migration
      */
     public function down()
     {
-        Schema::drop('block_repeaters');
+        //
     }
 
 }

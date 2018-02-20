@@ -13,15 +13,15 @@ class CreatePageVersions extends Migration
      */
     public function up()
     {
-        Schema::create('page_versions', function (Blueprint $table) {
-            $table->engine = 'InnoDB';
+        Schema::table('page_versions', function (Blueprint $table) {
+            $table->create();
             $table->increments('id');
-            $table->integer('page_id')->unsigned();
-            $table->integer('version_id')->unsigned();
+            $table->integer('page_id');
+            $table->integer('version_id');
             $table->string('template');
             $table->string('label')->nullable();
-            $table->string('preview_key')->unique();
-            $table->integer('user_id')->unsigned();
+            $table->string('preview_key');
+            $table->integer('user_id');
             $table->timestamps();
         });
     }
@@ -33,7 +33,7 @@ class CreatePageVersions extends Migration
      */
     public function down()
     {
-        Schema::drop('page_versions');
+        //
     }
 
 }

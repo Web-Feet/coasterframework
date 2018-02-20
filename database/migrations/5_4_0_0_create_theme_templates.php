@@ -12,14 +12,14 @@ class CreateThemeTemplates extends Migration
      */
     public function up()
     {
-        Schema::create('theme_templates', function (Blueprint $table) {
-            $table->engine = 'InnoDB';
+        Schema::table('theme_templates', function (Blueprint $table) {
+            $table->create();
             $table->increments('id');
-            $table->integer('theme_id')->unsigned();
-            $table->integer('template_id')->unsigned();
+            $table->integer('theme_id');
+            $table->integer('template_id');
             $table->string('label')->nullable();
-            $table->integer('child_template')->unsigned()->nullable();
-            $table->boolean('hidden')->nullable();
+            $table->integer('child_template')->nullable();
+            $table->integer('hidden')->nullable();
             $table->timestamps();
         });
 
@@ -61,7 +61,7 @@ class CreateThemeTemplates extends Migration
      */
     public function down()
     {
-        Schema::drop('theme_templates');
+
     }
 
 }

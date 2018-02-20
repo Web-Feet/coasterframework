@@ -18,12 +18,4 @@ class BlockNoteNull extends Migration
         });
     }
 
-    public function down()
-    {
-        Schema::table('blocks', function(Blueprint $table)
-        {
-            $table->dropColumn('note');
-        });
-    }
-
 }

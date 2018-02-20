@@ -13,20 +13,14 @@ class CreateBackups extends Migration
      */
     public function up()
     {
-        Schema::create('backups', function (Blueprint $table) {
-            $table->engine = 'InnoDB';
+        Schema::table('backups', function (Blueprint $table) {
+            $table->create();
             $table->increments('id');
-            $table->integer('log_id')->unsigned();
+            $table->integer('log_id');
             $table->integer('primary_id');
             $table->string('model');
             $table->mediumText('data');
             $table->timestamps();
-        });
-
-        Schema::table('backups', function (Blueprint $table) {
-            $table->foreign('log_id')
-                  ->references('id')->on('admin_logs')
-                  ->onDelete('cascade');
         });
     }
 
@@ -37,7 +31,7 @@ class CreateBackups extends Migration
      */
     public function down()
     {
-        Schema::drop('backups');
+        //
     }
 
 }

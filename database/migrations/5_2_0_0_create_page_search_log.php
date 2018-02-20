@@ -13,8 +13,8 @@ class CreatePageSearchLog extends Migration
      */
     public function up()
     {
-        Schema::create('page_search_log', function (Blueprint $table) {
-            $table->engine = 'InnoDB';
+        Schema::table('page_search_log', function (Blueprint $table) {
+            $table->create();
             $table->increments('id');
             $table->string('term');
             $table->integer('count');
@@ -29,7 +29,7 @@ class CreatePageSearchLog extends Migration
      */
     public function down()
     {
-        Schema::drop('page_search_log');
+        //
     }
 
 }

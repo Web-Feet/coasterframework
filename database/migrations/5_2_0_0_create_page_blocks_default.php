@@ -13,11 +13,11 @@ class CreatePageBlocksDefault extends Migration
      */
     public function up()
     {
-        Schema::create('page_blocks_default', function (Blueprint $table) {
-            $table->engine = 'InnoDB';
+        Schema::table('page_blocks_default', function (Blueprint $table) {
+            $table->create();
             $table->increments('id');
             $table->integer('language_id')->default(1);
-            $table->integer('block_id')->unsigned();
+            $table->integer('block_id');
             $table->text('content');
             $table->integer('version');
             $table->timestamps();
@@ -31,7 +31,7 @@ class CreatePageBlocksDefault extends Migration
      */
     public function down()
     {
-        Schema::drop('page_blocks_default');
+        //
     }
 
 }

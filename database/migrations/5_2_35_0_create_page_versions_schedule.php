@@ -16,8 +16,8 @@ class CreatePageVersionsSchedule extends Migration
     {
         $date = new Carbon;
 
-        Schema::create('page_versions_schedule', function (Blueprint $table) {
-            $table->engine = 'InnoDB';
+        Schema::table('page_versions_schedule', function (Blueprint $table) {
+            $table->create();
             $table->increments('id');
             $table->integer('page_version_id');
             $table->timestamp('live_from')->useCurrent();
@@ -52,7 +52,7 @@ class CreatePageVersionsSchedule extends Migration
      */
     public function down()
     {
-        Schema::drop('page_versions_schedule');
+        //
     }
 
 }

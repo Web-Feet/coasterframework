@@ -13,11 +13,11 @@ class CreateTemplateBlocks extends Migration
      */
     public function up()
     {
-        Schema::create('template_blocks', function (Blueprint $table) {
-            $table->engine = 'InnoDB';
+        Schema::table('template_blocks', function (Blueprint $table) {
+            $table->create();
             $table->increments('id');
-            $table->integer('template_id')->unsigned();
-            $table->integer('block_id')->unsigned();
+            $table->integer('template_id');
+            $table->integer('block_id');
             $table->timestamps();
         });
     }
@@ -29,7 +29,7 @@ class CreateTemplateBlocks extends Migration
      */
     public function down()
     {
-        Schema::drop('template_blocks');
+        //
     }
 
 }

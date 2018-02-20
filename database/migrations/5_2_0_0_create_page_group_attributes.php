@@ -13,10 +13,10 @@ class CreatePageGroupAttributes extends Migration
      */
     public function up()
     {
-        Schema::create('page_group_attributes', function (Blueprint $table) {
-            $table->engine = 'InnoDB';
+        Schema::table('page_group_attributes', function (Blueprint $table) {
+            $table->create();
             $table->increments('id');
-            $table->integer('group_id')->unsigned();
+            $table->integer('group_id');
             $table->integer('item_block_id');
             $table->integer('filter_by_block_id');
             $table->timestamps();
@@ -30,7 +30,7 @@ class CreatePageGroupAttributes extends Migration
      */
     public function down()
     {
-        Schema::drop('page_group_attributes');
+        //
     }
 
 }

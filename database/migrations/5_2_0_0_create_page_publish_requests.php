@@ -13,8 +13,8 @@ class CreatePagePublishRequests extends Migration
      */
     public function up()
     {
-        Schema::create('page_publish_requests', function (Blueprint $table) {
-            $table->engine = 'InnoDB';
+        Schema::table('page_publish_requests', function (Blueprint $table) {
+            $table->create();
             $table->increments('id');
             $table->integer('page_version_id');
             $table->enum('status', ['awaiting', 'approved', 'denied', 'cancelled']);
@@ -32,7 +32,7 @@ class CreatePagePublishRequests extends Migration
      */
     public function down()
     {
-        Schema::drop('page_publish_requests');
+        //
     }
 
 }

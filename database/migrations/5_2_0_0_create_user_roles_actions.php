@@ -14,11 +14,11 @@ class CreateUserRolesActions extends Migration
      */
     public function up()
     {
-        Schema::create('user_roles_actions', function (Blueprint $table) {
-            $table->engine = 'InnoDB';
+        Schema::table('user_roles_actions', function (Blueprint $table) {
+            $table->create();
             $table->increments('id');
-            $table->integer('role_id')->unsigned();
-            $table->integer('action_id')->unsigned();
+            $table->integer('role_id');
+            $table->integer('action_id');
             $table->timestamps();
         });
 
@@ -314,7 +314,7 @@ class CreateUserRolesActions extends Migration
      */
     public function down()
     {
-        Schema::drop('user_roles_actions');
+        //
     }
 
 }

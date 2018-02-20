@@ -13,11 +13,11 @@ class CreateMenus extends Migration
      */
     public function up()
     {
-        Schema::create('menus', function (Blueprint $table) {
-            $table->engine = 'InnoDB';
+        Schema::table('menus', function (Blueprint $table) {
+            $table->create();
             $table->increments('id');
             $table->string('label');
-            $table->string('name')->unique();
+            $table->string('name');
             $table->integer('max_sublevel')->default(0);
             $table->timestamps();
         });
@@ -30,7 +30,7 @@ class CreateMenus extends Migration
      */
     public function down()
     {
-        Schema::drop('menus');
+        //
     }
 
 }

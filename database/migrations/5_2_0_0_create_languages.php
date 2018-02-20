@@ -14,10 +14,10 @@ class CreateLanguages extends Migration
      */
     public function up()
     {
-        Schema::create('languages', function (Blueprint $table) {
-            $table->engine = 'InnoDB';
+        Schema::table('languages', function (Blueprint $table) {
+            $table->create();
             $table->increments('id');
-            $table->string('language')->unique();
+            $table->string('language');
             $table->timestamps();
         });
 
@@ -41,7 +41,7 @@ class CreateLanguages extends Migration
      */
     public function down()
     {
-        Schema::drop('languages');
+        //
     }
 
 }

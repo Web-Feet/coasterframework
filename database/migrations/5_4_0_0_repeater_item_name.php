@@ -18,12 +18,4 @@ class RepeaterItemName extends Migration
         });
     }
 
-    public function down()
-    {
-        Schema::table('block_repeaters', function(Blueprint $table)
-        {
-            $table->dropColumn('item_name');
-        });
-    }
-
 }

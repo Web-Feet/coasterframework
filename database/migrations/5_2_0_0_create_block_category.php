@@ -13,10 +13,10 @@ class CreateBlockCategory extends Migration
      */
     public function up()
     {
-        Schema::create('block_category', function (Blueprint $table) {
-            $table->engine = 'InnoDB';
+        Schema::table('block_category', function (Blueprint $table) {
+            $table->create();
             $table->increments('id');
-            $table->string('name')->unique();
+            $table->string('name');
             $table->integer('order');
             $table->timestamps();
         });
@@ -29,7 +29,7 @@ class CreateBlockCategory extends Migration
      */
     public function down()
     {
-        Schema::drop('block_category');
+        //
     }
 
 }

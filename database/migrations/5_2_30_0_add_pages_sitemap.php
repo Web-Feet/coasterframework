@@ -26,10 +26,7 @@ class AddPagesSitemap extends Migration
      */
     public function down()
     {
-        Schema::table('pages', function(Blueprint $table)
-        {
-            $table->dropColumn('sitemap');
-        });
+
     }
 
 }

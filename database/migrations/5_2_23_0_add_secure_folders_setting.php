@@ -39,7 +39,7 @@ class AddSecureFoldersSetting extends Migration
      */
     public function down()
     {
-        //
+
     }
 
 }
