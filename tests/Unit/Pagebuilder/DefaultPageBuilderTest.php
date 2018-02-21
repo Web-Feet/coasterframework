@@ -6,9 +6,6 @@ use CoasterCms\Models\Block;
 use CoasterCms\Models\PageBlockDefault;
 use CoasterCms\Tests\Feature\Blocks\Traits\BlockTrait;
 use CoasterCms\Tests\TestCase;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Foundation\Testing\WithoutMiddleware;
 
 class DefaultPageBuilderTest extends TestCase
 {
