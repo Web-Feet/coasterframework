@@ -75,7 +75,7 @@
             </thead>
 
             <tbody>
-            @php($rowClasses = ['new' => 'success', 'delete' => 'danger', 'update' => 'warning', 'info' => 'info', 'none' => ''])
+            @php $rowClasses = ['new' => 'success', 'delete' => 'danger', 'update' => 'warning', 'info' => 'info', 'none' => '']; @endphp
             @foreach($importBlocksList as $blockName => $listInfo)
                 @php
                 $importBlock = $importBlocks->getAggregatedBlock($blockName);
