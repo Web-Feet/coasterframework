@@ -9,7 +9,7 @@ class DisplayPagesTest extends TestCase
 
 	use PagesTrait;
 
-    /** @test 
+    /** @test
     * @codingStandardsIgnoreLine */
     function can_access_a_live_page_saved_in_the_admin()
     {
@@ -24,7 +24,18 @@ class DisplayPagesTest extends TestCase
         $this->response->assertStatus(200);
     }
 
-    /** @test 
+    /**
+     * @test
+     * @codingStandardsIgnoreLine */
+    function accessing_url_of_a_nonexistent_page_returns_404()
+    {
+        $this->response = $this->get('/');
+
+        $this->response->assertStatus(404);
+    }
+
+
+    /** @test
     * @codingStandardsIgnoreLine */
     function cannot_access_a_non_live_page_saved_in_the_admin()
     {
@@ -39,7 +50,7 @@ class DisplayPagesTest extends TestCase
         $this->response->assertStatus(404);
     }
 
-    /** @test 
+    /** @test
     * @codingStandardsIgnoreLine */
     function cannot_access_a_page_before_start_date()
     {
@@ -49,7 +60,7 @@ class DisplayPagesTest extends TestCase
             'live' => 0,
             'live_start' => Carbon::parse('2018-05-02 09:00'),
             'live_end' => Carbon::parse('2018-05-03 12:00'),
-        ], ['url' => '/']);        
+        ], ['url' => '/']);
 
         Carbon::setTestNow(Carbon::parse('2018-05-02 08:59:59'));
         $this->response = $this->get('/');
@@ -68,7 +79,7 @@ class DisplayPagesTest extends TestCase
             'live' => 0,
             'live_start' => Carbon::parse('2018-05-02 09:00'),
             'live_end' => Carbon::parse('2018-05-03 12:00'),
-        ], ['url' => '/']);  
+        ], ['url' => '/']);
 
         Carbon::setTestNow(Carbon::parse('2018-05-02 09:00:00'));
         $this->response = $this->get('/');
@@ -86,8 +97,8 @@ class DisplayPagesTest extends TestCase
             'live' => 0,
             'live_start' => Carbon::parse('2018-05-02 09:00'),
             'live_end' => Carbon::parse('2018-05-03 12:00'),
-        ], ['url' => '/']);  
-        
+        ], ['url' => '/']);
+
         Carbon::setTestNow(Carbon::parse('2018-05-03 12:00:01'));
         $this->response = $this->get('/');
 
