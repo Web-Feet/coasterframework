@@ -2,6 +2,8 @@
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockRepeater;
 use CoasterCms\Models\Page;
+use CoasterCms\Models\PageBlockRepeaterData;
+use CoasterCms\Models\PageBlockRepeaterRows;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\User;
@@ -103,5 +105,21 @@ $factory->define(BlockRepeater::class, function () {
     return [
       'block_id' => 2,
       'blocks' => '1',
+    ];
+});
+
+$factory->define(PageBlockRepeaterRows::class, function () {
+    return [
+      'repeater_id' => 2,
+      'row_id' => 1,
+    ];
+});
+
+$factory->define(PageBlockRepeaterData::class, function () {
+    return [
+      'row_key' => 1,
+      'block_id' => 1,
+      'version' => 1,
+      'content' => 'content',
     ];
 });
