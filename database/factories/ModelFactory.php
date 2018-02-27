@@ -1,5 +1,6 @@
 <?php
 use CoasterCms\Models\Block;
+use CoasterCms\Models\BlockRepeater;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Template;
@@ -95,5 +96,12 @@ $factory->define(Block::class, function () {
         'label' => 'Block label',
         'type' => 'string',
         'category_id' => 1,
+    ];
+});
+
+$factory->define(BlockRepeater::class, function () {
+    return [
+      'block_id' => 2,
+      'blocks' => '1',
     ];
 });
