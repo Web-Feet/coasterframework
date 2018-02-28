@@ -200,7 +200,9 @@ class Repeater extends AbstractBlock
         $this->_editViewData['itemName'] = '';
 
         if ($repeaterBlocks = BlockRepeater::getRepeaterBlocks($this->_block->id)) {
-            $this->_editViewData['itemName'] = BlockRepeater::preload($this->_block->id)->item_name;
+            $blockRepeater = BlockRepeater::preload($this->_block->id);
+            $this->_editViewData['itemName'] = $blockRepeater->item_name;
+            $this->_editViewData['maxRows'] = $blockRepeater->max_rows;
             // check if new or existing row needs displaying
             if ($newRow) {
                 $renderedRow = '';

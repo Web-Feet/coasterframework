@@ -99,6 +99,9 @@ function load_editor_js(rerun) {
             }
         });
     });
+    $('.repeater-table').each(function () {
+        checkMaxRows($(this));
+    });
 
     // multi-select / video select
     $(".chosen-select").select2();
@@ -192,4 +195,18 @@ function load_editor_js(rerun) {
 
 function repeater_delete(repeater_id, row_id) {
     $("#"+repeater_id+"_"+row_id).remove();
+    checkMaxRows($("#repeater_"+repeater_id));
+}
+function checkMaxRows(repeaterTable) {
+    var maxRows = repeaterTable.data('max');
+    if (maxRows) {
+        var repeaterId = repeaterTable.data('repeater');
+        var currentRows = repeaterTable.find('> tbody > tr').length;
+        var repeaterButton = repeaterTable.parent().parent().find('.repeater_button[data-repeater='+repeaterId+']');
+        if (currentRows < maxRows) {
+            repeaterButton.show();
+        } else {
+            repeaterButton.hide();
+        }
+    }
 }

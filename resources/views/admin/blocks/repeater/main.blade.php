@@ -2,7 +2,7 @@
     <h4 class="col-sm-12">{{ $label }}</h4>
 
     <div class="col-sm-12 {!! $renderedRows ? '' : ' hide' !!}">
-        <table id="repeater_{!! $content !!}" class="table table-bordered repeater-table">
+        <table id="repeater_{!! $content !!}" data-repeater="{{ $content }}" data-max="{{ $maxRows }}" class="table table-bordered repeater-table">
             <tbody>
                 {!! $renderedRows !!}
             </tbody>
