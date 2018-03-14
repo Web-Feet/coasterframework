@@ -198,6 +198,7 @@ class Repeater extends AbstractBlock
         $repeaterId = $content ?: PageBlockRepeaterRows::nextFreeRepeaterId();
         $this->_editViewData['renderedRows'] = '';
         $this->_editViewData['itemName'] = '';
+        $this->_editViewData['maxRows'] = '';
 
         if ($repeaterBlocks = BlockRepeater::getRepeaterBlocks($this->_block->id)) {
             $blockRepeater = BlockRepeater::preload($this->_block->id);
