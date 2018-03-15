@@ -79,7 +79,8 @@ class Image extends AbstractBlock
         $imageData->extra_attrs = '';
         $imageData->group = '';
         $imageData->original = '';
-        return $this->_renderDisplayView($options, $imageData);
+        $this->_renderDisplayView($options, $imageData);
+        return ''; // don't return anything to replicate empty($imageData->file) line in display func
     }
 
     /**
