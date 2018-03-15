@@ -67,6 +67,19 @@ class Image extends AbstractBlock
         }
         return $this->_renderDisplayView($options, $imageData);
     }
+    
+    /**
+     * @param array $options
+     * @return string
+     */
+    public function displayDummy($options)
+    {
+        $imageData = $this->_defaultData(null);
+        $imageData->extra_attrs = '';
+        $imageData->group = '';
+        $imageData->original = '';
+        return $this->_renderDisplayView($options, $imageData);
+    }
 
     /**
      * Load image block data with domain relative paths
