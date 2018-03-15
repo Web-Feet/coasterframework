@@ -18,6 +18,11 @@ class ThemeBuilderInstance extends DefaultInstance
      * @var array
      */
     public $errors;
+    
+    /**
+     * @var bool
+     */
+    public $isThemeBuilder;
 
     /**
      * @var BlocksCollection
@@ -64,6 +69,7 @@ class ThemeBuilderInstance extends DefaultInstance
     {
         parent::__construct($logger, $pageLoader);
         $this->errors = [];
+        $this->isThemeBuilder = true; // can use $pb->getData('isThemeBuilder') in templates now
 
         // set page override so check can be made if the actual page id is ever called
         $this->page->id = static::DUMMY_ORIGINAL_PAGE_ID;
