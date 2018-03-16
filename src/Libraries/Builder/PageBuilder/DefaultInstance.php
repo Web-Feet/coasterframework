@@ -492,6 +492,7 @@ class DefaultInstance
             $parentPageId = $this->parentPageId();
             if ($parentPageId) {
                 $pages = Page::category_pages($parentPageId, true);
+                $pages = array_values($pages); // so key +/- goes forth/back by index (not page_id)
                 if (count($pages) > 1) {
                     foreach ($pages as $k => $page) {
                         if ($page->id == $this->page->id) {
