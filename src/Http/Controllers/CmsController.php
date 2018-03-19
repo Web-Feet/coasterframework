@@ -71,6 +71,7 @@ class CmsController extends Controller
     {
         // update scheduled versions
         PageVersionSchedule::checkPageVersionIds();
+        $isExternal = false;
 
         try {
 
@@ -91,9 +92,11 @@ class CmsController extends Controller
                 throw new CmsPageException('cms page not live', 404);
             }
 
+            $isExternal = (stripos(PageBuilder::getData('customTemplate'), 'externals.') === 0);
+
             // check for form submissions
             if (!empty($_POST)) {
-                $formData = PageBuilder::getData('externalTemplate') ? Request::input(config('coaster::frontend.external_form_input')) : Request::all();
+                $formData = $isExternal ? Request::input(config('coaster::frontend.external_form_input')) : Request::all();
                 if (!empty($formData['block_id']) && empty($formData['coaster_check'])) { // honeypot option
                     if (!($block = Block::find($formData['block_id']))) {
                         throw new Exception('no block handler for this form data', 500);
@@ -154,9 +157,9 @@ class CmsController extends Controller
             }
 
             // save page content
-            if (PageBuilder::getData('externalTemplate')) {
+            if ($isExternal) {
                 $domDocument->appendInputFieldNames(config('coaster::frontend.external_form_input'));
-                $response->setContent($this->responseContent = $domDocument->saveBodyHTML());
+                $response->setContent($domDocument->saveBodyHTML());
             } else {
                 $response->setContent($domDocument->saveHTML($domDocument));
             }
