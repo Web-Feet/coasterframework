@@ -12,7 +12,7 @@ $app->make(Illuminate\Contracts\Http\Kernel::class)->bootstrap();
 $requestCookies = $app->make('request')->cookies;
 foreach ($requestCookies->all() as $key => $cookie) {
     try {
-        $cookie = $app->make('encrypter')->decrypt($cookie);
+        $cookie = is_string($cookie) ? $app->make('encrypter')->decrypt($cookie) : null;
     } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
         $cookie = null;
     }
