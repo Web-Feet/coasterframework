@@ -310,7 +310,8 @@ input[type=checkbox].form-control {width: 25px;margin: 0; box-shadow: none;}
 .repeater-table td.repeater-action {padding:8px 2px;}
 
 .repeater-table .help-block { margin: 0; }
-.repeater-table .form-group { margin-bottom: 0; padding-bottom: 0; }
+.repeater-table .form-group { margin-bottom: 5px; padding-bottom: 0; }
+.repeater-table .form-group .row {padding: 5px 0;}
 
 .fileinput-nice {
     position: relative;
