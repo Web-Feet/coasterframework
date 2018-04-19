@@ -38,7 +38,7 @@ AssetBuilder::set('cms-editor', [
         '/jquery-ui/jquery-ui-timepicker-addon.js',
         '/jquery/select2/select2.min.js',
         '/jquery/select2/select2.min.css',
-        config('coaster::admin.tinymce') == 'compressed' ? '/jquery/tinymce/tinymce.gzip.js' : '/jquery/tinymce/tinymce.jquery.min.js',
+        config('coaster::admin.tinymce') == 'compressed' ? '/jquery/tinymce/tinymce.gzip.js' : '/jquery/tinymce/tinymce.min.js',
         '/app/js/functions.js',
         '/app/js/pageInfo.js',
         '/app/js/editor.js'

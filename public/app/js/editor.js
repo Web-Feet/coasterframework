@@ -8,7 +8,8 @@ var tinymce_cnf = {
     valid_elements : '*[*]',
     external_filemanager_path: get_public_url()+"filemanager/",
     filemanager_title: "Responsive Filemanager",
-    external_plugins: { "filemanager" : get_public_url()+"filemanager/plugin.min.js"}
+    external_plugins: { "filemanager" : get_public_url()+"filemanager/plugin.min.js"},
+    branding: false
 };
 var tinymce_fetched_cms_pages = false;
 

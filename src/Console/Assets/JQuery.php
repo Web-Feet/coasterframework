@@ -5,7 +5,7 @@ class JQuery extends AbstractAsset
 
     public static $name = 'jquery';
 
-    public static $version = '1.12.0';
+    public static $version = '1.12.0.1';
 
     public static $description = 'jQuery';
 
@@ -49,8 +49,8 @@ class JQuery extends AbstractAsset
             ]
         );
         $this->downloadZip(
-            'https://github.com/tinymce/tinymce-dist/archive/4.3.3.zip',
-            ['tinymce-dist-4.3.3' => 'tinymce']
+            'https://github.com/tinymce/tinymce-dist/archive/4.7.11.zip',
+            ['tinymce-dist-4.7.11' => 'tinymce']
         );
         $this->downloadZip(
             'https://github.com/tinymce/tinymce_compressor/archive/4.0.0.zip',
