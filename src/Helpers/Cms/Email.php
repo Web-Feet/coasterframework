@@ -27,10 +27,12 @@ class Email
         if ($emailCheck->passes()) {
 
             // get templates
-            $emailsViews = ['themes.' . PageBuilder::getData('theme') . '.emails.'];
-            foreach ($templates as $template) {
-                $emailsViews[] = $emailsViews[0] . $template . '.';
+            $emailsViews = [];
+            $emailViewRoot = 'themes.' . PageBuilder::getData('theme') . '.emails.';
+            foreach (array_filter($templates) as $template) {
+                $emailsViews[] = $emailViewRoot . $template . '.';
             }
+            $emailsViews = array_merge($emailsViews, [$emailViewRoot]);
 
             $sendTemplate = null;
             $replyTemplate = null;

@@ -84,7 +84,7 @@ class Form extends AbstractBlock
     public function submissionSendEmail(array $formData, \stdClass $form_settings)
     {
         $subject = config('coaster::site.name') . ': New Form Submission - ' . $this->_block->label;
-        return Email::sendFromFormData([$form_settings->template], $formData, $subject, $form_settings->email_to, $form_settings->email_from);
+        return Email::sendFromFormData([$form_settings->template, $this->_block->name], $formData, $subject, $form_settings->email_to, $form_settings->email_from);
     }
 
     /**
@@ -174,7 +174,7 @@ class Form extends AbstractBlock
         $formData->captcha = !empty($postContent['captcha']) ? true : false;
         $formData->email_from = $postContent['from'];
         $formData->email_to = $postContent['to'];
-        $formData->template = !empty($postContent['template'])? $postContent['template'] : 0;
+        $formData->template = !empty($postContent['template'])? $postContent['template'] : '';
         $formData->page_to = $postContent['page'];
         return $this->save($formData ? serialize($formData) : '');
     }
