@@ -59,7 +59,7 @@ function load_editor_js(rerun) {
     });
 
     // date time block
-    $('.datetimepicker').datetimepicker({dateFormat: dateFormat, timeFormat: timeFormat});
+    $('.datetimepicker').datetimepicker({dateFormat: dateFormat, timeFormat: timeFormat, showSecond: false, showMillisec: false, showMicrosec: false, showTimezone: false});
 
     // image blocks
     $(".fancybox").fancybox();

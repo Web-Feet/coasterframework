@@ -58,8 +58,8 @@ class JQueryUI extends AbstractAsset
             ]
         );
         $this->downloadZip(
-            'https://github.com/trentrichardson/jQuery-Timepicker-Addon/archive/v1.4.zip',
-            ['jQuery-Timepicker-Addon-1.4/dist/jquery-ui-timepicker-addon.js' => 'jquery-ui-timepicker-addon.js']
+            'https://github.com/trentrichardson/jQuery-Timepicker-Addon/archive/v1.6.3.zip',
+            ['jQuery-Timepicker-Addon-1.6.3/dist/jquery-ui-timepicker-addon.js' => 'jquery-ui-timepicker-addon.js']
         );
         $this->downloadFile('https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.2/jquery.ui.touch-punch.min.js');
         File::replaceString($this->_baseFolder . '/jquery-ui-timepicker-addon.js', 'formattedDateTime += this._defaults.separator + this.formattedTime + this._defaults.timeSuffix;', 'formattedDateTime = this.formattedTime + this._defaults.timeSuffix + this._defaults.separator + formattedDateTime;');

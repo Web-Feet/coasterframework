@@ -393,3 +393,7 @@ i.glyphicon-white {
 .well-blog p {
     margin-bottom: 20px;
 }
+
+.ui_tpicker_unit_hide {
+    display: none;
+}
