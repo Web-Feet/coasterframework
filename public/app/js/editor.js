@@ -1,6 +1,6 @@
 var tinymce_cnf = {
     selector: 'textarea.tinymce',
-    plugins: 'link table code fullscreen preview textcolor paste image media responsivefilemanager anchor codesample',
+    plugins: 'link lists table code fullscreen preview textcolor paste image media responsivefilemanager anchor codesample',
     toolbar: "responsivefilemanager undo redo | styleselect | bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist indent outdent | link unlink anchor | image media | code | codesample",
     min_height: 160,
     paste_as_text: true,
