@@ -854,9 +854,15 @@ class DefaultInstance
             }
         }
         if (!empty($options['fromPageIds'])) {
+            // keep order of fromPageIds
+            $pagesById = [];
             foreach ($pages as $k => $page) {
-                if (!in_array($page->id, $options['fromPageIds'])) {
-                    unset($pages[$k]);
+                $pagesById[$page->id] = $page;
+            }
+            $pages = [];
+            foreach ($options['fromPageIds'] as $pageId) {
+                if (array_key_exists($pageId, $pagesById)) {
+                    $pages[] = $pagesById[$pageId];
                 }
             }
         }
