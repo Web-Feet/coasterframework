@@ -176,24 +176,24 @@ interface PageBuilder
     public function categoryLink($direction = 'next');
 
     /**
-     * @param string $blockName
-     * @param string $search
+     * @param string|array $blockName
+     * @param string|array $search
      * @param array $options
      * @return string
      */
     public function filter($blockName, $search, $options = []);
 
     /**
-     * @param string $blockName
-     * @param string $search
+     * @param string|array $blockName
+     * @param string|array $search
      * @param array $options
      * @return string
      */
     public function categoryFilter($blockName, $search, $options = []);
 
     /**
-     * @param string $blockName
-     * @param string $search
+     * @param string|array $blockName
+     * @param string|array $search
      * @param array $options
      * @return string
      */
