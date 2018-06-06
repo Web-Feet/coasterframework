@@ -464,16 +464,15 @@ class DefaultInstance
         $pageId = !empty($options['page_id']) ? $options['page_id'] : $this->pageId();
         if ($pageId) {
             $pages = Page::category_pages($pageId, true);
-            if (!empty($pages)) {
-                if (!empty($options['sitemap'])) {
-                    foreach ($pages as $key => $page) {
-                        if (!$page->sitemap) {
-                            unset($pages[$key]);
-                        }
+            $options += ['renderIfEmpty' => false];
+            if (!empty($options['sitemap'])) {
+                foreach ($pages as $key => $page) {
+                    if (!$page->sitemap) {
+                        unset($pages[$key]);
                     }
                 }
-                return $this->_renderCategory($pageId, $pages, $options);
             }
+            return $this->_renderCategory($pageId, $pages, $options);
         }
         return '';
     }
