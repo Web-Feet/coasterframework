@@ -297,11 +297,12 @@ class PageBuilderFactory implements PageBuilder
 
     /**
      * @param string $section
+     * @param array $viewData
      * @return string
      */
-    public function section($section)
+    public function section($section, $viewData = [])
     {
-        return $this->_call('section', [$section]);
+        return $this->_call('section', [$section, $viewData]);
     }
 
     /**
