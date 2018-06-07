@@ -140,9 +140,10 @@ interface PageBuilder
 
     /**
      * @param string $section
+     * @param array $viewData
      * @return string
      */
-    public function section($section);
+    public function section($section, $viewData = []);
 
     /**
      * @param array $options
