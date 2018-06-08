@@ -63,6 +63,7 @@ class PageBuilderLogger
     /**
      * @param string $methodName
      * @param array $args
+     * @throws PageBuilderException
      * @return mixed
      */
     public function __call($methodName, $args)
@@ -77,6 +78,9 @@ class PageBuilderLogger
                 $return = call_user_func_array([$this->_pageBuilder, $methodName], $args);
             }
         } catch (PageBuilderException $e) {
+            if ($this->_pageBuilder->getData('isThemeBuilder')) {
+                throw $e;
+            }
             $logFn = 'error';
             $return = 'PageBuilder error: ' . $e->getMessage();
         }

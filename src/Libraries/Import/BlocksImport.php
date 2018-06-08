@@ -330,7 +330,6 @@ class BlocksImport extends AbstractImport
                 }
             }
             $this->_renderedOrders = $themeBuilder->getOrders();
-            $this->_importErrors = array_merge($this->_importErrors, $themeBuilder->getData('errors'));
         }
 
         // make sure every csv block is rendered & better after theme render as there is less context

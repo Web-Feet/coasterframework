@@ -456,6 +456,18 @@ class DefaultInstance
     }
 
     /**
+     * @param int $categoryPageId
+     * @param array|null $pages
+     * @param array $options
+     * @return string
+     */
+    public function pages($categoryPageId = null, $pages = null, $options = [])
+    {
+        $pages = is_null($pages) ? Page::all() : $pages;
+        return $this->_renderCategory($categoryPageId, $pages, $options);
+    }
+
+    /**
      * @param array $options
      * @return string
      */
@@ -808,7 +820,7 @@ class DefaultInstance
             'renderIfEmpty' => true,
             'view' => 'default',
             'type' => 'all',
-            'per_page' => 20,
+            'per_page' => 0,
             'limit' => 0,
             'content' => '',
             'templates' => [],
@@ -894,6 +906,7 @@ class DefaultInstance
             return '';
         }
 
+        $categoryPageId = is_numeric($categoryPageId) ? $categoryPageId : 0;
         $groupPageContainerId = 0;
         if ($categoryPageId && !$options['canonicals']) {
             $categoryPage = Page::preload($categoryPageId);

@@ -5,15 +5,16 @@
     <div class="table-responsive">
         <table id="themes-table" class="table table-striped table-bordered">
             <thead>
-                <tr>
-                    <th>Errors found in theme, can not continue.</th>
-                </tr>
+            <tr>
+                <th>Errors found in theme, can not continue.</th>
+            </tr>
             </thead>
             <tbody>
             @foreach($themeErrors as $error)
                 <tr>
                     <td>
-                        {{ $error }}
+                        {{ $error->getMessage() }}<br />
+                        <i>{{ $error->getFile() . ':' . $error->getLine() }}</i>
                     </td>
                 </tr>
             @endforeach

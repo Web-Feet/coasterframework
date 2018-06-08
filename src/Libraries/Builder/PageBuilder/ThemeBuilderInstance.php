@@ -15,11 +15,6 @@ class ThemeBuilderInstance extends DefaultInstance
 {
 
     /**
-     * @var array
-     */
-    public $errors;
-    
-    /**
      * @var bool
      */
     public $isThemeBuilder;
@@ -138,6 +133,17 @@ class ThemeBuilderInstance extends DefaultInstance
      * @return string
      */
     public function sitemap($options = [])
+    {
+        return $this->_renderCategoryWithoutPageData($options);
+    }
+
+    /**
+     * @param int $categoryPageId
+     * @param array|null $pages
+     * @param array $options
+     * @return string
+     */
+    public function pages($categoryPageId = null, $pages = null, $options = [])
     {
         return $this->_renderCategoryWithoutPageData($options);
     }
@@ -506,7 +512,6 @@ class ThemeBuilderInstance extends DefaultInstance
             }
             $appendRenderItems = $renderItems ? ' [' . implode(',', $renderItems) . ']' : '';
             $error = $e->getMessage() . ' (themes.' . $this->theme . '.templates.' . $this->template  . $appendRenderItems . ')';
-            $this->errors[] = $error;
             throw new PageBuilderException($error);
         }
     }

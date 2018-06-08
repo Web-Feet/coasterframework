@@ -30,6 +30,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static string breadcrumb(array $options = [])
  * @method static string menu(string $menuName, array $options = [])
  * @method static string sitemap(array $options = [])
+ * @method static string pages(int $categoryPageId = null, array $pages = null, array $options = [])
  * @method static string category(array $options = [])
  * @method static string categoryLink(string $direction = 'next')
  * @method static string filter(string $blockName, string $search, array $options = [])

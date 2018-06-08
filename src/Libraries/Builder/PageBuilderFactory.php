@@ -334,6 +334,17 @@ class PageBuilderFactory implements PageBuilder
     }
 
     /**
+     * @param int $categoryPageId
+     * @param array|null $pages
+     * @param array $options
+     * @return string
+     */
+    public function pages($categoryPageId = null, $pages = null, $options = [])
+    {
+        return $this->_call('pages', [$categoryPageId, $pages, $options]);
+    }
+
+    /**
      * @param array $options
      * @return string
      */

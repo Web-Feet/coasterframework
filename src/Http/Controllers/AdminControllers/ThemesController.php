@@ -212,17 +212,14 @@ class ThemesController extends Controller
         try {
             $blocksImport = new BlocksImport();
             $blocksImport->setTheme($theme)->run();
-            if ($blocksImport->getErrorMessages()) {
-                throw new \Exception;
-            }
         } catch (\Exception $e) {
-            $themeErrors = $e->getMessage() ? [$e->getMessage()] : $blocksImport->getErrorMessages();
+            $themeErrors[] = $e;
         }
 
         $importBlocks = $blocksImport->getBlocksCollection();
 
         $this->layoutData['content'] = View::make('coaster::pages.themes.update', [
-                'themeErrors' => $themeErrors,
+                'themeErrors' => array_merge($themeErrors, $blocksImport->getErrors()),
                 'theme' => $theme,
                 'importBlocks' => $importBlocks,
                 'importBlocksList' => $importBlocks->getBlockListInfo(),
