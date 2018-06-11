@@ -43,8 +43,9 @@ class Stringwprice extends String_
     {
         if ($postContent && (!empty($postContent['text']) || !empty($postContent['price']))) {
             $saveData = $this->_defaultData('');
-            $saveData->selected = !empty($postContent['text']) ? $postContent['text'] : '';
+            $saveData->text = !empty($postContent['text']) ? $postContent['text'] : '';
             $saveData->price = !empty($postContent['price']) ? $postContent['price'] : 0;
+            unset($saveData->selected);
         }
         return $this->save(isset($saveData) ? serialize($saveData) : '');
     }
@@ -60,7 +61,9 @@ class Stringwprice extends String_
         if (empty($content) || !is_a($content, \stdClass::class)) {
             $content = new \stdClass;
         }
+        //
         $content->text = isset($content->text) ? $content->text : '';
+        $content->text = isset($content->selected) ? $content->selected : $content->text; // text was saved to 'selected' before bugfix
         $content->price = isset($content->price) ? $content->price : '';
         return $content;
     }
