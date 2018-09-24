@@ -125,11 +125,12 @@ class PageBuilderFactory implements PageBuilder
     }
 
     /**
+     * @param bool $withThemePath
      * @return string
      */
-    public function templatePath()
+    public function templatePath($withThemePath = true)
     {
-        return $this->_call('templatePath');
+        return $this->_call('templatePath', [$withThemePath]);
     }
 
     /**
