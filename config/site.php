@@ -4,7 +4,7 @@ return [
 
     'name' => 'Coaster CMS',
     'email' => 'info@example.com',
-    'version' => 'v5.5.12',
+    'version' => 'v5.5.13',
     'pages' => '0',
     'groups' => '0',
     'secure_folders' => 'secure',
