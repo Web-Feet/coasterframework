@@ -54,9 +54,9 @@ class DOMDocument extends \DOMDocument
     {
         $innerHTML = '';
         foreach ($node->childNodes as $childNode) {
-            $innerHTML .= $this->saveHTML($childNode);
+            $innerHTML .= parent::saveHTML($childNode);
         }
-        return $innerHTML;
+        return $this->_reInsertJs($innerHTML);
     }
 
     public function saveBodyHTML($withTags = false)
