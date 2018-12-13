@@ -3,7 +3,7 @@
 use CoasterCms\Exceptions\PageBuilderException;
 use CoasterCms\Helpers\Cms\Page\PageLoader;
 use CoasterCms\Helpers\Cms\Page\Path;
-use CoasterCms\Libraries\Builder\PageBuilderLogger;
+use CoasterCms\Libraries\Builder\PageBuilder;
 use CoasterCms\Libraries\Builder\ViewClasses\BreadCrumb;
 use CoasterCms\Libraries\Builder\ViewClasses\PageDetails;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
@@ -102,9 +102,9 @@ class DefaultInstance
     public $cacheable;
 
     /**
-     * @var PageBuilderLogger
+     * @var PageBuilder
      */
-    protected $_logger;
+    protected $_wrapper;
 
     /**
      * @var array
@@ -122,10 +122,10 @@ class DefaultInstance
     public $customBlockDataKey;
 
     /**
-     * @param PageBuilderLogger $logger
+     * @param PageBuilder $wrapper
      * @param PageLoader $pageLoader
      */
-    public function __construct(PageBuilderLogger $logger, PageLoader $pageLoader)
+    public function __construct(PageBuilder $wrapper, PageLoader $pageLoader)
     {
         $this->page = !empty($pageLoader->pageLevels) ? end($pageLoader->pageLevels) : null;
         $this->pageLevels = $pageLoader->pageLevels;
@@ -145,7 +145,7 @@ class DefaultInstance
         $this->_customBlockData = [];
         $this->customBlockDataKey = 0;
 
-        $this->_logger = $logger;
+        $this->_wrapper = $wrapper;
     }
 
     /**
@@ -199,7 +199,7 @@ class DefaultInstance
         if (!is_null($setValue)) {
             $this->cacheable = (bool) $setValue;
         }
-        if ($this->_logger->logs('method')->contains('search')) {
+        if ($this->_wrapper->logs('method')->contains('search')) {
             return false;
         }
         return $this->cacheable;
@@ -978,14 +978,9 @@ class DefaultInstance
      * @param string $varName
      * @return mixed
      */
-    public function getData($varName = '')
+    public function getData($varName)
     {
-        $varName = camel_case($varName);
-        if ($varName) {
-            return property_exists($this, $varName) ? $this->$varName : null;
-        } else {
-            return get_object_vars($this);
-        }
+        return property_exists($this, $varName) ? $this->_wrapper->$varName : null;
     }
 
     /**
@@ -994,9 +989,7 @@ class DefaultInstance
      */
     public function setData($varName, $value)
     {
-        if ($varName && property_exists($this, $varName)) {
-            $this->$varName = $value;
-        }
+        $this->_wrapper->$varName = $value;
     }
 
     /**
