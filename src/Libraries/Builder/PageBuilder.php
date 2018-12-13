@@ -44,7 +44,7 @@ class PageBuilder implements \CoasterCms\Contracts\PageBuilder
     protected $_instanceLogsEnabled;
 
     /**
-     * PageBuilderFactory constructor.
+     * PageBuilder constructor.
      * @param string $defaultClass
      * @param array $defaultArgs
      */
