@@ -6,6 +6,7 @@
     <title>{!! $site_name." | ".$title !!}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="Coaster CMS {{ config('coaster::site.version') }}">
+    <meta name="robots" content="noindex">
     <meta name="_token" content="{{ csrf_token() }}">
 
     <link href='//fonts.googleapis.com/css?family=Raleway:400,100,300,500,600,700,800,900' rel='stylesheet' type='text/css'>
