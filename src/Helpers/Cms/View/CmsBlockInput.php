@@ -60,12 +60,14 @@ class CmsBlockInput
         }
 
         if (isset($options['disabled']) && $options['disabled']) {
+            $options['input_attr']['disabled'] = ['disabled' => 'disabled'];
             $options['disabled'] = ['disabled' => 'disabled'];
         } else {
             $options['disabled'] = [];
         }
 
         $options = array_merge([
+            'input_attr' => [],
             'class' => '',
             'content' => '',
             'name' => '',
