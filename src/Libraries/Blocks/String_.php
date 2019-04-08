@@ -35,4 +35,25 @@ class String_ extends AbstractBlock
         return parent::display($content, $options);
     }
 
+    /**
+     * Meta length guides
+     * @param string $content
+     * @return string
+     */
+    public function edit($content)
+    {
+        if (stripos($this->_block->name, 'meta') !== false) {
+            if (stripos($this->_block->name, 'title') !== false) {
+                $lengthGuide = ['data-min' => 40, 'data-max' => 60];
+            } elseif (stripos($this->_block->name, 'desc') !== false) {
+                $lengthGuide = ['data-min' => 120, 'data-max' => 156];
+            }
+            if (isset($lengthGuide)) {
+                $this->_editViewData['class'] = (empty($this->_editViewData['class']) ? '' : $this->_editViewData['class']) . ' length-guide';
+                $this->_editViewData['input_attr'] = $lengthGuide;
+            }
+        }
+        return parent::edit($content);
+    }
+
 }
