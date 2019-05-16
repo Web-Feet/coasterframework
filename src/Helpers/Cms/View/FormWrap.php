@@ -31,7 +31,7 @@ class FormWrap
             $pageId = $formOptions['page_id'] ?: PageBuilder::pageId($formOptions['real_page_id']);
             $honeyPot = $formOptions['honeyPot'];
 
-            $formTemplate = $formOptions['view'];
+            $formTemplate = $formOptions['view'] ?? '';
 
             unset($formOptions['real_page_id']);
             unset($formOptions['page_id']);
