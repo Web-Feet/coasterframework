@@ -96,6 +96,13 @@ class Form extends AbstractBlock
     {
         if ($form_settings = $this->_block->getContent(true)) {
             $form_settings = $this->_defaultData($form_settings);
+
+            if (!empty($formData['form_template'])) {
+                $form_settings->template = $formData['form_template'];
+            }
+
+            unset($formData['form_template']);
+
             $form_rules = BlockFormRule::get_rules($form_settings->template ?: $this->_block->name);
             $v = Validator::make($formData, $form_rules);
             $captcha = Securimage::captchaCheck();
