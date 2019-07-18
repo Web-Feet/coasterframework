@@ -14,7 +14,7 @@ class JQueryUI extends AbstractAsset
     public function run()
     {
         $this->downloadZip(
-            'http://download.jqueryui.com/download',
+            'https://download.jqueryui.com/download',
             ['jquery-ui-1.11.4.custom' => ''],
             'POST',
             [
