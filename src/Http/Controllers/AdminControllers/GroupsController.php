@@ -56,7 +56,7 @@ class GroupsController extends Controller
                         }
                     }
 
-                    $pageRows .= View::make('coaster::partials.groups.page_row', array('page_lang' => $pageLang, 'item_name' => $group->item_name, 'showBlocks' => $showBlocks, 'can_edit' => $canEdit, 'can_delete' => $canDelete))->render();
+                    $pageRows .= View::make('coaster::partials.groups.page_row', array('pageId' => $pageId, 'page_lang' => $pageLang, 'item_name' => $group->item_name, 'showBlocks' => $showBlocks, 'can_edit' => $canEdit, 'can_delete' => $canDelete))->render();
                 }
             }
 

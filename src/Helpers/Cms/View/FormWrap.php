@@ -31,6 +31,8 @@ class FormWrap
             $pageId = $formOptions['page_id'] ?: PageBuilder::pageId($formOptions['real_page_id']);
             $honeyPot = $formOptions['honeyPot'];
 
+            $formTemplate = $formOptions['view'] ?? '';
+
             unset($formOptions['real_page_id']);
             unset($formOptions['page_id']);
             unset($formOptions['view']);
@@ -38,7 +40,7 @@ class FormWrap
             unset($formOptions['honeyPot']);
 
             $formView = View::make($template, $templateData)->render();
-            return View::make('coasterCms::form.wrap', ['blockId' => $block->id, 'pageId' => $pageId, 'honeyPot' => $honeyPot, 'formAttributes' => $formOptions, 'formView' => $formView])->render();
+            return View::make('coasterCms::form.wrap', ['blockId' => $block->id, 'pageId' => $pageId, 'honeyPot' => $honeyPot, 'formAttributes' => $formOptions, 'formView' => $formView, 'formTemplate' => $formTemplate])->render();
         } else {
             return 'Form template '.$template.' not found';
         }

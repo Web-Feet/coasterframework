@@ -4,6 +4,7 @@ use CoasterCms\Helpers\Cms\Captcha\Securimage;
 use CoasterCms\Helpers\Cms\Email;
 use CoasterCms\Helpers\Cms\View\FormWrap;
 use CoasterCms\Facades\FormMessage;
+use Illuminate\Support\Facades\Cache;
 use PageBuilder;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockFormRule;
@@ -23,6 +24,11 @@ class Form extends AbstractBlock
     public static $blockSettings = ['Manage form input validation rules' => 'themes/forms'];
 
     /**
+     * @var string
+     */
+    protected $_displayedTemplatesKey;
+
+    /**
      * Repeater constructor.
      * @param Block $block
      */
@@ -30,6 +36,7 @@ class Form extends AbstractBlock
     {
         parent::__construct($block);
         $this->_displayViewDirs[] = 'forms';
+        $this->_displayedTemplatesKey = 'displayed_form_' . $this->_block->id . '_templates';
     }
 
     /**
@@ -42,6 +49,12 @@ class Form extends AbstractBlock
     {
         $formData = $this->_defaultData($content);
         $view = !empty($options['view']) ? $options['view'] : $formData->template;
+        if ($view) {
+            $formTemplates = Cache::get($this->_displayedTemplatesKey, []);
+            $formTemplates[] = $view;
+            $formTemplates = array_unique($formTemplates);
+            Cache::put($this->_displayedTemplatesKey, $formTemplates, 60 + abs((int)config('coaster::frontend.cache')));
+        }
         return FormWrap::view($this->_block, $options, $this->displayView($view), ['form_data' => $formData]);
     }
 
@@ -96,6 +109,16 @@ class Form extends AbstractBlock
     {
         if ($form_settings = $this->_block->getContent(true)) {
             $form_settings = $this->_defaultData($form_settings);
+
+            if (!empty($formData['form_template'])) {
+                $formTemplates = Cache::get($this->_displayedTemplatesKey, []);
+                if (in_array($formData['form_template'], $formTemplates)) {
+                    $form_settings->template = $formData['form_template'];
+                }
+            }
+
+            unset($formData['form_template']);
+
             $form_rules = BlockFormRule::get_rules($form_settings->template ?: $this->_block->name);
             $v = Validator::make($formData, $form_rules);
             $captcha = Securimage::captchaCheck();
