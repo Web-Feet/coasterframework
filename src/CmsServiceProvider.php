@@ -38,16 +38,17 @@ class CmsServiceProvider extends ServiceProvider
             UploadChecks::class
         ];
         $routerMiddleware = [
-            'coaster.admin' => AdminAuth::class,
-            'coaster.guest' => GuestAuth::class,
-            'coaster.secure_upload' => SecureUpload::class,
+            'coaster.cms' => [],
+            'coaster.admin' => [AdminAuth::class],
+            'coaster.guest' => [GuestAuth::class],
+            'coaster.secure_upload' => [SecureUpload::class],
         ];
         event(new LoadMiddleware($globalMiddleware, $routerMiddleware));
         foreach ($globalMiddleware as $globalMiddlewareClass) {
             $kernel->pushMiddleware($globalMiddlewareClass);
         }
         foreach ($routerMiddleware as $routerMiddlewareName => $routerMiddlewareClass) {
-            $router->middlewareGroup($routerMiddlewareName, [$routerMiddlewareClass]);
+            $router->middlewareGroup($routerMiddlewareName, $routerMiddlewareClass);
         }
 
         // use coater guard and user provider
