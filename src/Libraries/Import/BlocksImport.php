@@ -1,5 +1,6 @@
 <?php namespace CoasterCms\Libraries\Import;
 
+use CoasterCms\Events\Admin\ThemeBuilderInit;
 use CoasterCms\Helpers\Admin\Import\BlocksCollection;
 use CoasterCms\Helpers\Cms\File\Directory;
 use CoasterCms\Helpers\Cms\Page\PageLoaderDummy;
@@ -102,6 +103,7 @@ class BlocksImport extends AbstractImport
      */
     public function __construct($importFile = '', $requiredFile = false)
     {
+        event(new ThemeBuilderInit());
         parent::__construct($importFile, $requiredFile);
         $this->_blocksCollection = new BlocksCollection();
         $this->_blocksCollection->setScope('csv');
