@@ -564,7 +564,7 @@ class DefaultInstance
                     }
                 }
                 if ($options['operand'] == 'OR' || $k == 0) {
-                    $filteredPages = array_merge($filteredPages, $filteredPagesForBlock);
+                    $filteredPages = $filteredPages + $filteredPagesForBlock;
                 } else {
                     $filteredPages = array_intersect_key($filteredPages, $filteredPagesForBlock);
                 }
