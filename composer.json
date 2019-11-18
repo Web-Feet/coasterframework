@@ -17,7 +17,7 @@
         "doctrine/dbal": "^2.5",
         "laravelcollective/html": "5.5.*",
         "bkwld/croppa": "4.4.*",
-        "blueimp/jQuery-File-Upload": "9.19.1",
+        "blueimp/jquery-file-upload": "9.19.1",
         "guzzlehttp/guzzle": "6.*"
     },
     "require-dev": {
