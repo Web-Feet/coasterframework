@@ -450,7 +450,7 @@ class DefaultInstance
      */
     public function sitemap($options = [])
     {
-        $topLevelPages = Page::where('parent', '=', 0)->get();
+        $topLevelPages = Page::where('parent', '=', 0)->orderBy('order', 'asc')->get();
         $topLevelPages = $topLevelPages->isEmpty() ? [] : $topLevelPages;
         foreach ($topLevelPages as $key => $page) {
             if (!$page->is_live() || !$page->sitemap) {
