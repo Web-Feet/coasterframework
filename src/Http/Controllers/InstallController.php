@@ -11,6 +11,7 @@ use CoasterCms\Models\Theme;
 use CoasterCms\Models\User;
 use DB;
 use Dotenv\Dotenv;
+use Dotenv\Loader;
 use Hash;
 use Illuminate\Routing\Controller;
 use Request;
@@ -166,11 +167,10 @@ class InstallController extends Controller
 
         try {
             $envFileContents = File::getEnvContents();
-            $dotEnv = new Dotenv(base_path(), File::getEnvFile());
-            foreach ($dotEnv->load() as $env) {
-                $envParts = explode('=', $env);
-                if (key_exists($envParts[0], $updateEnv)) {
-                    $envFileContents = str_replace($env, $envParts[0] . '=' . $updateEnv[$envParts[0]], $envFileContents);
+            $dotEnv = Dotenv::create([base_path()]);
+            foreach ($dotEnv->load() as $envVar => $envValue) {
+                if (key_exists($envVar, $updateEnv)) {
+                    $envFileContents = preg_replace('#' . $envVar . '\s*=\s*\"*' . $envValue . '\s*\"\s*#', $envVar . '=' . $updateEnv[$envVar] . "\n", $envFileContents);
                 }
             }
 
@@ -188,9 +188,8 @@ class InstallController extends Controller
     public function runDatabaseMigrations($skipEnvCheck = false)
     {
         $unMatchedEnvVars = [];
-        $envFile = new Dotenv(base_path(), File::getEnvFile());
-        foreach ($envFile->load() as $env) {
-            list($envVar, $envValue) = explode('=', $env, 2);
+        $envFile = Dotenv::create([base_path()]);
+        foreach ($envFile->load() as $envVar => $envValue) {
             $envValue = trim($envValue, '"');
             if (getenv($envVar) !== false && getenv($envVar) != $envValue) {
                 $unMatchedEnvVars[$envVar] = $envValue;
