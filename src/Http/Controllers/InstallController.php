@@ -170,7 +170,7 @@ class InstallController extends Controller
             $dotEnv = Dotenv::create([base_path()]);
             foreach ($dotEnv->load() as $envVar => $envValue) {
                 if (key_exists($envVar, $updateEnv)) {
-                    $envFileContents = preg_replace('#^\W*' . $envVar . '\W*=\W*' . $envValue . '.\W*$#', $envVar . '=' . $updateEnv[$envVar], $envFileContents);
+                    $envFileContents = preg_replace('#^\W*' . $envVar . '\W*=\W*' . $envValue . '.\W*$#m', $envVar . '=' . $updateEnv[$envVar], $envFileContents);
                 }
             }
 
