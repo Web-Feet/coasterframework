@@ -7,21 +7,21 @@ class FileManager extends AbstractAsset
 
     public static $name = 'filemanager';
 
-    public static $version = 'v9.10.1';
+    public static $version = 'v9.14.0';
 
     public static $description = 'Responsive File Manager';
 
     public function run()
     {
         $this->downloadZip(
-            'https://github.com/trippo/ResponsiveFilemanager/releases/download/v9.10.1/responsive_filemanager.zip',
+            'https://github.com/trippo/ResponsiveFilemanager/releases/download/v9.14.0/responsive_filemanager.zip',
             ['filemanager' => '', 'tinymce/plugins/responsivefilemanager' => '../jquery/tinymce/plugins/responsivefilemanager']
         );
 
         $this->_setDetailedMessage('integrating with Coaster');
 
         File::insertAtLine($this->_baseFolder . '/config/config.php', [
-            362 => [
+            558 => [
                 'require __DIR__ .\'/../../../../vendor/web-feet/coasterframework/hooks/laravel.php\';',
                 '\CoasterCms\Helpers\Admin\FileManager::accessCheck();',
                 '\CoasterCms\Helpers\Admin\FileManager::setConfig($config, []);',
@@ -29,20 +29,17 @@ class FileManager extends AbstractAsset
             ]
         ]);
         File::insertAtLine($this->_baseFolder . '/dialog.php', [
-            84 => [
+            86 => [
                 '\CoasterCms\Helpers\Admin\FileManager::setSecureUpload($subdir);'
             ]
         ]);
         File::insertAtLine($this->_baseFolder . '/execute.php', [
-            33 => [
+            31 => [
                 '\CoasterCms\Helpers\Admin\FileManager::setSecureUpload($_POST[\'path\']);'
             ]
         ]);
         File::insertAtLine($this->_baseFolder . '/upload.php', [
-            19 => [
-                '   \CoasterCms\Helpers\Admin\FileManager::setSecureUpload($_POST[\'path\']);'
-            ],
-            24 => [
+            28 => [
                 '   \CoasterCms\Helpers\Admin\FileManager::setSecureUpload($_POST[\'fldr\']);'
             ]
         ]);
@@ -73,41 +70,23 @@ class FileManager extends AbstractAsset
 
         $this->_setDetailedMessage('setting up upload locations');
 
+        // check config files are up to date
+        $this->_backupOldConfigFiles(public_path('uploads'));
+        $this->_backupOldConfigFiles(storage_path('uploads'));
         $this->copyFrom($this->_publicFiles('uploads'), public_path('uploads'), false, false);
         $this->copyFrom($this->_publicFiles('uploads/secure'), storage_path('uploads/secure'), false, false);
-
-        // namespace has changed for FileManager helper, check config files have up to date one
-        $this->_checkConfigFiles(public_path('uploads'));
-        $this->_checkConfigFiles(storage_path('uploads'));
     }
 
-    protected function _checkConfigFiles($uploadPath)
+    protected function _backupOldConfigFiles($uploadPath)
     {
         foreach (scandir($uploadPath) as $item) {
             if (!in_array($item, ['.', '..'])) {
                 if (is_dir($uploadPath . '/' . $item)) {
-                    $this->_checkConfigFiles($uploadPath . '/' . $item);
+                    $this->_backupOldConfigFiles($uploadPath . '/' . $item);
                 } elseif ($item == 'config.php') {
-                    $this->_updateConfigFile($uploadPath . '/' . $item);
+                    rename($uploadPath . '/config.php', $uploadPath . '/config.php.old');
                 }
             }
         }
     }
-
-    protected function _updateConfigFile($configFile)
-    {
-        $count = 0;
-        $fileContent = file_get_contents($configFile);
-        $fileContent = preg_replace(
-            '/\S*filemanager_set_permissions\((.*)\);/m',
-            '\CoasterCms\Helpers\Admin\FileManager::filemanager_set_permissions(\1);',
-            $fileContent,
-            -1,
-            $count
-        );
-        if ($count) {
-            file_put_contents($configFile, $fileContent);
-        }
-    }
-
 }

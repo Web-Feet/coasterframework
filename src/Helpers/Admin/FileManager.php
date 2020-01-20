@@ -19,6 +19,7 @@ class FileManager
 
     public static function setConfig(&$config, $ignore)
     {
+
         $coasterSettings = [
             'base_url' => '',
             'upload_dir' => '/uploads/',
@@ -30,14 +31,13 @@ class FileManager
             'convert_spaces' => true,
             'image_max_width' => 2000,
             'image_max_height' => 2000,
-            'chmod_files' => false,
-            'chmod_dirs' => false,
             'ext_misc' => ['zip', 'rar', 'gz', 'tar', 'iso', 'dmg', 'kml', 'gpx'],
             'aviary_apiKey' => config('wf_cms::key.aviary'),
             'aviary_maxSize' => '2000',
             'hidden_folders' => ['.svn'],
             'java_upload' => false,
-        ];
+        ] + static::getPermissions();
+
         foreach ($coasterSettings as $setting => $value) {
             if (!in_array($setting, $ignore)) {
                 $config[$setting] = $value;
@@ -45,53 +45,34 @@ class FileManager
         }
     }
 
-    public static function filemanager_set_permissions($override = null)
+    public static function getPermissions($override = null)
     {
-        global $delete_files,
-               $create_folders,
-               $delete_folders,
-               $upload_files,
-               $rename_files,
-               $rename_folders,
-               $duplicate_files,
-               $copy_cut_files,
-               $copy_cut_dirs,
-               $preview_text_files,
-               $edit_text_files,
-               $create_text_files;
-        if($override || (Auth::action('filemanager.edit') && $override === null)) {
-            $delete_files		= true;
-            $create_folders		= true;
-            $delete_folders		= true;
-            $upload_files		= true;
-            $rename_files		= true;
-            $rename_folders		= true;
-            $duplicate_files	= true;
-            $copy_cut_files		= true;
-            $copy_cut_dirs		= true;
-            $preview_text_files	= true;
-            $edit_text_files 	= true;
-            $create_text_files 	= true;
-        } else {
-            $delete_files		= false;
-            $create_folders		= false;
-            $delete_folders		= false;
-            $upload_files		= false;
-            $rename_files		= false;
-            $rename_folders		= false;
-            $duplicate_files	= false;
-            $copy_cut_files		= false;
-            $copy_cut_dirs		= false;
-            $preview_text_files	= false;
-            $edit_text_files 	= false;
-            $create_text_files 	= false;
-        }
+        $editPermission = !!(is_null($override) ? Auth::action('filemanager.edit') : $override);
+
+        return[
+            'delete_files'                            => $editPermission,
+            'create_folders'                          => $editPermission,
+            'delete_folders'                          => $editPermission,
+            'upload_files'                            => $editPermission,
+            'rename_files'                            => $editPermission,
+            'rename_folders'                          => $editPermission,
+            'duplicate_files'                         => $editPermission,
+            'extract_files'                           => $editPermission,
+            'copy_cut_files'                          => $editPermission, // for copy/cut files
+            'copy_cut_dirs'                           => $editPermission, // for copy/cut directories
+            'chmod_files'                             => false, // change file permissions
+            'chmod_dirs'                              => false, // change folder permissions
+            'preview_text_files'                      => true, // eg.: txt, log etc.
+            'edit_text_files'                         => $editPermission, // eg.: txt, log etc.
+            'create_text_files'                       => $editPermission, // only create files with exts. defined in $config['editable_text_file_exts']
+            'download_files'			              => true, // allow download files or just preview
+        ];
     }
 
-    public static function setSecureUpload($checkPath)
+    public static function setSecureUpload($subdir)
     {
-        global $current_path;
-        $current_path = SecureUpload::isSecurePath($checkPath) ? SecureUpload::getBasePath(true) . '/' : $current_path;
+        global $config;
+        $config['current_path'] = SecureUpload::isSecurePath($subdir) ? SecureUpload::getBasePath(true) . '/' : $config['current_path'];
     }
 
     public static function createDirPermissions()
