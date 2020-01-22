@@ -44,6 +44,18 @@ class FileManager extends AbstractAsset
             ]
         ]);
 
+        // php 7.4 filemanager fixes
+        File::insertAtLine($this->_baseFolder . '/UploadHandler.php', [
+            495 => [
+                '        if (!$content_range) return $name;'
+            ]
+        ]);
+        File::replaceString(
+            $this->_baseFolder . '/UploadHandler.php',
+            '$uploaded_bytes = $this->fix_integer_overflow((int)$content_range[1]);',
+            '$uploaded_bytes = $this->fix_integer_overflow($content_range ? (int)$content_range[1] : 0);'
+        );
+
         // remove conflicting response class
         unlink($this->_baseFolder . '/include/Response.php');
         $clearResponseFile = fopen($this->_baseFolder . '/include/Response.php', 'w');
