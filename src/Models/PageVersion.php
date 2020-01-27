@@ -76,7 +76,7 @@ class PageVersion extends Eloquent
         $pageVersion = new static;
         $pageVersion->version_id = 1;
         $pageVersion->label = $label;
-        $pageVersion->preview_key = base_convert((rand(10, 99) . microtime(true)), 10, 36);
+        $pageVersion->preview_key = base_convert((int) (rand(10, 99) . microtime(true)), 10, 36);
         return $pageVersion;
     }
     
