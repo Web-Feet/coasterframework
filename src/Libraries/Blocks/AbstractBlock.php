@@ -1,4 +1,6 @@
-<?php namespace CoasterCms\Libraries\Blocks;
+<?php
+
+namespace CoasterCms\Libraries\Blocks;
 
 use CoasterCms\Helpers\Cms\View\CmsBlockInput;
 use CoasterCms\Models\Block;
@@ -194,9 +196,11 @@ abstract class AbstractBlock
                 $showColumns = !empty($options['show_columns']) ? $options['show_columns'] : [1];
                 $showRows = !empty($options['selected_items']) ? $options['selected_items'] : range(1, $total); // can use to display certain rows
                 $maxIndex = $total % $columns;
-                $lastElement = $total - $maxIndex + max(array_filter($showColumns, function ($var) use ($maxIndex) {return $var <= $maxIndex;}) ?: [0]);
+                $lastElement = $total - $maxIndex + max(array_filter($showColumns, function ($var) use ($maxIndex) {
+                    return $var <= $maxIndex;
+                }) ?: [0]);
                 foreach ($data as $dataItemId => $dataItem) {
-                    if (in_array((($i-1) % $columns)+1, $showColumns) && in_array($i, $showRows)) {
+                    if (in_array((($i - 1) % $columns) + 1, $showColumns) && in_array($i, $showRows)) {
                         $isLast = ($i == $lastElement || $i == max($showRows));
                         $itemData = [
                             'data' => $dataItem,
@@ -209,6 +213,7 @@ abstract class AbstractBlock
                             'count_all' => $i,
                             'total' => $total
                         ] + $options;
+
                         $renderedContent .= $this->_renderRepeatedDisplayViewItem($displayView, $itemData);
                         $isFirst = false;
                         $j++;
@@ -216,6 +221,7 @@ abstract class AbstractBlock
                     $i++;
                 }
             }
+
             return $renderedContent;
         } else {
             return $this->_renderDisplayViewNotFoundError();
@@ -239,7 +245,7 @@ abstract class AbstractBlock
     {
         $error = 'Template not found for ' . $this->_block->type . ' block: ' . $this->_block->name;
         foreach ($this->_displayViewLog as $k => $viewNotFound) {
-            $error .= '<br />Tried #' . ($k+1) . ' ' . $viewNotFound;
+            $error .= '<br />Tried #' . ($k + 1) . ' ' . $viewNotFound;
         }
         return $error;
     }
@@ -264,14 +270,14 @@ abstract class AbstractBlock
         $dotName = str_replace(['[', ']'], ['.', ''], $this->_getInputHTMLKey());
         $submittedData = Request::input($dotName);
         return CmsBlockInput::make($this->_block->type, $this->_editViewData + [
-                'label' => $this->_block->label,
-                'name' => $this->_getInputHTMLKey(),
-                'content' => $content,
-                'submitted_data' => $submittedData ? $this->_defaultData($submittedData) : null,
-                'note' => $this->_block->note,
-                '_block' => $this->_block,
-                '_blockType' => $this
-            ]);
+            'label' => $this->_block->label,
+            'name' => $this->_getInputHTMLKey(),
+            'content' => $content,
+            'submitted_data' => $submittedData ? $this->_defaultData($submittedData) : null,
+            'note' => $this->_block->note,
+            '_block' => $this->_block,
+            '_blockType' => $this
+        ]);
     }
 
     /**
@@ -392,5 +398,4 @@ abstract class AbstractBlock
     {
         return [];
     }
-
 }

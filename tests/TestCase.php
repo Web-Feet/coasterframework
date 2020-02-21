@@ -18,16 +18,19 @@ abstract class TestCase extends BaseTestCase
 
     protected static $preloadedModels = [];
 
+    protected $skipInstall = true;
     protected $response;
 
     public function setUp()
     {
         parent::setUp();
-        Install::shouldReceive('isComplete')->andReturn(true);
+        if ($this->skipInstall) {
+            Install::shouldReceive('isComplete')->andReturn(true);
+        }
 
         $this->app->register(CmsServiceProvider::class);
         $this->app->register(CoasterRoutesProvider::class);
-        $this->app['view']->addNamespace('coaster', realpath(__DIR__.'/../resources/views/admin'));
+        $this->app['view']->addNamespace('coaster', realpath(__DIR__ . '/../resources/views/admin'));
         static::$preloadedModels = [];
 
         $this->registerDefaultMiddleware();
@@ -37,9 +40,9 @@ abstract class TestCase extends BaseTestCase
 
     public function registerFactoriesSingleton()
     {
-         $this->app->singleton(Factory::class, function ($app) {
+        $this->app->singleton(Factory::class, function ($app) {
             $faker = $app->make(\Faker\Generator::class);
-            return Factory::construct($faker, realpath(__DIR__.'/../database/factories'));
+            return Factory::construct($faker, realpath(__DIR__ . '/../database/factories'));
         });
     }
 
@@ -97,13 +100,20 @@ abstract class TestCase extends BaseTestCase
     protected function disableExceptionHandling()
     {
         $this->oldExceptionHandler = $this->app->make(ExceptionHandler::class);
-        $this->app->instance(ExceptionHandler::class, new class extends Handler {
-            public function __construct() {}
-            public function report(\Exception $e) {}
-            public function render($request, \Exception $e) {
+        $this->app->instance(ExceptionHandler::class, new class extends Handler
+        {
+            public function __construct()
+            {
+            }
+            public function report(\Exception $e)
+            {
+            }
+            public function render($request, \Exception $e)
+            {
                 throw $e;
             }
-        });
+        }
+        );
         return $this;
     }
 

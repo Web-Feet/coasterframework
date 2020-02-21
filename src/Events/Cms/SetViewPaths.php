@@ -22,7 +22,7 @@ class SetViewPaths
         $this->adminViews = &$adminViews;
         $this->frontendViews = &$frontendViews;
     }
-    
+
     /**
      * Get the channels the event should be broadcast on.
      *
