@@ -1,4 +1,6 @@
-<?php namespace CoasterCms\Libraries\Blocks;
+<?php
+
+namespace CoasterCms\Libraries\Blocks;
 
 use Carbon\Carbon;
 use CoasterCms\Helpers\Cms\Email;
@@ -59,6 +61,7 @@ class Repeater extends AbstractBlock
         $options = $options + ['random' => false, 'repeated_view' => true];
         $options['repeater_id'] = $content;
         $repeaterRows = PageBlockRepeaterData::loadRepeaterData($content, $options['version'], $options['random']);
+
         return $this->_renderDisplayView($options, $repeaterRows);
     }
 
@@ -158,7 +161,7 @@ class Repeater extends AbstractBlock
      */
     public function submission($formData)
     {
-        $formRules = BlockFormRule::get_rules($this->_block->name.'-form');
+        $formRules = BlockFormRule::get_rules($this->_block->name . '-form');
         $v = Validator::make($formData, $formRules);
         if ($v->passes()) {
 
@@ -174,10 +177,9 @@ class Repeater extends AbstractBlock
 
             $this->insertRow($formData);
 
-            Email::sendFromFormData([$this->_block->name.'-form'], $formData, config('coaster::site.name') . ': New Form Submission - ' . $this->_block->label);
+            Email::sendFromFormData([$this->_block->name . '-form'], $formData, config('coaster::site.name') . ': New Form Submission - ' . $this->_block->label);
 
             return \redirect(Request::url());
-
         } else {
             FormMessage::set($v->messages());
         }
@@ -294,7 +296,7 @@ class Repeater extends AbstractBlock
 
         foreach ($repeaterRows as $rowId => $repeaterRow) {
             foreach ($repeaterBlocks as $blockId => $repeaterBlock) {
-                if(($blockContent = array_key_exists($blockId, $repeaterRow) ? $repeaterRow[$blockId] : null) !== null) {
+                if (($blockContent = array_key_exists($blockId, $repeaterRow) ? $repeaterRow[$blockId] : null) !== null) {
                     $block = Block::preloadClone($blockId)->setRepeaterData($this->_block->getRepeaterId(), $this->_block->getRepeaterRowId())->setPageId($this->_block->getPageId());
                     if ($block->exists && $block->search_weight > 0) {
                         $blockSearchText = $block->getTypeObject()->generateSearchText($blockContent);
@@ -324,7 +326,9 @@ class Repeater extends AbstractBlock
 
         if (!array_key_exists(0, $repeaterBlockContents)) {
             if (!empty($currentRepeaterRows)) {
-                $rowOrders = array_map(function ($row) {return !empty($row[0]) ? $row[0] : 0;}, $currentRepeaterRows);
+                $rowOrders = array_map(function ($row) {
+                    return !empty($row[0]) ? $row[0] : 0;
+                }, $currentRepeaterRows);
                 $repeaterBlockContents[0] = max($rowOrders) + 1;
             } else {
                 $repeaterBlockContents[0] = 1;
@@ -348,5 +352,4 @@ class Repeater extends AbstractBlock
     {
         static::$_duplicate = $duplicate;
     }
-
 }

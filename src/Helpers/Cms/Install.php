@@ -25,11 +25,11 @@ class Install
             if (!File::exists($dir)) {
                 File::makeDirectory($dir);
             }
-            $state = $state ?: 'coaster.install.permissions';
+            $state = $state ? : 'coaster.install.permissions';
         }
         if ($state) {
             File::put($filePath, $state);
-            static::$_loadedState = static::$_loadedState ?: $state;
+            static::$_loadedState = static::$_loadedState ? : $state;
         } else {
             static::$_loadedState = File::get($filePath);
         }
