@@ -85,11 +85,11 @@
                         <td>Database Structure</td>
                         <td>
                             @if (!empty($database_structure['errors']))
-                                <span class="text-danger">{{ count($database_structure['errors']).' '.str_plural('error', count($database_structure['errors'])) }} found</span>
+                                <span class="text-danger">{{ count($database_structure['errors']).' '.\Illuminate\Support\Str::plural('error', count($database_structure['errors'])) }} found</span>
                             @elseif (!empty($database_structure['warnings']))
-                                <span class="text-warning">{{ count($database_structure['warnings']).' '.str_plural('warning', count($database_structure['warnings'])) }} found</span>
+                                <span class="text-warning">{{ count($database_structure['warnings']).' '.\Illuminate\Support\Str::plural('warning', count($database_structure['warnings'])) }} found</span>
                             @elseif (!empty($database_structure['notices']))
-                                <span class="text-success">{{ count($database_structure['notices']).' '.str_plural('notice', count($database_structure['notices'])) }} found</span>
+                                <span class="text-success">{{ count($database_structure['notices']).' '.\Illuminate\Support\Str::plural('notice', count($database_structure['notices'])) }} found</span>
                             @else
                                 <span class="text-success">No errors found</span>
                             @endif

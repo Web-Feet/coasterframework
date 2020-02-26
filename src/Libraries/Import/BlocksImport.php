@@ -1,21 +1,24 @@
-<?php namespace CoasterCms\Libraries\Import;
+<?php
 
-use CoasterCms\Helpers\Admin\Import\BlocksCollection;
-use CoasterCms\Helpers\Cms\File\Directory;
-use CoasterCms\Helpers\Cms\Page\PageLoaderDummy;
-use CoasterCms\Libraries\Builder\PageBuilder\ThemeBuilderInstance;
-use CoasterCms\Libraries\Export\BlocksExport;
+namespace CoasterCms\Libraries\Import;
+
+use View;
+use PageBuilder;
+use Illuminate\Support\Str;
 use CoasterCms\Models\Block;
+use CoasterCms\Models\Theme;
+use CoasterCms\Models\Template;
+use CoasterCms\Models\ThemeBlock;
 use CoasterCms\Models\BlockCategory;
 use CoasterCms\Models\BlockRepeater;
-use CoasterCms\Models\Template;
-use CoasterCms\Models\Theme;
-use CoasterCms\Models\ThemeBlock;
 use CoasterCms\Models\ThemeTemplate;
 use CoasterCms\Models\ThemeTemplateBlock;
+use CoasterCms\Helpers\Cms\File\Directory;
 use Illuminate\Database\Eloquent\Collection;
-use PageBuilder;
-use View;
+use CoasterCms\Libraries\Export\BlocksExport;
+use CoasterCms\Helpers\Cms\Page\PageLoaderDummy;
+use CoasterCms\Helpers\Admin\Import\BlocksCollection;
+use CoasterCms\Libraries\Builder\PageBuilder\ThemeBuilderInstance;
 
 class BlocksImport extends AbstractImport
 {
@@ -217,7 +220,7 @@ class BlocksImport extends AbstractImport
                 }
             }
             $templates = array_flip($templates);
-            $templates = array_filter($templates, function($templateName) {
+            $templates = array_filter($templates, function ($templateName) {
                 return View::exists('themes.' . $this->_additionalData['theme']->theme . '.templates.' . $templateName);
             });
             $this->_templateList = array_unique(array_merge($this->_templateList, $templates));
@@ -283,7 +286,7 @@ class BlocksImport extends AbstractImport
     protected function _loadDbRepeaterData($scope = 'db')
     {
         $this->_blocksCollection->setScope($scope);
-        $blockIds = array_map(function(\CoasterCms\Helpers\Admin\Import\Block $currentBlock) {
+        $blockIds = array_map(function (\CoasterCms\Helpers\Admin\Import\Block $currentBlock) {
             return $currentBlock->blockData['id'];
         }, $this->_blocksCollection->getBlocks($scope));
         $currentRepeaters = BlockRepeater::whereIn('block_id', BlockRepeater::addChildBlockIds($blockIds))->get();
@@ -474,7 +477,7 @@ class BlocksImport extends AbstractImport
                     }
                 }
                 if ($createNewCategory) {
-                    $categoryName = str_plural(str_replace('_', ' ', $blockName));
+                    $categoryName = Str::plural(str_replace('_', ' ', $blockName));
                     $defaultCategorySearchStrings[$categoryName] = [];
                     $extraMatches[strtolower($categoryName)] = [$blockName];
                 }
@@ -703,5 +706,4 @@ class BlocksImport extends AbstractImport
         $this->_loadDbRepeaterData();
         return $this->_blocksCollection->getBlocks('db');
     }
-
 }
