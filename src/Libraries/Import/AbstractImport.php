@@ -1,8 +1,10 @@
-<?php namespace CoasterCms\Libraries\Import;
+<?php
+
+namespace CoasterCms\Libraries\Import;
 
 use CoasterCms\Models\Theme;
 use Illuminate\Validation\ValidationException;
-use Validator;
+use Illuminate\Support\Facades\Validator;
 
 abstract class AbstractImport
 {
@@ -158,7 +160,9 @@ abstract class AbstractImport
     protected function _customValidationColumnNames()
     {
         $columnHeaders = array_keys($this->_fieldMap);
-        return array_combine($columnHeaders, array_map(function ($columnHeader) {return '\''.$columnHeader.'\'';}, $columnHeaders));
+        return array_combine($columnHeaders, array_map(function ($columnHeader) {
+            return '\'' . $columnHeader . '\'';
+        }, $columnHeaders));
     }
 
     /**
@@ -197,7 +201,7 @@ abstract class AbstractImport
      */
     public function validateRules()
     {
-        return array_map(function($field) {
+        return array_map(function ($field) {
             return array_key_exists('validate', $field) ? $field['validate'] : '';
         }, $this->fieldMap());
     }
@@ -284,7 +288,9 @@ abstract class AbstractImport
      */
     public function getErrorMessages()
     {
-        return array_map(function (\Exception $e) {return $e->getMessage();}, $this->_importErrors);
+        return array_map(function (\Exception $e) {
+            return $e->getMessage();
+        }, $this->_importErrors);
     }
 
     /**
@@ -489,5 +495,4 @@ abstract class AbstractImport
         }
         return '';
     }
-
 }

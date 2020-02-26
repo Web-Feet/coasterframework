@@ -1,15 +1,17 @@
-<?php namespace CoasterCms\Http\Controllers\AdminControllers;
+<?php
 
-use Auth;
+namespace CoasterCms\Http\Controllers\AdminControllers;
+
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use CoasterCms\Facades\FormMessage;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\Language;
 use CoasterCms\Models\User;
-use Mail;
-use Request;
-use Validator;
-use View;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\View;
 
 class AccountController extends Controller
 {
@@ -191,5 +193,4 @@ class AccountController extends Controller
         $user->save();
         return \redirect()->route('coaster.admin.account');
     }
-
 }

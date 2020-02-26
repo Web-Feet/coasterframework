@@ -1,6 +1,8 @@
-<?php namespace CoasterCms\Http\Controllers\AdminControllers;
+<?php
 
-use Auth;
+namespace CoasterCms\Http\Controllers\AdminControllers;
+
+use Illuminate\Support\Facades\Auth;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Libraries\Builder\AssetBuilder;
 use CoasterCms\Libraries\Import\BlocksImport;
@@ -12,9 +14,9 @@ use CoasterCms\Models\BlockFormRule;
 use CoasterCms\Models\BlockSelectOption;
 use CoasterCms\Models\Theme;
 use GuzzleHttp\Client;
-use Request;
+use Illuminate\Support\Facades\Request;
 use URL;
-use View;
+use Illuminate\Support\Facades\View;
 
 class ThemesController extends Controller
 {
@@ -147,10 +149,10 @@ class ThemesController extends Controller
         }
 
         $this->layoutData['content'] = View::make('coaster::pages.themes.list', ['themes_installed' => $themes_installed, 'can_upload' => $theme_auth['manage']]);
-        $this->layoutData['modals'] = View::make('coaster::modals.themes.delete')->render().
-            View::make('coaster::modals.themes.export')->render().
-            View::make('coaster::modals.themes.install')->render().
-            View::make('coaster::modals.themes.install_confirm')->render().
+        $this->layoutData['modals'] = View::make('coaster::modals.themes.delete')->render() .
+            View::make('coaster::modals.themes.export')->render() .
+            View::make('coaster::modals.themes.install')->render() .
+            View::make('coaster::modals.themes.install_confirm')->render() .
             View::make('coaster::modals.themes.install_error')->render();
     }
 
@@ -218,7 +220,9 @@ class ThemesController extends Controller
 
         $importBlocks = $blocksImport->getBlocksCollection();
 
-        $this->layoutData['content'] = View::make('coaster::pages.themes.update', [
+        $this->layoutData['content'] = View::make(
+            'coaster::pages.themes.update',
+            [
                 'themeErrors' => array_merge($themeErrors, $blocksImport->getErrors()),
                 'theme' => $theme,
                 'importBlocks' => $importBlocks,
@@ -274,10 +278,9 @@ class ThemesController extends Controller
     {
         if ($template) {
             $rules = BlockFormRule::where('form_template', '=', $template)->get();
-            $rules = $rules->isEmpty()?[]:$rules;
+            $rules = $rules->isEmpty() ? [] : $rules;
             $this->layoutData['content'] = View::make('coaster::pages.themes.forms', ['template' => $template, 'rules' => $rules]);
-        }
-        else {
+        } else {
             $formTemplates = [];
             $themes = base_path('resources/views/themes');
             if (is_dir($themes)) {
@@ -285,7 +288,7 @@ class ThemesController extends Controller
                     if (is_dir($themes . DIRECTORY_SEPARATOR . $theme) && $theme != '.' && $theme != '..') {
 
                         $formsDirs = [$themes . DIRECTORY_SEPARATOR . $theme . '/blocks/form'];
-                        $formsDirs[] = $formsDirs[0].'s';
+                        $formsDirs[] = $formsDirs[0] . 's';
                         foreach ($formsDirs as $forms) {
                             if (is_dir($forms)) {
                                 foreach (scandir($forms) as $form) {
@@ -310,7 +313,6 @@ class ThemesController extends Controller
                                 }
                             }
                         }
-
                     }
                 }
             }
@@ -325,7 +327,7 @@ class ThemesController extends Controller
             $theme = Theme::find($theme_id);
             $file = $request->get('file');
             $path = $request->get('path');
-            $f = fopen($path,"w");
+            $f = fopen($path, "w");
             fwrite($f, $file);
             AdminLog::new_log('Theme: \'' . $theme->theme . '\' updated (Page ID ' . $theme->id . ')');
             return response(['success' => 1]);
@@ -344,8 +346,8 @@ class ThemesController extends Controller
     {
         AssetBuilder::add('cms-main', ['/ace/ace.js']);
         $theme = Theme::find($themeId);
-        $tvbp = base_path('resources/views/themes/'.$theme->theme);
-        $tcssbp = base_path('public/themes/'.$theme->theme.'/css');
+        $tvbp = base_path('resources/views/themes/' . $theme->theme);
+        $tcssbp = base_path('public/themes/' . $theme->theme . '/css');
         $ret = Theme::getViewFolderTree($tvbp);
         $filetree = View::make('coaster::partials.themes.filetree', ['directory' => $ret, 'theme' => $theme]);
 
@@ -423,15 +425,12 @@ class ThemesController extends Controller
                 ];
 
                 $this->layoutData['content'] = View::make('coaster::pages.themes.selects', ['block' => $block, 'import' => $import]);
-
             } else {
 
                 $options = BlockSelectOption::where('block_id', '=', $blockId)->get();
-                $options = $options->isEmpty()?[]:$options;
+                $options = $options->isEmpty() ? [] : $options;
                 $this->layoutData['content'] = View::make('coaster::pages.themes.selects', ['block' => $block, 'options' => $options]);
-
             }
-
         } else {
 
             $selectBlocks = [];
@@ -468,13 +467,12 @@ class ThemesController extends Controller
             $response = $client->get($importUrls[$importOption]);
             $matches = [];
 
-            preg_match_all('#'.$importRegex[$importOption].'#', $response->getBody(), $matches);
+            preg_match_all('#' . $importRegex[$importOption] . '#', $response->getBody(), $matches);
             if (!empty($matches[1])) {
                 foreach ($matches[1] as $match) {
                     $inputOptions[str_replace('$match', $match, $optionValue)] = str_replace('$match', $match, $optionText);
                 }
             }
-
         } else {
 
             $options = Request::get('selectOption');
@@ -483,7 +481,6 @@ class ThemesController extends Controller
                     $inputOptions[$option['value']] = $option['option'];
                 }
             }
-
         }
 
         BlockSelectOption::import($blockId, $inputOptions);
@@ -509,5 +506,4 @@ class ThemesController extends Controller
         }
         return $blockCategoryNames;
     }
-
 }

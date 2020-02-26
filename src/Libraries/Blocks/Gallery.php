@@ -1,14 +1,16 @@
-<?php namespace CoasterCms\Libraries\Blocks;
+<?php
 
-use Auth;
+namespace CoasterCms\Libraries\Blocks;
+
+use Illuminate\Support\Facades\Auth;
 use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Helpers\Admin\GalleryUploadHandler;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageVersion;
-use Request;
+use Illuminate\Support\Facades\Request;
 use URL;
-use View;
+use Illuminate\Support\Facades\View;
 
 class Gallery extends AbstractBlock
 {
@@ -206,5 +208,4 @@ class Gallery extends AbstractBlock
         }
         return $uploadHandler->get_response();
     }
-
 }

@@ -1,4 +1,6 @@
-<?php namespace CoasterCms\Http\Controllers;
+<?php
+
+namespace CoasterCms\Http\Controllers;
 
 use CoasterCms\Events\Cms\GeneratePage\LoadedPageResponse;
 use CoasterCms\Events\Cms\GeneratePage\LoadErrorTemplate;
@@ -15,9 +17,9 @@ use CoasterCms\Models\PageVersionSchedule;
 use Exception;
 use Illuminate\Routing\Controller;
 use PageBuilder;
-use Request;
-use Response;
-use View;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\View;
 
 class CmsController extends Controller
 {
@@ -124,20 +126,18 @@ class CmsController extends Controller
                 $this->_setHeader('Content-Type', PageBuilder::getData('contentType'));
                 $this->responseContent = $this->_getRenderedTemplate($templatePath);
             } else {
-                throw new CmsPageException('cms page found with non existent template - '.$templatePath, 500);
+                throw new CmsPageException('cms page found with non existent template - ' . $templatePath, 500);
             }
 
             // if declared as a search page, must have search block
             if (PageBuilder::getData('searchRequired') && !PageBuilder::logs('method')->has('search')) {
                 throw new CmsPageException('No search function implemented on this page', 404);
             }
-
         } catch (Exception $e) {
 
             if (!$this->responseContent) {
                 $this->_setErrorContent($e);
             }
-
         }
 
         $response = $this->_createResponse();
@@ -237,5 +237,4 @@ class CmsController extends Controller
 
         return $response;
     }
-
 }

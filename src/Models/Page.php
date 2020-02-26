@@ -1,6 +1,8 @@
-<?php namespace CoasterCms\Models;
+<?php
 
-use Auth;
+namespace CoasterCms\Models;
+
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use CoasterCms\Facades\FormMessage;
 use CoasterCms\Helpers\Cms\DateTimeHelper;
@@ -8,7 +10,7 @@ use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Libraries\Traits\DataPreLoad;
 use Eloquent;
 use Illuminate\Database\Eloquent\Collection;
-use View;
+use Illuminate\Support\Facades\View;
 
 class Page extends Eloquent
 {
@@ -70,10 +72,10 @@ class Page extends Eloquent
             $now = Carbon::now();
             $live_from = Carbon::parse($this->live_start) ?: Carbon::parse('-10 seconds');
             $live_to = Carbon::parse($this->live_end) ?: Carbon::parse('+10 seconds');
-            
+
             return ($now->between($live_from, $live_to));
         }
-        
+
         return false;
     }
 
@@ -350,7 +352,9 @@ class Page extends Eloquent
         $rootPages = Page::join('page_lang', 'page_lang.page_id', '=', 'pages.id')->where(function ($query) {
             $query->whereIn('page_lang.url', ['', '/']);
         })->where('page_lang.language_id', '=', Language::current())->where('link', '=', 0)->get(['pages.*'])->all();
-        $rootPageIds = array_map(function($rootPage) {return $rootPage->id;}, $rootPages);
+        $rootPageIds = array_map(function ($rootPage) {
+            return $rootPage->id;
+        }, $rootPages);
         $order = [];
         $changeUnderParentIds = [];
 
@@ -479,7 +483,7 @@ class Page extends Eloquent
     {
         return static::join('page_lang', 'page_lang.page_id', '=', 'pages.id')
             ->where('page_lang.language_id', '=', Language::current())->where('link', '=', 0)
-            ->where('page_lang.name', 'like', '%'.$q.'%')
+            ->where('page_lang.name', 'like', '%' . $q . '%')
             ->get(['pages.*']);
     }
 
@@ -574,7 +578,7 @@ class Page extends Eloquent
             $awaitingRequests = PagePublishRequests::all_requests($this->id, ['status' => 'awaiting']);
             $header = 'Publish Requests';
             if ($count = $awaitingRequests->count()) {
-                $header .= ' &nbsp; <span class="badge">'.$count.'</span>';
+                $header .= ' &nbsp; <span class="badge">' . $count . '</span>';
             }
             if ($awaitingRequests->isEmpty()) {
                 $awaitingRequests = 'No awaiting requests';
@@ -631,7 +635,7 @@ class Page extends Eloquent
             'link' => 0,
             'live' => 0,
             'sitemap' => 1,
-            'live_start'=> null,
+            'live_start' => null,
             'live_end' => null
         ], $this->getAttributes());
         foreach ($pageDefaults as $pageAttribute => $pageDefault) {
@@ -746,7 +750,7 @@ class Page extends Eloquent
             }
 
             // if new page publish template
-            $this->template = $this->id ? $this->template: $pageVersion->template;
+            $this->template = $this->id ? $this->template : $pageVersion->template;
             // if link remove live template
             $this->template = $this->link ? 0 : $this->template;
 
@@ -834,5 +838,4 @@ class Page extends Eloquent
             return false;
         }
     }
-
 }

@@ -1,6 +1,8 @@
-<?php namespace CoasterCms\Http\Middleware;
+<?php
 
-use Auth;
+namespace CoasterCms\Http\Middleware;
+
+use Illuminate\Support\Facades\Auth;
 use Closure;
 
 class SecureUpload
@@ -23,5 +25,4 @@ class SecureUpload
 
         return $response;
     }
-
 }

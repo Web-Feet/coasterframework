@@ -1,4 +1,6 @@
-<?php namespace CoasterCms\Libraries\Builder\PageBuilder;
+<?php
+
+namespace CoasterCms\Libraries\Builder\PageBuilder;
 
 use CoasterCms\Exceptions\PageBuilderException;
 use CoasterCms\Helpers\Admin\Import\BlocksCollection;
@@ -9,7 +11,7 @@ use CoasterCms\Libraries\Builder\ViewClasses\PageDetails;
 use CoasterCms\Libraries\Import\Blocks\SelectOptionImport;
 use CoasterCms\Models\Block;
 use CoasterCms\Models\Menu;
-use View;
+use Illuminate\Support\Facades\View;
 
 class ThemeBuilderInstance extends DefaultInstance
 {
@@ -95,7 +97,7 @@ class ThemeBuilderInstance extends DefaultInstance
     {
         $this->_repeaterTemplates = [];
         $repeaterPaths = [base_path('resources/views/themes/' . $this->theme . '/blocks/repeater')];
-        $repeaterPaths[] = $repeaterPaths[0].'s';
+        $repeaterPaths[] = $repeaterPaths[0] . 's';
         foreach ($repeaterPaths as $repeaterPath) {
             if (is_dir($repeaterPath)) {
                 foreach (scandir($repeaterPath) as $repeaterFile) {
@@ -267,9 +269,9 @@ class ThemeBuilderInstance extends DefaultInstance
     {
         $this->_renderPath[] = ['menu' => $menuName];
         if (!array_key_exists($menuName, $this->_existingMenus)) {
-            $menuView = 'themes.' . $this->theme . '.menus.' . (!empty($options['view'])?$options['view']:'default');
+            $menuView = 'themes.' . $this->theme . '.menus.' . (!empty($options['view']) ? $options['view'] : 'default');
             $subLevel = 0;
-            while (View::exists($menuView . '.submenu_' . ($subLevel+1))) {
+            while (View::exists($menuView . '.submenu_' . ($subLevel + 1))) {
                 $subLevel++;
             }
             $newMenu = new Menu;
@@ -309,7 +311,8 @@ class ThemeBuilderInstance extends DefaultInstance
                 'themes.' . $this->theme . '.categories.' . $view . '.page',
                 ['page' => new PageDetails(1), 'category_id' => 1, 'is_first' => true, 'is_last' => true, 'count' => 1, 'total' => 1]
             )->render();
-            $output = View::make('themes.' . $this->theme . '.categories.' . $view . '.pages_wrap',
+            $output = View::make(
+                'themes.' . $this->theme . '.categories.' . $view . '.pages_wrap',
                 ['pages' => $list, 'pagination' => '', 'links' => '', 'content' => '', 'category_id' => 1, 'total' => 1, 'html_content' => '', 'search_query' => '']
             )->render();
             array_pop($this->_renderPath);
@@ -515,5 +518,4 @@ class ThemeBuilderInstance extends DefaultInstance
             throw new PageBuilderException($error);
         }
     }
-
 }

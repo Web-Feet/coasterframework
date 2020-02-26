@@ -1,9 +1,11 @@
-<?php namespace CoasterCms\Helpers\Cms\View;
+<?php
+
+namespace CoasterCms\Helpers\Cms\View;
 
 use CoasterCms\Models\Block;
 use PageBuilder;
-use Request;
-use View;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\View;
 
 class FormWrap
 {
@@ -42,8 +44,7 @@ class FormWrap
             $formView = View::make($template, $templateData)->render();
             return View::make('coasterCms::form.wrap', ['blockId' => $block->id, 'pageId' => $pageId, 'honeyPot' => $honeyPot, 'formAttributes' => $formOptions, 'formView' => $formView, 'formTemplate' => $formTemplate])->render();
         } else {
-            return 'Form template '.$template.' not found';
+            return 'Form template ' . $template . ' not found';
         }
     }
-
 }

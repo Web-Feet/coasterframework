@@ -1,7 +1,9 @@
-<?php namespace CoasterCms\Libraries\Blocks;
+<?php
+
+namespace CoasterCms\Libraries\Blocks;
 
 use CoasterCms\Models\User;
-use Auth;
+use Illuminate\Support\Facades\Auth;
 
 class Selectuser extends Select
 {
@@ -29,7 +31,7 @@ class Selectuser extends Select
     {
         $users = [];
         foreach (User::all() as $user) {
-            $users[$user->id] = $user->getName() . ' (#'.$user->id.')';
+            $users[$user->id] = $user->getName() . ' (#' . $user->id . ')';
         }
         $this->_editViewData['customName'] = array_key_exists($content, $users) ? '' : $content;
         $this->_editViewData['selectOptions'] = [0 => '-- Custom User --'] + $users;
@@ -58,5 +60,4 @@ class Selectuser extends Select
         $userName = (is_numeric($content) && !empty($userAliases[$content])) ? $userAliases[$content] : $content;
         return parent::generateSearchText($userName);
     }
-
 }

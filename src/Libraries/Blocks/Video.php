@@ -1,9 +1,11 @@
-<?php namespace CoasterCms\Libraries\Blocks;
+<?php
+
+namespace CoasterCms\Libraries\Blocks;
 
 use CoasterCms\Models\Block;
 use CoasterCms\Models\BlockVideoCache;
 use GuzzleHttp\Client;
-use View;
+use Illuminate\Support\Facades\View;
 
 class Video extends Select
 {
@@ -118,5 +120,4 @@ class Video extends Select
             return null;
         }
     }
-
 }

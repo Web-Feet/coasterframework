@@ -1,4 +1,6 @@
-<?php namespace CoasterCms\Models;
+<?php
+
+namespace CoasterCms\Models;
 
 use CoasterCms\Helpers\Cms\File\Directory;
 use CoasterCms\Helpers\Cms\File\SecureUpload;
@@ -17,11 +19,11 @@ use CoasterCms\Libraries\Import\PagesImport;
 use DB;
 use Eloquent;
 use Illuminate\Http\JsonResponse;
-use Request;
+use Illuminate\Support\Facades\Request;
 use URL;
-use Validator;
+use Illuminate\Support\Facades\Validator;
 
-Class Theme extends Eloquent
+class Theme extends Eloquent
 {
     protected $table = 'themes';
 
@@ -33,11 +35,11 @@ Class Theme extends Eloquent
         $themeTemplatesTable = DB::getTablePrefix() . $themeTemplatesTableNoPrefix;
         $t1 = $this->belongsToMany('CoasterCms\Models\Template', $themeTemplatesTableNoPrefix)
             ->addSelect($templatesTableNoPrefix . '.id')
-            ->addSelect(DB::raw('IF (`'.$themeTemplatesTable.'`.`label` IS NOT NULL, `'.$themeTemplatesTable.'`.`label`, `'.$templatesTable.'`.`label`) as label'))
-            ->addSelect(DB::raw('IF (`'.$themeTemplatesTable.'`.`child_template` IS NOT NULL, `'.$themeTemplatesTable.'`.`child_template`, `'.$templatesTable.'`.`child_template`) as child_template'))
-            ->addSelect(DB::raw('IF (`'.$themeTemplatesTable.'`.`hidden` IS NOT NULL, `'.$themeTemplatesTable.'`.`hidden`, `'.$templatesTable.'`.`hidden`) as hidden'));
+            ->addSelect(DB::raw('IF (`' . $themeTemplatesTable . '`.`label` IS NOT NULL, `' . $themeTemplatesTable . '`.`label`, `' . $templatesTable . '`.`label`) as label'))
+            ->addSelect(DB::raw('IF (`' . $themeTemplatesTable . '`.`child_template` IS NOT NULL, `' . $themeTemplatesTable . '`.`child_template`, `' . $templatesTable . '`.`child_template`) as child_template'))
+            ->addSelect(DB::raw('IF (`' . $themeTemplatesTable . '`.`hidden` IS NOT NULL, `' . $themeTemplatesTable . '`.`hidden`, `' . $templatesTable . '`.`hidden`) as hidden'));
         $t2 = DB::raw('(' . $t1->toSql() . ') ' . $themeTemplatesTable);
-        return Template::join($t2, $themeTemplatesTableNoPrefix.'.id', '=', $templatesTableNoPrefix.'.id')
+        return Template::join($t2, $themeTemplatesTableNoPrefix . '.id', '=', $templatesTableNoPrefix . '.id')
             ->setBindings($t1->getBindings())
             ->addSelect($templatesTableNoPrefix . '.id')
             ->addSelect($templatesTableNoPrefix . '.template')
@@ -67,7 +69,7 @@ Class Theme extends Eloquent
             }
         }
         if ($includeTemplate && !array_key_exists($includeTemplate, $templates)) {
-            $templates[$includeTemplate] = 'Hidden or non existent template (ID: '.$includeTemplate.')';
+            $templates[$includeTemplate] = 'Hidden or non existent template (ID: ' . $includeTemplate . ')';
         }
         asort($templates);
         return $templates;
@@ -177,9 +179,7 @@ Class Theme extends Eloquent
                         }
                     }
                 }
-
             }
-
         }
     }
 
@@ -254,7 +254,7 @@ Class Theme extends Eloquent
         }
 
         if (!empty($options['check'])) {
-            $pagesImport = is_dir($themePath . '/views') ? $themePath.'/views/import/pages' : $themePath . '/import/pages';
+            $pagesImport = is_dir($themePath . '/views') ? $themePath . '/views/import/pages' : $themePath . '/import/pages';
             return new JsonResponse(is_dir($pagesImport));
         }
 
@@ -283,10 +283,9 @@ Class Theme extends Eloquent
             } catch (\Exception $e) {
                 return new JsonResponse([$e->getMessage()], 500);
             }
-
         }
 
-        $unpacked = is_dir($themePath.'/templates') && is_dir(public_path().'/themes/'.$themeName);
+        $unpacked = is_dir($themePath . '/templates') && is_dir(public_path() . '/themes/' . $themeName);
 
         if (!$unpacked) {
             return new JsonResponse(['Themes template folder or public folder not found'], 500);
@@ -344,7 +343,6 @@ Class Theme extends Eloquent
         } else {
             return new JsonResponse('Theme with same name exists in database (' . $themeName . ')');
         }
-
     }
 
     public static function activate($themeName)
@@ -382,24 +380,22 @@ Class Theme extends Eloquent
 
     public static function getViewFolderTree($dir, $ret = array())
     {
-      $tmp = new \stdClass;
-      $dirArr = explode('/', $dir);
-      $tmp->directory = end($dirArr);
-      $tmp->path = $dir;
-      $tmp->files = \File::files($dir);
-      foreach ($tmp->files as $fk => $file)
-      {
-        $filArr = explode('/', $file);
-        $tmp->files[$fk] = end($filArr);
-      }
-      $tmp->folders = \File::directories($dir);
-      foreach ($tmp->folders as $fk => $folder)
-      {
-        $tmp->folders[$fk] = static::getViewFolderTree($folder, $ret);
-      }
-      $ret = $tmp;
+        $tmp = new \stdClass;
+        $dirArr = explode('/', $dir);
+        $tmp->directory = end($dirArr);
+        $tmp->path = $dir;
+        $tmp->files = \File::files($dir);
+        foreach ($tmp->files as $fk => $file) {
+            $filArr = explode('/', $file);
+            $tmp->files[$fk] = end($filArr);
+        }
+        $tmp->folders = \File::directories($dir);
+        foreach ($tmp->folders as $fk => $folder) {
+            $tmp->folders[$fk] = static::getViewFolderTree($folder, $ret);
+        }
+        $ret = $tmp;
 
-      return $ret;
+        return $ret;
     }
 
     public static function export($themeId, $withPageData)
@@ -440,7 +436,7 @@ Class Theme extends Eloquent
                 }
             }
             // zip theme dir and rename export folder to import
-            $zip->addDir($themesDir, 'views', function($addFrom, $addTo) use($withPageData) {
+            $zip->addDir($themesDir, 'views', function ($addFrom, $addTo) use ($withPageData) {
                 if (stripos($addTo, '/.') !== false) {
                     $addTo = '';
                 } elseif ($addTo == 'views/import' || (!$withPageData && stripos($addTo, 'views/export/pages') === 0)) {
@@ -451,7 +447,7 @@ Class Theme extends Eloquent
                 return [$addFrom, $addTo];
             });
             // zip public files
-            $zip->addDir($themePublicDir, 'public', function($addFrom, $addTo) {
+            $zip->addDir($themePublicDir, 'public', function ($addFrom, $addTo) {
                 if (stripos($addTo, '/.') !== false) {
                     $addTo = '';
                 }
@@ -466,10 +462,9 @@ Class Theme extends Eloquent
             header("Expires: 0");
             readfile($zipFilePath);
             unlink($zipFilePath);
-            Directory::remove($themesDir.$theme->theme.'/export');
+            Directory::remove($themesDir . $theme->theme . '/export');
             exit;
         }
         return 'error';
     }
-
 }

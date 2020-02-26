@@ -1,4 +1,6 @@
-<?php namespace CoasterCms\Http\Controllers\AdminControllers;
+<?php
+
+namespace CoasterCms\Http\Controllers\AdminControllers;
 
 use CoasterCms\Helpers\Cms\Page\PageCache;
 use CoasterCms\Http\Controllers\AdminController as Controller;
@@ -7,7 +9,7 @@ use CoasterCms\Models\Block;
 use CoasterCms\Models\PageBlockDefault;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\Theme;
-use View;
+use Illuminate\Support\Facades\View;
 
 class BlocksController extends Controller
 {
@@ -50,5 +52,4 @@ class BlocksController extends Controller
 
         return \redirect()->route('coaster.admin.blocks');
     }
-
 }

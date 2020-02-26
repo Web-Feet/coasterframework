@@ -1,6 +1,8 @@
-<?php namespace CoasterCms\Http\Controllers\AdminControllers;
+<?php
 
-use Auth;
+namespace CoasterCms\Http\Controllers\AdminControllers;
+
+use Illuminate\Support\Facades\Auth;
 use Cache;
 use CoasterCms\Helpers\Admin\Validation\Database;
 use CoasterCms\Helpers\Cms\File\Directory;
@@ -15,9 +17,9 @@ use CoasterCms\Models\Setting;
 use CoasterCms\Models\Theme;
 use DateTimeHelper;
 use DB;
-use Request;
+use Illuminate\Support\Facades\Request;
 use URL;
-use View;
+use Illuminate\Support\Facades\View;
 
 class SystemController extends Controller
 {
@@ -119,7 +121,7 @@ class SystemController extends Controller
             } else {
                 $settings[$k]->value = $custom;
             }
-            $settings[$k]->note = !empty($note)?$note:null;
+            $settings[$k]->note = !empty($note) ? $note : null;
             $settings[$k]->name = str_replace('.', $this->dot_replace, $setting->name);
         }
 
@@ -203,11 +205,10 @@ class SystemController extends Controller
             $run = true;
             $message = 'Composer is required to run the upgrade and must be executable from the sites root directory.<br />
             The process can take a minute or so to complete.';
-
         } elseif (version_compare(config('coaster::site.version'), Setting::latestTag(), '<') && Setting::latestTag() != "not-found") {
 
             if (!getenv('HOME') && !getenv('COMPOSER_HOME')) {
-                putenv("COMPOSER_HOME=".exec('pwd')."/.composer");
+                putenv("COMPOSER_HOME=" . exec('pwd') . "/.composer");
             }
 
             $coasterStorage = storage_path(config('coaster::site.storage_path'));
@@ -227,15 +228,13 @@ class SystemController extends Controller
                     $error .= '<pre>' . str_replace("\n", "<br />", $upgradeLog) . '</pre>';
                 }
             } else {
-                $error = 'Can\'t create or write to log file :'.$logFile;
+                $error = 'Can\'t create or write to log file :' . $logFile;
             }
-
         } else {
-            $message = 'Already at the latest version '.config('coaster::site.version');
+            $message = 'Already at the latest version ' . config('coaster::site.version');
         }
 
         $this->layoutData['content'] = View::make('coaster::pages.system.upgrade', ['message' => $message, 'error' => $error, 'run' => $run]);
-
     }
 
     public function postKeys($key = null)
@@ -303,7 +302,7 @@ class SystemController extends Controller
                                 } else {
                                     $update = true;
                                 }
-                                $warnings[] = 'Warning: ' . $dbTableName . '/' . $dbColumnData->Field . ' default values needs changing, ' . ($dbColumnData->Default!==null?'\''.$dbColumnData->Default.'\'':'No default') . ' => ' .  ($migrationFieldData->Default!==null?'\''.$migrationFieldData->Default.'\'':'No default');
+                                $warnings[] = 'Warning: ' . $dbTableName . '/' . $dbColumnData->Field . ' default values needs changing, ' . ($dbColumnData->Default !== null ? '\'' . $dbColumnData->Default . '\'' : 'No default') . ' => ' .  ($migrationFieldData->Default !== null ? '\'' . $migrationFieldData->Default . '\'' : 'No default');
                             }
                             if ($basic_fix == 1 && $update) {
                                 if (strpos($migrationFieldData->Default, 'CURRENT_TIMESTAMP') !== false) {
@@ -343,5 +342,4 @@ class SystemController extends Controller
 
         return ['errors' => $errors, 'warnings' => $warnings, 'notices' => $notices];
     }
-
 }

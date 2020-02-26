@@ -5,8 +5,8 @@ namespace CoasterCms\Libraries\Blocks;
 use CoasterCms\Helpers\Cms\View\CmsBlockInput;
 use CoasterCms\Models\Block;
 use PageBuilder;
-use Request;
-use View;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\View;
 
 abstract class AbstractBlock
 {

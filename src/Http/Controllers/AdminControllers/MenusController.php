@@ -1,4 +1,6 @@
-<?php namespace CoasterCms\Http\Controllers\AdminControllers;
+<?php
+
+namespace CoasterCms\Http\Controllers\AdminControllers;
 
 use CoasterCms\Helpers\Cms\Page\PageCache;
 use CoasterCms\Helpers\Cms\Page\Path;
@@ -7,9 +9,9 @@ use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Menu;
 use CoasterCms\Models\MenuItem;
 use CoasterCms\Models\Page;
-use Request;
-use Response;
-use View;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\View;
 
 class MenusController extends Controller
 {
@@ -55,7 +57,7 @@ class MenusController extends Controller
             PageCache::clear();
             return $menu_item->getJSONLogIds();
         }
-        return Response::make('Menu item with ID '.$itemId.' not found', 500);
+        return Response::make('Menu item with ID ' . $itemId . ' not found', 500);
     }
 
     public function postSort()
@@ -148,5 +150,4 @@ class MenusController extends Controller
         }
         return abort('500');
     }
-
 }

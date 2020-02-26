@@ -1,8 +1,10 @@
-<?php namespace CoasterCms\Http\Controllers\AdminControllers;
+<?php
+
+namespace CoasterCms\Http\Controllers\AdminControllers;
 
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\PageSearchLog;
-use View;
+use Illuminate\Support\Facades\View;
 
 class SearchController extends Controller
 {
@@ -12,6 +14,4 @@ class SearchController extends Controller
         $search_data = PageSearchLog::orderBy('count', 'DESC')->orderBy('updated_at', 'DESC')->get();
         $this->layoutData['content'] = View::make('coaster::pages.search', array('search_data' => $search_data));
     }
-
-
 }

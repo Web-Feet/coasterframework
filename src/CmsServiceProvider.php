@@ -1,6 +1,8 @@
-<?php namespace CoasterCms;
+<?php
 
-use Auth;
+namespace CoasterCms;
+
+use Illuminate\Support\Facades\Auth;
 use CoasterCms\Events\Cms\LoadAuth;
 use CoasterCms\Events\Cms\LoadMiddleware;
 use CoasterCms\Events\Cms\SetViewPaths;
@@ -141,5 +143,4 @@ class CmsServiceProvider extends ServiceProvider
             'Collective\Html\HtmlServiceProvider'
         ];
     }
-
 }

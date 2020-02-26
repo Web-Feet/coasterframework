@@ -1,6 +1,8 @@
-<?php namespace CoasterCms\Http\Controllers\AdminControllers;
+<?php
 
-use Auth;
+namespace CoasterCms\Http\Controllers\AdminControllers;
+
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use CoasterCms\Helpers\Cms\StringHelper;
 use CoasterCms\Http\Controllers\AdminController as Controller;
@@ -11,8 +13,8 @@ use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageGroupAttribute;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Theme;
-use Request;
-use View;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\View;
 
 class GroupsController extends Controller
 {
@@ -119,6 +121,4 @@ class GroupsController extends Controller
 
         return redirect()->route('coaster.admin.groups.edit', ['groupId' => $groupId]);
     }
-
-
 }

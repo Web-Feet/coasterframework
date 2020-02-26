@@ -1,6 +1,8 @@
-<?php namespace CoasterCms\Http\Controllers\AdminControllers;
+<?php
 
-use Auth;
+namespace CoasterCms\Http\Controllers\AdminControllers;
+
+use Illuminate\Support\Facades\Auth;
 use CoasterCms\Helpers\Cms\Install;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
 use CoasterCms\Http\Controllers\AdminController as Controller;
@@ -9,7 +11,7 @@ use CoasterCms\Models\PagePublishRequests;
 use CoasterCms\Models\PageSearchLog;
 use CoasterCms\Models\Setting;
 use GuzzleHttp\Client;
-use View;
+use Illuminate\Support\Facades\View;
 
 class HomeController extends Controller
 {
@@ -43,7 +45,7 @@ class HomeController extends Controller
         }
 
         $coasterBlog = 'https://www.coastercms.org/blog/';
-        $coasterBlogHttpClient = new Client(['base_uri' => $coasterBlog.'wp-json/wp/v2/', 'connect_timeout' => 2]);
+        $coasterBlogHttpClient = new Client(['base_uri' => $coasterBlog . 'wp-json/wp/v2/', 'connect_timeout' => 2]);
         try {
             $latestPosts = $coasterBlogHttpClient->request('GET', 'posts', ['query' => ['per_page' => 3]]);
             $latestPosts = json_decode($latestPosts->getBody());
@@ -59,8 +61,7 @@ class HomeController extends Controller
             $search_data = PageSearchLog::orderBy('count', 'DESC')->orderBy('updated_at', 'DESC')->limit(6)->get();
             $numbSearches = $search_data->count();
             $search_view = View::make('coaster::pages.search', array('search_data' => $search_data));
-        }
-        else {
+        } else {
             $search_view = '';
         }
         $data = array('firstTimer' => $firstTimer, 'coasterPosts' => $posts, 'coasterBlog' => $coasterBlog, 'logs' => $logs, 'requests' => $requests_table, 'user_requests' => $user_requests_table, 'any_requests' => $any_requests, 'any_user_requests' => $any_user_requests);
@@ -115,7 +116,5 @@ class HomeController extends Controller
 
         $this->layoutData['title'] = 'Your Publish Requests';
         $this->layoutData['content'] = View::make('coaster::pages.home.requests', array('title' => $this->layoutData['title'], 'requests' => $user_requests_table, 'pagination' => !is_string($user_requests) ? PaginatorRender::run($user_requests, 2) : ''));
-
     }
-
 }

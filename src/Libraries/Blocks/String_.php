@@ -1,8 +1,10 @@
-<?php namespace CoasterCms\Libraries\Blocks;
+<?php
+
+namespace CoasterCms\Libraries\Blocks;
 
 use CoasterCms\Helpers\Cms\StringHelper;
 use PageBuilder;
-use View;
+use Illuminate\Support\Facades\View;
 
 class String_ extends AbstractBlock
 {
@@ -55,5 +57,4 @@ class String_ extends AbstractBlock
         }
         return parent::edit($content);
     }
-
 }

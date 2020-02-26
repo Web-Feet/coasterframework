@@ -1,4 +1,6 @@
-<?php namespace CoasterCms\Libraries\Blocks;
+<?php
+
+namespace CoasterCms\Libraries\Blocks;
 
 use CoasterCms\Helpers\Cms\Captcha\Securimage;
 use CoasterCms\Helpers\Cms\Email;
@@ -11,10 +13,10 @@ use CoasterCms\Models\BlockFormRule;
 use CoasterCms\Models\FormSubmission;
 use CoasterCms\Models\Page;
 use CoasterCms\Models\Theme;
-use Request;
-use Response;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Response;
 use Session;
-use Validator;
+use Illuminate\Support\Facades\Validator;
 
 class Form extends AbstractBlock
 {
@@ -53,7 +55,7 @@ class Form extends AbstractBlock
             $formTemplates = Cache::get($this->_displayedTemplatesKey, []);
             $formTemplates[] = $view;
             $formTemplates = array_unique($formTemplates);
-            Cache::put($this->_displayedTemplatesKey, $formTemplates, 60 + abs((int)config('coaster::frontend.cache')));
+            Cache::put($this->_displayedTemplatesKey, $formTemplates, 60 + abs((int) config('coaster::frontend.cache')));
         }
         return FormWrap::view($this->_block, $options, $this->displayView($view), ['form_data' => $formData]);
     }
@@ -148,7 +150,6 @@ class Form extends AbstractBlock
                     FormMessage::add('captcha_code', 'Invalid Captcha Code, try again.');
                 }
             }
-
         } else {
             return Response::make('No form settings found, try saving the form block in the admin.', 500);
         }
@@ -197,7 +198,7 @@ class Form extends AbstractBlock
         $formData->captcha = !empty($postContent['captcha']) ? true : false;
         $formData->email_from = $postContent['from'];
         $formData->email_to = $postContent['to'];
-        $formData->template = !empty($postContent['template'])? $postContent['template'] : '';
+        $formData->template = !empty($postContent['template']) ? $postContent['template'] : '';
         $formData->page_to = $postContent['page'];
         return $this->save($formData ? serialize($formData) : '');
     }
@@ -230,5 +231,4 @@ class Form extends AbstractBlock
         $content->page_to = !empty($content->page_to) ? $content->page_to : '';
         return $content;
     }
-
 }

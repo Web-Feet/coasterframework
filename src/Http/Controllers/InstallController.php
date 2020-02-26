@@ -1,4 +1,6 @@
-<?php namespace CoasterCms\Http\Controllers;
+<?php
+
+namespace CoasterCms\Http\Controllers;
 
 use Artisan;
 use Carbon\Carbon;
@@ -13,9 +15,9 @@ use DB;
 use Dotenv\Dotenv;
 use Hash;
 use Illuminate\Routing\Controller;
-use Request;
-use Validator;
-use View;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\View;
 
 class InstallController extends Controller
 {
@@ -78,7 +80,8 @@ class InstallController extends Controller
                         \mkdir($dir, 0777, true);
                     }
                 }
-            } catch (\Exception $e) {}
+            } catch (\Exception $e) {
+            }
             if (!$isWritable = is_writable($dir)) {
                 $continue = false;
             }
@@ -121,20 +124,22 @@ class InstallController extends Controller
         }
 
         try {
-            $host = ($details['host'] ?: 'localhost') . (isset($port) ? ';port='.$port : '');
+            $host = ($details['host'] ?: 'localhost') . (isset($port) ? ';port=' . $port : '');
             if (stristr($details['name'], '.sqlite') !== false) {
                 $details['connection'] = 'sqlite';
                 with(new \Illuminate\Database\Connectors\SQLiteConnector)->connect(['database' => $details['name']]);
-            }
-            else
-            {
+            } else {
                 $details['connection'] = 'mysql';
-                new \PDO('mysql:dbname='.$details['name'].';host='.$host, $details['user'], $details['password']);
+                new \PDO('mysql:dbname=' . $details['name'] . ';host=' . $host, $details['user'], $details['password']);
             }
         } catch (\PDOException $e) {
             switch ($e->getCode()) {
-                case 1045: FormMessage::add('user', $e->getMessage()); break;
-                case 1049: FormMessage::add('name', $e->getMessage()); break;
+                case 1045:
+                    FormMessage::add('user', $e->getMessage());
+                    break;
+                case 1049:
+                    FormMessage::add('name', $e->getMessage());
+                    break;
                 case 2003:
                 case 2005:
                     FormMessage::add('host', $e->getMessage());
@@ -200,7 +205,6 @@ class InstallController extends Controller
         if (!$skipEnvCheck && $unMatchedEnvVars) {
 
             $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'envCheck', 'unMatchedEnvVars' => $unMatchedEnvVars]);
-
         } else {
             Artisan::call('migrate', ['--path' => '/vendor/web-feet/coasterframework/database/migrations']);
 
@@ -242,7 +246,6 @@ class InstallController extends Controller
                     )
                 )
             );
-
         }
 
         Install::setInstallState('coaster.install.theme');
@@ -287,7 +290,6 @@ class InstallController extends Controller
                 $usedThemeSetting->value = $theme->id;
                 $usedThemeSetting->save();
             }
-
         }
 
         if (!Request::exists('theme') || $error) {
@@ -298,5 +300,4 @@ class InstallController extends Controller
             $this->layoutData['content'] = View::make('coaster::pages.install', ['stage' => 'complete']);
         }
     }
-
 }

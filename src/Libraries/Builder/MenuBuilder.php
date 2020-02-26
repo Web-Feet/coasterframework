@@ -1,4 +1,6 @@
-<?php namespace CoasterCms\Libraries\Builder;
+<?php
+
+namespace CoasterCms\Libraries\Builder;
 
 use CoasterCms\Facades\PageBuilder;
 use CoasterCms\Helpers\Cms\Page\Path;
@@ -7,7 +9,7 @@ use CoasterCms\Models\Menu;
 use CoasterCms\Models\MenuItem;
 use CoasterCms\Models\Page;
 use Illuminate\Support\Collection;
-use View;
+use Illuminate\Support\Facades\View;
 
 class MenuBuilder
 {
@@ -275,5 +277,4 @@ class MenuBuilder
             $this->activePageId = (int) $page->id;
         }
     }
-
 }

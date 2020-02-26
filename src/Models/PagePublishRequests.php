@@ -1,9 +1,11 @@
-<?php namespace CoasterCms\Models;
+<?php
 
-use Auth;
+namespace CoasterCms\Models;
+
+use Illuminate\Support\Facades\Auth;
 use Eloquent;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Request;
+use Illuminate\Support\Facades\Request;
 
 class PagePublishRequests extends Eloquent
 {
@@ -124,5 +126,4 @@ class PagePublishRequests extends Eloquent
         }
         return 0;
     }
-
 }

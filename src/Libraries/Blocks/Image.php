@@ -1,8 +1,10 @@
-<?php namespace CoasterCms\Libraries\Blocks;
+<?php
+
+namespace CoasterCms\Libraries\Blocks;
 
 use CoasterCms\Models\Block;
 use URL;
-use View;
+use Illuminate\Support\Facades\View;
 
 class Image extends AbstractBlock
 {
@@ -67,7 +69,7 @@ class Image extends AbstractBlock
         }
         return $this->_renderDisplayView($options, $imageData);
     }
-    
+
     /**
      * @param array $options
      * @return string
@@ -153,5 +155,4 @@ class Image extends AbstractBlock
             return [];
         }
     }
-
 }

@@ -1,6 +1,8 @@
-<?php namespace CoasterCms\Http\Controllers\AdminControllers;
+<?php
 
-use Auth;
+namespace CoasterCms\Http\Controllers\AdminControllers;
+
+use Illuminate\Support\Facades\Auth;
 use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
 use CoasterCms\Http\Controllers\AdminController as Controller;
@@ -10,7 +12,7 @@ use CoasterCms\Models\Page;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\ThemeTemplate;
-use View;
+use Illuminate\Support\Facades\View;
 
 class FormsController extends Controller
 {
@@ -82,7 +84,8 @@ class FormsController extends Controller
             }
             $this->layoutData['content'] = View::make(
                 'coaster::pages.forms.submissions',
-                array('links' => PaginatorRender::admin($submissions),
+                array(
+                    'links' => PaginatorRender::admin($submissions),
                     'submissions' => $submission_rows,
                     'form' => $block_data->label,
                     'can_export' => Auth::action('forms.csv'),
@@ -162,5 +165,4 @@ class FormsController extends Controller
             exit;
         }
     }
-
 }

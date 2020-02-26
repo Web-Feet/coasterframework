@@ -1,4 +1,6 @@
-<?php namespace CoasterCms\Models;
+<?php
+
+namespace CoasterCms\Models;
 
 use CoasterCms\Libraries\Traits\DataPreLoad;
 use DB;
@@ -6,7 +8,7 @@ use Eloquent;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Facades\App;
-use Request;
+use Illuminate\Support\Facades\Request;
 
 class Block extends Eloquent
 {
@@ -82,7 +84,7 @@ class Block extends Eloquent
      */
     public static function getBlockIdsOfType($blockType)
     {
-        $key = 'type'. ucwords($blockType) .'Ids';
+        $key = 'type' . ucwords($blockType) . 'Ids';
         if (!static::_preloadIsset($key)) {
             $data = static::where('type', '=', $blockType)->get();
             static::_preloadOnce($data, $key, ['id'], 'id');
@@ -335,15 +337,22 @@ class Block extends Eloquent
         $pageLangTable = DB::getTablePrefix() . (new PageLang)->getTable();
 
         switch ($tableName) {
-            case 'page_blocks': $identifiers = ['block_id', 'language_id', 'page_id']; break;
-            case 'page_blocks_default': $identifiers = ['block_id', 'language_id']; break;
-            case 'page_blocks_repeater_data': $identifiers = ['block_id', 'row_key']; break;
-            default: throw new \Exception('unknown blocks data table: ' . $fullTableName);
+            case 'page_blocks':
+                $identifiers = ['block_id', 'language_id', 'page_id'];
+                break;
+            case 'page_blocks_default':
+                $identifiers = ['block_id', 'language_id'];
+                break;
+            case 'page_blocks_repeater_data':
+                $identifiers = ['block_id', 'row_key'];
+                break;
+            default:
+                throw new \Exception('unknown blocks data table: ' . $fullTableName);
         }
         $selectIdentifiers = 'maxVersions.' . implode(', maxVersions.', $identifiers);
         $joinClauses = ['version' => 'version'] + $identifiers;
 
-        $useMaxLiveJoin = ($tableName == 'page_blocks' && $version == -1) ? 'JOIN '.$pageLangTable.' pl ON pl.page_id = maxVersions.page_id AND pl.language_id = maxVersions.language_id AND pl.live_version >= maxVersions.version' : '';
+        $useMaxLiveJoin = ($tableName == 'page_blocks' && $version == -1) ? 'JOIN ' . $pageLangTable . ' pl ON pl.page_id = maxVersions.page_id AND pl.language_id = maxVersions.language_id AND pl.live_version >= maxVersions.version' : '';
 
         $whereQueries = ['main' => [], 'maxVersions' => []];
         $whereBindings = ['main' => [], 'maxVersions' => []];
@@ -377,15 +386,16 @@ class Block extends Eloquent
             ->join(
                 DB::raw(
                     '(SELECT ' . $selectIdentifiers . ', MAX(maxVersions.version) as version FROM ' . $fullTableName . ' maxVersions '
-                    . $useMaxLiveJoin . ' '
-                    . (!empty($whereQueries['maxVersions']) ? 'WHERE ' . implode(' AND ', $whereQueries['maxVersions']) : '') . '
+                        . $useMaxLiveJoin . ' '
+                        . (!empty($whereQueries['maxVersions']) ? 'WHERE ' . implode(' AND ', $whereQueries['maxVersions']) : '') . '
                      GROUP BY ' . $selectIdentifiers . ')' . DB::getTablePrefix() . 'j'
                 ),
-                function (JoinClause $join) use($joinClauses) {
+                function (JoinClause $join) use ($joinClauses) {
                     foreach ($joinClauses as $joinClauseIdentifier) {
-                        $join->on('main.'.$joinClauseIdentifier, '=', 'j.'.$joinClauseIdentifier);
+                        $join->on('main.' . $joinClauseIdentifier, '=', 'j.' . $joinClauseIdentifier);
                     }
-                })
+                }
+            )
             ->whereRaw(!empty($whereQueries['main']) ? implode(' AND ', $whereQueries['main']) : '')
             ->setBindings(array_merge($whereBindings['maxVersions'], $whereBindings['main']));
 
@@ -424,5 +434,4 @@ class Block extends Eloquent
         }
         return [$tabHeaders, $tabContents];
     }
-
 }

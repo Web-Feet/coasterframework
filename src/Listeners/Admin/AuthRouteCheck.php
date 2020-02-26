@@ -1,8 +1,10 @@
-<?php namespace CoasterCms\Listeners\Admin;
+<?php
+
+namespace CoasterCms\Listeners\Admin;
 
 use CoasterCms\Events\Admin\AuthRoute;
 use CoasterCms\Models\PageGroup;
-use Request;
+use Illuminate\Support\Facades\Request;
 
 class AuthRouteCheck
 {
@@ -41,5 +43,4 @@ class AuthRouteCheck
                 $event->override = $page_group->exists ? $page_group->canAddItems() : $event->override;
         }
     }
-
 }

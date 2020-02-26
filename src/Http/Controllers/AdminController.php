@@ -1,14 +1,16 @@
-<?php namespace CoasterCms\Http\Controllers;
+<?php
 
-use Auth;
+namespace CoasterCms\Http\Controllers;
+
+use Illuminate\Support\Facades\Auth;
 use CoasterCms\Events\Admin\LoadResponse;
 use CoasterCms\Helpers\Admin\Routes;
 use CoasterCms\Helpers\Admin\View\AdminMenu;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
-use Request;
-use Response;
-use View;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\View;
 
 class AdminController extends Controller
 {
@@ -91,5 +93,4 @@ class AdminController extends Controller
 
         return Response::make($responseContent, $this->responseCode);
     }
-
 }

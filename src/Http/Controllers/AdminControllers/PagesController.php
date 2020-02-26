@@ -1,6 +1,8 @@
-<?php namespace CoasterCms\Http\Controllers\AdminControllers;
+<?php
 
-use Auth;
+namespace CoasterCms\Http\Controllers\AdminControllers;
+
+use Illuminate\Support\Facades\Auth;
 use CoasterCms\Helpers\Cms\DateTimeHelper;
 use CoasterCms\Helpers\Cms\Page\PageCache;
 use CoasterCms\Helpers\Cms\Page\Path;
@@ -17,9 +19,9 @@ use CoasterCms\Models\PagePublishRequests;
 use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\PageVersionSchedule;
 use CoasterCms\Models\ThemeTemplate;
-use Request;
-use Response;
-use View;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\View;
 
 class PagesController extends AdminController
 {
@@ -29,7 +31,9 @@ class PagesController extends AdminController
         $rootPages = Page::join('page_lang', 'page_lang.page_id', '=', 'pages.id')->where(function ($query) {
             $query->whereIn('page_lang.url', ['', '/']);
         })->where('page_lang.language_id', '=', Language::current())->where('link', '=', 0)->get(['pages.*'])->all();
-        $rootPageIds = array_map(function($rootPage) {return 'list_'.$rootPage->id;}, $rootPages);
+        $rootPageIds = array_map(function ($rootPage) {
+            return 'list_' . $rootPage->id;
+        }, $rootPages);
 
         $this->layoutData['content'] = View::make('coaster::pages.pages', array('pages' => Page::getPageTreeView(0), 'add_page' => Auth::action('pages.add'), 'page_states' => Auth::user()->getPageStates(), 'max' => Page::at_limit(), 'rootPageIds' => $rootPageIds, 'groups_exist' => PageGroup::count()));
         $this->layoutData['modals'] = View::make('coaster::modals.general.delete_item');
@@ -288,7 +292,7 @@ class PagesController extends AdminController
         if ($page = Page::find($pageId)) {
             return json_encode($page->delete());
         }
-        return Response::make('Page with ID '.$pageId.' not found', 500);
+        return Response::make('Page with ID ' . $pageId . ' not found', 500);
     }
 
     public function postVersions($pageId)
@@ -317,7 +321,7 @@ class PagesController extends AdminController
         $scheduleFrom = DateTimeHelper::jQueryToMysql(Request::input('schedule_from'));
         $scheduleTo = DateTimeHelper::jQueryToMysql(Request::input('schedule_to'));
         $scheduleToVersion = Request::input('schedule_to_version');
-        $scheduleRepeat = Request::input('schedule_repeat')?:0;
+        $scheduleRepeat = Request::input('schedule_repeat') ?: 0;
         $versionId = Request::input('version_id');
         $pageVersion = PageVersion::where('page_id', '=', $pageId)->where('version_id', '=', $versionId)->first();
 
@@ -347,7 +351,6 @@ class PagesController extends AdminController
                     }
                     $pageVersionSchedule->save();
                 }
-
             }
             return 1;
         }
@@ -404,7 +407,6 @@ class PagesController extends AdminController
             $pagination = PaginatorRender::admin($requests);
         }
         return View::make('coaster::partials.tabs.publish_requests.table', array('show' => $show, 'requests' => $requests, 'pagination' => $pagination))->render();
-
     }
 
     public function postRequestPublish($pageId)
@@ -451,5 +453,4 @@ class PagesController extends AdminController
         });
         return json_encode($json_array);
     }
-
 }

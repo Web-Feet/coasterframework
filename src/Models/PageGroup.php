@@ -1,6 +1,8 @@
-<?php namespace CoasterCms\Models;
+<?php
 
-use Auth;
+namespace CoasterCms\Models;
+
+use Illuminate\Support\Facades\Auth;
 use CoasterCms\Libraries\Traits\DataPreLoad;
 use Eloquent;
 use Illuminate\Database\Eloquent\Collection;
@@ -38,7 +40,9 @@ class PageGroup extends Eloquent
     public function blockFilters()
     {
         $groupAttributes = $this->groupAttributes ?: collect([]);
-        return $groupAttributes->filter(function($groupAttribute) {return $groupAttribute->filter_by_block_id > 0;});
+        return $groupAttributes->filter(function ($groupAttribute) {
+            return $groupAttribute->filter_by_block_id > 0;
+        });
     }
 
     /**
@@ -114,7 +118,7 @@ class PageGroup extends Eloquent
     public function containerPageIdsFiltered($pageId)
     {
         $containerPageIds = [];
-        foreach($this->containerPageIds() as $containerPageId) {
+        foreach ($this->containerPageIds() as $containerPageId) {
             if (in_array($pageId, $this->itemPageIdsFiltered($containerPageId))) {
                 $containerPageIds[] = $containerPageId;
             }
@@ -171,7 +175,7 @@ class PageGroup extends Eloquent
             }
         }
 
-        if ($sort && !array_key_exists($filterType.$sorted, self::$groupPages[$this->id])) {
+        if ($sort && !array_key_exists($filterType . $sorted, self::$groupPages[$this->id])) {
             if (!empty(self::$groupPages[$this->id][$filterType])) {
                 if ($sortByBlockIds = $this->orderAttributeBlocksIds()) {
 
@@ -190,7 +194,7 @@ class PageGroup extends Eloquent
                         );
                         $sortOrder = 0;
                         foreach ($sortedPages as $index => $sortedPage) {
-                            if (empty($sortedPages[$index-1]) || $sortedPages[$index-1]->content != $sortedPage->content) {
+                            if (empty($sortedPages[$index - 1]) || $sortedPages[$index - 1]->content != $sortedPage->content) {
                                 $sortOrder++;
                             }
                             $sortedPageIds[$sortedPage->page_id][$orderPriority] = $sortOrder;
@@ -203,7 +207,7 @@ class PageGroup extends Eloquent
                         }
                         $orderPriority++;
                     }
-                    uasort($sortedPageIds, function($a, $b) {
+                    uasort($sortedPageIds, function ($a, $b) {
                         foreach ($a as $orderPriority => $orderValue) {
                             if ($orderValue < $b[$orderPriority]) {
                                 return -1;
@@ -214,19 +218,18 @@ class PageGroup extends Eloquent
                         return 0;
                     });
 
-                    self::$groupPages[$this->id][$filterType.$sorted] = array_keys($sortedPageIds);
-
+                    self::$groupPages[$this->id][$filterType . $sorted] = array_keys($sortedPageIds);
                 } else {
                     // if no sort by attribute
-                    self::$groupPages[$this->id][$filterType.$sorted] = self::$groupPages[$this->id][$filterType];
+                    self::$groupPages[$this->id][$filterType . $sorted] = self::$groupPages[$this->id][$filterType];
                 }
             } else {
                 // if nothing to sort
-                self::$groupPages[$this->id][$filterType.$sorted] = [];
+                self::$groupPages[$this->id][$filterType . $sorted] = [];
             }
         }
 
-        return self::$groupPages[$this->id][$filterType.$sorted];
+        return self::$groupPages[$this->id][$filterType . $sorted];
     }
 
     /**
@@ -244,7 +247,7 @@ class PageGroup extends Eloquent
 
         self::$groupPagesFiltered[$this->id] = empty(self::$groupPagesFiltered[$this->id]) ? [] : self::$groupPagesFiltered[$this->id];
 
-        if (!array_key_exists($filterType.$sorted, self::$groupPagesFiltered[$this->id])) {
+        if (!array_key_exists($filterType . $sorted, self::$groupPagesFiltered[$this->id])) {
 
             if ($pageIds = $this->itemPageIds($checkLive, $sort)) {
 
@@ -281,15 +284,13 @@ class PageGroup extends Eloquent
 
                         $pageIds = $filteredPageIds;
                     }
-
                 }
-
             }
 
-            self::$groupPagesFiltered[$this->id][$filterType.$sorted] = $pageIds;
+            self::$groupPagesFiltered[$this->id][$filterType . $sorted] = $pageIds;
         }
 
-        return self::$groupPagesFiltered[$this->id][$filterType.$sorted];
+        return self::$groupPagesFiltered[$this->id][$filterType . $sorted];
     }
 
     /**
@@ -309,7 +310,8 @@ class PageGroup extends Eloquent
         return $pages;
     }
 
-    public function orderAttributeBlocksIds() {
+    public function orderAttributeBlocksIds()
+    {
         $blockIds = [];
         foreach ($this->groupAttributes as $attribute) {
             if ($attribute->item_block_order_priority) {
@@ -318,5 +320,4 @@ class PageGroup extends Eloquent
         }
         return $blockIds;
     }
-
 }

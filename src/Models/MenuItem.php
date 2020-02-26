@@ -1,11 +1,13 @@
-<?php namespace CoasterCms\Models;
+<?php
 
-use Auth;
+namespace CoasterCms\Models;
+
+use Illuminate\Support\Facades\Auth;
 use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Libraries\Traits\DataPreLoad;
 use CoasterCms\Libraries\Traits\Logger;
 use Eloquent;
-use View;
+use Illuminate\Support\Facades\View;
 
 class MenuItem extends Eloquent
 {
@@ -149,5 +151,4 @@ class MenuItem extends Eloquent
             $menuItem->addLogWithBackup($log, $menuItem);
         });
     }
-
 }

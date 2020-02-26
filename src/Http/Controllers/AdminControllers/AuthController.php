@@ -1,11 +1,13 @@
-<?php namespace CoasterCms\Http\Controllers\AdminControllers;
+<?php
 
-use Auth;
+namespace CoasterCms\Http\Controllers\AdminControllers;
+
+use Illuminate\Support\Facades\Auth;
 use CoasterCms\Facades\FormMessage;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use Cookie;
-use Request;
-use View;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\View;
 
 class AuthController extends Controller
 {
@@ -43,5 +45,4 @@ class AuthController extends Controller
         Auth::logout();
         return \redirect()->route('coaster.admin.login');
     }
-
 }

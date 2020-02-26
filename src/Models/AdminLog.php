@@ -1,6 +1,8 @@
-<?php namespace CoasterCms\Models;
+<?php
 
-use Auth;
+namespace CoasterCms\Models;
+
+use Illuminate\Support\Facades\Auth;
 use Eloquent;
 
 class AdminLog extends Eloquent
@@ -67,5 +69,4 @@ class AdminLog extends Eloquent
 
         return $logId;
     }
-
 }

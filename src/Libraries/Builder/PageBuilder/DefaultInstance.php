@@ -27,9 +27,9 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Macroable;
-use Request;
+use Illuminate\Support\Facades\Request;
 use URL;
-use View;
+use Illuminate\Support\Facades\View;
 
 class DefaultInstance
 {

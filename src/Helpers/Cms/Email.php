@@ -1,11 +1,13 @@
-<?php namespace CoasterCms\Helpers\Cms;
+<?php
+
+namespace CoasterCms\Helpers\Cms;
 
 use CoasterCms\Exceptions\CmsPageException;
 use Illuminate\Mail\Message;
 use PageBuilder;
-use Mail;
-use Validator;
-use View;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\View;
 
 class Email
 {
@@ -82,11 +84,8 @@ class Email
             }
 
             return !Mail::failures();
-
         } else {
             return false;
         }
-
     }
-
 }

@@ -1,4 +1,6 @@
-<?php namespace CoasterCms\Http\Controllers\AdminControllers;
+<?php
+
+namespace CoasterCms\Http\Controllers\AdminControllers;
 
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Libraries\Blocks\Gallery;
@@ -8,8 +10,8 @@ use CoasterCms\Models\Page;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\ThemeTemplate;
-use Request;
-use View;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\View;
 
 class GalleryController extends Controller
 {
@@ -97,5 +99,4 @@ class GalleryController extends Controller
             throw new \Exception('Not a gallery block!');
         }
     }
-
 }

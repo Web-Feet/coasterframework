@@ -1,6 +1,8 @@
-<?php namespace CoasterCms\Http\Controllers\AdminControllers;
+<?php
 
-use Auth;
+namespace CoasterCms\Http\Controllers\AdminControllers;
+
+use Illuminate\Support\Facades\Auth;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminAction;
 use CoasterCms\Models\AdminController;
@@ -9,10 +11,10 @@ use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageLang;
 use CoasterCms\Models\User;
 use CoasterCms\Models\UserRole;
-use Request;
-use Response;
-use Validator;
-use View;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\View;
 
 class RolesController extends Controller
 {
@@ -68,7 +70,6 @@ class RolesController extends Controller
                 $options .= View::make('coaster::partials.roles.option', array('name' => $action->name, 'id' => $action->id, 'val' => false, 'class' => $class))->render();
             }
             $sections[$controller->role_section] .= View::make('coaster::partials.roles.section', array('section' => $controller->role_name, 'options' => $options))->render();
-
         }
         $content = '';
         foreach ($group as $id => $name) {
@@ -120,7 +121,7 @@ class RolesController extends Controller
                 }
                 $role->actions()->sync($copy_actions);
                 foreach ($copy->page_actions as $page_action) {
-                    $role->page_actions()->attach($page_action->id,['action_id' => $page_action->pivot->action_id, 'access' => $page_action->pivot->access]);
+                    $role->page_actions()->attach($page_action->id, ['action_id' => $page_action->pivot->action_id, 'access' => $page_action->pivot->access]);
                 }
             }
             $role_info[$role->id] = $role->name;
@@ -158,9 +159,9 @@ class RolesController extends Controller
         $v = Validator::make(Request::all(), array(
             'new_role' => 'required|integer'
         ));
-        $error = 'Invalid new role ID: '. Request::input('new_role');
+        $error = 'Invalid new role ID: ' . Request::input('new_role');
         if ($v->passes()) {
-            $error = 'Role does not exist with ID: '.Request::input('role');
+            $error = 'Role does not exist with ID: ' . Request::input('role');
             if ($role = UserRole::find(Request::input('role'))) {
                 $error = 'New role ID must be different from the role being deleted';
                 if (Request::input('new_role') != $role->id) {
@@ -251,7 +252,6 @@ class RolesController extends Controller
                                     $this->_role_permissions->page_actions()->newPivotStatementForId($group_page->id)->whereActionId($action_id)->delete();
                                 }
                             }
-
                         } elseif ($existing[$page->id][$action_id] != $value) {
                             // update existing
                             $this->_role_permissions->page_actions()->newPivotStatementForId($page->id)->whereActionId($action_id)->update(['access' => $value]);
@@ -272,7 +272,6 @@ class RolesController extends Controller
                             }
                         }
                     }
-
                 }
             }
 
@@ -291,7 +290,6 @@ class RolesController extends Controller
             $sub_pages = "";
 
             if ($child_page->group_container > 0) {
-
             } elseif (!empty($this->_child_pages[$child_page->id])) {
                 $sub_pages = $this->_print_pages($child_page->id);
             }
@@ -323,9 +321,7 @@ class RolesController extends Controller
             }
 
             $pages_li .= View::make('coaster::partials.roles.pages.li', array('page_lang' => $page_lang, 'sub_pages' => $sub_pages, 'actions' => $page_actions))->render();
-
         }
         return View::make('coaster::partials.roles.pages.ul', array('pages_li' => $pages_li));
     }
-
 }

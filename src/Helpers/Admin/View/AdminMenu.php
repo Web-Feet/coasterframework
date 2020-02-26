@@ -1,12 +1,14 @@
-<?php namespace CoasterCms\Helpers\Admin\View;
+<?php
 
-use Auth;
+namespace CoasterCms\Helpers\Admin\View;
+
+use Illuminate\Support\Facades\Auth;
 use CoasterCms\Models\AdminAction;
 use CoasterCms\Models\AdminController;
 use CoasterCms\Models\Language;
-use Request;
+use Illuminate\Support\Facades\Request;
 use URL;
-use View;
+use Illuminate\Support\Facades\View;
 
 class AdminMenu
 {
@@ -15,7 +17,7 @@ class AdminMenu
 
     public static function getSystemMenu()
     {
-        
+
         $systemMenuItems = [
             'Open Frontend' => [
                 'link' => URL::to('/') . '" target="_blank',
@@ -53,14 +55,12 @@ class AdminMenu
                 'link' => route('coaster.admin.logout'),
                 'icon' => 'fa fa-sign-out'
             ];
-
         } else {
 
             $systemMenuItems['Login'] = [
                 'link' => route('coaster.admin.login'),
                 'icon' => 'fa fa-lock'
             ];
-
         }
 
         $systemMenu = '';
@@ -70,7 +70,6 @@ class AdminMenu
         }
 
         return $systemMenu;
-
     }
 
     public static function getSectionsMenu()
@@ -109,10 +108,9 @@ class AdminMenu
                 // get top level item view
                 $url = self::_itemUrl($topLevelItem->action_id);
                 $adminMenu .= View::make('coaster::menus.sections.item', ['sub_menu' => $subMenuItems, 'item' => $topLevelItem, 'active' => self::$_setActive, 'url' => $url])->render();
-
             }
         }
-        
+
         return $adminMenu;
     }
 
@@ -139,12 +137,9 @@ class AdminMenu
                 }
 
                 return route($routeName);
-
             }
-
         }
 
         return '#';
     }
-
 }

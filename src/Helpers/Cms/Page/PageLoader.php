@@ -1,4 +1,6 @@
-<?php namespace CoasterCms\Helpers\Cms\Page;
+<?php
+
+namespace CoasterCms\Helpers\Cms\Page;
 
 use CoasterCms\Models\Page;
 use CoasterCms\Models\PageGroup;
@@ -7,7 +9,7 @@ use CoasterCms\Models\PageVersion;
 use CoasterCms\Models\Template;
 use CoasterCms\Models\Theme;
 use Illuminate\Database\Eloquent\Builder;
-use Request;
+use Illuminate\Support\Facades\Request;
 
 class PageLoader
 {
@@ -135,7 +137,6 @@ class PageLoader
                         }
                         break;
                     }
-
                 }
             }
         }
@@ -177,13 +178,11 @@ class PageLoader
                     $this->previewVersion = PageVersion::where('page_id', '=', $lowestLevelPage->id)->where('preview_key', '=', $previewKey)->first() ?: null;
                 }
             }
-
         }
 
-        if($customTemplate = Request::get('external')) {
+        if ($customTemplate = Request::get('external')) {
             $this->customTemplate = 'externals.' . $customTemplate;
         }
-
     }
 
     /**
@@ -272,5 +271,4 @@ class PageLoader
             return false;
         }
     }
-
 }

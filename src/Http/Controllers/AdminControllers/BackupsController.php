@@ -1,11 +1,13 @@
-<?php namespace CoasterCms\Http\Controllers\AdminControllers;
+<?php
 
-use Auth;
+namespace CoasterCms\Http\Controllers\AdminControllers;
+
+use Illuminate\Support\Facades\Auth;
 use CoasterCms\Http\Controllers\AdminController as Controller;
 use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\Backup;
-use Request;
-use Response;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Response;
 
 class BackupsController extends Controller
 {
@@ -22,7 +24,7 @@ class BackupsController extends Controller
                     if (Backup::restore($logId) == 1) {
                         AdminLog::new_log('Restored log ID #' . $logId);
                     } else {
-                        return Response::make('Error restoring log ID #'.$logId, 500);
+                        return Response::make('Error restoring log ID #' . $logId, 500);
                     }
                 }
             }
@@ -30,5 +32,4 @@ class BackupsController extends Controller
         }
         return 'Success';
     }
-
 }

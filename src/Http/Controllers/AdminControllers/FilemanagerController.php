@@ -1,7 +1,9 @@
-<?php namespace CoasterCms\Http\Controllers\AdminControllers;
+<?php
+
+namespace CoasterCms\Http\Controllers\AdminControllers;
 
 use CoasterCms\Http\Controllers\AdminController as Controller;
-use View;
+use Illuminate\Support\Facades\View;
 
 class FilemanagerController extends Controller
 {
@@ -10,5 +12,4 @@ class FilemanagerController extends Controller
     {
         $this->layoutData['content'] = View::make('coaster::pages.filemanager');
     }
-
 }

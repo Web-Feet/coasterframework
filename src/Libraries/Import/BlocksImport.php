@@ -2,7 +2,7 @@
 
 namespace CoasterCms\Libraries\Import;
 
-use View;
+use Illuminate\Support\Facades\View;
 use PageBuilder;
 use Illuminate\Support\Str;
 use CoasterCms\Models\Block;

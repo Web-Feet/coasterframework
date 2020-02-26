@@ -1,9 +1,11 @@
-<?php namespace CoasterCms\Models;
+<?php
 
-use Auth;
+namespace CoasterCms\Models;
+
+use Illuminate\Support\Facades\Auth;
 use CoasterCms\Libraries\Traits\DataPreLoad;
 use Eloquent;
-use View;
+use Illuminate\Support\Facades\View;
 
 class Menu extends Eloquent
 {
@@ -53,5 +55,4 @@ class Menu extends Eloquent
         }
         return View::make('coaster::partials.menus.ol', ['renderedItems' => $renderedMenuItems, 'menu' => $this, 'permissions' => $permissions])->render();
     }
-
 }

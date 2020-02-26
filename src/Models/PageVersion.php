@@ -1,11 +1,13 @@
-<?php namespace CoasterCms\Models;
+<?php
 
-use Auth;
+namespace CoasterCms\Models;
+
+use Illuminate\Support\Facades\Auth;
 use CoasterCms\Helpers\Cms\View\PaginatorRender;
 use CoasterCms\Libraries\Traits\DataPreLoad;
 use DateTimeHelper;
 use Eloquent;
-use View;
+use Illuminate\Support\Facades\View;
 
 class PageVersion extends Eloquent
 {
@@ -43,12 +45,12 @@ class PageVersion extends Eloquent
 
     public static function getLiveVersion($pageId)
     {
-        if (!static::_preloadIsset('liveVersions') ) {
+        if (!static::_preloadIsset('liveVersions')) {
             $pageLangTable = (new PageLang)->getTable();
             $pageVersionsTable = (new static)->getTable();
-            $pageVersions = self::join($pageLangTable, function ($join) use($pageLangTable, $pageVersionsTable) {
-                $join->on($pageLangTable.'.page_id', '=', $pageVersionsTable.'.page_id')->on($pageLangTable.'.live_version', '=', $pageVersionsTable.'.version_id');
-            })->where('language_id', '=', Language::current())->orderBy($pageLangTable.'.page_id')->get([$pageVersionsTable.'.*']);
+            $pageVersions = self::join($pageLangTable, function ($join) use ($pageLangTable, $pageVersionsTable) {
+                $join->on($pageLangTable . '.page_id', '=', $pageVersionsTable . '.page_id')->on($pageLangTable . '.live_version', '=', $pageVersionsTable . '.version_id');
+            })->where('language_id', '=', Language::current())->orderBy($pageLangTable . '.page_id')->get([$pageVersionsTable . '.*']);
             static::_preload($pageVersions, 'liveVersions', ['page_id']);
         }
         return static::_preloadGet('liveVersions', $pageId);
@@ -79,7 +81,7 @@ class PageVersion extends Eloquent
         $pageVersion->preview_key = base_convert((rand(10, 99) . microtime(true)), 10, 36);
         return $pageVersion;
     }
-    
+
     public function publish($set_live = false, $ignore_auth = false)
     {
         $page_lang = PageLang::where('page_id', '=', $this->page_id)->where('language_id', '=', Language::current())->first();
@@ -133,5 +135,4 @@ class PageVersion extends Eloquent
     {
         return $this->label ?: ('version ' . DateTimeHelper::display($this->created_at, 'short'));
     }
-
 }

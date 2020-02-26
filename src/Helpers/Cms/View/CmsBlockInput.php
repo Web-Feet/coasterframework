@@ -1,9 +1,11 @@
-<?php namespace CoasterCms\Helpers\Cms\View;
+<?php
+
+namespace CoasterCms\Helpers\Cms\View;
 
 use CoasterCms\Facades\FormMessage;
 use CoasterCms\Models\Block;
-use Request;
-use View;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\View;
 
 class CmsBlockInput
 {
@@ -31,7 +33,6 @@ class CmsBlockInput
                     return $location . $blockTypeView;
                 }
             }
-
         }
 
         return null;
@@ -42,7 +43,7 @@ class CmsBlockInput
         if ($pos = strpos($name, '[')) {
             return substr_replace($name, $append, $pos, 0);
         } else {
-            return $name.$append;
+            return $name . $append;
         }
     }
 
@@ -84,5 +85,4 @@ class CmsBlockInput
 
         return View::make($view, $options)->render();
     }
-
 }

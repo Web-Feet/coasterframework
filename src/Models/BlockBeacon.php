@@ -1,4 +1,6 @@
-<?php namespace CoasterCms\Models;
+<?php
+
+namespace CoasterCms\Models;
 
 use CoasterCms\Helpers\Cms\Page\Path;
 use CoasterCms\Libraries\Beacons\BeaconAbstract;
@@ -7,9 +9,9 @@ use Eloquent;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use URL;
-use View;
+use Illuminate\Support\Facades\View;
 
-Class BlockBeacon extends Eloquent
+class BlockBeacon extends Eloquent
 {
     protected $table = 'block_beacons';
 
@@ -26,7 +28,7 @@ Class BlockBeacon extends Eloquent
     {
         $type = ucwords(strtolower($type));
         if (!array_key_exists($type, static::$_class)) {
-            $className = 'CoasterCms\Libraries\Beacons\\'.$type.'Beacon';
+            $className = 'CoasterCms\Libraries\Beacons\\' . $type . 'Beacon';
             static::$_class[$type] = new $className;
         }
         return static::$_class[$type];
@@ -49,7 +51,10 @@ Class BlockBeacon extends Eloquent
                 $pendingConfigs = [];
                 foreach ($enabledDrivers as $driver => $apiKey) {
                     if ($apiKey) {
-                        $devicesData += array_map(function ($v)use($driver) {$v->driver = $driver; return $v;}, static::getClass($driver)->listBeacons());
+                        $devicesData += array_map(function ($v) use ($driver) {
+                            $v->driver = $driver;
+                            return $v;
+                        }, static::getClass($driver)->listBeacons());
                         $pendingConfigs += static::getClass($driver)->getPendingConfigs();
                     }
                 }
@@ -91,7 +96,7 @@ Class BlockBeacon extends Eloquent
                         continue;
                     }
                     $beacon->page_name = '';
-                    if ($beacon->url == self::_getUrl($beacon->device) && ! empty($beacon->page_id)) {
+                    if ($beacon->url == self::_getUrl($beacon->device) && !empty($beacon->page_id)) {
                         $beacon->page_name = Path::getFullName($beacon->page_id);
                     } else {
                         $beacon->page_id = 0;
@@ -110,7 +115,7 @@ Class BlockBeacon extends Eloquent
         self::preload();
         $visibleBeacons = [];
         foreach (self::$_beacons as $uniqueId => $beacon) {
-          $loweredDeviceType = strtolower($beacon->device->deviceType);
+            $loweredDeviceType = strtolower($beacon->device->deviceType);
             if (!$beacon->removed && ($allTypes || ($loweredDeviceType == 'beacon' && in_array($beacon->device->profiles[0], self::$_changeable)))) {
                 $visibleBeacons[$uniqueId] = $beacon;
             }
@@ -123,8 +128,8 @@ Class BlockBeacon extends Eloquent
         if (!isset($device->url) || !in_array($device->profiles[0], self::$_changeable)) {
             return '';
         }
-        if (substr($device->url, 0,2) == 'ht') {
-          return $device->url;
+        if (substr($device->url, 0, 2) == 'ht') {
+            return $device->url;
         }
         $prefixes = [
             '00' => 'http://www.',
@@ -153,7 +158,7 @@ Class BlockBeacon extends Eloquent
         foreach (self::getVisibleBeacons(false) as $beacon) {
             $options[$beacon->unique_id] = $beacon->device->uniqueId;
             if ($beacon->device->alias) {
-                $options[$beacon->unique_id] .= ' ('.$beacon->device->alias.')';
+                $options[$beacon->unique_id] .= ' (' . $beacon->device->alias . ')';
             }
             if ($beacon->page_id == $pageId) {
                 $selected[] = $beacon->unique_id;
@@ -204,17 +209,17 @@ Class BlockBeacon extends Eloquent
                     $bitlyResponse = json_decode(self::_bitly()->request('GET', 'v3/shorten', [
                         'query' => [
                             'access_token' => config('coaster::key.bitly'),
-                            'longUrl' => $pageUrl.'?beacon_id='.$uniqueId
+                            'longUrl' => $pageUrl . '?beacon_id=' . $uniqueId
                         ]
                     ])->getBody());
                     if ($bitlyResponse->status_code == 200) {
                         $beaconUrl = 'http://bit.ly/' . $bitlyResponse->data->hash;
                     } else {
-                        FormMessage::add('page_info_other[beacons]', 'Error generating bit.ly url (response:  '.$bitlyResponse->status_txt.')');
+                        FormMessage::add('page_info_other[beacons]', 'Error generating bit.ly url (response:  ' . $bitlyResponse->status_txt . ')');
                         return 0;
                     }
                 } catch (RequestException $e) {
-                    FormMessage::add('page_info_other[beacons]', 'Error generating bit.ly url (response: '.$e->getCode().')');
+                    FormMessage::add('page_info_other[beacons]', 'Error generating bit.ly url (response: ' . $e->getCode() . ')');
                     return 0;
                 }
             }
@@ -224,14 +229,12 @@ Class BlockBeacon extends Eloquent
             }
 
             $updated = static::getClass($beacon->type)->setUrl($uniqueId, $beaconUrl);
-            if ($updated)
-            {
+            if ($updated) {
                 $beacon->page_id = $pageId;
                 $beacon->url = $beaconUrl;
                 $beacon->save();
             }
             return 1;
-
         }
 
         return 0;
@@ -284,5 +287,4 @@ Class BlockBeacon extends Eloquent
         }
         return self::$_bitly;
     }
-
 }

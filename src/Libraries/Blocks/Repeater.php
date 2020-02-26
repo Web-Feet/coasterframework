@@ -15,8 +15,8 @@ use CoasterCms\Models\BlockRepeater;
 use CoasterCms\Models\PageBlockRepeaterData;
 use CoasterCms\Models\PageBlockRepeaterRows;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Request;
-use Validator;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Validator;
 
 class Repeater extends AbstractBlock
 {

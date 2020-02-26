@@ -1,7 +1,9 @@
-<?php namespace CoasterCms\Models;
+<?php
+
+namespace CoasterCms\Models;
 
 use Eloquent;
-use Request;
+use Illuminate\Support\Facades\Request;
 
 class PageRedirect extends Eloquent
 {
@@ -20,7 +22,7 @@ class PageRedirect extends Eloquent
             $redirectMatches[] = '/' . $redirectUrl . '/';
             $redirectMatches[] = $redirectUrl . '/';
         }
-        
+
         $redirect = self::whereIn('redirect', array_unique($redirectMatches))->first();
         if (!empty($redirect)) {
             return $redirect;
@@ -53,5 +55,4 @@ class PageRedirect extends Eloquent
             }
         }
     }
-
 }
