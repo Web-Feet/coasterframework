@@ -1,17 +1,19 @@
-<?php namespace CoasterCms\Http\Controllers\AdminControllers;
+<?php
 
-use Auth;
-use CoasterCms\Facades\FormMessage;
-use CoasterCms\Http\Controllers\AdminController as Controller;
-use CoasterCms\Models\AdminLog;
+namespace CoasterCms\Http\Controllers\AdminControllers;
+
 use CoasterCms\Models\User;
+use Illuminate\Support\Str;
+use CoasterCms\Models\AdminLog;
 use CoasterCms\Models\UserRole;
-use Hash;
-use Mail;
-use Request;
-use Response;
-use Validator;
-use View;
+use CoasterCms\Facades\FormMessage;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Validator;
+use CoasterCms\Http\Controllers\AdminController as Controller;
 
 class UsersController extends Controller
 {
@@ -57,7 +59,9 @@ class UsersController extends Controller
                 case 'status':
                     // stop admins disabling super admins
                     if ($authUser->id != $user->id) {
-                        $v = Validator::make(Request::all(), array(
+                        $v = Validator::make(
+                            Request::all(),
+                            array(
                                 'set' => 'integer|min:0|max:1'
                             )
                         );
@@ -133,7 +137,9 @@ class UsersController extends Controller
     public function postAdd()
     {
         $authUser = Auth::user();
-        $v = Validator::make(Request::all(), array(
+        $v = Validator::make(
+            Request::all(),
+            array(
                 'email' => 'required|email',
                 'role' => 'required|integer'
             )
@@ -147,7 +153,7 @@ class UsersController extends Controller
 
         if ($v->passes() && !$perm_issue) {
 
-            $password = str_random(8);
+            $password = Str::random(8);
             $new_user = new User;
             $new_user->email = Request::input('email');
             $new_user->role_id = Request::input('role');
@@ -186,7 +192,7 @@ class UsersController extends Controller
 
     public function postDelete($userId = 0)
     {
-        $error = 'User with ID '.$userId.' not found';
+        $error = 'User with ID ' . $userId . ' not found';
         if ($user = User::find($userId)) {
             if (Auth::user()->role->admin >= $user->role->admin && Auth::user()->id != $user->id) {
                 return json_encode($user->delete());
@@ -195,5 +201,4 @@ class UsersController extends Controller
         }
         return Response::make($error, 500);
     }
-
 }
