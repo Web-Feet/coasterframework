@@ -12,11 +12,17 @@
             "email": "chadanuk+coastercms@gmail.com"
         }
     ],
+     "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/BKWLD/croppa"
+        }
+    ],
     "require": {
         "php": "^7.2",
         "doctrine/dbal": "^2.5",
         "laravelcollective/html": "6.*",
-        "bkwld/croppa": "4.4.*",
+        "bkwld/croppa": "dev-master",
         "blueimp/jquery-file-upload": "10.8.*",
         "fideloper/proxy": "^4.0",
         "guzzlehttp/guzzle": "6.*"

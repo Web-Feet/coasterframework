@@ -1,4 +1,6 @@
-<?php namespace CoasterCms\Libraries\Builder\PageBuilder;
+<?php
+
+namespace CoasterCms\Libraries\Builder\PageBuilder;
 
 use CoasterCms\Exceptions\PageBuilderException;
 use CoasterCms\Helpers\Cms\Page\PageLoader;
@@ -267,7 +269,7 @@ class DefaultInstance
     public function pageUrlSegment($pageId = 0, $noOverride = false)
     {
         $pageId = $pageId ?: $this->pageId($noOverride);
-        return $pageId ? PageLang::getUrl($pageId): '';
+        return $pageId ? PageLang::getUrl($pageId) : '';
     }
 
     /**
@@ -278,7 +280,7 @@ class DefaultInstance
     public function pageUrl($pageId = 0, $noOverride = false)
     {
         $pageId = $pageId ?: $this->pageId($noOverride);
-        return $pageId ? Path::getFullUrl($pageId): '';
+        return $pageId ? Path::getFullUrl($pageId) : '';
     }
 
     /**
@@ -289,7 +291,7 @@ class DefaultInstance
     public function pageName($pageId = 0, $noOverride = false)
     {
         $pageId = $pageId ?: $this->pageId($noOverride);
-        return $pageId ? PageLang::getName($pageId): '';
+        return $pageId ? PageLang::getName($pageId) : '';
     }
 
     /**
@@ -301,7 +303,7 @@ class DefaultInstance
     public function pageFullName($pageId = 0, $noOverride = false, $sep = ' &raquo; ')
     {
         $pageId = $pageId ?: $this->pageId($noOverride);
-        return $pageId ? Path::getFullName($pageId, $sep): '';
+        return $pageId ? Path::getFullName($pageId, $sep) : '';
     }
 
     /**
@@ -690,7 +692,6 @@ class DefaultInstance
                     break;
                 }
             }
-
         } else {
             return config('app.env') == 'development' ? 'block not found' : '';
         }
@@ -701,7 +702,7 @@ class DefaultInstance
         }
 
         // set version that data has been grabbed for (0 = latest)
-        if(empty($options['version'])) {
+        if (empty($options['version'])) {
             $options['version'] = $usingGlobalContent ? 0 : $this->pageVersion($pageId);
         }
 
@@ -894,7 +895,7 @@ class DefaultInstance
         }
 
         // pagination
-        if (!empty($options['per_page']) && (int)$options['per_page'] > 0) {
+        if (!empty($options['per_page']) && (int) $options['per_page'] > 0) {
             $paginator = new LengthAwarePaginator($pages, count($pages), $options['per_page'], Request::input('page', 1));
             $paginator->setPath(Request::getPathInfo());
             $paginator->appends(Request::all());
@@ -921,11 +922,11 @@ class DefaultInstance
         $pages = array_values($pages);
         foreach ($pages as $count => $page) {
             $isFirst = ($count == 0);
-            $isLast = ($count == $total -1);
+            $isLast = ($count == $total - 1);
 
             if (is_string($page->id)) {
                 $tmpCustomBlockKey = $this->customBlockDataKey;
-                $this->customBlockDataKey = 'customPage:'.$page->id;
+                $this->customBlockDataKey = 'customPage:' . $page->id;
                 $pageDetails = new \stdClass;
                 foreach ($page as $blockName => $content) {
                     if (in_array($blockName, ['fullUrl', 'fullName'])) {
@@ -980,7 +981,7 @@ class DefaultInstance
      */
     public function getData($varName = '')
     {
-        $varName = camel_case($varName);
+        $varName = Str::camel($varName);
         if ($varName) {
             return property_exists($this, $varName) ? $this->$varName : null;
         } else {
@@ -1016,5 +1017,4 @@ class DefaultInstance
         }
         throw new PageBuilderException('function ' . $name . '() not found');
     }
-
 }

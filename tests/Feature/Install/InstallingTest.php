@@ -4,14 +4,11 @@
 use CoasterCms\Facades\Install;
 use CoasterCms\Helpers\Install as InstallContract;
 use CoasterCms\Tests\TestCase;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Support\Facades\Storage;
 
 class InstallingTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->skipInstall = false;
         parent::setUp();

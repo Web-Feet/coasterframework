@@ -1,429 +1,410 @@
-<?php namespace CoasterCms\Helpers\Admin\Tools\Import;
+<?php
 
-use CoasterCms\Helpers\Cms\Html\DOMDocument;
-use CoasterCms\Helpers\Cms\Page\Path;
-use CoasterCms\Models\Block;
-use CoasterCms\Models\BlockSelectOption;
-use CoasterCms\Models\PageLang;
+namespace CoasterCms\Helpers\Admin\Tools\Import;
+
+use Carbon\Carbon;
 use CoasterCms\Models\Page;
-use CoasterCms\Models\ThemeTemplateBlock;
+use Illuminate\Support\Str;
+use CoasterCms\Models\Block;
+use CoasterCms\Models\Language;
+use CoasterCms\Models\PageLang;
 use CoasterCms\Models\Template;
-use CoasterCms\Models\PageBlockRepeaterData;
-use CoasterCms\Models\BlockRepeater;
 use CoasterCms\Models\PageGroup;
 use CoasterCms\Models\PageVersion;
-use CoasterCms\Models\Language;
-use Carbon\Carbon;
+use CoasterCms\Models\BlockRepeater;
+use CoasterCms\Helpers\Cms\Page\Path;
+use CoasterCms\Models\BlockSelectOption;
+use CoasterCms\Models\ThemeTemplateBlock;
+use CoasterCms\Helpers\Cms\Html\DOMDocument;
+use CoasterCms\Models\PageBlockRepeaterData;
 
 class WpApi
 {
-    protected $url = '';
-    protected $blog_name = 'blog';
-    protected $per_page = 50;
-    protected $category_block_name = 'categories';
-    protected $templates = [
-                          'list_template' => 'blog',
-                          'item_template' => 'blog-post',
-                          'category_template' => 'blog-category',
-                          'search_template' => 'blog-search',
-                          'archive_template' =>'blog-archives'
-                        ];
-    protected $templateObjs = [];
-    protected $tag_block_name = 'tags';
-    protected $groupPage = null;
-    protected $group = null;
-    protected $ret = [];
+  protected $url = '';
+  protected $blog_name = 'blog';
+  protected $per_page = 50;
+  protected $category_block_name = 'categories';
+  protected $templates = [
+    'list_template' => 'blog',
+    'item_template' => 'blog-post',
+    'category_template' => 'blog-category',
+    'search_template' => 'blog-search',
+    'archive_template' => 'blog-archives'
+  ];
+  protected $templateObjs = [];
+  protected $tag_block_name = 'tags';
+  protected $groupPage = null;
+  protected $group = null;
+  protected $ret = [];
 
-    protected $block;
+  protected $block;
 
-    public function __construct($url)
-    {
-      $this->url = $url;
-      $this->groupPage = $this->getBlogGroupPage();
-      $this->group = PageGroup::where('id', '=', $this->groupPage->group_container)->first();
-      $this->setUpCommentsBlocks();
-    }
+  public function __construct($url)
+  {
+    $this->url = $url;
+    $this->groupPage = $this->getBlogGroupPage();
+    $this->group = PageGroup::where('id', '=', $this->groupPage->group_container)->first();
+    $this->setUpCommentsBlocks();
+  }
 
-    public function setUpCommentsBlocks()
-    {
-      $commentBlocks = collect([]);
-      $commentsBlock = $this->getBlock('comments', 'repeater', 'Comments', '');
-      $commentBlocks->push($this->getBlock('comment_content', 'text', 'Comment Content', ''));
+  public function setUpCommentsBlocks()
+  {
+    $commentBlocks = collect([]);
+    $commentsBlock = $this->getBlock('comments', 'repeater', 'Comments', '');
+    $commentBlocks->push($this->getBlock('comment_content', 'text', 'Comment Content', ''));
 
-      BlockRepeater::unguard();
-      $rb = BlockRepeater::firstOrCreate(['block_id' => $commentsBlock->id]);
-      BlockRepeater::reguard();
+    BlockRepeater::unguard();
+    $rb = BlockRepeater::firstOrCreate(['block_id' => $commentsBlock->id]);
+    BlockRepeater::reguard();
 
-      $commentStatusBlock = $this->getBlock('comment_status', 'select', 'Comment Status', '');
-      BlockSelectOption::unguard();
-      $this->commentApprovedId = BlockSelectOption::firstOrCreate(['block_id' => $commentStatusBlock->id, 'option' => 'Approved', 'value' => 'approved'])->id;
-      $this->commentNotApprovedId = BlockSelectOption::firstOrCreate(['block_id' => $commentStatusBlock->id, 'option' => 'Awaiting Approval', 'value' => 'awaiting approval'])->id;
-      BlockSelectOption::reguard();
-      $commentBlocks->push($commentStatusBlock);
-      $commentBlocks->push($this->getBlock('comment_author', 'string', 'Comment Author', ''));
-      $commentBlocks->push($this->getBlock('comment_date', 'datetime', 'Comment Date', ''));
-      $commentBlocks->push($this->getBlock('comment_url', 'string', 'Comment Author', ''));
-      $commentBlocks->push($this->getBlock('comment_parent', 'string', 'Comment Parent', ''));
+    $commentStatusBlock = $this->getBlock('comment_status', 'select', 'Comment Status', '');
+    BlockSelectOption::unguard();
+    $this->commentApprovedId = BlockSelectOption::firstOrCreate(['block_id' => $commentStatusBlock->id, 'option' => 'Approved', 'value' => 'approved'])->id;
+    $this->commentNotApprovedId = BlockSelectOption::firstOrCreate(['block_id' => $commentStatusBlock->id, 'option' => 'Awaiting Approval', 'value' => 'awaiting approval'])->id;
+    BlockSelectOption::reguard();
+    $commentBlocks->push($commentStatusBlock);
+    $commentBlocks->push($this->getBlock('comment_author', 'string', 'Comment Author', ''));
+    $commentBlocks->push($this->getBlock('comment_date', 'datetime', 'Comment Date', ''));
+    $commentBlocks->push($this->getBlock('comment_url', 'string', 'Comment Author', ''));
+    $commentBlocks->push($this->getBlock('comment_parent', 'string', 'Comment Parent', ''));
 
-      $rb->blocks = $commentBlocks->map(function($item){ return $item->id;})->implode(',');
-      $rb->save();
-    }
+    $rb->blocks = $commentBlocks->map(function ($item) {
+      return $item->id;
+    })->implode(',');
+    $rb->save();
+  }
 
-    public function featuredImage($data, $pageLang)
-    {
-        if (property_exists($data->_embedded, "wp:featuredmedia")) {
+  public function featuredImage($data, $pageLang)
+  {
+    if (property_exists($data->_embedded, "wp:featuredmedia")) {
 
-            $imData = head($data->_embedded->{"wp:featuredmedia"});
+      $imData = head($data->_embedded->{"wp:featuredmedia"});
 
-            if ( ! empty($imData->source_url) && $imData->media_type == 'image') {
-              $imageBlock = $this->getBlock('image', 'image', 'Image');
-              $im = $this->saveImageLocally($imData->source_url);
-              $alt = empty($imData->alt_text) ? $pageLang->name : $imData->alt_text;
-              $imageBlock->setPageId($pageLang->page_id)->getTypeObject()->submit(['source' => $im, 'alt' => $alt]);
-              return $imData->source_url;
-            }
-        }
-        return '';
-    }
-    public function getAuthor($wpAuthorData)
-    {
-      return $wpAuthorData[0]->name;
-    }
-
-
-    public function getBlock($name, $type = 'selectmultiplewnew', $label = '', $note = '', $category_id = 1)
-    {
-      if (isset($this->blocks[$name]))
-      {
-       return $this->blocks[$name];
+      if (!empty($imData->source_url) && $imData->media_type == 'image') {
+        $imageBlock = $this->getBlock('image', 'image', 'Image');
+        $im = $this->saveImageLocally($imData->source_url);
+        $alt = empty($imData->alt_text) ? $pageLang->name : $imData->alt_text;
+        $imageBlock->setPageId($pageLang->page_id)->getTypeObject()->submit(['source' => $im, 'alt' => $alt]);
+        return $imData->source_url;
       }
-      $label = empty($label) ? str_replace('_', ' ', $name) : $label;
-      Block::unguard();
-      $block = Block::firstOrCreate(['name' => $name, 'label' => ucwords($label), 'note' => $note, 'category_id' => $category_id, 'type' => $type]);
-      Block::reguard();
-      ThemeTemplateBlock::unguard();
-      ThemeTemplateBlock::firstOrCreate(['theme_template_id' => $this->getTemplateId('item_template'), 'block_id' => $block->id]);
-      ThemeTemplateBlock::reguard();
-      $this->blocks[$name] = $block;
-      return $block;
     }
-    public function loopDataAndAddToSelectMultipleWNewBlock($block, $data, $page_id)
-    {
-      $toSave = [];
-      BlockSelectOption::unguard();
-      foreach($data AS $item)
-      {
-        $selectOpt = BlockSelectOption::firstOrCreate(['block_id' => $block->id, 'option' => $item->name, 'value' => strtolower($item->name)]);
-        $toSave[] = strtolower($item->name);
-      }
-      BlockSelectOption::reguard();
+    return '';
+  }
+  public function getAuthor($wpAuthorData)
+  {
+    return $wpAuthorData[0]->name;
+  }
 
-      $block->setPageId($page_id)->getTypeObject()->submit(['select' => $toSave, 'custom' => '']);
-      return implode(', ', $toSave);
+
+  public function getBlock($name, $type = 'selectmultiplewnew', $label = '', $note = '', $category_id = 1)
+  {
+    if (isset($this->blocks[$name])) {
+      return $this->blocks[$name];
     }
-
-    public function getCategory($data, $page_id)
-    {
-        $catBlock = $this->getBlock($this->category_block_name, 'selectmultiplewnew', 'Categories', '', 2);
-
-        $cats = collect($data)->collapse()->where('taxonomy', 'category')->all();
-
-        return $this->loopDataAndAddToSelectMultipleWNewBlock($catBlock, $cats, $page_id);
+    $label = empty($label) ? str_replace('_', ' ', $name) : $label;
+    Block::unguard();
+    $block = Block::firstOrCreate(['name' => $name, 'label' => ucwords($label), 'note' => $note, 'category_id' => $category_id, 'type' => $type]);
+    Block::reguard();
+    ThemeTemplateBlock::unguard();
+    ThemeTemplateBlock::firstOrCreate(['theme_template_id' => $this->getTemplateId('item_template'), 'block_id' => $block->id]);
+    ThemeTemplateBlock::reguard();
+    $this->blocks[$name] = $block;
+    return $block;
+  }
+  public function loopDataAndAddToSelectMultipleWNewBlock($block, $data, $page_id)
+  {
+    $toSave = [];
+    BlockSelectOption::unguard();
+    foreach ($data as $item) {
+      $selectOpt = BlockSelectOption::firstOrCreate(['block_id' => $block->id, 'option' => $item->name, 'value' => strtolower($item->name)]);
+      $toSave[] = strtolower($item->name);
     }
+    BlockSelectOption::reguard();
 
-    private function syncTags($page, $tags)
-    {
-        $tagBlock = $this->getBlock($this->tag_block_name, 'selectmultiplewnew', 'Tags', '', 2);
-        $tags = collect($tags)->collapse()->where('taxonomy', 'post_tag')->all();
+    $block->setPageId($page_id)->getTypeObject()->submit(['select' => $toSave, 'custom' => '']);
+    return implode(', ', $toSave);
+  }
 
-        return $this->loopDataAndAddToSelectMultipleWNewBlock($tagBlock, $tags, $page->id);
+  public function getCategory($data, $page_id)
+  {
+    $catBlock = $this->getBlock($this->category_block_name, 'selectmultiplewnew', 'Categories', '', 2);
+
+    $cats = collect($data)->collapse()->where('taxonomy', 'category')->all();
+
+    return $this->loopDataAndAddToSelectMultipleWNewBlock($catBlock, $cats, $page_id);
+  }
+
+  private function syncTags($page, $tags)
+  {
+    $tagBlock = $this->getBlock($this->tag_block_name, 'selectmultiplewnew', 'Tags', '', 2);
+    $tags = collect($tags)->collapse()->where('taxonomy', 'post_tag')->all();
+
+    return $this->loopDataAndAddToSelectMultipleWNewBlock($tagBlock, $tags, $page->id);
+  }
+
+  public function getTemplateId($name = '')
+  {
+    if (isset($this->templateObjs[$name])) {
+      return $this->templateObjs[$name]->id;
     }
+    $tpl = Template::where('template', '=', $this->templates[$name])->first();
 
-    public function getTemplateId($name='')
-    {
-      if (isset($this->templateObjs[$name])) {
-        return $this->templateObjs[$name]->id;
-      }
-      $tpl = Template::where('template', '=', $this->templates[$name])->first();
+    $this->templateObjs[$name] = $tpl;
+    return $tpl->id;
+  }
 
-      $this->templateObjs[$name] = $tpl;
-      return $tpl->id;
-    }
-
-    public function createGroupPage($name, $item_name, $template_name, $item_template_name = '')
-    {
-      if ($item_template_name == 'item_template')
-      {
-        $this->blogPageGroup = new PageGroup;
-        $this->blogPageGroup->name = ucfirst($name);
-        $this->blogPageGroup->item_name = $item_name;
-        $this->blogPageGroup->default_template = $this->getTemplateId($item_template_name);
-        $this->blogPageGroup->save();
-      }
-
-      $groupPage = new Page;
-      $groupPage->group_container = $this->blogPageGroup->id;
-      $groupPage->template = $this->getTemplateId($template_name);
-
-      if ($item_template_name != 'item_template')
-      {
-        $groupPage->parent = $this->blogPage->id;
-      }
-      $groupPage->save();
-
-      // Page Lang
-      $groupPageLang = new PageLang;
-      $groupPageLang->page_id = $groupPage->id;
-      $groupPageLang->live_version = 1;
-      $groupPageLang->language_id = Language::current();
-      $groupPageLang->name = ucfirst($name);
-      $groupPageLang->url = str_slug($groupPageLang->name);
-      $groupPageLang->save();
-
-      $titleBlock = $this->getBlock('title', 'string', 'Title');
-      $titleBlock->setPageId($groupPage->id)->getTypeObject()->submit($groupPageLang->name);
-
-      return $groupPage;
+  public function createGroupPage($name, $item_name, $template_name, $item_template_name = '')
+  {
+    if ($item_template_name == 'item_template') {
+      $this->blogPageGroup = new PageGroup;
+      $this->blogPageGroup->name = ucfirst($name);
+      $this->blogPageGroup->item_name = $item_name;
+      $this->blogPageGroup->default_template = $this->getTemplateId($item_template_name);
+      $this->blogPageGroup->save();
     }
 
-    public function getBlogGroupPage()
-    {
-      $this->blogPageGroup = PageGroup::where('name', '=', $this->blog_name);
-      // New Page
-      $groupPageLang = PageLang::where('name', '=', $this->blog_name)->first();
+    $groupPage = new Page;
+    $groupPage->group_container = $this->blogPageGroup->id;
+    $groupPage->template = $this->getTemplateId($template_name);
 
-      if (empty($groupPageLang))
-      {
-        // Blog Initialize;
-        $this->blogPage = $groupPage = $this->createGroupPage($this->blog_name, 'Post', 'list_template', 'item_template');
-        $this->categoryPage = $this->createGroupPage('Categories', '', 'category_template');
-        $this->archivePage = $this->createGroupPage('Archive', '', 'archive_template');
-        $this->searchPage = $this->createGroupPage('Search', '', 'search_template');
-      }
-      else
-      {
-        $groupPage = Page::find($groupPageLang->page_id);
-      }
-      return $groupPage;
+    if ($item_template_name != 'item_template') {
+      $groupPage->parent = $this->blogPage->id;
+    }
+    $groupPage->save();
+
+    // Page Lang
+    $groupPageLang = new PageLang;
+    $groupPageLang->page_id = $groupPage->id;
+    $groupPageLang->live_version = 1;
+    $groupPageLang->language_id = Language::current();
+    $groupPageLang->name = ucfirst($name);
+    $groupPageLang->url = Str::slug($groupPageLang->name);
+    $groupPageLang->save();
+
+    $titleBlock = $this->getBlock('title', 'string', 'Title');
+    $titleBlock->setPageId($groupPage->id)->getTypeObject()->submit($groupPageLang->name);
+
+    return $groupPage;
+  }
+
+  public function getBlogGroupPage()
+  {
+    $this->blogPageGroup = PageGroup::where('name', '=', $this->blog_name);
+    // New Page
+    $groupPageLang = PageLang::where('name', '=', $this->blog_name)->first();
+
+    if (empty($groupPageLang)) {
+      // Blog Initialize;
+      $this->blogPage = $groupPage = $this->createGroupPage($this->blog_name, 'Post', 'list_template', 'item_template');
+      $this->categoryPage = $this->createGroupPage('Categories', '', 'category_template');
+      $this->archivePage = $this->createGroupPage('Archive', '', 'archive_template');
+      $this->searchPage = $this->createGroupPage('Search', '', 'search_template');
+    } else {
+      $groupPage = Page::find($groupPageLang->page_id);
+    }
+    return $groupPage;
+  }
+
+  public function saveImageLocally($image)
+  {
+    $imagePathArr = explode('/', $image);
+    $fullFileName = end($imagePathArr);
+
+    $newUrlPath = 'uploads/images/' . $fullFileName;
+    // Open the file to get existing content
+    $data = @file_get_contents($image);
+
+    // New file
+    $new = public_path($newUrlPath);
+    if (!file_exists($new)) {
+      // Write the contents back to a new file
+      file_put_contents($new, $data);
     }
 
-    public function saveImageLocally($image)
-    {
-      $imagePathArr = explode('/', $image);
-      $fullFileName = end($imagePathArr);
+    return '/' . $newUrlPath;
+  }
 
-      $newUrlPath = 'uploads/images/'.$fullFileName;
-      // Open the file to get existing content
-      $data = @file_get_contents($image);
-
-      // New file
-      $new = public_path($newUrlPath);
-      if ( ! file_exists($new)) {
-        // Write the contents back to a new file
-        file_put_contents($new, $data);
-      }
-
-      return '/'.$newUrlPath;
-    }
-
-    public function processContent($content)
-    {
-      $doc = new DomDocument;
-      $doc->loadHTML($content);
-      $images = $doc->getElementsByTagName('img');
-      foreach ($images as $imageNode)
-      {
-        try {
-         $image = $imageNode->getAttribute('src');
-         $newUrlPath = $this->saveImageLocally($image);
-         $content = str_replace($image, url()->to($newUrlPath), $content);
-         $content = preg_replace('/[width|height]=".*"/', '', $content);
-         } catch (Exception $e) {
-
-         }
-
-      }
-      return $content;
-    }
-
-    public function getComments($data, $page)
-    {
-      $ret = '';
-      $commentData = collect($this->getJson($this->url . '/wp-json/wp/v2/comments/?post='.$data->id ));
-      $idsInserted = [];
-      foreach ($commentData as $comment)
-      {
-        $check = PageBlockRepeaterData::where('content', '=', $comment->content->rendered)->first();
-        if ( ! $check)
-        {
-          $rowData['comment_author'] = $comment->author_name;
-          $rowData['comment_url'] = $comment->author_url;
-          $rowData['comment_content'] = $comment->content->rendered;
-          $rowData['comment_status'] = $comment->status;
-
-          $rowData['comment_parent'] = isset($idsInserted[$comment->parent]) ? $idsInserted[$comment->parent] : 0;
-
-          $rowData['comment_date'] = $this->carbonDate($comment->date)->format('Y-m-d H:i:s');
-
-          Block::preloadClone('comments')->setPageId($page->id)->getTypeObject()->insertRow($rowData);
-
-          $check = PageBlockRepeaterData::where('content', '=', $comment->content->rendered)->first();
-          $idsInserted[$comment->id] = $check->row_id;
-          $ret .= 'Comment: '.$comment->content->rendered.', ';
-        }
-        else
-        {
-          $idsInserted[$comment->id] = $check->row_id;
-          $ret .= 'Comment: '.$comment->content->rendered.', ';
-        }
-      }
-      return $ret;
-
-    }
-
-    public function getMetas($yoastData, $data, $page_id)
-    {
-      $meta_title = (empty($yoastData->title)) ? $data->title->rendered : $yoastData->title;
-      $meta_description = (empty($yoastData->metadesc)) ? substr(strip_tags($data->content->rendered), 0, 140).'...' : $yoastData->metadesc;
-      $meta_keywords = (empty($yoastData->metakeywords)) ? $data->title->rendered : $yoastData->metakeywords;
+  public function processContent($content)
+  {
+    $doc = new DomDocument;
+    $doc->loadHTML($content);
+    $images = $doc->getElementsByTagName('img');
+    foreach ($images as $imageNode) {
       try {
-        $meta_title_block = $this->getBlock('meta_title', 'string', 'Meta Title', '', 5);
-        if (!empty($title_block)) {
-            $meta_title_block->setPageId($page_id)->getTypeObject()->save($meta_title);
-        }
-        $meta_desc_block = $this->getBlock('meta_description', 'string', 'Meta Description', '', 5);
-        if (!empty($meta_desc_block)) {
-            $meta_desc_block->setPageId($page_id)->getTypeObject()->save($meta_description);
-        }
-        $meta_keywords_block = $this->getBlock('meta_keywords', 'string', 'Meta Keywords', '', 5);
-        if (!empty($meta_keywords_block)) {
-            $meta_keywords_block->setPageId($page_id)->getTypeObject()->save($meta_keywords);
-        }
+        $image = $imageNode->getAttribute('src');
+        $newUrlPath = $this->saveImageLocally($image);
+        $content = str_replace($image, url()->to($newUrlPath), $content);
+        $content = preg_replace('/[width|height]=".*"/', '', $content);
       } catch (Exception $e) {
-
       }
-
-
     }
+    return $content;
+  }
 
-    public function createPost($data)
-    {
-      $pageLang = PageLang::where('name', '=', $data->title->rendered)->first();
-      $uporc = 'updated';
-      if (empty($pageLang))
-      {
-          $uporc = 'created';
-          $page = new Page;
-          $pageLang = new PageLang;
+  public function getComments($data, $page)
+  {
+    $ret = '';
+    $commentData = collect($this->getJson($this->url . '/wp-json/wp/v2/comments/?post=' . $data->id));
+    $idsInserted = [];
+    foreach ($commentData as $comment) {
+      $check = PageBlockRepeaterData::where('content', '=', $comment->content->rendered)->first();
+      if (!$check) {
+        $rowData['comment_author'] = $comment->author_name;
+        $rowData['comment_url'] = $comment->author_url;
+        $rowData['comment_content'] = $comment->content->rendered;
+        $rowData['comment_status'] = $comment->status;
+
+        $rowData['comment_parent'] = isset($idsInserted[$comment->parent]) ? $idsInserted[$comment->parent] : 0;
+
+        $rowData['comment_date'] = $this->carbonDate($comment->date)->format('Y-m-d H:i:s');
+
+        Block::preloadClone('comments')->setPageId($page->id)->getTypeObject()->insertRow($rowData);
+
+        $check = PageBlockRepeaterData::where('content', '=', $comment->content->rendered)->first();
+        $idsInserted[$comment->id] = $check->row_id;
+        $ret .= 'Comment: ' . $comment->content->rendered . ', ';
+      } else {
+        $idsInserted[$comment->id] = $check->row_id;
+        $ret .= 'Comment: ' . $comment->content->rendered . ', ';
       }
-      else
-      {
-        $page = Page::find($pageLang->page_id);
-        $comments  = $this->getComments($data, $page);
+    }
+    return $ret;
+  }
 
-        if ( ! empty($data->yoast))
-        {
-          $this->getMetas($data->yoast, $data, $page->id);
-        }
-        $res = new \stdClass;
-        $res->message = 'Post '.$uporc.': '.$pageLang->name;
-        $res->oldLink = $data->link;
-        $res->newLink = Path::getFullUrl($page->id);
-        $res->categories =  $this->getCategory($data->_embedded->{"wp:term"}, $page->id);
-        $res->tags = 'UPDATE RUN';
-        $res->comments = $comments;
-        $res->main_image = $this->featuredImage($data, $pageLang);
-        $latestVersion = PageVersion::latest_version($page->id, true);
-        if (!empty($latestVersion)) {
-            $latestVersion->publish();
-        }
-        return $res;
+  public function getMetas($yoastData, $data, $page_id)
+  {
+    $meta_title = (empty($yoastData->title)) ? $data->title->rendered : $yoastData->title;
+    $meta_description = (empty($yoastData->metadesc)) ? substr(strip_tags($data->content->rendered), 0, 140) . '...' : $yoastData->metadesc;
+    $meta_keywords = (empty($yoastData->metakeywords)) ? $data->title->rendered : $yoastData->metakeywords;
+    try {
+      $meta_title_block = $this->getBlock('meta_title', 'string', 'Meta Title', '', 5);
+      if (!empty($title_block)) {
+        $meta_title_block->setPageId($page_id)->getTypeObject()->save($meta_title);
       }
+      $meta_desc_block = $this->getBlock('meta_description', 'string', 'Meta Description', '', 5);
+      if (!empty($meta_desc_block)) {
+        $meta_desc_block->setPageId($page_id)->getTypeObject()->save($meta_description);
+      }
+      $meta_keywords_block = $this->getBlock('meta_keywords', 'string', 'Meta Keywords', '', 5);
+      if (!empty($meta_keywords_block)) {
+        $meta_keywords_block->setPageId($page_id)->getTypeObject()->save($meta_keywords);
+      }
+    } catch (Exception $e) {
+    }
+  }
 
-      $page->live = 2;
-      $page->live_start = $this->carbonDate($data->date)->format("Y-m-d H:i:s");
-      $page->created_at = $this->carbonDate($data->date);
-      $page->updated_at = $this->carbonDate($data->modified);
-      $page->parent = $this->groupPage->id;
-      $page->template = $this->group->default_template;
-      $page->save();
-      $page->groups()->sync([$this->group->id]);
+  public function createPost($data)
+  {
+    $pageLang = PageLang::where('name', '=', $data->title->rendered)->first();
+    $uporc = 'updated';
+    if (empty($pageLang)) {
+      $uporc = 'created';
+      $page = new Page;
+      $pageLang = new PageLang;
+    } else {
+      $page = Page::find($pageLang->page_id);
       $comments  = $this->getComments($data, $page);
 
-      $categories = $this->getCategory($data->_embedded->{"wp:term"}, $page->id);
-      // Page Lang
-      $pageLang->live_version = 0;
-      $pageLang->page_id = $page->id;
-
-      $pageLang->language_id = Language::current();
-
-      $pageLang->name = $data->title->rendered;
-      $pageLang->url = str_slug($pageLang->name);
-      $pageLang->save();
-
-      $tags = $this->syncTags($page, $data->_embedded->{"wp:term"});
-      $date_block = Block::where('name', '=', 'post_date')->first();
-      if ( ! empty($date_block)) {
-        $date_block->setPageId($page->id)->getTypeObject()->save($this->carbonDate($data->date)->format("Y-m-d H:i:s"));
-      }
-      $title_block = Block::where('name', '=', config('coaster::admin.title_block'))->first();
-      if (!empty($title_block)) {
-          $title_block->setPageId($page->id)->getTypeObject()->save($pageLang->name);
-      }
-      $content_block = Block::where('name', '=', 'content')->first();
-      if (!empty($content_block)) {
-          $content_block->setPageId($page->id)->getTypeObject()->save($this->processContent($data->content->rendered));
-      }
-      $leadText_block = Block::where('name', '=', 'lead_text')->first();
-      if (!empty($leadText_block)) {
-          $leadText_block->setPageId($page->id)->getTypeObject()->save($data->excerpt->rendered);
-      }
-
-      if ( ! empty($data->yoast))
-      {
+      if (!empty($data->yoast)) {
         $this->getMetas($data->yoast, $data, $page->id);
       }
-
       $res = new \stdClass;
-      $res->message = 'Post '.$uporc.': '.$pageLang->name;
+      $res->message = 'Post ' . $uporc . ': ' . $pageLang->name;
       $res->oldLink = $data->link;
       $res->newLink = Path::getFullUrl($page->id);
-      $res->categories = $categories;
-      $res->tags = $tags;
+      $res->categories =  $this->getCategory($data->_embedded->{"wp:term"}, $page->id);
+      $res->tags = 'UPDATE RUN';
       $res->comments = $comments;
       $res->main_image = $this->featuredImage($data, $pageLang);
       $latestVersion = PageVersion::latest_version($page->id, true);
       if (!empty($latestVersion)) {
-          $latestVersion->publish();
+        $latestVersion->publish();
       }
       return $res;
-
     }
 
+    $page->live = 2;
+    $page->live_start = $this->carbonDate($data->date)->format("Y-m-d H:i:s");
+    $page->created_at = $this->carbonDate($data->date);
+    $page->updated_at = $this->carbonDate($data->modified);
+    $page->parent = $this->groupPage->id;
+    $page->template = $this->group->default_template;
+    $page->save();
+    $page->groups()->sync([$this->group->id]);
+    $comments  = $this->getComments($data, $page);
 
-    protected function carbonDate($date)
-    {
-        return Carbon::parse($date);
-    }
-    public function importPosts($page = 1)
-    {
-        $posts = collect($this->getJson($this->url . '/wp-json/wp/v2/posts/?_embed&filter[orderby]=modified&page=' . $page.'&per_page='.$this->per_page ));
+    $categories = $this->getCategory($data->_embedded->{"wp:term"}, $page->id);
+    // Page Lang
+    $pageLang->live_version = 0;
+    $pageLang->page_id = $page->id;
 
-        foreach ($posts as $post) {
-            $this->ret[] = $this->createPost($post);
-        }
-        if (count($posts) == $this->per_page) {
-          $this->importPosts($page+1);
-        }
-        if (empty($posts)) {
-          $this->ret[] = 'No posts to import, check the API is installed correctly.';
-        }
-        return $this->ret;
+    $pageLang->language_id = Language::current();
+
+    $pageLang->name = $data->title->rendered;
+    $pageLang->url = Str::slug($pageLang->name);
+    $pageLang->save();
+
+    $tags = $this->syncTags($page, $data->_embedded->{"wp:term"});
+    $date_block = Block::where('name', '=', 'post_date')->first();
+    if (!empty($date_block)) {
+      $date_block->setPageId($page->id)->getTypeObject()->save($this->carbonDate($data->date)->format("Y-m-d H:i:s"));
+    }
+    $title_block = Block::where('name', '=', config('coaster::admin.title_block'))->first();
+    if (!empty($title_block)) {
+      $title_block->setPageId($page->id)->getTypeObject()->save($pageLang->name);
+    }
+    $content_block = Block::where('name', '=', 'content')->first();
+    if (!empty($content_block)) {
+      $content_block->setPageId($page->id)->getTypeObject()->save($this->processContent($data->content->rendered));
+    }
+    $leadText_block = Block::where('name', '=', 'lead_text')->first();
+    if (!empty($leadText_block)) {
+      $leadText_block->setPageId($page->id)->getTypeObject()->save($data->excerpt->rendered);
     }
 
-    protected function getJson($url)
-    {
-        $response = file_get_contents($url, false);
-        return json_decode( $response );
+    if (!empty($data->yoast)) {
+      $this->getMetas($data->yoast, $data, $page->id);
     }
+
+    $res = new \stdClass;
+    $res->message = 'Post ' . $uporc . ': ' . $pageLang->name;
+    $res->oldLink = $data->link;
+    $res->newLink = Path::getFullUrl($page->id);
+    $res->categories = $categories;
+    $res->tags = $tags;
+    $res->comments = $comments;
+    $res->main_image = $this->featuredImage($data, $pageLang);
+    $latestVersion = PageVersion::latest_version($page->id, true);
+    if (!empty($latestVersion)) {
+      $latestVersion->publish();
+    }
+    return $res;
+  }
+
+
+  protected function carbonDate($date)
+  {
+    return Carbon::parse($date);
+  }
+  public function importPosts($page = 1)
+  {
+    $posts = collect($this->getJson($this->url . '/wp-json/wp/v2/posts/?_embed&filter[orderby]=modified&page=' . $page . '&per_page=' . $this->per_page));
+
+    foreach ($posts as $post) {
+      $this->ret[] = $this->createPost($post);
+    }
+    if (count($posts) == $this->per_page) {
+      $this->importPosts($page + 1);
+    }
+    if (empty($posts)) {
+      $this->ret[] = 'No posts to import, check the API is installed correctly.';
+    }
+    return $this->ret;
+  }
+
+  protected function getJson($url)
+  {
+    $response = file_get_contents($url, false);
+    return json_decode($response);
+  }
 }
