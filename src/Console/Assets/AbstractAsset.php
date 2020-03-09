@@ -87,7 +87,7 @@ abstract class AbstractAsset
             }
             $this->run();
             if (!$this->_failed) { // silent fail (throw \Exception in run() for normal failure)
-                 $this->_currentVersion = $version;
+                $this->_currentVersion = $version;
             }
         }
         return $this->_currentVersion;
@@ -112,13 +112,24 @@ abstract class AbstractAsset
     public function downloadZip($url, $extracts, $method = 'GET', $params = [], $inBaseFolder = true, $overwrite = true)
     {
         $zipFile = $this->downloadFile($url, '', $method, $params, $inBaseFolder, $overwrite);
+        $this->extractZip($zipFile, $extracts, $inBaseFolder, $overwrite);
+        unlink($zipFile);
+    }
+
+    /**
+     * @param string $zipFile
+     * @param array $extracts
+     * @param bool $inBaseFolder
+     * @param bool $overwrite
+     */
+    public function extractZip($zipFile, $extracts, $inBaseFolder = true, $overwrite = true)
+    {
         $zip = new Zip;
         $zip->open($zipFile);
         foreach ($extracts as $zipPath => $filePath) {
             $zip->extractDir($zipPath, ($inBaseFolder ? $this->_baseFolder : '') . $filePath, $overwrite);
         }
         $zip->close();
-        unlink($zipFile);
     }
 
     /**
