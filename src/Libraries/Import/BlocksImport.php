@@ -202,7 +202,7 @@ class BlocksImport extends AbstractImport
 
     /**
      * @param string $importFieldData
-     * @return string
+     * @return array
      */
     protected function _mapTemplates($importFieldData)
     {
