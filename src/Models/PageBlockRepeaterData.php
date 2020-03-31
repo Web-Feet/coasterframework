@@ -53,7 +53,7 @@ class PageBlockRepeaterData extends Eloquent
                 uasort($repeaterRowsById, ['self', '_order']);
             } else {
                 shuffle($repeaterRowsById);
-                $repeaterRowsById = array_slice($repeaterRowsById, 0, $randomOrder);
+                $repeaterRowsById = $randomOrder === true ? $repeaterRowsById : array_slice($repeaterRowsById, 0, $randomOrder);
             }
         }
         return $repeaterRowsById;
