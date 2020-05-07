@@ -810,7 +810,7 @@ class Page extends Eloquent
         $duplicatePage->setRelations([]);
 
         $pageLangPost['name'] = preg_replace('/\s+Duplicate$/', '', $pageLangPost['name']) . ' Duplicate';
-        $pageLangPost['url'] = preg_replace('/--v\w+$/', '', $pageLangPost['url']) . '--v' . base_convert(microtime(true), 10, 36);
+        $pageLangPost['url'] = preg_replace('/--v\w+$/', '', $pageLangPost['url']) . '--v' . base_convert((int) microtime(true), 10, 36);
         $pageVersion = PageVersion::prepareNew();
         $pageVersion->template = $duplicatePage->template;
 
