@@ -15,7 +15,7 @@ class FileManager extends AbstractAsset
     {
         $this->downloadZip(
             'https://github.com/trippo/ResponsiveFilemanager/releases/download/v9.14.0/responsive_filemanager.zip',
-            ['filemanager' => '', 'tinymce/plugins/responsivefilemanager' => '../jquery/tinymce/plugins/responsivefilemanager']
+            ['responsive_filemanager/filemanager' => '', 'responsive_filemanager/tinymce/plugins/responsivefilemanager' => '../jquery/tinymce/plugins/responsivefilemanager']
         );
 
         $this->_setDetailedMessage('integrating with Coaster');
