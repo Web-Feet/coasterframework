@@ -55,6 +55,11 @@ class FileManager extends AbstractAsset
             '$uploaded_bytes = $this->fix_integer_overflow((int)$content_range[1]);',
             '$uploaded_bytes = $this->fix_integer_overflow($content_range ? (int)$content_range[1] : 0);'
         );
+        File::replaceString(
+            $this->_baseFolder . '/UploadHandler.php',
+            '\'readfile_chunk_size\' => 10 * 1024 * 1024, // 10 MiB',
+            '\'readfile_chunk_size\' => 2 * 1024 * 1024, // 2 MiB'
+        );
 
         // remove conflicting response class
         unlink($this->_baseFolder . '/include/Response.php');
