@@ -25,18 +25,12 @@ class FileManager
             'current_path' => '../../uploads/',
             'thumbs_base_path' => '../../cache/fm_thumbs/',
             'MaxSizeUpload' => 10,
-            'show_folder_size' => true,
-            'transliteration' => true,
-            'convert_spaces' => true,
             'image_max_width' => 2000,
             'image_max_height' => 2000,
             'chmod_files' => false,
             'chmod_dirs' => false,
             'ext_misc' => ['zip', 'rar', 'gz', 'tar', 'iso', 'dmg', 'kml', 'gpx'],
-            'aviary_apiKey' => config('wf_cms::key.aviary'),
-            'aviary_maxSize' => '2000',
-            'hidden_folders' => ['.svn'],
-            'java_upload' => false,
+            'hidden_folders' => ['.svn', '.git'],
         ];
         foreach ($coasterSettings as $setting => $value) {
             if (!in_array($setting, $ignore)) {
