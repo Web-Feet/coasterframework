@@ -135,7 +135,7 @@ class Form extends AbstractBlock
                 }
 
                 // Send email
-                if ($this->submissionSendEmail(unserialize($form_submission->content), $form_settings)) {
+                if ($form_settings->email_to !== 'none' && $this->submissionSendEmail(unserialize($form_submission->content), $form_settings)) {
                     $form_submission->sent = 1;
                     $form_submission->save();
                 }
