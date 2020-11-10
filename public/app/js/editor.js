@@ -225,8 +225,8 @@ $('.length-guide').on('input', function () {
     if (!barEl.length) {
         wrapEl.append(
             '<div class="progress-wrap row" style="padding: 0 ;">' +
-            '<div class="col-xs-2 text-center">123</div>' +
-            '<div class="col-xs-10">' +
+            '<div class="col-xs-3 col-lg-2 text-center">123</div>' +
+            '<div class="col-xs-9 col-lg-10">' +
             '<div class="progress" style="height: 5px; margin: 7px 0;">' +
             '<div class="progress-bar"></div>' +
             '</div>' +
@@ -253,9 +253,9 @@ $('.length-guide').on('input', function () {
     
     var lengthText;
     if (length > max) {
-        lengthText = 'Long';
+        lengthText = 'Too Long';
     } else if (length < min) {
-        lengthText = 'Short';
+        lengthText = 'Too Short';
     } else {
         lengthText = 'Good';
     }
