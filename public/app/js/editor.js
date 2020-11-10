@@ -225,8 +225,8 @@ $('.length-guide').on('input', function () {
     if (!barEl.length) {
         wrapEl.append(
             '<div class="progress-wrap row" style="padding: 0 ;">' +
-            '<div class="col-xs-1 text-center">123</div>' +
-            '<div class="col-xs-11">' +
+            '<div class="col-xs-2 text-center">123</div>' +
+            '<div class="col-xs-10">' +
             '<div class="progress" style="height: 5px; margin: 7px 0;">' +
             '<div class="progress-bar"></div>' +
             '</div>' +
@@ -243,8 +243,6 @@ $('.length-guide').on('input', function () {
     barWidth = barWidth > 100 ? 100 : barWidth;
 
     barEl.css('width', barWidth + '%');
-    numberEl.text(length);
-
     if (length >= min && length <= max) {
         barEl.addClass('progress-bar-success');
         barEl.removeClass('progress-bar-danger');
@@ -252,6 +250,16 @@ $('.length-guide').on('input', function () {
         barEl.addClass('progress-bar-danger');
         barEl.removeClass('progress-bar-success');
     }
+    
+    var lengthText;
+    if (length > max) {
+        lengthText = 'Long';
+    } else if (length < min) {
+        lengthText = 'Short';
+    } else {
+        lengthText = 'Good';
+    }
+    numberEl.text(length + ' (' + lengthText + ')');
 
 }).trigger('input');
 
